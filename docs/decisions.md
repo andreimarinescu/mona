@@ -2,6 +2,42 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D10 · 2026-10-01 · Contract set B frozen at v1.0 (Andrei's verdict)
+
+- C2, C6, C8 and C9 are frozen at 1.0. Amendments A7 and A9–A11 amend set A; changes now go only through `amendments.md`.
+- **Stage privacy line:** "the document and everything Mona derived from it are deleted after 24 hours" (C9 §5.4). The stage instance is a throwaway database.
+- **Stage fallback networking** (a laptop stack the presenter's phone connects to) is Andrei's call on site. No lane builds or documents it beyond the loopback default.
+- **Lanes unblocked:** L2-P2 (REST, write tools, auth), L3 screens, L4 (interviews, deadlines, drafts, export), L1-M3 (the set B hooks, the Visitors purge, apply-group rule revert, A7/A10).
+
+## D9 · 2026-09-30 · Cheap model for tests; Qwen 3.6 only for quality runs (operator request)
+
+- **Test model:** `qwen/qwen3.7-flash` on OpenRouter (Alibaba). It costs $0.03/M prompt and $0.13/M completion, against Qwen 3.6's $0.15/$1.00. It streams `reasoning_content`, calls tools, honours json_schema, and `reasoning.enabled=false` gives 0 reasoning tokens (probed 2026-09-30). **Every dev and test run uses it by default:** unit and integration tests that reach a model, e2e including `MONA_LIVE=1`, and lane smoke runs.
+- **Qwen 3.6 (`qwen/qwen3.6-35b-a3b`, D4 pins) only for quality runs,** where the output itself is the evidence:
+  - classification or evidence accuracy on real documents (L5c histogram, acceptance cases);
+  - debrief quality;
+  - timing measurements;
+  - rehearsals.
+
+  Lanes name the quality runs in their reports.
+- **Free models are out:** `:free` endpoints are rate-limited upstream (429 on the first call) and may retain prompts. Practice documents never go to a `:free` endpoint.
+- **Switching:**
+  - Hermes: `deploy/hermes/config.yaml` sets `model.default: "${MONA_CHAT_MODEL}"`. Hermes expands `${VAR}` in any string but has no default syntax, so compose passes `MONA_CHAT_MODEL: ${MONA_CHAT_MODEL:-qwen/qwen3.7-flash}` to the Hermes service.
+  - The D4 provider pins move under `provider_routing.models."qwen/qwen3.6-35b-a3b"` (per-model overrides), so the flash model routes to its only provider.
+  - Direct model calls (pydantic-ai sub-tasks) read `MONA_LLM_MODEL` with the same default.
+  - Prod (llama-server) is unaffected (C9).
+- **Spend:** reports that ran models include the OpenRouter usage delta (`GET https://openrouter.ai/api/v1/key` → `data.usage`). Total at D9: $0.46.
+
+## D8 · 2026-09-30 · Set A amendments A2–A6 (from the set B draft)
+
+- Set A is amended by A2–A6 in `docs/contracts/amendments.md`:
+  - A2: Visitors documents are never rule candidates;
+  - A3: the "ask me each time" answer shape;
+  - A4: the activating rule change joins the apply group;
+  - A5: the `ses` id prefix;
+  - A6: Romanian titles use comma-below.
+- **Running lanes read the main checkout's copy** (`~/DevFiles/mona-hq/mona/docs/contracts/amendments.md`) at every commit boundary. It wins over the frozen text it amends.
+- The Romanian `condition_text` wording (W1-B P2) will be A7, when set B freezes, since its table lives in C8 §8.
+
 ## D7 · 2026-09-30 · Contract set A frozen at v1.0 (Andrei's verdict)
 
 - C1, C3 (shape), C4, C5 and C7 are frozen at 1.0 in `docs/contracts/`. Changes now go only through `amendments.md`.
