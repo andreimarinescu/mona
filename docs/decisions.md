@@ -2,6 +2,34 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D13 · 2026-10-01 · Overnight autonomy (operator ruling)
+
+- While Andrei is away, the orchestrator verifies and merges finished lanes and launches the queued cards (vault resume point) within the lane limits (3 heavy + 1 light). This lifts the kickoff's "operator present for new launches" rule for these unattended stretches.
+- **Not without Andrei:**
+  - signing and pushing (the next sitting waits for him);
+  - contract verdicts;
+  - anything the standing rules call important.
+  Those are batched as questions for his return, and work that depends on them is held.
+- Every launch and merge is logged in the vault resume point, so a compaction loses nothing.
+
+## D12 · 2026-10-01 · Mona is practice-agnostic (operator question)
+
+- **Only in seed data.** Practice-specific content (entity, person and counterparty names such as AGIPI, TALENZ or Hello bank; addresses; example suppliers) lives only in seed data (`demo/seed/`, the private overlay, test fixtures) and in docs and tests as examples. It never appears in application code, prompts, tool descriptions or the committed Hermes profile.
+- **Model-facing text is generic.** Tool descriptions and prompts use neutral examples ("a supplier, insurer, bank or public body"). Practice examples reach the model only through registry data (`categories.model_definition`, counterparties, rules).
+- **Hermes memory seeds are generated.** `deploy/hermes/memories/` is rendered from the loaded practice registry at seed/reset time, not hand-written. Until then the committed files are the demo practice's and are listed as such.
+- **Guard.** A check reads every entity, person and counterparty name and alias from `demo/seed/practice.yaml` and fails if any appears in `apps/*/src`, `packages/`, or `deploy/hermes/` outside `memories/`. It runs in `make check`.
+- **Carried by:**
+  - L2 fixes the "e.g. AGIPI" hint in `mona/mcp/filters.py`;
+  - L5c generates the memory seeds;
+  - the guard lands with the next lane that touches `scripts/`.
+
+## D11 · 2026-10-01 · Parallel-lane ownership on the api
+
+- **Migrations:** only L2 adds Alembic migrations (next: `0005`, auth sessions + A9). Every other lane (L1-M2, L4, L1-M3) adds none. A needed index or column goes in the lane's report, and the orchestrator routes it.
+- **Routers:** each lane keeps its routes in its own module (`mona/api/<area>.py`, `mona/interviews/api.py`, …) and adds one `include_router` line in the app factory, so merges stay one-line conflicts.
+- **Model client:** L1-M2's model client module is the one client (C9 §1.2 "one LLM client"). L2-P2 adds the prod fail-closed guard to it; L4 calls it, never a second client.
+- **Shared test fixtures** (`apps/api/tests/conftest.py`): add fixtures with lane-specific names (`<lane>_…`) to avoid clashes like the L1/L2 `seeded_template` collision.
+
 ## D10 · 2026-10-01 · Contract set B frozen at v1.0 (Andrei's verdict)
 
 - C2, C6, C8 and C9 are frozen at 1.0. Amendments A7 and A9–A11 amend set A; changes now go only through `amendments.md`.

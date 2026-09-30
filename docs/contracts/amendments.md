@@ -78,3 +78,15 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
 - **Change:** `summary: "Intake, batch bat_… {state}, N questions"`, where `{state}` is `running` while the batch runs, else `finished`.
 - **Why:** set B G9. An early debrief can be ready while the batch still runs.
 - **Lanes:** L3.
+
+## A12 · 2026-10-01 · C4 §3.3 `sum_amounts`: titles in the result
+
+- **Change:** each summed document in the result carries its `title` (for up to 10 documents; beyond that, ids only with `"truncated": true`), within the §2.3 cap.
+- **Why:** L2-P1's live runs showed the model following a sum with two `get_document` calls just to name the documents, against the ≤2-calls budget (C4 §2.9).
+- **Lanes:** L2.
+
+## A13 · 2026-10-01 · C4 §4.2 and C7 §1: two narrower attachment mounts
+
+- **Change:** instead of the whole `/opt/data/cache`, the api mounts only `cache/documents` and `cache/images`, read-only, as two volume subpaths at the same absolute paths. `ATTACH_ROOT` and the guard are unchanged.
+- **Why:** the single mount also exposed Hermes' own cache files to the api (L2-P1).
+- **Lanes:** L2.
