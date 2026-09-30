@@ -1,0 +1,204 @@
+/* Mona design tokens — generated from build/tokens.py. Light is default; dark via [data-theme="dark"] or the OS setting. */
+
+@font-face { font-family: "Fraunces"; src: url("fonts/Fraunces-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Fraunces"; src: url("fonts/Fraunces-Italic-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url("fonts/InstrumentSans-Variable.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
+
+:root, [data-theme="light"] {
+  color-scheme: light;
+  --brand-plaster: #FBF7F0;
+  --brand-sand: #F3EBDD;
+  --brand-terracotta: #A94F33;
+  --brand-sea: #1F4E5A;
+  --brand-olive: #5A5C2E;
+  --brand-saffron: #D9A441;
+  --brand-umber: #2B221C;
+  --bg: #F3EBDD;
+  --surface: #FBF7F0;
+  --surface-raised: #FFFDF9;
+  --surface-sunken: #EFE5D4;
+  --border: #E2D6C3;
+  --border-strong: #8C7B6B;
+  --text: #2B221C;
+  --text-muted: #6B5F55;
+  --text-inverse: #FBF7F0;
+  --inverse: #2B221C;
+  --accent: #A94F33;
+  --accent-hover: #8E3F27;
+  --accent-soft: #F4DDD3;
+  --accent-strong: #8A3C24;
+  --on-accent: #FFFDF9;
+  --info: #1F4E5A;
+  --info-soft: #DCE8E8;
+  --success: #4E5027;
+  --success-soft: #E7E8D5;
+  --warning: #7A4F0E;
+  --warning-soft: #F6E7C4;
+  --danger: #8E2A2A;
+  --danger-soft: #F4DCD8;
+  --on-danger: #FFFDF9;
+  --focus: #1F4E5A;
+  --status-filed-fg: #3F4120;
+  --status-filed-bg: #E7E8D5;
+  --status-review-fg: #5E400B;
+  --status-review-bg: #F6E7C4;
+  --status-processing-fg: #1F4E5A;
+  --status-unreadable-fg: #7E3522;
+  --status-unreadable-bg: #F4DDD3;
+  --confidence-high: #4E5027;
+  --confidence-mid: #7A4F0E;
+  --confidence-low: #8E2A2A;
+  --confidence-track: #E2D6C3;
+  --shadow-1: 0 1px 0 rgba(43,34,28,0.05), 0 1px 3px rgba(43,34,28,0.08);
+  --shadow-2: 0 2px 4px rgba(43,34,28,0.06), 0 10px 24px -8px rgba(43,34,28,0.22);
+  --shadow-3: 0 4px 8px rgba(43,34,28,0.06), 0 24px 56px -16px rgba(43,34,28,0.38);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1A1512;
+  --surface: #241E1A;
+  --surface-raised: #2E2621;
+  --surface-sunken: #15110E;
+  --border: #3B322B;
+  --border-strong: #85766A;
+  --text: #F3EBDD;
+  --text-muted: #B9AB9B;
+  --text-inverse: #1A1512;
+  --inverse: #F3EBDD;
+  --accent: #E08A6C;
+  --accent-hover: #EBA088;
+  --accent-soft: #43261B;
+  --accent-strong: #F2B39D;
+  --on-accent: #1A1512;
+  --info: #8FC1C8;
+  --info-soft: #17323A;
+  --success: #C3C685;
+  --success-soft: #2B2D16;
+  --warning: #E8BC66;
+  --warning-soft: #3B2C0E;
+  --danger: #F2A7A0;
+  --danger-soft: #40191A;
+  --on-danger: #1A1512;
+  --focus: #8FC1C8;
+  --status-filed-fg: #CDD08F;
+  --status-filed-bg: #2B2D16;
+  --status-review-fg: #EDC677;
+  --status-review-bg: #3B2C0E;
+  --status-processing-fg: #9CCBD2;
+  --status-unreadable-fg: #F0A48C;
+  --status-unreadable-bg: #43261B;
+  --confidence-high: #C3C685;
+  --confidence-mid: #E8BC66;
+  --confidence-low: #F2A7A0;
+  --confidence-track: #3B322B;
+  --shadow-1: 0 1px 0 rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-2: 0 2px 4px rgba(0,0,0,0.35), 0 10px 24px -8px rgba(0,0,0,0.6);
+  --shadow-3: 0 4px 8px rgba(0,0,0,0.4), 0 24px 56px -16px rgba(0,0,0,0.75);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #1A1512;
+    --surface: #241E1A;
+    --surface-raised: #2E2621;
+    --surface-sunken: #15110E;
+    --border: #3B322B;
+    --border-strong: #85766A;
+    --text: #F3EBDD;
+    --text-muted: #B9AB9B;
+    --text-inverse: #1A1512;
+    --inverse: #F3EBDD;
+    --accent: #E08A6C;
+    --accent-hover: #EBA088;
+    --accent-soft: #43261B;
+    --accent-strong: #F2B39D;
+    --on-accent: #1A1512;
+    --info: #8FC1C8;
+    --info-soft: #17323A;
+    --success: #C3C685;
+    --success-soft: #2B2D16;
+    --warning: #E8BC66;
+    --warning-soft: #3B2C0E;
+    --danger: #F2A7A0;
+    --danger-soft: #40191A;
+    --on-danger: #1A1512;
+    --focus: #8FC1C8;
+    --status-filed-fg: #CDD08F;
+    --status-filed-bg: #2B2D16;
+    --status-review-fg: #EDC677;
+    --status-review-bg: #3B2C0E;
+    --status-processing-fg: #9CCBD2;
+    --status-unreadable-fg: #F0A48C;
+    --status-unreadable-bg: #43261B;
+    --confidence-high: #C3C685;
+    --confidence-mid: #E8BC66;
+    --confidence-low: #F2A7A0;
+    --confidence-track: #3B322B;
+    --shadow-1: 0 1px 0 rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-2: 0 2px 4px rgba(0,0,0,0.35), 0 10px 24px -8px rgba(0,0,0,0.6);
+    --shadow-3: 0 4px 8px rgba(0,0,0,0.4), 0 24px 56px -16px rgba(0,0,0,0.75);
+  }
+}
+
+:root {
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-dialog: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --container-sm: 640px;
+  --container-md: 880px;
+  --container-lg: 1200px;
+  --container-xl: 1440px;
+  --duration-instant: 80ms;
+  --duration-quick: 160ms;
+  --duration-calm: 240ms;
+  --duration-slow: 400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --duration-quick: 0ms; --duration-calm: 0ms; --duration-slow: 0ms; }
+}
+
+.type-display-xl { font-family: var(--font-display); font-size: 64px; line-height: 68px; font-weight: 400; letter-spacing: -0.02em; font-variation-settings: 'SOFT' 100, 'WONK' 0, 'opsz' 144; }
+.type-display { font-family: var(--font-display); font-size: 44px; line-height: 50px; font-weight: 400; letter-spacing: -0.015em; font-variation-settings: 'SOFT' 100, 'WONK' 0, 'opsz' 96; }
+.type-title { font-family: var(--font-display); font-size: 30px; line-height: 36px; font-weight: 400; letter-spacing: -0.01em; font-variation-settings: 'SOFT' 100, 'WONK' 0, 'opsz' 48; }
+.type-voice { font-family: var(--font-display); font-size: 22px; line-height: 29px; font-weight: 400; font-variation-settings: 'SOFT' 100, 'WONK' 0, 'opsz' 24; }
+.type-voice-italic { font-family: var(--font-display); font-size: 18px; line-height: 26px; font-weight: 400; font-style: italic; font-variation-settings: 'SOFT' 100, 'WONK' 0, 'opsz' 18; }
+.type-heading { font-family: var(--font-sans); font-size: 18px; line-height: 26px; font-weight: 600; }
+.type-body-lg { font-family: var(--font-sans); font-size: 17px; line-height: 26px; font-weight: 400; }
+.type-body { font-family: var(--font-sans); font-size: 15px; line-height: 22px; font-weight: 400; }
+.type-body-strong { font-family: var(--font-sans); font-size: 15px; line-height: 22px; font-weight: 600; }
+.type-label { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 600; }
+.type-caption { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 400; }
+.type-overline { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.type-filename { font-family: var(--font-mono); font-size: 13px; line-height: 20px; font-weight: 400; }

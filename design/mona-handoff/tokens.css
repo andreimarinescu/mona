@@ -1,0 +1,268 @@
+/* Mona — design tokens as CSS custom properties.
+   Generated from tokens.json (Mona design system v1) plus the app extensions marked below.
+   Themes: light by default; set data-theme="dark" (or "light") on <html> or any subtree.
+   With no data-theme anywhere, the page follows the operating system. */
+
+@font-face { font-family: "Fraunces"; src: url("fonts/Fraunces-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Fraunces"; src: url("fonts/Fraunces-Italic-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Instrument Sans"; src: url("fonts/InstrumentSans-Variable.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
+
+:root {
+  /* Brand primitives: logo, print, illustration. Build UI from the semantic tokens. */
+  --brand-plaster: #fbf7f0;
+  --brand-sand: #f3ebdd;
+  --brand-terracotta: #a94f33;
+  --brand-sea: #1f4e5a;
+  --brand-olive: #5a5c2e;
+  --brand-saffron: #d9a441;
+  --brand-umber: #2b221c;
+
+  /* Families */
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  /* Type roles: use --type-<role> with the font shorthand, e.g. font: var(--type-body); */
+  --type-display-xl: 400 64px/68px var(--font-display);
+  --type-display-xl-tracking: -0.02em;
+  --type-display-xl-opsz: 144;
+  --type-display: 400 44px/50px var(--font-display);
+  --type-display-tracking: -0.015em;
+  --type-display-opsz: 96;
+  --type-title: 400 30px/36px var(--font-display);
+  --type-title-tracking: -0.01em;
+  --type-title-opsz: 48;
+  --type-voice: 400 22px/29px var(--font-display);
+  --type-voice-opsz: 24;
+  --type-voice-italic: italic 400 18px/26px var(--font-display);
+  --type-voice-italic-opsz: 18;
+  --type-heading: 600 18px/26px var(--font-sans);
+  --type-body-lg: 400 17px/26px var(--font-sans);
+  --type-body: 400 15px/22px var(--font-sans);
+  --type-body-strong: 600 15px/22px var(--font-sans);
+  --type-label: 600 14px/20px var(--font-sans);
+  --type-caption: 400 13px/18px var(--font-sans);
+  --type-overline: 600 12px/16px var(--font-sans);
+  --type-overline-tracking: 0.12em;
+  --type-filename: 400 13px/20px var(--font-mono);
+  --font-variation-display: "SOFT" 100, "WONK" 0; /* add "opsz" per role */
+
+  /* Space (4px scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* Layers */
+  --z-sticky: 10;
+  --z-drawer: 40;
+  --z-dialog: 50;
+  --z-toast: 60;
+  --z-tooltip: 70;
+
+  /* Layout. Breakpoints are reference values: CSS variables do not work inside @media. */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --container-sm: 640px;
+  --container-md: 880px;
+  --container-lg: 1200px;
+  --container-xl: 1440px;
+
+  /* Motion (from the design system README and component bundle) */
+  --duration-instant: 80ms;
+  --duration-quick: 160ms;
+  --duration-calm: 240ms;
+  --duration-slow: 480ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+}
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3ebdd;
+  --surface: #fbf7f0;
+  --surface-raised: #fffdf9;
+  --surface-sunken: #efe5d4;
+  --border: #e2d6c3;
+  --border-strong: #8c7b6b;
+  --text: #2b221c;
+  --text-muted: #6b5f55;
+  --text-inverse: #fbf7f0;
+  --inverse: #2b221c;
+  --accent: #a94f33;
+  --accent-hover: #8e3f27;
+  --accent-soft: #f4ddd3;
+  --accent-strong: #8a3c24;
+  --on-accent: #fffdf9;
+  --info: #1f4e5a;
+  --info-soft: #dce8e8;
+  --success: #4e5027;
+  --success-soft: #e7e8d5;
+  --warning: #7a4f0e;
+  --warning-soft: #f6e7c4;
+  --danger: #8e2a2a;
+  --danger-soft: #f4dcd8;
+  --on-danger: #fffdf9;
+  --focus: #1f4e5a;
+  --status-filed-fg: #3f4120;
+  --status-filed-bg: #e7e8d5;
+  --status-review-fg: #5e400b;
+  --status-review-bg: #f6e7c4;
+  --status-processing-fg: #1f4e5a;
+  --status-unreadable-fg: #7e3522;
+  --status-unreadable-bg: #f4ddd3;
+  --confidence-high: #4e5027;
+  --confidence-mid: #7a4f0e;
+  --confidence-low: #8e2a2a;
+  --confidence-track: #e2d6c3;
+  --shadow-1: 0 1px 0 rgba(43,34,28,0.05), 0 1px 3px rgba(43,34,28,0.08);
+  --shadow-2: 0 2px 4px rgba(43,34,28,0.06), 0 10px 24px -8px rgba(43,34,28,0.22);
+  --shadow-3: 0 4px 8px rgba(43,34,28,0.06), 0 24px 56px -16px rgba(43,34,28,0.38);
+  /* App extensions: not in the design system yet; propose upstream. */
+  --scrim: rgba(26, 21, 18, 0.48); /* Backdrop behind dialogs. */
+  --chart-auto: #1f4e5a; /* Chart series 1: filed by Mona. */
+  --chart-review: #d9a441; /* Chart series 2: reviewed by a person (differs from series 1 in lightness). */
+  --chart-grid: #e2d6c3; /* Chart gridlines. */
+  --diff-add-bg: #e7e8d5; /* PathDiff: added segment ground (text: success). */
+  --diff-del-bg: #f4dcd8; /* PathDiff: removed segment ground (text: danger). */
+  --highlight: rgba(217, 164, 65, 0.28); /* Evidence highlight fill over a document page. */
+  --highlight-edge: #7a4f0e; /* Evidence highlight outline and number badge. */
+  --paper: #ffffff; /* A document page (stays light in dark mode, like paper). */
+  --paper-ink: #2b221c; /* Text drawn on paper. */
+  --paper-muted: #6b5f55; /* Secondary text on paper. */
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1a1512;
+  --surface: #241e1a;
+  --surface-raised: #2e2621;
+  --surface-sunken: #15110e;
+  --border: #3b322b;
+  --border-strong: #85766a;
+  --text: #f3ebdd;
+  --text-muted: #b9ab9b;
+  --text-inverse: #1a1512;
+  --inverse: #f3ebdd;
+  --accent: #e08a6c;
+  --accent-hover: #eba088;
+  --accent-soft: #43261b;
+  --accent-strong: #f2b39d;
+  --on-accent: #1a1512;
+  --info: #8fc1c8;
+  --info-soft: #17323a;
+  --success: #c3c685;
+  --success-soft: #2b2d16;
+  --warning: #e8bc66;
+  --warning-soft: #3b2c0e;
+  --danger: #f2a7a0;
+  --danger-soft: #40191a;
+  --on-danger: #1a1512;
+  --focus: #8fc1c8;
+  --status-filed-fg: #cdd08f;
+  --status-filed-bg: #2b2d16;
+  --status-review-fg: #edc677;
+  --status-review-bg: #3b2c0e;
+  --status-processing-fg: #9ccbd2;
+  --status-unreadable-fg: #f0a48c;
+  --status-unreadable-bg: #43261b;
+  --confidence-high: #c3c685;
+  --confidence-mid: #e8bc66;
+  --confidence-low: #f2a7a0;
+  --confidence-track: #3b322b;
+  --shadow-1: 0 1px 0 rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-2: 0 2px 4px rgba(0,0,0,0.35), 0 10px 24px -8px rgba(0,0,0,0.6);
+  --shadow-3: 0 4px 8px rgba(0,0,0,0.4), 0 24px 56px -16px rgba(0,0,0,0.75);
+  /* App extensions: not in the design system yet; propose upstream. */
+  --scrim: rgba(0, 0, 0, 0.6); /* Backdrop behind dialogs. */
+  --chart-auto: #8fc1c8; /* Chart series 1: filed by Mona. */
+  --chart-review: #b07d22; /* Chart series 2: reviewed by a person (differs from series 1 in lightness). */
+  --chart-grid: #3b322b; /* Chart gridlines. */
+  --diff-add-bg: #2b2d16; /* PathDiff: added segment ground (text: success). */
+  --diff-del-bg: #40191a; /* PathDiff: removed segment ground (text: danger). */
+  --highlight: rgba(232, 188, 102, 0.26); /* Evidence highlight fill over a document page. */
+  --highlight-edge: #e8bc66; /* Evidence highlight outline and number badge. */
+  --paper: #f7f2ea; /* A document page (stays light in dark mode, like paper). */
+  --paper-ink: #2b221c; /* Text drawn on paper. */
+  --paper-muted: #6b5f55; /* Secondary text on paper. */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg: #1a1512;
+    --surface: #241e1a;
+    --surface-raised: #2e2621;
+    --surface-sunken: #15110e;
+    --border: #3b322b;
+    --border-strong: #85766a;
+    --text: #f3ebdd;
+    --text-muted: #b9ab9b;
+    --text-inverse: #1a1512;
+    --inverse: #f3ebdd;
+    --accent: #e08a6c;
+    --accent-hover: #eba088;
+    --accent-soft: #43261b;
+    --accent-strong: #f2b39d;
+    --on-accent: #1a1512;
+    --info: #8fc1c8;
+    --info-soft: #17323a;
+    --success: #c3c685;
+    --success-soft: #2b2d16;
+    --warning: #e8bc66;
+    --warning-soft: #3b2c0e;
+    --danger: #f2a7a0;
+    --danger-soft: #40191a;
+    --on-danger: #1a1512;
+    --focus: #8fc1c8;
+    --status-filed-fg: #cdd08f;
+    --status-filed-bg: #2b2d16;
+    --status-review-fg: #edc677;
+    --status-review-bg: #3b2c0e;
+    --status-processing-fg: #9ccbd2;
+    --status-unreadable-fg: #f0a48c;
+    --status-unreadable-bg: #43261b;
+    --confidence-high: #c3c685;
+    --confidence-mid: #e8bc66;
+    --confidence-low: #f2a7a0;
+    --confidence-track: #3b322b;
+    --shadow-1: 0 1px 0 rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-2: 0 2px 4px rgba(0,0,0,0.35), 0 10px 24px -8px rgba(0,0,0,0.6);
+    --shadow-3: 0 4px 8px rgba(0,0,0,0.4), 0 24px 56px -16px rgba(0,0,0,0.75);
+    /* App extensions: not in the design system yet; propose upstream. */
+    --scrim: rgba(0, 0, 0, 0.6); /* Backdrop behind dialogs. */
+    --chart-auto: #8fc1c8; /* Chart series 1: filed by Mona. */
+    --chart-review: #b07d22; /* Chart series 2: reviewed by a person (differs from series 1 in lightness). */
+    --chart-grid: #3b322b; /* Chart gridlines. */
+    --diff-add-bg: #2b2d16; /* PathDiff: added segment ground (text: success). */
+    --diff-del-bg: #40191a; /* PathDiff: removed segment ground (text: danger). */
+    --highlight: rgba(232, 188, 102, 0.26); /* Evidence highlight fill over a document page. */
+    --highlight-edge: #e8bc66; /* Evidence highlight outline and number badge. */
+    --paper: #f7f2ea; /* A document page (stays light in dark mode, like paper). */
+    --paper-ink: #2b221c; /* Text drawn on paper. */
+    --paper-muted: #6b5f55; /* Secondary text on paper. */
+  }
+}
+
+/* Reduced motion: transitions drop to zero; spinners keep turning, slower (a stopped spinner reads as frozen). */
+@media (prefers-reduced-motion: reduce) {
+  :root { --duration-instant: 0ms; --duration-quick: 0ms; --duration-calm: 0ms; --duration-slow: 0ms; }
+}
