@@ -78,3 +78,41 @@ def seed_load(
         typer.echo(str(e), err=True)
         raise typer.Exit(1) from None
     typer.echo(str(summary))
+
+
+rules_app = typer.Typer(no_args_is_help=True, help="Import and export rules.yaml (C5 §10).")
+app.add_typer(rules_app, name="rules")
+
+
+@rules_app.command("import")
+def rules_import(
+    file: Annotated[Path, typer.Argument(help="A mona.rules/v1 file.")],
+) -> None:
+    """Upsert rules by key in one transaction; rules absent from the file are left alone."""
+    from mona.db import get_sync_engine
+    from mona.seed.files import SeedError
+    from mona.seed.loader import import_rules
+
+    try:
+        with get_sync_engine().begin() as conn:
+            summary = import_rules(conn, file)
+    except SeedError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1) from None
+    typer.echo(str(summary).replace("seed loaded", "rules imported"))
+
+
+@rules_app.command("export")
+def rules_export(
+    output: Annotated[Path | None, typer.Option(help="Write here instead of stdout.")] = None,
+) -> None:
+    """Print (or write) the current rules in the rules.yaml schema."""
+    from mona.db import get_sync_engine
+    from mona.seed.rules_export import dump_rules_yaml, export_rules
+
+    with get_sync_engine().connect() as conn:
+        out = dump_rules_yaml(export_rules(conn))
+    if output:
+        output.write_text(out, encoding="utf-8")
+    else:
+        typer.echo(out, nl=False)

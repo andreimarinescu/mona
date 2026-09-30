@@ -72,3 +72,49 @@ def clean(app_db) -> str:
         for stmt in CLEANUP:
             conn.execute(stmt)
     return app_db
+
+
+@pytest.fixture(scope="module")
+def migrated_engine():
+    """A scratch database at head, private to the test module."""
+    from sqlalchemy import create_engine
+
+    from tests.pg import alembic, scratch_db, sqlalchemy_url_for
+
+    with scratch_db() as db:
+        alembic(db, "upgrade", "head")
+        engine = create_engine(sqlalchemy_url_for(db), pool_size=8)
+        try:
+            yield engine
+        finally:
+            engine.dispose()
+
+
+@pytest.fixture(scope="module")
+def services_seed_template():
+    """A database at head with the synthetic C5 §8.5 seed (both rule tiers) loaded."""
+    from sqlalchemy import create_engine
+
+    from tests.pg import alembic, scratch_db, sqlalchemy_url_for
+    from tests.services_world import load_fixture_seed
+
+    with scratch_db() as db:
+        alembic(db, "upgrade", "head")
+        engine = create_engine(sqlalchemy_url_for(db))
+        load_fixture_seed(engine, sqlalchemy_url_for(db))
+        engine.dispose()
+        yield db
+
+
+@pytest.fixture
+def seeded_engine(services_seed_template):
+    from sqlalchemy import create_engine
+
+    from tests.pg import scratch_db, sqlalchemy_url_for
+
+    with scratch_db(template=services_seed_template) as db:
+        engine = create_engine(sqlalchemy_url_for(db), pool_size=8)
+        try:
+            yield engine
+        finally:
+            engine.dispose()

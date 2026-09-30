@@ -1,4 +1,4 @@
-"""C5 §8.1 template grammar (parser only; rendering is L1's)."""
+"""C5 §8.1 template grammar."""
 
 from dataclasses import dataclass
 from typing import Literal

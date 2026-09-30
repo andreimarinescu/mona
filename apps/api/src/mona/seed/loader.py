@@ -17,8 +17,8 @@ from sqlalchemy.exc import IntegrityError
 from mona.db.models import Base
 from mona.iban import iban_candidates, iban_hash, iban_last4, is_valid_iban
 from mona.ids import new_id
+from mona.rules import store
 from mona.rules.grammar import Registry, RuleBody, unresolved
-from mona.rules.text import Names, render_condition_text
 from mona.seed.files import (
     PracticeFile,
     Problem,
@@ -226,24 +226,6 @@ def _labels(labels: dict[str, str], where: str) -> list[Problem]:
 
 
 # --- registry snapshot and references (invariant 1) ---
-
-
-def _snapshot(conn: Connection) -> Registry:
-    reg = Registry()
-    ent = {r.id: r for r in conn.execute(select(T["entities"]))}
-    reg.entities = {r.key for r in ent.values()}
-    reg.visitors_entity = next(
-        (r.key for r in ent.values() if r.purge_after_hours is not None), None
-    )
-    for r in conn.execute(select(T["sub_units"])):
-        reg.sub_units.setdefault(ent[r.entity_id].key, set()).add(r.key)
-    reg.people = set(conn.execute(select(T["people"].c.key)).scalars())
-    reg.accounts = set(conn.execute(select(T["accounts"].c.key)).scalars())
-    reg.counterparties = set(conn.execute(select(T["counterparties"].c.key)).scalars())
-    reg.categories = set(conn.execute(select(T["categories"].c.id)).scalars())
-    for r in conn.execute(select(T["subcategories"])):
-        reg.subcategories.setdefault(r.category_id, set()).add(r.key)
-    return reg
 
 
 def _merge(reg: Registry, p: PracticeFile) -> Registry:
@@ -534,72 +516,77 @@ def _write_counterparties(conn: Connection, p: PracticeFile, s: Summary) -> None
         raise SeedError(problems)
 
 
-def _names(conn: Connection) -> Names:
-    acc = T["accounts"]
-    return Names(
-        people={r.key: r.display_name for r in conn.execute(select(T["people"]))},
-        entities={r.key: r.display_name for r in conn.execute(select(T["entities"]))},
-        accounts={
-            r.key: f"{r.label} •• {r.iban_last4}"
-            for r in conn.execute(select(acc.c.key, acc.c.label, acc.c.iban_last4))
-        },
-        categories={r.id: r.labels for r in conn.execute(select(T["categories"]))},
-    )
-
-
 def _write_rules(conn: Connection, rules: list[tuple[RuleIn, RuleBody]], s: Summary) -> None:
-    names = _names(conn)
-    t, versions = T["rules"], T["rule_versions"]
+    names = store.names(conn)
     for r, body in rules:
-        conditions = [c.model_dump() for c in body.conditions]
-        action = body.action.model_dump()
-        priority = r.priority if r.priority is not None else 10 * len(conditions)
-        text = render_condition_text(body.conditions, names)
-        row = conn.execute(select(t).where(t.c.key == r.key)).mappings().first()
-        core = {"conditions": conditions, "action": action, "priority": priority}
-        if row is None:
-            rid = new_id("rul")
-            conn.execute(
-                insert(t).values(
-                    id=rid,
-                    key=r.key,
-                    name=r.name,
-                    state=r.state,
-                    source=r.source,
-                    condition_text=text,
-                    **core,
-                )
-            )
-            conn.execute(
-                insert(versions).values(rule_id=rid, version=1, condition_text=text, **core)
-            )
+        _, outcome = store.save_rule(
+            conn,
+            key=r.key,
+            name=r.name,
+            state=r.state,
+            source=r.source,
+            body=body,
+            priority=r.priority,
+            names=names,
+        )
+        if outcome == "inserted":
             s.inserted["rules"] += 1
-            continue
-        changed: dict[str, Any] = {
-            k: v
-            for k, v in {
-                "name": r.name,
-                "state": r.state,
-                "source": r.source,
-                "condition_text": text,
-                **core,
-            }.items()
-            if row[k] != v
-        }
-        if not changed:
-            continue
-        if any(k in changed for k in core):
-            changed |= {"version": row["version"] + 1, "corrections_since": 0}
-            conn.execute(
-                insert(versions).values(
-                    rule_id=row["id"], version=changed["version"], condition_text=text, **core
-                )
-            )
-        conn.execute(update(t).where(t.c.id == row["id"]).values(updated_at=func.now(), **changed))
-        s.updated["rules"] += 1
+        elif outcome == "updated":
+            s.updated["rules"] += 1
 
 
-# --- entry point ---
+# --- entry points ---
+
+
+def _check_rules(
+    files: list[tuple[str, RulesFile]], registry: Registry, problems: list[Problem]
+) -> list[tuple[RuleIn, RuleBody]]:
+    """Invariants 1 and 6 for rules files: keys, grammar, references."""
+    rules: list[tuple[RuleIn, RuleBody]] = []
+    problems += _duplicates([r.key for _, f in files for r in f.rules], "rules")
+    for name, f in files:
+        for r in f.rules:
+            where = f"{name}.rules[{r.key}]"
+            if not KEY.match(r.key):
+                problems.append(Problem(1, where, "key must match ^[a-z][a-z0-9-]{1,39}$"))
+            try:
+                body = RuleBody.model_validate({"conditions": r.conditions, "action": r.action})
+            except ValidationError as e:
+                problems += [
+                    Problem(
+                        6,
+                        where + (f".{'.'.join(map(str, err['loc']))}" if err["loc"] else ""),
+                        err["msg"],
+                    )
+                    for err in e.errors(include_input=False, include_url=False)
+                ]
+                continue
+            rules.append((r, body))
+    for r, body in rules:
+        for msg in unresolved(body, registry):
+            where, _, what = msg.partition(": ")
+            problems.append(Problem(1 if "unknown" in what else 6, f"rules[{r.key}].{where}", what))
+    return rules
+
+
+def import_rules(conn: Connection, path: Path) -> Summary:
+    """`mona rules import` (C5 §10): upsert one rules.yaml by key against the DB registry."""
+    problems: list[Problem] = []
+    raw = _read_yaml(path, path.name, problems)
+    if problems:
+        raise SeedError(problems)
+    problems += _iban_literals(raw, path.name)
+    parsed = _parse(RulesFile, raw, path.name, problems)
+    if parsed is None:
+        raise SeedError(problems)
+    rules = _check_rules([(path.name, parsed)], store.registry(conn), problems)
+    if problems:
+        raise SeedError(problems)
+    summary = Summary()
+    with conn.begin_nested():
+        _write_rules(conn, rules, summary)
+    log.info("%s", summary)
+    return summary
 
 
 def read_overlay(path: Path | None, problems: list[Problem]) -> dict[str, Any] | None:
@@ -663,34 +650,9 @@ def load_seed(
                 Problem(3, f"accounts[{a.key}].iban", "the overlay value is not a valid IBAN")
             )
 
-    rules: list[tuple[RuleIn, RuleBody]] = []
-    all_keys = [r.key for _, f in files for r in f.rules]
-    problems += _duplicates(all_keys, "rules")
-    for name, f in files:
-        for r in f.rules:
-            where = f"{name}.rules[{r.key}]"
-            if not KEY.match(r.key):
-                problems.append(Problem(1, where, "key must match ^[a-z][a-z0-9-]{1,39}$"))
-            try:
-                body = RuleBody.model_validate({"conditions": r.conditions, "action": r.action})
-            except ValidationError as e:
-                problems += [
-                    Problem(
-                        6,
-                        where + (f".{'.'.join(map(str, err['loc']))}" if err["loc"] else ""),
-                        err["msg"],
-                    )
-                    for err in e.errors(include_input=False, include_url=False)
-                ]
-                continue
-            rules.append((r, body))
-
-    registry = _merge(_snapshot(conn), practice)
+    registry = _merge(store.registry(conn), practice)
     problems += _practice_refs(practice, registry)
-    for r, body in rules:
-        for msg in unresolved(body, registry):
-            where, _, what = msg.partition(": ")
-            problems.append(Problem(1 if "unknown" in what else 6, f"rules[{r.key}].{where}", what))
+    rules = _check_rules(files, registry, problems)  # type: ignore[arg-type]
     if problems:
         raise SeedError(problems)
 

@@ -24,6 +24,7 @@ mona = "mona.cli:app"
 
 [dependency-groups]
 dev = [
+    "hypothesis==6.168.3",
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "ruff==0.16.9",
