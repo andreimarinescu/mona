@@ -8,7 +8,7 @@ const ConversationThread = lazy(() => import('../chat/ConversationThread').then(
 
 export function ChatPanel() {
   const { t } = useTranslation();
-  const { chat, closeChat, setConversationId } = useAppState();
+  const { chat, closeChat, setConversationId, clearOutbox } = useAppState();
   const context = usePageContext();
   const latest = useRef(context);
   useEffect(() => {
@@ -47,6 +47,8 @@ export function ChatPanel() {
             pageContext={() => latest.current}
             onConversationId={setConversationId}
             autoFocus
+            outbox={chat.outbox}
+            onOutboxSent={clearOutbox}
           />
         </Suspense>
       </div>

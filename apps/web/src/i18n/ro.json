@@ -64,14 +64,48 @@
       "title": "Pagina nu a fost găsită",
       "body": "Nu există nimic la această adresă.",
       "home": "Înapoi acasă"
-    }
+    },
+    "invalid_request": "Ceva din cerere nu este valid.",
+    "unauthenticated": "Deblocați Mona pentru a continua.",
+    "invalid_password": "Parola nu este corectă.",
+    "csrf_failed": "Pagina nu mai este actuală. Reîncărcați-o și încercați din nou.",
+    "not_allowed": "Această acțiune nu este posibilă aici.",
+    "not_found": "Nu îl mai găsesc.",
+    "not_ready": "Nu este gata încă.",
+    "stale": "Documentul s-a modificat între timp. Reîncărcați și încercați din nou.",
+    "conflict": "Acțiunea intră în conflict cu o altă modificare. Încercați din nou.",
+    "turn_in_progress": "Mona încă răspunde. Așteptați răspunsul.",
+    "already_answered": "Această întrebare are deja un răspuns.",
+    "already_undone": "Această modificare a fost deja anulată.",
+    "superseded": "Documentul a fost mutat între timp, așa că nu se poate anula.",
+    "in_use": "Este încă folosit, așa că nu poate fi șters.",
+    "too_large": "Este prea mare. Fișierele pot avea cel mult 25 MB.",
+    "unsupported_media_type": "Acest tip de cerere nu este acceptat.",
+    "invalid_template": "Șablonul are o greșeală la caracterul {{offset}}.",
+    "invalid_rule": "Regula nu este validă: {{message}}",
+    "invalid_value": "Verificați această valoare.",
+    "not_undoable": "Această modificare nu poate fi anulată.",
+    "not_renderable": "Alegeți mai întâi o entitate, ca să știu unde să-l arhivez.",
+    "locked": "Mona este blocată. Deblocați pentru a continua.",
+    "too_many_attempts": "Prea multe încercări. Încercați din nou peste un minut.",
+    "internal": "Ceva nu a funcționat. Încercați din nou.",
+    "unavailable": "Mona nu își poate accesa baza de date acum."
   },
   "toast": {
     "filed_one": "{{n}} document arhivat",
     "filed_few": "{{n}} documente arhivate",
     "filed_other": "{{n}} de documente arhivate",
     "undo": "Anulați",
-    "failed": "Ceva nu a mers"
+    "failed": "Ceva nu a mers",
+    "undone_one": "Am anulat {{n}} modificare",
+    "undone_few": "Am anulat {{n}} modificări",
+    "undone_other": "Am anulat {{n}} de modificări",
+    "redone_one": "Am refăcut {{n}} modificare",
+    "redone_few": "Am refăcut {{n}} modificări",
+    "redone_other": "Am refăcut {{n}} de modificări",
+    "undoSkipped_one": "{{n}} modificare nu a putut fi anulată: documentul a fost mutat între timp.",
+    "undoSkipped_few": "{{n}} modificări nu au putut fi anulate: documentele au fost mutate între timp.",
+    "undoSkipped_other": "{{n}} de modificări nu au putut fi anulate: documentele au fost mutate între timp."
   },
   "dev": {
     "ds": {
@@ -184,6 +218,352 @@
         "running": "Lucrează…",
         "done": "Gata"
       }
+    },
+    "banner": {
+      "debrief": "Să trecem prin întrebările despre acest lot."
+    }
+  },
+  "common": {
+    "undo": "Anulați",
+    "redo": "Refaceți",
+    "retry": "Încercați din nou",
+    "filed": "Arhivat"
+  },
+  "intake": {
+    "subtitle": "Trageți orice: PDF-uri, fotografii, scanări. Le citesc aici, pe acest calculator, și arhivez ce știu sigur.",
+    "drop": {
+      "region": "Adăugați documente",
+      "title": "Trageți documentele aici",
+      "over": "Dați drumul ca să le adăugați",
+      "hint": "PDF, JPG sau PNG, până la {{size}} fiecare, cel mult {{n}} odată",
+      "choose": "Alegeți fișiere…"
+    },
+    "visitor": {
+      "label": "Document al unui vizitator",
+      "hint": "O factură sau o scrisoare primită de la cineva. Se arhivează la Vizitatori și se șterge după 24 de ore."
+    },
+    "uploading": "Se adaugă fișierele…",
+    "overLimit_one": "{{n}} fișier nu a fost adăugat: cel mult 25 MB fiecare, 50 odată.",
+    "overLimit_few": "{{n}} fișiere nu au fost adăugate: cel mult 25 MB fiecare, 50 odată.",
+    "overLimit_other": "{{n}} de fișiere nu au fost adăugate: cel mult 25 MB fiecare, 50 odată.",
+    "banner": {
+      "questions_one": "Mona are o întrebare despre acest lot",
+      "questions_few": "Mona are {{count}} întrebări despre acest lot",
+      "questions_other": "Mona are {{count}} de întrebări despre acest lot",
+      "answer": "Răspundeți acum",
+      "hint": "Durează cam un minut, iar următorul lot îl voi arhiva mai bine."
+    },
+    "step": "Pasul {{n}} din {{total}}: {{step}}",
+    "steps": {
+      "queued": "În așteptare",
+      "reading": "Citire",
+      "ocr": "OCR",
+      "classifying": "Clasificare",
+      "result": "Rezultat"
+    },
+    "outcome": {
+      "rejected": "Neadăugat",
+      "duplicate": "Deja primit",
+      "failed": "De verificat"
+    },
+    "reject": {
+      "unsupported_type": "Pot citi doar fișiere PDF, JPG și PNG.",
+      "too_large": "Prea mare: cel mult 25 MB.",
+      "empty": "Fișierul este gol.",
+      "unreadable_file": "Fișierul nu se deschide. Trimiteți-l din nou sau faceți o fotografie mai clară."
+    },
+    "duplicateDeleted": "Ați șters acest document mai devreme.",
+    "duplicateOf": "La fel ca „{{title}}”",
+    "restore": "Restaurați",
+    "working": "În lucru",
+    "batch": {
+      "title_one": "Lot de {{n}}",
+      "title_few": "Lot de {{n}}",
+      "title_other": "Lot de {{n}}",
+      "started": "Început la {{time}}",
+      "timeLeft_one": "cam {{n}} minut rămas",
+      "timeLeft_few": "cam {{n}} minute rămase",
+      "timeLeft_other": "cam {{n}} de minute rămase",
+      "done": "{{done}} din {{total}} terminate",
+      "region": "Lotul curent"
+    },
+    "counts": {
+      "filed": "Arhivate",
+      "review": "De verificat",
+      "unreadable": "Ilizibile",
+      "processing": "În lucru"
+    },
+    "summary": "{{filed}} arhivate, {{needYou}} de verificat, {{unreadable}} ilizibile, {{alreadyHad}} deja primite",
+    "table": {
+      "caption": "Fișierele din acest lot și stadiul fiecăruia",
+      "file": "Fișier",
+      "steps": "Progres",
+      "status": "Stare",
+      "where": "Unde sau de ce"
+    },
+    "empty": "Nu a sosit nimic încă. Trageți un document mai sus ca să începeți."
+  },
+  "activity": {
+    "subtitle": "Tot ce ați modificat dumneavoastră și Mona, cele mai noi primele. Orice modificare poate fi anulată.",
+    "filters": {
+      "label": "Filtrați jurnalul de activitate",
+      "actor": "Cine a făcut modificarea",
+      "all": "Toți",
+      "mona": "De Mona",
+      "user": "De dumneavoastră",
+      "entity": "Entitate",
+      "kind": "Tipul modificării",
+      "allKinds": "Toate modificările",
+      "search": "Căutați în jurnal"
+    },
+    "kind": {
+      "intake_batch": "Loturi primite",
+      "rule_apply": "Reguli aplicate",
+      "correction": "Corecturi",
+      "file": "Arhivări",
+      "move": "Mutări",
+      "rename": "Redenumiri",
+      "unfile": "Trimise la verificare",
+      "delete": "Ștergeri",
+      "undo": "Anulări",
+      "redo": "Refaceri",
+      "doc": {
+        "update": "Câmpuri modificate"
+      },
+      "rule": {
+        "create": "Reguli create",
+        "change": "Reguli modificate"
+      },
+      "deadline": {
+        "add": "Termene adăugate"
+      },
+      "reminder": {
+        "add": "Memento-uri programate"
+      },
+      "mark": {
+        "unreadable": "Marcate ilizibile"
+      }
+    },
+    "action": {
+      "file_mona": "Mona a arhivat {{doc}}",
+      "file_user": "Ați arhivat {{doc}}",
+      "move_mona": "Mona a mutat {{doc}}",
+      "move_user": "Ați mutat {{doc}}",
+      "rename_mona": "Mona a redenumit {{doc}}",
+      "rename_user": "Ați redenumit {{doc}}",
+      "unfile_mona": "Mona a trimis {{doc}} la verificare",
+      "unfile_user": "Ați trimis {{doc}} la verificare",
+      "delete_mona": "Mona a șters {{doc}}",
+      "delete_user": "Ați șters {{doc}}",
+      "undo_mona": "Mona a anulat o modificare la {{doc}}",
+      "undo_user": "Ați anulat o modificare la {{doc}}",
+      "redo_mona": "Mona a refăcut o modificare la {{doc}}",
+      "redo_user": "Ați refăcut o modificare la {{doc}}",
+      "doc": {
+        "update_mona": "Mona a actualizat datele pentru {{doc}}",
+        "update_user": "Ați actualizat datele pentru {{doc}}"
+      },
+      "rule": {
+        "create_mona": "Mona a creat regula „{{rule}}”",
+        "create_user": "Ați creat regula „{{rule}}”",
+        "change_mona": "Mona a modificat regula „{{rule}}”",
+        "change_user": "Ați modificat regula „{{rule}}”"
+      },
+      "deadline": {
+        "add_mona": "Mona a adăugat un termen",
+        "add_user": "Ați adăugat un termen"
+      },
+      "reminder": {
+        "add_mona": "Mona a programat un memento",
+        "add_user": "Ați programat un memento"
+      },
+      "mark": {
+        "unreadable_mona": "Mona a marcat {{doc}} ca ilizibil",
+        "unreadable_user": "Ați marcat {{doc}} ca ilizibil"
+      }
+    },
+    "group": {
+      "intake_batch_mona": "Mona a procesat un lot primit",
+      "intake_batch_user": "Mona a procesat un lot primit",
+      "rule_apply_mona": "Mona a aplicat regula „{{rule}}”",
+      "rule_apply_user": "Ați aplicat regula „{{rule}}”",
+      "correction_mona": "Mona a corectat un document",
+      "correction_user": "Ați corectat un document",
+      "undo_mona": "Mona a anulat un grup de modificări",
+      "undo_user": "Ați anulat un grup de modificări",
+      "redo_mona": "Mona a refăcut un grup de modificări",
+      "redo_user": "Ați refăcut un grup de modificări",
+      "refile_mona": "Mona a arhivat din nou documente",
+      "refile_user": "Ați arhivat din nou documente"
+    },
+    "undoState": {
+      "undoable": "Poate fi anulat",
+      "undone": "Anulat",
+      "superseded": "Mutat între timp",
+      "not_undoable": "Nu poate fi anulat"
+    },
+    "undoneAt": "Anulat la {{time}}",
+    "undoWholeBatch": "Anulați tot lotul",
+    "undoAll": "Anulați tot",
+    "changesCount_one": "{{n}} modificare",
+    "changesCount_few": "{{n}} modificări",
+    "changesCount_other": "{{n}} de modificări",
+    "undoneCount_one": "{{n}} anulată",
+    "undoneCount_few": "{{n}} anulate",
+    "undoneCount_other": "{{n}} anulate",
+    "supersededCount_one": "{{n}} mutată între timp",
+    "supersededCount_few": "{{n}} mutate între timp",
+    "supersededCount_other": "{{n}} mutate între timp",
+    "showMore_one": "Afișați încă {{n}} din acest lot",
+    "showMore_few": "Afișați încă {{n}} din acest lot",
+    "showMore_other": "Afișați încă {{n}} din acest lot",
+    "expand": "Afișați modificările din acest grup",
+    "collapse": "Ascundeți modificările din acest grup",
+    "empty": {
+      "title": "Nimic aici deocamdată",
+      "body": "Modificările făcute de Mona și de dumneavoastră vor apărea aici, fiecare cu butonul Anulați."
+    },
+    "loadFailed": "Nu am putut încărca jurnalul.",
+    "loadMore": "Afișați modificările mai vechi",
+    "day": {
+      "today": "Azi · {{date}}",
+      "yesterday": "Ieri · {{date}}"
+    },
+    "journalNumber": "Jurnal nr. {{id}}",
+    "place": {
+      "trash": "Coș",
+      "review": "De verificat",
+      "inbox": "Intrări"
+    },
+    "unknownDocument": "un document",
+    "deletedDocument": "{{title}} (șters)",
+    "unknownRule": "o regulă",
+    "you": "Dumneavoastră",
+    "timeline": {
+      "empty": "Nicio modificare deocamdată.",
+      "label": "Istoricul acestui document"
+    }
+  },
+  "review": {
+    "filter": {
+      "label": "Filtrați după motiv",
+      "all": "Toate · {{n}}"
+    },
+    "list": {
+      "label": "Documente de verificat",
+      "select": "Selectați {{title}}",
+      "selectAll": "Selectați tot",
+      "selected_one": "{{n}} selectat",
+      "selected_few": "{{n}} selectate",
+      "selected_other": "{{n}} selectate",
+      "approve_one": "Aprobați {{n}} selectat",
+      "approve_few": "Aprobați {{n}} selectate",
+      "approve_other": "Aprobați {{n}} selectate",
+      "corrected": "Corectat de dumneavoastră",
+      "arrived": "Sosit {{when}} · {{source}}"
+    },
+    "source": {
+      "drop": "adăugat",
+      "telegram": "Telegram"
+    },
+    "subtitle_one": "{{n}} document · cel mai vechi a sosit {{when}}",
+    "subtitle_few": "{{n}} documente · cel mai vechi a sosit {{when}}",
+    "subtitle_other": "{{n}} de documente · cel mai vechi a sosit {{when}}",
+    "subtitleEmpty": "Nimic nu așteaptă confirmarea dumneavoastră acum.",
+    "empty": {
+      "title": "Totul este arhivat",
+      "body": "Când un document are nevoie de atenția dumneavoastră, va aștepta aici."
+    },
+    "detail": {
+      "back": "De verificat",
+      "pages_one": "{{n}} pagină",
+      "pages_few": "{{n}} pagini",
+      "pages_other": "{{n}} de pagini",
+      "position": "{{index}} din {{total}}",
+      "prev": "Documentul anterior",
+      "next": "Documentul următor",
+      "filed": "Acest document este arhivat.",
+      "open": "Deschideți",
+      "newFileName": "Numele nou al fișierului",
+      "willBeFiled": "Va fi arhivat în {{path}}",
+      "updatesOnSave": "Numele fișierului și dosarul se actualizează la salvare.",
+      "correct": "Corectați și arhivați",
+      "confirm": "Confirmați",
+      "skip": "Săriți peste",
+      "markUnreadable": "Marcați ca ilizibil",
+      "keys": "Enter confirmă · J / K pentru a trece între documente",
+      "history": "Istoricul acestui document"
+    },
+    "thumbnail": {
+      "alt": "Prima pagină din {{title}}",
+      "none": "Previzualizarea nu este gata încă."
+    },
+    "suggestion": {
+      "region": "Sugestia Monei",
+      "eyebrow": "Sugestia Monei",
+      "evidence": "Fragmente din document",
+      "page": "pagina {{n}}",
+      "unverified": "negăsit în pagină"
+    },
+    "field": {
+      "entity": "Entitate",
+      "counterparty": "Emitent",
+      "issuer": "Emitent",
+      "reference": "Referință",
+      "doc_type": "Tipul documentului",
+      "doc_date": "Data",
+      "period_start": "Început de perioadă",
+      "period_end": "Sfârșit de perioadă",
+      "amount": "Sumă",
+      "due_date": "Scadență",
+      "addressee": "Destinatar"
+    },
+    "picker": {
+      "entity": "Entitate",
+      "chooseEntity": "Alegeți o entitate",
+      "category": "Categorie",
+      "chooseCategory": "Alegeți o categorie",
+      "subcategory": "Subcategorie",
+      "noSubcategory": "Niciuna",
+      "changed": "Schimbat de dumneavoastră la {{entity}}."
+    },
+    "scopePrompt": {
+      "voice": "Am notat. Să tratez la fel și celelalte documente de acest tip?",
+      "legend": "Aplicați corecția la",
+      "justThisOne": "Doar acesta",
+      "justThisOneHint": "Se mută doar acest document. Fără regulă.",
+      "everyDocument": "Toate documentele de acest tip",
+      "everyDocumentHint": "Arhivez la fel documentele de acest tip, cele existente și cele viitoare.",
+      "pastFuture": "existente + viitoare",
+      "done": "Gata",
+      "noCounterparty": "Acest document nu are emitent, așa că nu pot scrie o regulă."
+    },
+    "toast": {
+      "moved": "„{{title}}” mutat la {{entity}}",
+      "ruleApplied_one": "Regulă aplicată: {{n}} document mutat",
+      "ruleApplied_few": "Regulă aplicată: {{n}} documente mutate",
+      "ruleApplied_other": "Regulă aplicată: {{n}} de documente mutate"
+    }
+  },
+  "rules": {
+    "preview": {
+      "becomes": "devine",
+      "eyebrow": "Previzualizarea regulii",
+      "apply": "Aplicați",
+      "adjust": "Ajustați",
+      "applied_one": "Aplicată: {{n}} document mutat",
+      "applied_few": "Aplicată: {{n}} documente mutate",
+      "applied_other": "Aplicată: {{n}} de documente mutate",
+      "counts": "{{moves}} de mutat · {{stays}} rămân pe loc",
+      "noMoves": "Niciun alt document de mutat. Regula se va aplica celor viitoare.",
+      "more_one": "și încă {{n}}",
+      "more_few": "și încă {{n}}",
+      "more_other": "și încă {{n}}"
+    },
+    "source": {
+      "interview": "Din întrebări",
+      "correction": "Din corecții",
+      "seed": "Predefinită"
     }
   }
 }

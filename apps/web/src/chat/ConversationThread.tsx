@@ -8,11 +8,12 @@ import {
 import { useAISDKRuntime } from '@assistant-ui/react-ai-sdk';
 import { Banner, Spinner } from '@mona/ui';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DeadlineCard, DocCard, InterviewCard, MonaText, ThinkingBlock, ToolActivityChip, UserText } from './parts';
 import { monaTransport } from './transport';
 import type { MonaUIMessage, PageContext } from './types';
+import type { ChatOutbox } from '../state/context';
 
 function UserMessage() {
   return (
@@ -43,9 +44,11 @@ export interface ThreadProps {
   pageContext: () => PageContext;
   onConversationId?: (id: string) => void;
   autoFocus?: boolean;
+  outbox?: ChatOutbox | null;
+  onOutboxSent?: (id: number) => void;
 }
 
-function Thread({ conversationId, initial, pageContext, onConversationId, autoFocus }: ThreadProps) {
+function Thread({ conversationId, initial, pageContext, onConversationId, autoFocus, outbox, onOutboxSent }: ThreadProps) {
   const { t, i18n } = useTranslation();
   const [mona] = useState(() =>
     monaTransport({
@@ -66,6 +69,18 @@ function Thread({ conversationId, initial, pageContext, onConversationId, autoFo
       }
     },
   });
+  const sent = useRef(0);
+  const { sendMessage } = chat;
+  useEffect(() => {
+    if (!outbox || sent.current === outbox.id) return;
+    const timer = setTimeout(() => {
+      sent.current = outbox.id;
+      mona.overrideNext(outbox.pageContext);
+      void sendMessage({ text: outbox.message });
+      onOutboxSent?.(outbox.id);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [outbox, sendMessage, onOutboxSent, mona]);
   const runtime = useAISDKRuntime(chat);
   const error = chat.error?.message;
   return (
@@ -101,9 +116,11 @@ export interface ConversationThreadProps {
   pageContext: () => PageContext;
   onConversationId?: (id: string) => void;
   autoFocus?: boolean;
+  outbox?: ChatOutbox | null;
+  onOutboxSent?: (id: number) => void;
 }
 
-export function ConversationThread({ conversationId: initialId, pageContext, onConversationId, autoFocus }: ConversationThreadProps) {
+export function ConversationThread({ conversationId: initialId, pageContext, onConversationId, autoFocus, outbox, onOutboxSent }: ConversationThreadProps) {
   const { t } = useTranslation();
   const [conversationId] = useState(initialId);
   const transcript = useQuery({
@@ -125,6 +142,8 @@ export function ConversationThread({ conversationId: initialId, pageContext, onC
       pageContext={pageContext}
       onConversationId={onConversationId}
       autoFocus={autoFocus}
+      outbox={outbox}
+      onOutboxSent={onOutboxSent}
     />
   );
 }

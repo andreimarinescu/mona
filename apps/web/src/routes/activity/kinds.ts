@@ -1,0 +1,18 @@
+export const KINDS = [
+  'intake_batch',
+  'rule_apply',
+  'correction',
+  'file',
+  'move',
+  'rename',
+  'unfile',
+  'delete',
+  'undo',
+  'redo',
+  'doc.update',
+  'rule.create',
+  'rule.change',
+  'deadline.add',
+  'reminder.add',
+  'mark.unreadable',
+] as const;

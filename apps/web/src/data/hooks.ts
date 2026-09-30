@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useProviders } from './context';
+import { SHELL_POLL_MS, pollStopsOn } from './polling';
 
 export function useEntities() {
   const p = useProviders();
@@ -13,7 +14,11 @@ export function useSettings() {
 
 export function useShellCounts() {
   const p = useProviders();
-  return useQuery({ queryKey: ['shell-counts'], queryFn: () => p.shellCounts() });
+  return useQuery({
+    queryKey: ['shell-counts'],
+    queryFn: () => p.shellCounts(),
+    refetchInterval: (query) => (pollStopsOn(query.state.error) ? false : SHELL_POLL_MS),
+  });
 }
 
 export function useHealth() {

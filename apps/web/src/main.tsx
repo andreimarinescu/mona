@@ -10,10 +10,18 @@ import { createRoot } from 'react-dom/client';
 import { AppProviders } from './AppProviders';
 import { router } from './router';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AppProviders>
-      <RouterProvider router={router} />
-    </AppProviders>
-  </StrictMode>,
-);
+async function start() {
+  if (import.meta.env.DEV && globalThis.localStorage?.getItem('mona.msw') === '1') {
+    const { startMockApi } = await import('./mocks/browser');
+    await startMockApi();
+  }
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>
+    </StrictMode>,
+  );
+}
+
+void start();

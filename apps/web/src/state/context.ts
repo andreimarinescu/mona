@@ -1,6 +1,13 @@
 import { createContext, useContext } from 'react';
+import type { PageContext } from '../chat/types';
 
 export type EntityScope = 'all' | (string & {});
+
+export interface ChatOutbox {
+  id: number;
+  message: string;
+  pageContext: PageContext;
+}
 
 export interface ChatState {
   open: boolean;
@@ -8,13 +15,16 @@ export interface ChatState {
   /** Bumped when a different conversation is opened, so the thread remounts. */
   generation: number;
   everOpened: boolean;
+  /** A message the app sends on the person's behalf once the thread is mounted (the batch banner). */
+  outbox: ChatOutbox | null;
 }
 
 export interface AppState {
   scope: EntityScope;
   setScope(scope: EntityScope): void;
   chat: ChatState;
-  openChat(opts?: { opener?: HTMLElement | null; conversationId?: string }): void;
+  openChat(opts?: { opener?: HTMLElement | null; conversationId?: string; send?: { message: string; pageContext: PageContext } }): void;
+  clearOutbox(id: number): void;
   closeChat(): void;
   setConversationId(id: string): void;
   registerAskButton(el: HTMLElement | null): void;

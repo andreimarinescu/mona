@@ -3,8 +3,18 @@ import { expect, test, type Page } from '@playwright/test';
 
 const health = { status: 'ok', db: 'ok', version: '0.1.0' };
 
+const shell = { reviewCount: 6, processingCount: 0, queue: { llm: 0, cpu: 0 }, mona: 'online' };
+
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/health', (route) => route.fulfill({ json: health }));
+  await page.route('**/api/shell', (route) => route.fulfill({ json: shell }));
+  const empty = { items: [], total: 0, offset: 0, limit: 50 };
+  await page.route('**/api/review?**', (route) => route.fulfill({ json: empty }));
+  await page.route('**/api/batches?**', (route) => route.fulfill({ json: empty }));
+  await page.route('**/api/activity?**', (route) => route.fulfill({ json: { items: [], nextCursor: null, documents: {}, rules: {} } }));
+  await page.route('**/api/entities', (route) => route.fulfill({ json: { items: [], documentCounts: {}, visitorsEntityId: null } }));
+  await page.route('**/api/categories', (route) => route.fulfill({ json: { items: [] } }));
+  await page.route('**/api/settings', (route) => route.fulfill({ json: { confidenceHigh: 85, confidenceLow: 60, badgeHours: 24 } }));
 });
 
 function watchConsole(page: Page): string[] {
@@ -32,7 +42,6 @@ const NAV: [string, string, string][] = [
 
 const PARAM_ROUTES: [string, string, string?][] = [
   ['/chat/cnv_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Chat', 'cnv_01j9zq3k8e6y4v2m7c5r1t0b9a'],
-  ['/review/doc_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Review queue', 'doc_01j9zq3k8e6y4v2m7c5r1t0b9a'],
   ['/archive/folders/Cabinet%20Marchand/2026', 'Archive'],
   ['/documents/doc_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Document', 'doc_01j9zq3k8e6y4v2m7c5r1t0b9a'],
   ['/rules/rul_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Rules', 'rul_01j9zq3k8e6y4v2m7c5r1t0b9a'],

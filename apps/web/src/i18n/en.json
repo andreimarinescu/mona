@@ -63,13 +63,44 @@
       "title": "Page not found",
       "body": "There is nothing at this address.",
       "home": "Back to Home"
-    }
+    },
+    "invalid_request": "Something in the request wasn't right.",
+    "unauthenticated": "Please unlock Mona to continue.",
+    "invalid_password": "That password isn't right.",
+    "csrf_failed": "This page is out of date. Reload it and try again.",
+    "not_allowed": "That can't be done here.",
+    "not_found": "I can't find it any more.",
+    "not_ready": "It isn't ready yet.",
+    "stale": "The document changed in the meantime. Reload and try again.",
+    "conflict": "That clashed with another change. Try again.",
+    "turn_in_progress": "Mona is still answering. Wait for her reply.",
+    "already_answered": "This question already has an answer.",
+    "already_undone": "This change has already been undone.",
+    "superseded": "The document has moved since, so this can't be undone.",
+    "in_use": "It's still in use, so it can't be deleted.",
+    "too_large": "That's too large. Files can be up to 25 MB.",
+    "unsupported_media_type": "That kind of request isn't supported.",
+    "invalid_template": "The template has a mistake at character {{offset}}.",
+    "invalid_rule": "The rule isn't valid: {{message}}",
+    "invalid_value": "Check this value.",
+    "not_undoable": "This change can't be undone.",
+    "not_renderable": "Choose an entity first, so I know where to file it.",
+    "locked": "Mona is locked. Unlock to continue.",
+    "too_many_attempts": "Too many attempts. Try again in a minute.",
+    "internal": "Something went wrong. Try again.",
+    "unavailable": "Mona can't reach her database right now."
   },
   "toast": {
     "filed_one": "Filed {{n}} document",
     "filed_other": "Filed {{n}} documents",
     "undo": "Undo",
-    "failed": "Something went wrong"
+    "failed": "Something went wrong",
+    "undone_one": "Undid {{n}} change",
+    "undone_other": "Undid {{n}} changes",
+    "redone_one": "Redid {{n}} change",
+    "redone_other": "Redid {{n}} changes",
+    "undoSkipped_one": "{{n}} change couldn't be undone: the document has moved since.",
+    "undoSkipped_other": "{{n}} changes couldn't be undone: the documents have moved since."
   },
   "dev": {
     "ds": {
@@ -182,6 +213,337 @@
         "running": "Working…",
         "done": "Done"
       }
+    },
+    "banner": {
+      "debrief": "Let's go through your questions about this batch."
+    }
+  },
+  "common": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "retry": "Try again",
+    "filed": "Filed"
+  },
+  "intake": {
+    "subtitle": "Drop anything: PDFs, photos, scans. I read them here, on this computer, and file what I'm sure of.",
+    "drop": {
+      "region": "Add documents",
+      "title": "Drop documents here",
+      "over": "Drop to add them",
+      "hint": "PDF, JPG or PNG, up to {{size}} each, up to {{n}} at a time",
+      "choose": "Choose files…"
+    },
+    "visitor": {
+      "label": "Visitor document",
+      "hint": "A bill or letter someone handed you. It's filed under Visitors and deleted after 24 hours."
+    },
+    "uploading": "Adding your files…",
+    "overLimit_one": "{{n}} file wasn't added: files can be up to 25 MB, 50 at a time.",
+    "overLimit_other": "{{n}} files weren't added: files can be up to 25 MB, 50 at a time.",
+    "banner": {
+      "questions_one": "Mona has one question about this batch",
+      "questions_other": "Mona has {{count}} questions about this batch",
+      "answer": "Answer now",
+      "hint": "It takes about a minute, and I file the next batch better for it."
+    },
+    "step": "Step {{n}} of {{total}}: {{step}}",
+    "steps": {
+      "queued": "Queued",
+      "reading": "Reading",
+      "ocr": "OCR",
+      "classifying": "Classifying",
+      "result": "Result"
+    },
+    "outcome": {
+      "rejected": "Not added",
+      "duplicate": "Already had",
+      "failed": "Needs you"
+    },
+    "reject": {
+      "unsupported_type": "Only PDF, JPG and PNG files can be read.",
+      "too_large": "Too large: files can be up to 25 MB.",
+      "empty": "The file is empty.",
+      "unreadable_file": "The file can't be opened. Send it again or take a clearer photo."
+    },
+    "duplicateDeleted": "You deleted this one earlier.",
+    "duplicateOf": "Same as “{{title}}”",
+    "restore": "Restore",
+    "working": "Working on it",
+    "batch": {
+      "title_one": "Batch of {{n}}",
+      "title_other": "Batch of {{n}}",
+      "started": "Started {{time}}",
+      "timeLeft_one": "about {{n}} minute left",
+      "timeLeft_other": "about {{n}} minutes left",
+      "done": "{{done}} of {{total}} done",
+      "region": "Current batch"
+    },
+    "counts": {
+      "filed": "Filed",
+      "review": "Needs review",
+      "unreadable": "Unreadable",
+      "processing": "In progress"
+    },
+    "summary": "{{filed}} filed, {{needYou}} need you, {{unreadable}} unreadable, {{alreadyHad}} already had",
+    "table": {
+      "caption": "Files in this batch and where each one stands",
+      "file": "File",
+      "steps": "Progress",
+      "status": "Status",
+      "where": "Where or why"
+    },
+    "empty": "Nothing has come in yet. Drop a document above to start."
+  },
+  "activity": {
+    "subtitle": "Everything Mona and you changed, newest first. Every change can be undone.",
+    "filters": {
+      "label": "Filter the activity log",
+      "actor": "Who made the change",
+      "all": "All",
+      "mona": "By Mona",
+      "user": "By you",
+      "entity": "Entity",
+      "kind": "Kind of change",
+      "allKinds": "All changes",
+      "search": "Search the journal"
+    },
+    "kind": {
+      "intake_batch": "Intake batches",
+      "rule_apply": "Rules applied",
+      "correction": "Corrections",
+      "file": "Filed",
+      "move": "Moves",
+      "rename": "Renames",
+      "unfile": "Sent back to review",
+      "delete": "Deletions",
+      "undo": "Undos",
+      "redo": "Redos",
+      "doc": {
+        "update": "Field edits"
+      },
+      "rule": {
+        "create": "Rules created",
+        "change": "Rules changed"
+      },
+      "deadline": {
+        "add": "Deadlines added"
+      },
+      "reminder": {
+        "add": "Reminders set"
+      },
+      "mark": {
+        "unreadable": "Marked unreadable"
+      }
+    },
+    "action": {
+      "file_mona": "Mona filed {{doc}}",
+      "file_user": "You filed {{doc}}",
+      "move_mona": "Mona moved {{doc}}",
+      "move_user": "You moved {{doc}}",
+      "rename_mona": "Mona renamed {{doc}}",
+      "rename_user": "You renamed {{doc}}",
+      "unfile_mona": "Mona sent {{doc}} back to review",
+      "unfile_user": "You sent {{doc}} back to review",
+      "delete_mona": "Mona deleted {{doc}}",
+      "delete_user": "You deleted {{doc}}",
+      "undo_mona": "Mona undid a change to {{doc}}",
+      "undo_user": "You undid a change to {{doc}}",
+      "redo_mona": "Mona redid a change to {{doc}}",
+      "redo_user": "You redid a change to {{doc}}",
+      "doc": {
+        "update_mona": "Mona updated the details of {{doc}}",
+        "update_user": "You updated the details of {{doc}}"
+      },
+      "rule": {
+        "create_mona": "Mona created the rule “{{rule}}”",
+        "create_user": "You created the rule “{{rule}}”",
+        "change_mona": "Mona changed the rule “{{rule}}”",
+        "change_user": "You changed the rule “{{rule}}”"
+      },
+      "deadline": {
+        "add_mona": "Mona added a deadline",
+        "add_user": "You added a deadline"
+      },
+      "reminder": {
+        "add_mona": "Mona set a reminder",
+        "add_user": "You set a reminder"
+      },
+      "mark": {
+        "unreadable_mona": "Mona marked {{doc}} as unreadable",
+        "unreadable_user": "You marked {{doc}} as unreadable"
+      }
+    },
+    "group": {
+      "intake_batch_mona": "Mona processed an intake batch",
+      "intake_batch_user": "Mona processed an intake batch",
+      "rule_apply_mona": "Mona applied the rule “{{rule}}”",
+      "rule_apply_user": "You applied the rule “{{rule}}”",
+      "correction_mona": "Mona corrected a document",
+      "correction_user": "You corrected a document",
+      "undo_mona": "Mona undid a group of changes",
+      "undo_user": "You undid a group of changes",
+      "redo_mona": "Mona redid a group of changes",
+      "redo_user": "You redid a group of changes",
+      "refile_mona": "Mona filed documents again",
+      "refile_user": "You filed documents again"
+    },
+    "undoState": {
+      "undoable": "Can be undone",
+      "undone": "Undone",
+      "superseded": "Moved since",
+      "not_undoable": "Can't be undone"
+    },
+    "undoneAt": "Undone at {{time}}",
+    "undoWholeBatch": "Undo whole batch",
+    "undoAll": "Undo all",
+    "changesCount_one": "{{n}} change",
+    "changesCount_other": "{{n}} changes",
+    "undoneCount_one": "{{n}} undone",
+    "undoneCount_other": "{{n}} undone",
+    "supersededCount_one": "{{n}} moved since",
+    "supersededCount_other": "{{n}} moved since",
+    "showMore_one": "Show {{n}} more in this batch",
+    "showMore_other": "Show {{n}} more in this batch",
+    "expand": "Show the changes in this group",
+    "collapse": "Hide the changes in this group",
+    "empty": {
+      "title": "Nothing here yet",
+      "body": "Changes Mona and you make will show up here, each with an Undo."
+    },
+    "loadFailed": "I couldn't load the journal.",
+    "loadMore": "Show older changes",
+    "day": {
+      "today": "Today · {{date}}",
+      "yesterday": "Yesterday · {{date}}"
+    },
+    "journalNumber": "Journal #{{id}}",
+    "place": {
+      "trash": "Trash",
+      "review": "Review queue",
+      "inbox": "Inbox"
+    },
+    "unknownDocument": "a document",
+    "deletedDocument": "{{title}} (deleted)",
+    "unknownRule": "a rule",
+    "you": "You",
+    "timeline": {
+      "empty": "No changes yet.",
+      "label": "History of this document"
+    }
+  },
+  "review": {
+    "filter": {
+      "label": "Filter by reason",
+      "all": "All · {{n}}"
+    },
+    "list": {
+      "label": "Documents to review",
+      "select": "Select {{title}}",
+      "selectAll": "Select all",
+      "selected_one": "{{n}} selected",
+      "selected_other": "{{n}} selected",
+      "approve_one": "Approve {{n}} selected",
+      "approve_other": "Approve {{n}} selected",
+      "corrected": "Corrected by you",
+      "arrived": "Arrived {{when}} · {{source}}"
+    },
+    "source": {
+      "drop": "dropped in",
+      "telegram": "Telegram"
+    },
+    "subtitle_one": "{{n}} document · the oldest arrived {{when}}",
+    "subtitle_other": "{{n}} documents · the oldest arrived {{when}}",
+    "subtitleEmpty": "Nothing needs your eye right now.",
+    "empty": {
+      "title": "All filed",
+      "body": "When something needs your eye, it will wait here."
+    },
+    "detail": {
+      "back": "Review queue",
+      "pages_one": "{{n}} page",
+      "pages_other": "{{n}} pages",
+      "position": "{{index}} of {{total}}",
+      "prev": "Previous document",
+      "next": "Next document",
+      "filed": "This document is filed.",
+      "open": "Open it",
+      "newFileName": "New file name",
+      "willBeFiled": "Will be filed in {{path}}",
+      "updatesOnSave": "The file name and folder update when you save.",
+      "correct": "Correct and file",
+      "confirm": "Confirm",
+      "skip": "Skip",
+      "markUnreadable": "Mark unreadable",
+      "keys": "Enter confirms · J / K to move",
+      "history": "History of this document"
+    },
+    "thumbnail": {
+      "alt": "First page of {{title}}",
+      "none": "The preview isn't ready yet."
+    },
+    "suggestion": {
+      "region": "Mona's suggestion",
+      "eyebrow": "Mona's suggestion",
+      "evidence": "Evidence from the document",
+      "page": "page {{n}}",
+      "unverified": "not found on the page"
+    },
+    "field": {
+      "entity": "Entity",
+      "counterparty": "Counterparty",
+      "issuer": "Issuer",
+      "reference": "Reference",
+      "doc_type": "Document type",
+      "doc_date": "Date",
+      "period_start": "Period start",
+      "period_end": "Period end",
+      "amount": "Amount",
+      "due_date": "Due date",
+      "addressee": "Addressed to"
+    },
+    "picker": {
+      "entity": "Entity",
+      "chooseEntity": "Choose an entity",
+      "category": "Category",
+      "chooseCategory": "Choose a category",
+      "subcategory": "Subcategory",
+      "noSubcategory": "None",
+      "changed": "Changed by you to {{entity}}."
+    },
+    "scopePrompt": {
+      "voice": "Noted. Should I treat other documents like this one the same way?",
+      "legend": "Apply the correction to",
+      "justThisOne": "Just this one",
+      "justThisOneHint": "Only this document moves. No rule.",
+      "everyDocument": "Every document like this",
+      "everyDocumentHint": "I file documents like this the same way, past and future.",
+      "pastFuture": "past + future",
+      "done": "Done",
+      "noCounterparty": "This document has no counterparty, so I can't write a rule for it."
+    },
+    "toast": {
+      "moved": "Moved “{{title}}” to {{entity}}",
+      "ruleApplied_one": "Rule applied: moved {{n}} document",
+      "ruleApplied_other": "Rule applied: moved {{n}} documents"
+    }
+  },
+  "rules": {
+    "preview": {
+      "becomes": "becomes",
+      "eyebrow": "Rule preview",
+      "apply": "Apply",
+      "adjust": "Adjust",
+      "applied_one": "Applied: {{n}} document moved",
+      "applied_other": "Applied: {{n}} documents moved",
+      "counts": "{{moves}} move · {{stays}} stay",
+      "noMoves": "No other documents to move. The rule applies to future ones.",
+      "more_one": "and {{n}} more",
+      "more_other": "and {{n}} more"
+    },
+    "source": {
+      "interview": "From an interview",
+      "correction": "From a correction",
+      "seed": "Built in"
     }
   }
 }

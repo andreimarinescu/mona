@@ -11,6 +11,9 @@ import { SkipLink } from './shell/SkipLink';
 import { NotFound } from './routes/NotFound';
 import { Placeholder } from './routes/Placeholder';
 import { Unlock } from './routes/Unlock';
+import { ActivityPage } from './routes/activity/ActivityPage';
+import { IntakePage } from './routes/intake/IntakePage';
+import { ReviewPage } from './routes/review/ReviewPage';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -28,13 +31,16 @@ const shellRoute = createRoute({ getParentRoute: () => rootRoute, id: 'shell', c
 const page = <const TPath extends string>(path: TPath, title: string) =>
   createRoute({ getParentRoute: () => shellRoute, path, component: () => <Placeholder title={title} /> });
 
+const screen = <const TPath extends string>(path: TPath, component: () => React.JSX.Element) =>
+  createRoute({ getParentRoute: () => shellRoute, path, component });
+
 const shellRoutes = [
   page('/', 'nav.home'),
   page('/chat', 'nav.chat'),
   page('/chat/$conversationId', 'nav.chat'),
-  page('/intake', 'nav.intake'),
-  page('/review', 'nav.review'),
-  page('/review/$documentId', 'nav.review'),
+  screen('/intake', IntakePage),
+  screen('/review', ReviewPage),
+  screen('/review/$documentId', ReviewPage),
   page('/archive', 'nav.archive'),
   page('/archive/folders/$', 'nav.archive'),
   page('/documents/$documentId', 'nav.document'),
@@ -42,7 +48,7 @@ const shellRoutes = [
   page('/rules/$ruleId', 'nav.rules'),
   page('/entities', 'nav.entities'),
   page('/entities/categories/$categoryId', 'nav.entities'),
-  page('/activity', 'nav.activity'),
+  screen('/activity', ActivityPage),
   page('/settings', 'nav.settings'),
 ];
 

@@ -64,14 +64,48 @@
       "title": "Page introuvable",
       "body": "Il n’y a rien à cette adresse.",
       "home": "Retour à l’accueil"
-    }
+    },
+    "invalid_request": "Un élément de la demande n’est pas valide.",
+    "unauthenticated": "Déverrouillez Mona pour continuer.",
+    "invalid_password": "Ce mot de passe n’est pas le bon.",
+    "csrf_failed": "Cette page n’est plus à jour. Rechargez-la et réessayez.",
+    "not_allowed": "Cette action n’est pas possible ici.",
+    "not_found": "Je ne le trouve plus.",
+    "not_ready": "Ce n’est pas encore prêt.",
+    "stale": "Le document a changé entre-temps. Rechargez et réessayez.",
+    "conflict": "Cela entre en conflit avec une autre modification. Réessayez.",
+    "turn_in_progress": "Mona est encore en train de répondre. Attendez sa réponse.",
+    "already_answered": "Cette question a déjà une réponse.",
+    "already_undone": "Cette modification a déjà été annulée.",
+    "superseded": "Le document a été déplacé depuis ; impossible d’annuler.",
+    "in_use": "Il est encore utilisé ; impossible de le supprimer.",
+    "too_large": "C’est trop volumineux. Les fichiers sont limités à 25 Mo.",
+    "unsupported_media_type": "Ce type de demande n’est pas pris en charge.",
+    "invalid_template": "Le modèle comporte une erreur au caractère {{offset}}.",
+    "invalid_rule": "La règle n’est pas valide : {{message}}",
+    "invalid_value": "Vérifiez cette valeur.",
+    "not_undoable": "Cette modification ne peut pas être annulée.",
+    "not_renderable": "Choisissez d’abord une entité, pour que je sache où le classer.",
+    "locked": "Mona est verrouillée. Déverrouillez pour continuer.",
+    "too_many_attempts": "Trop de tentatives. Réessayez dans une minute.",
+    "internal": "Un problème est survenu. Réessayez.",
+    "unavailable": "Mona n’accède pas à sa base de données pour le moment."
   },
   "toast": {
     "filed_one": "{{n}} document classé",
     "filed_many": "{{n}} de documents classés",
     "filed_other": "{{n}} documents classés",
     "undo": "Annuler",
-    "failed": "Un problème est survenu"
+    "failed": "Un problème est survenu",
+    "undone_one": "{{n}} modification annulée",
+    "undone_many": "{{n}} de modifications annulées",
+    "undone_other": "{{n}} modifications annulées",
+    "redone_one": "{{n}} modification rétablie",
+    "redone_many": "{{n}} de modifications rétablies",
+    "redone_other": "{{n}} modifications rétablies",
+    "undoSkipped_one": "{{n}} modification n’a pas pu être annulée : le document a été déplacé depuis.",
+    "undoSkipped_many": "{{n}} de modifications n’ont pas pu être annulées : les documents ont été déplacés depuis.",
+    "undoSkipped_other": "{{n}} modifications n’ont pas pu être annulées : les documents ont été déplacés depuis."
   },
   "dev": {
     "ds": {
@@ -184,6 +218,352 @@
         "running": "En cours…",
         "done": "Terminé"
       }
+    },
+    "banner": {
+      "debrief": "Passons en revue les questions sur ce lot."
+    }
+  },
+  "common": {
+    "undo": "Annuler",
+    "redo": "Rétablir",
+    "retry": "Réessayer",
+    "filed": "Classé"
+  },
+  "intake": {
+    "subtitle": "Déposez ce que vous voulez : PDF, photos, scans. Je les lis ici, sur cet ordinateur, et je classe ce dont je suis sûre.",
+    "drop": {
+      "region": "Ajouter des documents",
+      "title": "Déposez vos documents ici",
+      "over": "Relâchez pour les ajouter",
+      "hint": "PDF, JPG ou PNG, jusqu’à {{size}} chacun, {{n}} à la fois au maximum",
+      "choose": "Choisir des fichiers…"
+    },
+    "visitor": {
+      "label": "Document d’un visiteur",
+      "hint": "Une facture ou un courrier qu’on vous a confié. Il est classé sous Visiteurs et supprimé après 24 heures."
+    },
+    "uploading": "Ajout de vos fichiers…",
+    "overLimit_one": "{{n}} fichier n’a pas été ajouté : 25 Mo au plus, 50 à la fois.",
+    "overLimit_many": "{{n}} de fichiers n’ont pas été ajoutés : 25 Mo au plus, 50 à la fois.",
+    "overLimit_other": "{{n}} fichiers n’ont pas été ajoutés : 25 Mo au plus, 50 à la fois.",
+    "banner": {
+      "questions_one": "Mona a {{count}} question sur ce lot",
+      "questions_many": "Mona a {{count}} de questions sur ce lot",
+      "questions_other": "Mona a {{count}} questions sur ce lot",
+      "answer": "Répondre maintenant",
+      "hint": "Cela prend environ une minute, et je classerai mieux le prochain lot."
+    },
+    "step": "Étape {{n}} sur {{total}} : {{step}}",
+    "steps": {
+      "queued": "En attente",
+      "reading": "Lecture",
+      "ocr": "OCR",
+      "classifying": "Classement",
+      "result": "Résultat"
+    },
+    "outcome": {
+      "rejected": "Non ajouté",
+      "duplicate": "Déjà reçu",
+      "failed": "À vérifier"
+    },
+    "reject": {
+      "unsupported_type": "Seuls les fichiers PDF, JPG et PNG peuvent être lus.",
+      "too_large": "Trop volumineux : 25 Mo au plus.",
+      "empty": "Le fichier est vide.",
+      "unreadable_file": "Le fichier ne s’ouvre pas. Renvoyez-le ou prenez une photo plus nette."
+    },
+    "duplicateDeleted": "Vous l’aviez supprimé.",
+    "duplicateOf": "Identique à « {{title}} »",
+    "restore": "Restaurer",
+    "working": "En cours",
+    "batch": {
+      "title_one": "Lot de {{n}}",
+      "title_many": "Lot de {{n}}",
+      "title_other": "Lot de {{n}}",
+      "started": "Commencé à {{time}}",
+      "timeLeft_one": "environ {{n}} minute restante",
+      "timeLeft_many": "environ {{n}} de minutes restantes",
+      "timeLeft_other": "environ {{n}} minutes restantes",
+      "done": "{{done}} sur {{total}} terminés",
+      "region": "Lot en cours"
+    },
+    "counts": {
+      "filed": "Classés",
+      "review": "À vérifier",
+      "unreadable": "Illisibles",
+      "processing": "En cours"
+    },
+    "summary": "{{filed}} classés, {{needYou}} à vérifier, {{unreadable}} illisibles, {{alreadyHad}} déjà reçus",
+    "table": {
+      "caption": "Fichiers de ce lot et état de chacun",
+      "file": "Fichier",
+      "steps": "Avancement",
+      "status": "Statut",
+      "where": "Où ou pourquoi"
+    },
+    "empty": "Rien n’est encore arrivé. Déposez un document ci-dessus pour commencer."
+  },
+  "activity": {
+    "subtitle": "Tout ce que Mona et vous avez modifié, du plus récent au plus ancien. Chaque modification peut être annulée.",
+    "filters": {
+      "label": "Filtrer le journal d’activité",
+      "actor": "Qui a fait la modification",
+      "all": "Tous",
+      "mona": "Par Mona",
+      "user": "Par vous",
+      "entity": "Entité",
+      "kind": "Type de modification",
+      "allKinds": "Toutes les modifications",
+      "search": "Rechercher dans le journal"
+    },
+    "kind": {
+      "intake_batch": "Lots reçus",
+      "rule_apply": "Règles appliquées",
+      "correction": "Corrections",
+      "file": "Classements",
+      "move": "Déplacements",
+      "rename": "Renommages",
+      "unfile": "Renvoyés à vérifier",
+      "delete": "Suppressions",
+      "undo": "Annulations",
+      "redo": "Rétablissements",
+      "doc": {
+        "update": "Champs modifiés"
+      },
+      "rule": {
+        "create": "Règles créées",
+        "change": "Règles modifiées"
+      },
+      "deadline": {
+        "add": "Échéances ajoutées"
+      },
+      "reminder": {
+        "add": "Rappels programmés"
+      },
+      "mark": {
+        "unreadable": "Marqués illisibles"
+      }
+    },
+    "action": {
+      "file_mona": "Mona a classé {{doc}}",
+      "file_user": "Vous avez classé {{doc}}",
+      "move_mona": "Mona a déplacé {{doc}}",
+      "move_user": "Vous avez déplacé {{doc}}",
+      "rename_mona": "Mona a renommé {{doc}}",
+      "rename_user": "Vous avez renommé {{doc}}",
+      "unfile_mona": "Mona a renvoyé {{doc}} à vérifier",
+      "unfile_user": "Vous avez renvoyé {{doc}} à vérifier",
+      "delete_mona": "Mona a supprimé {{doc}}",
+      "delete_user": "Vous avez supprimé {{doc}}",
+      "undo_mona": "Mona a annulé une modification de {{doc}}",
+      "undo_user": "Vous avez annulé une modification de {{doc}}",
+      "redo_mona": "Mona a rétabli une modification de {{doc}}",
+      "redo_user": "Vous avez rétabli une modification de {{doc}}",
+      "doc": {
+        "update_mona": "Mona a mis à jour les informations de {{doc}}",
+        "update_user": "Vous avez mis à jour les informations de {{doc}}"
+      },
+      "rule": {
+        "create_mona": "Mona a créé la règle « {{rule}} »",
+        "create_user": "Vous avez créé la règle « {{rule}} »",
+        "change_mona": "Mona a modifié la règle « {{rule}} »",
+        "change_user": "Vous avez modifié la règle « {{rule}} »"
+      },
+      "deadline": {
+        "add_mona": "Mona a ajouté une échéance",
+        "add_user": "Vous avez ajouté une échéance"
+      },
+      "reminder": {
+        "add_mona": "Mona a programmé un rappel",
+        "add_user": "Vous avez programmé un rappel"
+      },
+      "mark": {
+        "unreadable_mona": "Mona a marqué {{doc}} comme illisible",
+        "unreadable_user": "Vous avez marqué {{doc}} comme illisible"
+      }
+    },
+    "group": {
+      "intake_batch_mona": "Mona a traité un lot reçu",
+      "intake_batch_user": "Mona a traité un lot reçu",
+      "rule_apply_mona": "Mona a appliqué la règle « {{rule}} »",
+      "rule_apply_user": "Vous avez appliqué la règle « {{rule}} »",
+      "correction_mona": "Mona a corrigé un document",
+      "correction_user": "Vous avez corrigé un document",
+      "undo_mona": "Mona a annulé un groupe de modifications",
+      "undo_user": "Vous avez annulé un groupe de modifications",
+      "redo_mona": "Mona a rétabli un groupe de modifications",
+      "redo_user": "Vous avez rétabli un groupe de modifications",
+      "refile_mona": "Mona a reclassé des documents",
+      "refile_user": "Vous avez reclassé des documents"
+    },
+    "undoState": {
+      "undoable": "Peut être annulé",
+      "undone": "Annulé",
+      "superseded": "Déplacé depuis",
+      "not_undoable": "Ne peut pas être annulé"
+    },
+    "undoneAt": "Annulé à {{time}}",
+    "undoWholeBatch": "Annuler tout le lot",
+    "undoAll": "Tout annuler",
+    "changesCount_one": "{{n}} modification",
+    "changesCount_many": "{{n}} de modifications",
+    "changesCount_other": "{{n}} modifications",
+    "undoneCount_one": "{{n}} annulée",
+    "undoneCount_many": "{{n}} annulées",
+    "undoneCount_other": "{{n}} annulées",
+    "supersededCount_one": "{{n}} déplacée depuis",
+    "supersededCount_many": "{{n}} déplacées depuis",
+    "supersededCount_other": "{{n}} déplacées depuis",
+    "showMore_one": "Afficher {{n}} autre de ce lot",
+    "showMore_many": "Afficher {{n}} autres de ce lot",
+    "showMore_other": "Afficher {{n}} autres de ce lot",
+    "expand": "Afficher les modifications de ce groupe",
+    "collapse": "Masquer les modifications de ce groupe",
+    "empty": {
+      "title": "Rien ici pour l’instant",
+      "body": "Les modifications de Mona et les vôtres apparaîtront ici, chacune avec un bouton Annuler."
+    },
+    "loadFailed": "Je n’ai pas pu charger le journal.",
+    "loadMore": "Afficher les modifications plus anciennes",
+    "day": {
+      "today": "Aujourd’hui · {{date}}",
+      "yesterday": "Hier · {{date}}"
+    },
+    "journalNumber": "Journal n° {{id}}",
+    "place": {
+      "trash": "Corbeille",
+      "review": "À vérifier",
+      "inbox": "Boîte d’entrée"
+    },
+    "unknownDocument": "un document",
+    "deletedDocument": "{{title}} (supprimé)",
+    "unknownRule": "une règle",
+    "you": "Vous",
+    "timeline": {
+      "empty": "Aucune modification pour l’instant.",
+      "label": "Historique de ce document"
+    }
+  },
+  "review": {
+    "filter": {
+      "label": "Filtrer par motif",
+      "all": "Tous · {{n}}"
+    },
+    "list": {
+      "label": "Documents à vérifier",
+      "select": "Sélectionner {{title}}",
+      "selectAll": "Tout sélectionner",
+      "selected_one": "{{n}} sélectionné",
+      "selected_many": "{{n}} sélectionnés",
+      "selected_other": "{{n}} sélectionnés",
+      "approve_one": "Approuver {{n}} sélectionné",
+      "approve_many": "Approuver {{n}} sélectionnés",
+      "approve_other": "Approuver {{n}} sélectionnés",
+      "corrected": "Corrigé par vous",
+      "arrived": "Arrivé {{when}} · {{source}}"
+    },
+    "source": {
+      "drop": "déposé",
+      "telegram": "Telegram"
+    },
+    "subtitle_one": "{{n}} document · le plus ancien est arrivé {{when}}",
+    "subtitle_many": "{{n}} de documents · le plus ancien est arrivé {{when}}",
+    "subtitle_other": "{{n}} documents · le plus ancien est arrivé {{when}}",
+    "subtitleEmpty": "Rien ne demande votre attention pour le moment.",
+    "empty": {
+      "title": "Tout est classé",
+      "body": "Quand un document demandera votre avis, il attendra ici."
+    },
+    "detail": {
+      "back": "À vérifier",
+      "pages_one": "{{n}} page",
+      "pages_many": "{{n}} de pages",
+      "pages_other": "{{n}} pages",
+      "position": "{{index}} sur {{total}}",
+      "prev": "Document précédent",
+      "next": "Document suivant",
+      "filed": "Ce document est classé.",
+      "open": "Ouvrir",
+      "newFileName": "Nouveau nom de fichier",
+      "willBeFiled": "Sera classé dans {{path}}",
+      "updatesOnSave": "Le nom du fichier et le dossier seront mis à jour à l’enregistrement.",
+      "correct": "Corriger et classer",
+      "confirm": "Confirmer",
+      "skip": "Passer",
+      "markUnreadable": "Marquer comme illisible",
+      "keys": "Entrée confirme · J / K pour se déplacer",
+      "history": "Historique de ce document"
+    },
+    "thumbnail": {
+      "alt": "Première page de {{title}}",
+      "none": "L’aperçu n’est pas encore prêt."
+    },
+    "suggestion": {
+      "region": "Suggestion de Mona",
+      "eyebrow": "Suggestion de Mona",
+      "evidence": "Extraits du document",
+      "page": "page {{n}}",
+      "unverified": "introuvable dans la page"
+    },
+    "field": {
+      "entity": "Entité",
+      "counterparty": "Émetteur",
+      "issuer": "Organisme",
+      "reference": "Référence",
+      "doc_type": "Type de document",
+      "doc_date": "Date",
+      "period_start": "Début de période",
+      "period_end": "Fin de période",
+      "amount": "Montant",
+      "due_date": "Échéance",
+      "addressee": "Destinataire"
+    },
+    "picker": {
+      "entity": "Entité",
+      "chooseEntity": "Choisir une entité",
+      "category": "Catégorie",
+      "chooseCategory": "Choisir une catégorie",
+      "subcategory": "Sous-catégorie",
+      "noSubcategory": "Aucune",
+      "changed": "Modifié par vous pour {{entity}}."
+    },
+    "scopePrompt": {
+      "voice": "C’est noté. Dois-je traiter de la même façon les autres documents de ce type ?",
+      "legend": "Appliquer la correction à",
+      "justThisOne": "Seulement celui-ci",
+      "justThisOneHint": "Seul ce document est déplacé. Pas de règle.",
+      "everyDocument": "Tous les documents de ce type",
+      "everyDocumentHint": "Je classe de la même façon les documents de ce type, passés et à venir.",
+      "pastFuture": "passés + à venir",
+      "done": "Terminé",
+      "noCounterparty": "Ce document n’a pas d’émetteur, je ne peux donc pas écrire de règle."
+    },
+    "toast": {
+      "moved": "« {{title}} » déplacé vers {{entity}}",
+      "ruleApplied_one": "Règle appliquée : {{n}} document déplacé",
+      "ruleApplied_many": "Règle appliquée : {{n}} de documents déplacés",
+      "ruleApplied_other": "Règle appliquée : {{n}} documents déplacés"
+    }
+  },
+  "rules": {
+    "preview": {
+      "becomes": "devient",
+      "eyebrow": "Aperçu de la règle",
+      "apply": "Appliquer",
+      "adjust": "Ajuster",
+      "applied_one": "Appliquée : {{n}} document déplacé",
+      "applied_many": "Appliquée : {{n}} de documents déplacés",
+      "applied_other": "Appliquée : {{n}} documents déplacés",
+      "counts": "{{moves}} à déplacer · {{stays}} déjà en place",
+      "noMoves": "Aucun autre document à déplacer. La règle s’appliquera aux suivants.",
+      "more_one": "et {{n}} autre",
+      "more_many": "et {{n}} autres",
+      "more_other": "et {{n}} autres"
+    },
+    "source": {
+      "interview": "Issue d’une question",
+      "correction": "Issue d’une correction",
+      "seed": "Intégrée"
     }
   }
 }

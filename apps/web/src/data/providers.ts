@@ -1,6 +1,8 @@
 import type { Lang } from '@mona/ui';
 import { api } from '../api/client';
-import { countsFixture, entitiesFixture, settingsFixture } from './fixtures';
+import { entitiesFixture, settingsFixture } from './fixtures';
+import type { ShellState } from './dto';
+import { get } from './http';
 import type { Entity, HealthState, Settings, ShellCounts } from './types';
 
 export interface DataProviders {
@@ -20,7 +22,6 @@ function overrideLanguage(): Lang | null {
 export const stubProviders = {
   entities: async () => entitiesFixture,
   settings: async () => ({ ...settingsFixture, locale: overrideLanguage() ?? settingsFixture.locale }),
-  shellCounts: async () => countsFixture,
 } satisfies Partial<DataProviders>;
 
 const OFFLINE: HealthState = { status: 'offline', version: null };
@@ -36,4 +37,9 @@ export async function fetchHealth(): Promise<HealthState> {
   }
 }
 
-export const defaultProviders: DataProviders = { ...stubProviders, health: fetchHealth };
+export async function fetchShellCounts(): Promise<ShellCounts> {
+  const s = await get<ShellState>('/api/shell');
+  return { reviewCount: s.reviewCount, queueCount: s.queue.llm + s.queue.cpu };
+}
+
+export const defaultProviders: DataProviders = { ...stubProviders, shellCounts: fetchShellCounts, health: fetchHealth };
