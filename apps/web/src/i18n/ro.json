@@ -1,0 +1,18 @@
+{
+  "app": {
+    "name": "Mona",
+    "tagline": "Actele, rezolvate — aici, în cabinet."
+  },
+  "home": {
+    "status": "Mona este în curs de configurare."
+  },
+  "dev": {
+    "ds": { "title": "Mostră din sistemul de design" },
+    "pdf": {
+      "title": "Verificare căutare pdf.js",
+      "query": "Frază de căutat",
+      "findHash": "Caută prin hash-ul URL",
+      "findEvent": "Caută prin magistrala de evenimente"
+    }
+  }
+}

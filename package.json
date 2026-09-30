@@ -1,0 +1,15 @@
+{
+  "name": "mona",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "test:scripts": "node --test scripts/*.test.mjs"
+  }
+}

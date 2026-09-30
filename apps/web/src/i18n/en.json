@@ -1,0 +1,18 @@
+{
+  "app": {
+    "name": "Mona",
+    "tagline": "Paperwork, handled — right here in the practice."
+  },
+  "home": {
+    "status": "Mona is being set up."
+  },
+  "dev": {
+    "ds": { "title": "Design system sample" },
+    "pdf": {
+      "title": "pdf.js find check",
+      "query": "Phrase to find",
+      "findHash": "Find via URL hash",
+      "findEvent": "Find via event bus"
+    }
+  }
+}

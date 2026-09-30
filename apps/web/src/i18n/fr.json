@@ -1,0 +1,18 @@
+{
+  "app": {
+    "name": "Mona",
+    "tagline": "Vos papiers, réglés — ici, au cabinet."
+  },
+  "home": {
+    "status": "Mona est en cours d’installation."
+  },
+  "dev": {
+    "ds": { "title": "Échantillon du design system" },
+    "pdf": {
+      "title": "Vérification de la recherche pdf.js",
+      "query": "Phrase à trouver",
+      "findHash": "Trouver via le hash de l’URL",
+      "findEvent": "Trouver via le bus d’événements"
+    }
+  }
+}

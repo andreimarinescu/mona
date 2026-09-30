@@ -9,3 +9,8 @@ __pycache__/
 /data/
 *.local
 .DS_Store
+.pytest_cache/
+.ruff_cache/
+test-results/
+playwright-report/
+*.tsbuildinfo
