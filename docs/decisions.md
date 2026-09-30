@@ -2,6 +2,14 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D4 · 2026-09-30 · W0 spike results folded into dev config (S5, S6)
+
+- **OpenRouter pins (dev).** Direct requests (pydantic-ai sub-tasks) send `provider: {order: [akashml, coreweave, siliconflow, parasail, deepinfra], allow_fallbacks: false, require_parameters: true, quantizations: [fp8, fp16, bf16]}`. Hermes has no `allow_fallbacks`/`quantizations` keys, so `deploy/hermes/config.yaml` uses `provider_routing.only` + `order` + `require_parameters`, which keeps the same five fp8+ providers. CoreWeave and SiliconFlow lack tool support, and `require_parameters` skips them on Hermes turns.
+- **Thinking off:** `reasoning: {enabled: false}` on OpenRouter; per-request `chat_template_kwargs: {"enable_thinking": false}` on llama-server. Typed outputs support both. Typed outputs never run with thinking on (S6 reproduced P0-3).
+- **Hermes session titles must be unique:** the adapter titles a Hermes session with our conversation id (C3 amendment at the set A fold).
+- **Profile seeding:** `deploy/hermes/` seeds the `hermes_data` volume on first start only. After editing it, reseed with `docker compose down -v` or a targeted volume reset. `mona demo-reset` (L5b) owns this in the demo.
+- **Dev secrets:** `HERMES_API_KEY` was rotated on 2026-09-30 after it appeared in a lane's tool output. Lanes print `docker compose config` only through a filter.
+
 ## D3 · 2026-09-30 · Hermes integration facts from S1/S2 (details: `docs/spikes/s1/README.md`)
 
 - **Image.** Hermes 0.21.5 is `nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7`; there is no `0.21.5` tag. The profile is the `/opt/data` volume; start the image with `gateway run` under its own entrypoint.

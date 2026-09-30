@@ -3,6 +3,10 @@ model:
   provider: "openrouter"
   base_url: "https://openrouter.ai/api/v1"
   context_length: 65536
+provider_routing:
+  only: [akashml, coreweave, siliconflow, parasail, deepinfra]
+  order: [akashml, coreweave, siliconflow, parasail, deepinfra]
+  require_parameters: true
 agent:
   reasoning_effort: "medium"
   max_turns: 12
