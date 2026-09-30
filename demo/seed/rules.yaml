@@ -1,0 +1,101 @@
+version: 0
+todo: draft, re-key to canonical ids when C1/C5 freeze; identifier refs resolve against demo-data/seed/identifiers.yaml
+
+rules:
+  - id: seed-personal-insurers
+    name: AGIPI, MAE and Abeille are personal insurers
+    priority: 10
+    source: seed
+    condition_text: Documents from AGIPI, MAE or Abeille belong to the family, filed under the insurer.
+    conditions:
+      - {field: counterparty, op: in, value: [AGIPI, MAE, Abeille]}
+    action: {entity: personal, category: insurance}
+
+  - id: seed-agipi-per-by-insured
+    name: AGIPI PER, filed under the insured person
+    priority: 20
+    source: seed
+    condition_text: AGIPI documents about a retirement savings plan (PER) go under the insured person, in the PER folder.
+    conditions:
+      - {field: counterparty, op: equals, value: AGIPI}
+      - {field: text, op: contains_any, value: ["plan d'épargne retraite", "adhésion FAR PER"]}
+    action:
+      entity: personal
+      sub_unit: {from: addressee}
+      category: insurance
+      subcategory: PER
+
+  - id: seed-agipi-life-by-insured
+    name: AGIPI life insurance, filed under the insured person
+    priority: 20
+    source: seed
+    condition_text: AGIPI life-insurance statements go under the insured person, in the Assurance vie folder.
+    conditions:
+      - {field: counterparty, op: equals, value: AGIPI}
+      - {field: text, op: contains_any, value: ["assurance vie", "assurance-vie", "situation annuelle"]}
+    action:
+      entity: personal
+      sub_unit: {from: addressee}
+      category: insurance
+      subcategory: Assurance vie
+
+  - id: seed-unim-business
+    name: UNIM is a business insurer
+    priority: 10
+    source: seed
+    condition_text: UNIM documents are business insurance.
+    todo: entity assumed to be the SELARL until Claudiu confirms
+    conditions:
+      - {field: counterparty, op: equals, value: UNIM}
+    action: {entity: selarl-simina, category: insurance}
+
+  - id: seed-hello-bank-lmnp
+    name: Hello bank statements for the LMNP account
+    priority: 30
+    source: seed
+    condition_text: Hello bank documents on the LMNP account go to LMNP, Angers-Strasbourg, Bank, by fiscal year.
+    conditions:
+      - {field: counterparty, op: equals, value: Hello bank}
+      - {field: iban, op: in, ref: identifiers.iban.lmnp_angers_strasbourg}
+    action:
+      entity: lmnp
+      sub_unit: angers-strasbourg
+      category: bank
+
+  - id: seed-talenz-mdd
+    name: TALENZ accounts for Medical Digital Design
+    priority: 30
+    source: seed
+    condition_text: TALENZ accounting documents addressed to Medical Digital Design go to its annual documents, by fiscal year.
+    conditions:
+      - {field: counterparty, op: equals, value: TALENZ}
+      - {field: siren, op: equals, ref: identifiers.entities.mdd.siren}
+    action: {entity: mdd, category: annual_accounts}
+
+  - id: seed-selarl-annual-accounts
+    name: SELARL accounts and tax packages
+    priority: 30
+    source: seed
+    condition_text: Balance sheets and management summaries of the SELARL go to its annual documents, by fiscal year.
+    conditions:
+      - {field: siren, op: equals, ref: identifiers.entities.selarl-simina.siren}
+      - {field: text, op: contains_any, value: [bilan, soldes intermédiaires de gestion, liasse fiscale]}
+    action: {entity: selarl-simina, category: annual_accounts}
+
+  - id: seed-oxyleo-personal-tax
+    name: OXYLEO income-tax preparation is personal
+    priority: 30
+    source: seed
+    condition_text: OXYLEO income-tax documents go to Personal, Taxes, by year.
+    conditions:
+      - {field: counterparty, op: equals, value: OXYLEO}
+    action: {entity: personal, category: tax}
+
+  - id: seed-opco-selarl
+    name: OPCO contributions belong to the SELARL
+    priority: 30
+    source: seed
+    condition_text: OPCO contribution calls go to the SELARL, Payment calls, by fiscal year.
+    conditions:
+      - {field: counterparty, op: equals, value: OPCO}
+    action: {entity: selarl-simina, category: payment_calls}

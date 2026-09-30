@@ -1,0 +1,185 @@
+version: 0
+todo: draft, re-key to canonical ids when C1/C5 freeze
+
+practice:
+  name: Cabinet d'Orthodontie Dr Christine Simina
+  filing_language: fr
+  ui_languages: [en, fr, ro]
+
+people:
+  - {id: claudiu, display_name: Claudiu Gamulescu}
+  - {id: christine, display_name: Dr Christine Simina}
+  - {id: child_1, display_name_ref: people.child_1}
+  - {id: child_2, display_name_ref: people.child_2}
+
+entities:
+  - id: selarl-simina
+    display_name: Cabinet d'Orthodontie Dr Christine Simina
+    folder_name: Cabinet Orthodontie
+    legal_form: SELARL
+    visibility: practice
+    fiscal_year_end: "12-31"
+    fiscal_year_end_todo: confirm with Claudiu (question 7)
+    sub_units: []
+    linked_people: [christine]
+    filing_language: fr
+    identifiers_ref: identifiers.entities.selarl-simina
+  - id: mdd
+    display_name: Medical Digital Design
+    folder_name: Medical Digital Design
+    legal_form: SASU
+    visibility: practice
+    fiscal_year_end: "09-30"
+    fiscal_year_end_todo: confirm with Claudiu (question 7)
+    sub_units: []
+    linked_people: [claudiu]
+    filing_language: fr
+    identifiers_ref: identifiers.entities.mdd
+  - id: lmnp
+    display_name: LMNP
+    folder_name: LMNP
+    legal_form: LMNP
+    visibility: practice
+    fiscal_year_end: null
+    fiscal_year_end_todo: ask Claudiu (question 7)
+    sub_units:
+      - {id: angers-strasbourg, label: Angers-Strasbourg}
+    sub_units_todo: full sub-unit list and bank-account mapping (question 6)
+    linked_people: [claudiu, christine]
+    filing_language: fr
+    identifiers_ref: identifiers.entities.lmnp
+  - id: sci-c-immobilier
+    display_name: SCI C Immobilier
+    folder_name: SCI C Immobilier
+    legal_form: SCI
+    visibility: practice
+    fiscal_year_end: null
+    fiscal_year_end_todo: ask Claudiu (question 7)
+    sub_units: []
+    linked_people: [claudiu, christine]
+    filing_language: fr
+    identifiers_ref: identifiers.entities.sci-c-immobilier
+  - id: claudiu-ae
+    display_name: Claudiu Gamulescu (auto-entrepreneur)
+    folder_name: Claudiu Gamulescu
+    legal_form: EI
+    visibility: practice
+    fiscal_year_end: null
+    fiscal_year_end_todo: ask Claudiu (question 7)
+    sub_units: []
+    linked_people: [claudiu]
+    filing_language: fr
+  - id: low-tech
+    display_name: Association Low-Tech Alternatives
+    folder_name: Low-Tech Alternatives
+    legal_form: Association
+    visibility: practice
+    fiscal_year_end: null
+    fiscal_year_end_todo: ask Claudiu (question 7)
+    sub_units: []
+    linked_people: [claudiu]
+    filing_language: fr
+  - id: personal
+    display_name: Personnel (famille)
+    folder_name: Personnel
+    legal_form: null
+    visibility: personal
+    fiscal_year_end: "12-31"
+    sub_units:
+      - {id: claudiu, label: Claudiu}
+      - {id: christine, label: Christine}
+      - {id: child_1, label_ref: people.child_1_short}
+      - {id: child_2, label_ref: people.child_2_short}
+    sub_units_todo: per-person split is a draft assumption (question 5)
+    linked_people: [claudiu, christine, child_1, child_2]
+    filing_language: fr
+  - id: visitors
+    display_name: Visitors
+    folder_name: Visitors
+    legal_form: null
+    visibility: practice
+    fiscal_year_end: "12-31"
+    sub_units: []
+    linked_people: []
+    filing_language: fr
+    purge_after_hours: 24
+
+categories:
+  - id: annual_accounts
+    icon: tax
+    labels: {fr: Documents annuels, en: Annual accounts, ro: Documente anuale}
+    path_template: "{entity}/Documents annuels/{fy}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
+    subcategories: [Bilan, Soldes intermédiaires, Liasse fiscale, Approbation des comptes, Déclaration de revenus]
+  - id: payment_calls
+    icon: invoice
+    labels: {fr: Appels de paiement, en: Payment calls, ro: Cereri de plată}
+    path_template: "{entity}/Appels de paiement/{fy}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
+    subcategories: [Appel de cotisations, Contribution OPCO, Avis de mise en recouvrement, Relance, Saisie administrative]
+  - id: supplier_invoices
+    icon: invoice
+    labels: {fr: Factures fournisseurs, en: Supplier invoices, ro: Facturi furnizori}
+    path_template: "{entity}/Factures reçues/{counterparty}/{year}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
+    subcategories: [Facture, Avoir, Bon de livraison, Devis]
+  - id: misc_expenses
+    icon: invoice
+    labels: {fr: Dépenses diverses, en: Miscellaneous expenses, ro: Cheltuieli diverse}
+    path_template: "{entity}/Dépenses diverses/{year}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
+    subcategories: [Ticket de caisse, Facture, Colis]
+  - id: sales_invoices
+    icon: invoice
+    labels: {fr: Factures émises, en: Sales invoices, ro: Facturi emise}
+    path_template: "{entity}/Factures émises/{year}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
+    subcategories: [Facture, Avoir]
+  - id: bank
+    icon: bank
+    labels: {fr: Banque, en: Bank, ro: Bancă}
+    path_template: "{entity}/Banque/{fy}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
+    subcategories: [Relevé de compte, Relevé de frais, Avis]
+  - id: payroll
+    icon: payroll
+    labels: {fr: Paie et social, en: Payroll, ro: Salarizare}
+    path_template: "{entity}/Paie et social/{year}"
+    file_template: "{date:YYYY-MM-DD}_{sub}_{reference}"
+    subcategories: [Déclaration sociale nominative, Bulletin de salaire]
+  - id: insurance
+    icon: insurance
+    labels: {fr: Assurances, en: Insurance, ro: Asigurări}
+    path_template: "{entity}/Assurances/{counterparty}/{sub}/{year}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
+    subcategories: [PER, Assurance vie, Santé, Prévoyance, Multirisque, Responsabilité civile]
+  - id: training
+    icon: training
+    labels: {fr: Formations, en: Training, ro: Formări}
+    path_template: "{entity}/Formations/{year}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
+    subcategories: [Attestation, Facture, Support de cours]
+  - id: travel
+    icon: travel
+    labels: {fr: Déplacements, en: Travel, ro: Deplasări}
+    path_template: "{entity}/Déplacements/{year}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
+    subcategories: [Transport, Hotel, Location de voiture, Restaurant, Parking]
+  - id: tax
+    icon: tax
+    labels: {fr: Impôts et taxes, en: Taxes, ro: Impozite și taxe}
+    path_template: "{entity}/Impôts et taxes/{year}"
+    file_template: "{date:YYYY-MM-DD}_{issuer}_{sub}"
+    subcategories: [Avis d'imposition, Taxe foncière, Éléments préparatoires, Courrier du fisc]
+  - id: patient_documents
+    icon: personal
+    labels: {fr: Documents patients, en: Patient documents, ro: Documente pacienți}
+    path_template: "{entity}/Documents patients/{year}"
+    file_template: "{date:YYYY-MM-DD}_{sub}_{reference}"
+    subcategories: [Devis, Ordonnance, Conseils post-soins]
+  - id: general
+    icon: personal
+    labels: {fr: Documents généraux, en: General documents, ro: Documente generale}
+    path_template: "{entity}/Documents généraux/{year}"
+    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
+    subcategories: [Contrat, Courrier, État civil, Autre]

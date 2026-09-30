@@ -1,0 +1,272 @@
+reference_anchor: 2026-10-20
+expected_note: expected path and file names are written for the reference anchor
+
+docs:
+  - id: syn-agipi-per
+    gap: per-valid-pdf
+    template: letter
+    render: pdf
+    out: agipi-per-avis-echeance
+    sender: {name: AGIPI, lines: [Association d'assurance (document fictif), 1 avenue de l'Exemple, 67000 Strasbourg]}
+    addressee: {person: christine, lines: [10 rue Fictive, 53000 Laval]}
+    reference: PER-DEMO-0417
+    dates: {doc: {offset: -6}, due: {offset: 12}}
+    amount: {value: 480.00, currency: EUR}
+    object: "Votre plan d'épargne retraite (PER), avis d'échéance de versement"
+    body:
+      - "Chère Adhérente,"
+      - "Nous vous informons que le prochain versement sur votre plan d'épargne retraite, référence {reference}, est de {amount}."
+      - "Ce montant sera prélevé le {due} sur le compte indiqué dans votre dossier."
+      - "Votre plan d'épargne retraite (PER) reste géré par AGIPI."
+    expected:
+      entity: personal
+      sub_unit: christine
+      category: insurance
+      subcategory: PER
+      counterparty: AGIPI
+      path: Personnel/Christine/Assurances/AGIPI/PER/2026
+      file_name: 2026-10-14_AGIPI_PER_PER-DEMO-0417.pdf
+
+  - id: syn-oxyleo-prep
+    gap: oxyleo-valid-pdf
+    template: letter
+    render: pdf
+    out: oxyleo-elements-preparatoires
+    sender: {name: OXYLEO, lines: [Cabinet d'expertise comptable (document fictif), 8 rue de l'Exemple, 53000 Laval]}
+    addressee: {person: claudiu, lines: [10 rue Fictive, 53000 Laval]}
+    reference: OXY-DEMO-2025
+    dates: {doc: {offset: -9}}
+    object: "REVENUS 2025 : éléments préparatoires"
+    body:
+      - "Merci de préparer les pièces suivantes pour votre déclaration de revenus 2025."
+      - "Avis d'imposition de l'an dernier, attestations bancaires, justificatifs de dons et de frais de garde."
+      - "Votre situation personnelle ou familiale a-t-elle évolué ? Merci de nous le signaler avant la date limite."
+    expected:
+      entity: personal
+      category: tax
+      subcategory: Éléments préparatoires
+      counterparty: OXYLEO
+      issuer: OXYLEO
+      path: Personnel/Impôts et taxes/2026
+      file_name: 2026-10-11_OXYLEO_Elements-preparatoires.pdf
+
+  - id: syn-hello-fy-crossing
+    gap: bank-statement-fy-crossing-valid-pdf
+    template: statement
+    render: pdf
+    out: releve-compte-decembre-janvier
+    sender: {name: Hello bank, lines: [Service clients (document fictif), TSA 00000, 75000 Paris]}
+    addressee: {person: claudiu, lines: [10 rue Fictive, 53000 Laval]}
+    account: iban_lmnp_angers_strasbourg
+    reference: REL-DEMO-0126
+    dates: {doc: {ym: [0, 1, 15]}, period_start: {ym: [-1, 12, 15]}, period_end: {ym: [0, 1, 15]}}
+    object: "Relevé de compte chèques"
+    opening_balance: 2799.61
+    amount: {value: 3212.40, currency: EUR}
+    rows:
+      - {day: 1, label: PRLV SEPA COMPTABILITE DEMO, amount: -75.00}
+      - {day: 2, label: VIREMENT SEPA EMIS APPEL DE FONDS COPRO, amount: -394.08}
+      - {day: 5, label: VIR SEPA RECU LOYER DEMO ANGERS, amount: 880.00}
+      - {day: 20, label: PRLV SEPA ASSURANCE DEMO, amount: -36.13}
+      - {day: 27, label: VIR SEPA RECU LOYER DEMO ANGERS, amount: 38.00}
+    expected:
+      entity: lmnp
+      sub_unit: angers-strasbourg
+      category: bank
+      subcategory: Relevé de compte
+      counterparty: Hello bank
+      path: LMNP/Angers-Strasbourg/Banque/2026
+      file_name: 2026-01-15_Hello-bank_Releve-de-compte.pdf
+
+  - id: syn-urssaf-call
+    gap: urssaf-due-within-7-days
+    template: letter
+    render: pdf
+    out: urssaf-appel-cotisations
+    sender: {name: URSSAF Pays de la Loire, lines: [Service recouvrement (document fictif), 3 place de l'Exemple, 44000 Nantes]}
+    addressee: {entity: selarl-simina, lines: [4 rue Fictive, 53000 Laval]}
+    show_siren: true
+    reference: URS-DEMO-3391
+    dates: {doc: {offset: -2}, due: {offset: 3}, period_end: {offset: -20}}
+    amount: {value: 1842.00, currency: EUR}
+    object: "Appel de cotisations, 3e trimestre 2026"
+    body:
+      - "Madame, Monsieur,"
+      - "Nous vous informons que le montant des cotisations dues au titre du 3e trimestre 2026 s'élève à {amount}."
+      - "Cette somme doit nous parvenir au plus tard le {due}. Passé ce délai, une majoration de retard sera appliquée."
+      - "Référence à rappeler lors du paiement : {reference}."
+    expected:
+      entity: selarl-simina
+      category: payment_calls
+      subcategory: Appel de cotisations
+      counterparty: URSSAF
+      path: Cabinet Orthodontie/Appels de paiement/2026
+      file_name: 2026-10-18_URSSAF_Appel-de-cotisations_URS-DEMO-3391.pdf
+
+  - id: syn-sie-letter
+    gap: sie-letter-payment-schedule
+    template: letter
+    render: pdf
+    out: sie-avis-mise-en-recouvrement
+    sender: {name: SIE Mayenne, lines: [Service des impôts des entreprises (document fictif), 5 rue de l'Exemple, 53000 Laval]}
+    addressee: {entity: mdd, lines: [12 rue Fictive, 53000 Laval]}
+    show_siren: true
+    reference: SIE-DEMO-7742
+    dates: {doc: {offset: -4}, due: {offset: 14}, period_end: {ym: [-1, 9, 30]}}
+    amount: {value: 4316.00, currency: EUR}
+    object: "Avis de mise en recouvrement, TVA de l'exercice clos le {period_end}"
+    body:
+      - "Madame, Monsieur,"
+      - "Après examen de votre dossier, la somme de {amount} reste due au titre de la TVA de l'exercice clos le {period_end}."
+      - "Vous devez régler ce montant avant le {due}. À défaut, des majorations et des poursuites pourront être engagées."
+      - "Si vous ne pouvez pas payer en une seule fois, vous pouvez demander un délai de paiement au comptable public en indiquant la référence {reference}."
+    expected:
+      entity: mdd
+      category: payment_calls
+      subcategory: Avis de mise en recouvrement
+      counterparty: SIE Mayenne
+      path: Medical Digital Design/Appels de paiement/2025
+      file_name: 2026-10-16_SIE-Mayenne_Avis-de-mise-en-recouvrement_SIE-DEMO-7742.pdf
+
+  - id: syn-patient-devis
+    gap: patient-showcase
+    template: letter
+    render: pdf
+    out: devis-orthodontie
+    sender: {name: Cabinet d'Orthodontie Dr Christine Simina, lines: [4 rue Fictive, 53000 Laval]}
+    addressee: {text: M. Patient Exemple, lines: [Dossier patient fictif]}
+    reference: DEV-DEMO-0231
+    dates: {doc: {offset: -12}}
+    amount: {value: 1250.00, currency: EUR}
+    object: "Devis pour traitement orthodontique"
+    body:
+      - "Identification du praticien : Dr Christine Simina (fictif)."
+      - "Traitement proposé : appareil multi-attaches, 18 mois de traitement, contrôles mensuels."
+      - "Montant total des honoraires : {amount}, hors soins à tarif opposable."
+      - "Durée de validité du devis : 1 an."
+    expected:
+      entity: selarl-simina
+      category: patient_documents
+      subcategory: Devis
+      counterparty: Cabinet Orthodontie
+      path: Cabinet Orthodontie/Documents patients/2026
+      file_name: 2026-10-08_Devis_DEV-DEMO-0231.pdf
+
+  - id: syn-patient-ordonnance
+    gap: patient-showcase
+    template: letter
+    render: pdf
+    out: ordonnance
+    sender: {name: Cabinet d'Orthodontie Dr Christine Simina, lines: [4 rue Fictive, 53000 Laval]}
+    addressee: {text: M. Patient Exemple, lines: [Dossier patient fictif]}
+    reference: ORD-DEMO-0518
+    dates: {doc: {offset: -11}}
+    object: "Ordonnance"
+    body:
+      - "Le {date}, pour M. Patient Exemple."
+      - "Bain de bouche antiseptique sans alcool, 2 fois par jour pendant 7 jours."
+      - "Antalgique de palier 1 en cas de douleur, selon la notice."
+      - "À renouveler : non."
+    expected:
+      entity: selarl-simina
+      category: patient_documents
+      subcategory: Ordonnance
+      counterparty: Cabinet Orthodontie
+      path: Cabinet Orthodontie/Documents patients/2026
+      file_name: 2026-10-09_Ordonnance_ORD-DEMO-0518.pdf
+
+  - id: syn-patient-care-sheet
+    gap: patient-showcase
+    template: letter
+    render: pdf
+    out: conseils-post-soins
+    sender: {name: Cabinet d'Orthodontie Dr Christine Simina, lines: [4 rue Fictive, 53000 Laval]}
+    addressee: {text: M. Patient Exemple, lines: [Dossier patient fictif]}
+    reference: CPS-DEMO-0042
+    dates: {doc: {offset: -10}}
+    object: "Conseils après la pose de l'appareil"
+    body:
+      - "Brossez-vous les dents après chaque repas, avec une brosse souple."
+      - "Évitez les aliments durs ou collants pendant les premières semaines."
+      - "En cas de fil ou de bague qui blesse, appliquez la cire fournie et appelez le cabinet."
+    expected:
+      entity: selarl-simina
+      category: patient_documents
+      subcategory: Conseils post-soins
+      counterparty: Cabinet Orthodontie
+      path: Cabinet Orthodontie/Documents patients/2026
+      file_name: 2026-10-10_Conseils-post-soins_CPS-DEMO-0042.pdf
+
+  - id: syn-supplier-rotated
+    gap: rotated-multipage-scan
+    template: letter
+    render: scan
+    scan: {rotations: [90, 180]}
+    out: scan-facture-fournisseur
+    sender: {name: Dentalis Fournitures, lines: [Matériel dentaire (document fictif), 21 zone de l'Exemple, 35000 Rennes]}
+    addressee: {entity: selarl-simina, lines: [4 rue Fictive, 53000 Laval]}
+    reference: FA-DEMO-5580
+    dates: {doc: {offset: -8}, due: {offset: 22}}
+    amount: {value: 386.40, currency: EUR}
+    object: "Facture FA-DEMO-5580"
+    body:
+      - "Détail de la commande : 4 boîtes de gants, 2 lots de fraises, 1 lampe de polymérisation."
+      - "Total TTC : {amount}."
+    page_two:
+      - "Conditions de règlement : 30 jours à réception de la facture, soit avant le {due}."
+      - "Aucun escompte pour paiement anticipé. Indemnité forfaitaire de recouvrement : 40 EUR."
+    expected:
+      entity: selarl-simina
+      category: supplier_invoices
+      subcategory: Facture
+      counterparty: Dentalis Fournitures
+      path: Cabinet Orthodontie/Factures reçues/Dentalis Fournitures/2026
+      file_name: 2026-10-12_Dentalis-Fournitures_Facture_FA-DEMO-5580.pdf
+
+  - id: syn-visitor-photo
+    gap: phone-photo
+    template: letter
+    render: photo
+    out: photo-facture-eau
+    sender: {name: Eaux du Bocage, lines: [Service des eaux (document fictif), 2 chemin de l'Exemple, 53000 Laval]}
+    addressee: {text: Visiteur Exemple, lines: [3 rue Fictive, 53000 Laval]}
+    reference: EB-DEMO-1206
+    dates: {doc: {offset: -15}, due: {offset: 15}}
+    amount: {value: 74.25, currency: EUR}
+    object: "Facture d'eau, période du semestre"
+    body:
+      - "Montant à payer : {amount}."
+      - "Date limite de paiement : {due}."
+      - "Référence client : {reference}."
+    expected:
+      entity: visitors
+      category: supplier_invoices
+      subcategory: Facture
+      counterparty: Eaux du Bocage
+      path: Visitors/Factures reçues/Eaux du Bocage/2026
+      file_name: 2026-10-05_Eaux-du-Bocage_Facture_EB-DEMO-1206.jpg
+
+  - id: syn-unreadable
+    gap: unreadable-scan
+    template: letter
+    render: unreadable
+    out: scan-illisible
+    sender: {name: Courrier ancien, lines: [Expéditeur illisible]}
+    addressee: {text: Destinataire illisible, lines: [Adresse illisible]}
+    reference: ILL-DEMO-0001
+    dates: {doc: {offset: -30}}
+    object: "Courrier"
+    body:
+      - "Ce document est volontairement dégradé pour tester la file de révision."
+      - "Le texte n'est plus lisible après numérisation."
+    expected:
+      queue_reason: unreadable
+
+  - id: syn-duplicate-urssaf
+    gap: duplicate
+    render: copy
+    copy_of: syn-urssaf-call
+    out: scan-2026-10-19
+    expected:
+      outcome: duplicate
+      duplicate_of: syn-urssaf-call
