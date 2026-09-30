@@ -1,0 +1,437 @@
+{
+  "prompt": "A patient asks whether they can pay a 1,850 EUR treatment in three instalments. Draft a two-sentence friendly reply from the practice manager.",
+  "rows": [
+    {
+      "route": "pin",
+      "mode": "think",
+      "rep": 0,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": 0.67,
+      "t_first_content": 20.71,
+      "wall_s": 21.08,
+      "completion_tokens": 1671,
+      "reasoning_tokens": 1688,
+      "tok_per_s": 81.9,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "pin",
+      "mode": "no_think",
+      "rep": 0,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.62,
+      "wall_s": 1.86,
+      "completion_tokens": 59,
+      "reasoning_tokens": 0,
+      "tok_per_s": 47.5,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "parasail",
+      "mode": "think",
+      "rep": 0,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": 0.44,
+      "t_first_content": 14.14,
+      "wall_s": 14.64,
+      "completion_tokens": 1495,
+      "reasoning_tokens": 1528,
+      "tok_per_s": 105.3,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "parasail",
+      "mode": "no_think",
+      "rep": 0,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.46,
+      "wall_s": 0.77,
+      "completion_tokens": 47,
+      "reasoning_tokens": 0,
+      "tok_per_s": 156.4,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "deepinfra",
+      "mode": "think",
+      "rep": 0,
+      "served_by": "DeepInfra",
+      "error": null,
+      "t_first_reasoning": 0.41,
+      "t_first_content": 16.71,
+      "wall_s": 17.81,
+      "completion_tokens": 877,
+      "reasoning_tokens": 794,
+      "tok_per_s": 50.4,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "deepinfra",
+      "mode": "no_think",
+      "rep": 0,
+      "served_by": "DeepInfra",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.63,
+      "wall_s": 1.58,
+      "completion_tokens": 54,
+      "reasoning_tokens": 0,
+      "tok_per_s": 56.7,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "akashml",
+      "mode": "think",
+      "rep": 0,
+      "served_by": "AkashML",
+      "error": null,
+      "t_first_reasoning": 0.38,
+      "t_first_content": 4.02,
+      "wall_s": 4.18,
+      "completion_tokens": 1168,
+      "reasoning_tokens": 1164,
+      "tok_per_s": 307.3,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "akashml",
+      "mode": "no_think",
+      "rep": 0,
+      "served_by": "AkashML",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.37,
+      "wall_s": 0.5,
+      "completion_tokens": 46,
+      "reasoning_tokens": 0,
+      "tok_per_s": 361.2,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "pin",
+      "mode": "think",
+      "rep": 1,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": 0.48,
+      "t_first_content": 6.25,
+      "wall_s": 6.72,
+      "completion_tokens": 678,
+      "reasoning_tokens": 603,
+      "tok_per_s": 108.6,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "pin",
+      "mode": "no_think",
+      "rep": 1,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.49,
+      "wall_s": 0.84,
+      "completion_tokens": 55,
+      "reasoning_tokens": 0,
+      "tok_per_s": 159.6,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "parasail",
+      "mode": "think",
+      "rep": 1,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": 1.09,
+      "t_first_content": 10.58,
+      "wall_s": 11.39,
+      "completion_tokens": 832,
+      "reasoning_tokens": 761,
+      "tok_per_s": 80.7,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "parasail",
+      "mode": "no_think",
+      "rep": 1,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.44,
+      "wall_s": 0.77,
+      "completion_tokens": 51,
+      "reasoning_tokens": 0,
+      "tok_per_s": 154.9,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "deepinfra",
+      "mode": "think",
+      "rep": 1,
+      "served_by": "DeepInfra",
+      "error": null,
+      "t_first_reasoning": 1.21,
+      "t_first_content": 20.41,
+      "wall_s": 21.68,
+      "completion_tokens": 973,
+      "reasoning_tokens": 930,
+      "tok_per_s": 47.5,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "deepinfra",
+      "mode": "no_think",
+      "rep": 1,
+      "served_by": "DeepInfra",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.38,
+      "wall_s": 1.27,
+      "completion_tokens": 45,
+      "reasoning_tokens": 0,
+      "tok_per_s": 50.2,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "akashml",
+      "mode": "think",
+      "rep": 1,
+      "served_by": "AkashML",
+      "error": null,
+      "t_first_reasoning": 3.3,
+      "t_first_content": 10.1,
+      "wall_s": 10.3,
+      "completion_tokens": 1627,
+      "reasoning_tokens": 1665,
+      "tok_per_s": 232.4,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "akashml",
+      "mode": "no_think",
+      "rep": 1,
+      "served_by": "AkashML",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.38,
+      "wall_s": 0.64,
+      "completion_tokens": 60,
+      "reasoning_tokens": 0,
+      "tok_per_s": 232.5,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "pin",
+      "mode": "think",
+      "rep": 2,
+      "served_by": "DeepInfra",
+      "error": null,
+      "t_first_reasoning": 0.98,
+      "t_first_content": 11.99,
+      "wall_s": 12.78,
+      "completion_tokens": 725,
+      "reasoning_tokens": 626,
+      "tok_per_s": 61.4,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "pin",
+      "mode": "no_think",
+      "rep": 2,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.44,
+      "wall_s": 1.22,
+      "completion_tokens": 42,
+      "reasoning_tokens": 0,
+      "tok_per_s": 53.3,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "parasail",
+      "mode": "think",
+      "rep": 2,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": 0.49,
+      "t_first_content": 8.54,
+      "wall_s": 9.13,
+      "completion_tokens": 669,
+      "reasoning_tokens": 584,
+      "tok_per_s": 77.5,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "parasail",
+      "mode": "no_think",
+      "rep": 2,
+      "served_by": "Parasail",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.48,
+      "wall_s": 0.81,
+      "completion_tokens": 63,
+      "reasoning_tokens": 0,
+      "tok_per_s": 191.3,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "deepinfra",
+      "mode": "think",
+      "rep": 2,
+      "served_by": "DeepInfra",
+      "error": null,
+      "t_first_reasoning": 0.85,
+      "t_first_content": 15.58,
+      "wall_s": 16.27,
+      "completion_tokens": 817,
+      "reasoning_tokens": 720,
+      "tok_per_s": 53.0,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "deepinfra",
+      "mode": "no_think",
+      "rep": 2,
+      "served_by": "DeepInfra",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.82,
+      "wall_s": 2.58,
+      "completion_tokens": 55,
+      "reasoning_tokens": 0,
+      "tok_per_s": 31.2,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "akashml",
+      "mode": "think",
+      "rep": 2,
+      "served_by": "AkashML",
+      "error": null,
+      "t_first_reasoning": 0.61,
+      "t_first_content": 8.91,
+      "wall_s": 9.21,
+      "completion_tokens": 934,
+      "reasoning_tokens": 850,
+      "tok_per_s": 108.7,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "akashml",
+      "mode": "no_think",
+      "rep": 2,
+      "served_by": "AkashML",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.43,
+      "wall_s": 0.72,
+      "completion_tokens": 56,
+      "reasoning_tokens": 0,
+      "tok_per_s": 196.9,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    }
+  ]
+}

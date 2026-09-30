@@ -1,0 +1,268 @@
+{
+  "tag": "dbr-run4-fr",
+  "locale": "fr",
+  "order": [
+    "akashml",
+    "coreweave",
+    "siliconflow"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 27.25,
+    "provider": "AkashML",
+    "budget_s": null,
+    "stopped_early": false,
+    "t_first_reasoning": 0.55,
+    "t_first_content": 24.58,
+    "reasoning_chars": 12639,
+    "content_chars": 1539,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 4366,
+      "cost": 0.0040295,
+      "reasoning_tokens": 3313
+    }
+  },
+  "pass2": {
+    "wall_s": 11.38,
+    "provider": "AkashML",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2529,
+    "completion_tokens": 1561,
+    "reasoning_tokens": 0,
+    "cost": 0.0016578
+  },
+  "total_wall_s": 38.63,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 3,
+    "evidence_quotes_verified": "6/6",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "\n\n• **Group 1: Prévia Assurances (d1, d2, d3)** | Ambiguity: Personal contracts (“Assurée : Mme Hélène Morel”, “Assuré : M. Paul Morel”) vs. SELARL payment/subscriber (“Prélèvement sur le compte FR76…”, “Souscripteur : SELARL”). 3 docs, ~1 704 € + 18 412 € value.\n  Q: “Are these strictly personal contracts, or does SELARL officially cover d1/d3?”\n  A1: “All personal; SELARL only reimburses d1.” → Rule: Always `selarl-morel` for d1; ignore d2/d3.\n  A2: “d1 & d3 are business; d2 personal.” → Rule: Always `selarl-morel` for d1/d3; ignore d2.\n  A3: “All business.” → Rule: Always `selarl-morel` for all.\n\n• **Group 2: Atelier Bois & Co (d5, d6)** | Ambiguity: Site/entity for carpentry. d5 cites “Chantier : 4 rue du Port”; d6 cites “salle de stérilisation” but no address. 2 docs, 6 250 €.\n  Q: “Confirm the site for d5 (2 340 €) and d6 (3 910 €)?”\n  A1: “d5 is LMNP; d6 is SELARL.” → Rule: Depends on a discriminator such as the site address.\n  A2: “Both SELARL.” → Rule: Always `selarl-morel`.\n  A3: “Both LMNP.” → Rule: Always `lmnp-port`.\n\n• **Group 3: Paul/LMNP routing (d4, d7)** | Ambiguity: Spouse’s account/address used for LMNP rent (“LOYER 4 RUE DU PORT”) and telecom (“ligne installée au 4 rue du Port”). 2 docs, 689,99 €.\n  Q: “Should LMNP documents use Paul’s account/address officially?”\n  A1: “Yes, standard LMNP routing.” → Rule: Always `lmnp-port`.\n  A2: “Keep personal; LMNP has separate accounts.” → Rule: Ask each time.\n  A3: “d4 is LMNP, d7 personal.” → Rule: Depends on a discriminator such as the account holder.",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Les contrats Prévia (d1, d2, d3) sont-ils strictement personnels ou couverts par la SELARL ?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Tous personnels",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "helene",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "d1 & d3 pro, d2 perso",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.provident",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Tous pro",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "b"
+      },
+      {
+        "id": "q2",
+        "text": "Les travaux Atelier Bois & Co (d5, d6) concernent-ils la SELARL ou la LMNP ?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "d5 LMNP, d6 SELARL",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "4 rue du Port, 35000 Rennes"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Tous SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "works.quote",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Tous LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q3",
+        "text": "Les documents de Paul (d4, d7) doivent-ils être routés vers la LMNP ?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "LOYER 4 RUE DU PORT MAI 650,00"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "ligne installée au 4 rue du Port, 35000 Rennes"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4",
+          "d7"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Oui, routage standard LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Garder personnel",
+            "rule_draft": {
+              "kind": "ask",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "paul",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "d4 LMNP, d7 perso",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "account_holder",
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "relevé de compte"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

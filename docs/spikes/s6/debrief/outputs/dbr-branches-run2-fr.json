@@ -1,0 +1,553 @@
+{
+  "tag": "dbr-branches-run2-fr",
+  "locale": "fr",
+  "order": [
+    "akashml",
+    "coreweave",
+    "siliconflow"
+  ],
+  "concise": true,
+  "rule_shape": "branches",
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 31.38,
+    "provider": "AkashML",
+    "budget_s": null,
+    "stopped_early": false,
+    "t_first_reasoning": 0.49,
+    "t_first_content": 27.34,
+    "reasoning_chars": 18740,
+    "content_chars": 1536,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 5837,
+      "cost": 0.0054526,
+      "reasoning_tokens": 4926
+    }
+  },
+  "pass2": {
+    "wall_s": 18.2,
+    "provider": "AkashML",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2549,
+    "completion_tokens": 3393,
+    "reasoning_tokens": 0,
+    "cost": 0.0033086
+  },
+  "total_wall_s": 49.58,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 3,
+    "evidence_quotes_verified": "7/7",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "\n\n• **1. Prévia (d1, d2, d3) | ~1 704 € + 18 412 €**\n  - d1: Debited from SELARL (“Prélèvement sur le compte FR76…”) but names Hélène → Settle by confirming practice reimburses owner’s pension.\n  - d2: Insured is Paul (“Assuré : M. Paul Morel”) → Settle by confirming spouse’s policy is strictly personal.\n  - d3: Subscriber is SELARL (“Souscripteur : SELARL…”) but cover is Hélène → Settle by confirming practice covers owner’s provident.\n  - Question: Are d1/d3 business expenses and d2 personal?\n  - Answers/Rules: Yes → Always SELARL; No → Always personal; Mixed → Depends on discriminator (contract holder).\n\n• **2. Atelier Bois & Co (d5, d6) | 6 250 €**\n  - d5: Work at “Chantier : 4 rue du Port” but billed to “Mme Morel” → Settle by mapping site to LMNP.\n  - d6: For “salle de stérilisation” but billed to “Dr Morel” → Settle by mapping equipment to SELARL.\n  - Question: Assign d5 to LMNP and d6 to SELARL based on physical site?\n  - Answers/Rules: Yes → Always LMNP/SELARL; No → Always SELARL; Site-dependent → Depends on discriminator (site address).\n\n• **3. LMNP/Spouse (d4, d7) | ~690 € + rent**\n  - d4: Joint account (“Titulaire : M OU MME MOREL PAUL”) receives LMNP rent → Settle by confirming if LMNP uses personal accounts.\n  - d7: “Titulaire : M. Paul Morel” for LMNP internet → Settle by confirming personal vs. business billing for flat utilities.\n  - Question: Are d4/d7 LMNP business or personal?\n  - Answers/Rules: LMNP → Always LMNP; Personal → Always personal; Mixed → Depends on discriminator (account holder).",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Les cotisations Prévia d'Hélène (d1, d3) sont-elles des charges de la SELARL et celle de Paul (d2) est-elle strictement personnelle ?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Oui, charges SELARL pour Hélène, personnel pour Paul",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "avis d'échéance"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Prévia Assurances"
+                    }
+                  ],
+                  "action": {
+                    "entity": "selarl-morel",
+                    "category": "insurance.pension",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "relevé de situation annuel"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Prévia Assurances"
+                    }
+                  ],
+                  "action": {
+                    "entity": "paul",
+                    "category": "insurance.life",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "b",
+            "label": "Non, tout est personnel",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Prévia Assurances"
+                    }
+                  ],
+                  "action": {
+                    "entity": "helene",
+                    "category": "insurance.pension",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "c",
+            "label": "Dépend du souscripteur",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "souscripteur",
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "avis d'échéance"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Prévia Assurances"
+                    },
+                    {
+                      "field": "addressee",
+                      "op": "contains",
+                      "value": "SELARL"
+                    }
+                  ],
+                  "action": {
+                    "entity": "selarl-morel",
+                    "category": "insurance.provident",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "avis d'échéance"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Prévia Assurances"
+                    },
+                    {
+                      "field": "addressee",
+                      "op": "contains",
+                      "value": "Mme Hélène Morel"
+                    }
+                  ],
+                  "action": {
+                    "entity": "helene",
+                    "category": "insurance.pension",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "relevé de situation annuel"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Prévia Assurances"
+                    }
+                  ],
+                  "action": {
+                    "entity": "paul",
+                    "category": "insurance.life",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q2",
+        "text": "La facture d5 (chantier 4 rue du Port) doit-elle être imputée à la LMNP et le devis d6 (stérilisation) à la SELARL ?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Oui, selon l'emplacement physique",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "facture"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Atelier Bois & Co"
+                    }
+                  ],
+                  "action": {
+                    "entity": "lmnp-port",
+                    "category": "works.invoice",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "devis"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Atelier Bois & Co"
+                    }
+                  ],
+                  "action": {
+                    "entity": "selarl-morel",
+                    "category": "works.quote",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "b",
+            "label": "Non, tout pour la SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Atelier Bois & Co"
+                    }
+                  ],
+                  "action": {
+                    "entity": "selarl-morel",
+                    "category": "works.quote",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "c",
+            "label": "Dépend de l'adresse du chantier",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "adresse_chantier",
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "facture"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Atelier Bois & Co"
+                    },
+                    {
+                      "field": "addressee",
+                      "op": "contains",
+                      "value": "4 rue du Port"
+                    }
+                  ],
+                  "action": {
+                    "entity": "lmnp-port",
+                    "category": "works.invoice",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "devis"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Atelier Bois & Co"
+                    }
+                  ],
+                  "action": {
+                    "entity": "selarl-morel",
+                    "category": "works.quote",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q3",
+        "text": "Les documents d4 (relevé bancaire) et d7 (télécom) sont-ils des charges de la LMNP ou des dépenses personnelles ?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "Titulaire : M OU MME MOREL PAUL"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "Titulaire : M. Paul Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4",
+          "d7"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Oui, charges de la LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "relevé de compte"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Banque Rivage"
+                    }
+                  ],
+                  "action": {
+                    "entity": "lmnp-port",
+                    "category": "bank.statement",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "facture"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Orélia Télécom"
+                    }
+                  ],
+                  "action": {
+                    "entity": "lmnp-port",
+                    "category": "telecom.bill",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "b",
+            "label": "Non, dépenses personnelles",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Banque Rivage"
+                    }
+                  ],
+                  "action": {
+                    "entity": "paul",
+                    "category": "bank.statement",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Orélia Télécom"
+                    }
+                  ],
+                  "action": {
+                    "entity": "paul",
+                    "category": "telecom.bill",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "c",
+            "label": "Dépend du titulaire du compte/ligne",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "titulaire",
+              "branches": [
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "relevé de compte"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Banque Rivage"
+                    },
+                    {
+                      "field": "addressee",
+                      "op": "contains",
+                      "value": "MOREL PAUL"
+                    }
+                  ],
+                  "action": {
+                    "entity": "lmnp-port",
+                    "category": "bank.statement",
+                    "subcategory": null
+                  }
+                },
+                {
+                  "conditions": [
+                    {
+                      "field": "doc_type",
+                      "op": "equals",
+                      "value": "facture"
+                    },
+                    {
+                      "field": "counterparty",
+                      "op": "equals",
+                      "value": "Orélia Télécom"
+                    },
+                    {
+                      "field": "addressee",
+                      "op": "contains",
+                      "value": "Paul Morel"
+                    }
+                  ],
+                  "action": {
+                    "entity": "lmnp-port",
+                    "category": "telecom.bill",
+                    "subcategory": null
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

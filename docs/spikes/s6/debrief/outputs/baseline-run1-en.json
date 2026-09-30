@@ -1,0 +1,336 @@
+{
+  "tag": "run1-en",
+  "locale": "en",
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 86.24,
+    "provider": "Parasail",
+    "t_first_reasoning": 1.09,
+    "t_first_content": 71.44,
+    "reasoning_chars": 16989,
+    "content_chars": 3676,
+    "usage": {
+      "prompt_tokens": 1967,
+      "completion_tokens": 6057,
+      "cost": 0.00635205,
+      "reasoning_tokens": 4317
+    }
+  },
+  "pass2": {
+    "wall_s": 25.43,
+    "provider": "Parasail",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 3083,
+    "completion_tokens": 2128,
+    "reasoning_tokens": 0,
+    "cost": 0.00259045
+  },
+  "total_wall_s": 111.67,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 4,
+    "evidence_quotes_verified": "9/9",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "### Document Analysis\n| Doc | Ambiguity & Settling Fact |\n|-----|---------------------------|\n| **d1** | Personal contract (`\"Assurée : Mme Hélène Morel\"`) but debited from SELARL (`\"Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118\"`). Settled by confirming if SELARL can deduct it as a business expense or if it's a personal draw. |\n| **d2** | Spouse's life savings contract with no business link (`\"Assuré : M. Paul Morel\"`). Settled by confirming it's purely personal and should be excluded from business books. |\n| **d3** | Insured is Hélène (`\"Assurée : Dr Hélène Morel\"`) but subscriber/payer is SELARL (`\"Souscripteur : SELARL Cabinet Dentaire Morel\"`). Settled by confirming if it's a standard SELARL provident expense or a personal benefit requiring payroll treatment. |\n| **d4** | Joint personal account (`\"Titulaire : M OU MME MOREL PAUL\"`) but receives rental income (`\"LOYER 4 RUE DU PORT MAI 650,00\"`). Settled by confirming if the account is used for LMNP accounting or purely personal. |\n| **d5** | Personal addressee (`\"Mme Morel\"`) but site matches LMNP (`\"Chantier : 4 rue du Port, 35000 Rennes\"`). Settled by confirming if works are for LMNP tax purposes or personal. |\n| **d6** | Personal addressee (`\"Dr Morel\"`) and no site, but description points to practice (`\"Meuble de rangement salle de stérilisation\"`). Settled by confirming if quote is for SELARL or personal. |\n| **d7** | Line at LMNP (`\"ligne installée au 4 rue du Port\"`) but billed to spouse (`\"Titulaire : M. Paul Morel\"`). Settled by confirming if it's an LMNP deductible expense or personal. |\n\n---\n\n### Grouped Questions & Filing Rules (Ranked by doc count & monetary impact)\n\n#### 1. Atelier Bois & Co (d5, d6) | 2 documents | 6 250 EUR\n**Question:** *“For the Atelier Bois & Co documents (d5, d6), should they be allocated to LMNP Rennes or SELARL based on the site/work description?”*\n- **Answer A:** d5 (Port address) → LMNP; d6 (sterilization room) → SELARL.  \n  **Rule:** *depends on a discriminator such as the site address or work description.*\n- **Answer B:** Both are for the dental practice.  \n  **Rule:** *always `selarl-morel`.*\n- **Answer C:** Both are for the rental flat.  \n  **Rule:** *always `lmnp-port`.*\n\n#### 2. Prévia Assurances (d1, d2, d3) | 3 documents | 1 704 EUR\n**Question:** *“Should the Prévia contracts for Hélène (d1, d3) and Paul (d2) be filed as SELARL business expenses, or treated as personal/spouse matters?”*\n- **Answer A:** d1 & d3 are SELARL expenses; d2 is personal.  \n  **Rule:** *depends on a discriminator such as the insured person.*\n- **Answer B:** All are SELARL business expenses.  \n  **Rule:** *always `selarl-morel`.*\n- **Answer C:** All are personal/spouse matters.  \n  **Rule:** *always exclude from business books (file personal).*\n\n#### 3. Banque Rivage (d4) | 1 document | affects 650 EUR rent flow\n**Question:** *“Is the joint account ending in …562 (d4) used for LMNP Rennes accounting or is it purely personal?”*\n- **Answer A:** Used for LMNP.  \n  **Rule:** *always `lmnp-port`.*\n- **Answer B:** Purely personal.  \n  **Rule:** *always exclude from business books (file personal).*\n- **Answer C:** Mixed or occasional use.  \n  **Rule:** *ask each time.*\n\n#### 4. Orélia Télécom (d7) | 1 document | 39.99 EUR\n**Question:** *“Should the Orélia Fibre invoice (d7) for 4 rue du Port be filed under LMNP Rennes or treated as personal?”*\n- **Answer A:** LMNP Rennes.  \n  **Rule:** *always `lmnp-port`.*\n- **Answer B:** Personal.  \n  **Rule:** *always exclude from business books (file personal).*\n- **Answer C:** Shared/occasional use.  \n  **Rule:** *ask each time.*\n\n*(Total: 4 questions, well within the 7-question limit.)*",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "For the Atelier Bois & Co documents (d5, d6), should they be allocated to LMNP Rennes or SELARL based on the site/work description?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Split: d5 to LMNP, d6 to SELARL",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "site_address_or_work_description",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "4 rue du Port, 35000 Rennes"
+                },
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "8 place du Marché, 35000 Rennes"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Both to SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Both to LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q2",
+        "text": "Should the Prévia contracts for Hélène (d1, d3) and Paul (d2) be filed as SELARL business expenses, or treated as personal/spouse matters?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Assurée : Mme Hélène Morel"
+          },
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "d1 & d3 to SELARL, d2 personal",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "insured_person",
+              "conditions": [
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Hélène Morel"
+                },
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Paul Morel"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.pension",
+                "subcategory": "insurance.provident"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "All to SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.pension",
+                "subcategory": "insurance.life"
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "All personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": "insurance.pension",
+                "subcategory": "insurance.life"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q3",
+        "text": "Is the joint account ending in …562 (d4) used for LMNP Rennes accounting or is it purely personal?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "Titulaire : M OU MME MOREL PAUL"
+          },
+          {
+            "doc_id": "d4",
+            "quote": "LOYER 4 RUE DU PORT MAI 650,00"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Used for LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Purely personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Mixed/occasional",
+            "rule_draft": {
+              "kind": "ask",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q4",
+        "text": "Should the Orélia Fibre invoice (d7) for 4 rue du Port be filed under LMNP Rennes or treated as personal?",
+        "evidence": [
+          {
+            "doc_id": "d7",
+            "quote": "ligne installée au 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "Titulaire : M. Paul Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d7"
+        ],
+        "impact": "low",
+        "options": [
+          {
+            "id": "a",
+            "label": "LMNP Rennes",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "telecom.bill",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": "telecom.bill",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Shared/occasional",
+            "rule_draft": {
+              "kind": "ask",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": "telecom.bill",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

@@ -1,0 +1,126 @@
+{
+  "tag": "fastc-b35-run1-en",
+  "locale": "en",
+  "order": [
+    "akashml",
+    "parasail",
+    "deepinfra"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 35.02,
+    "provider": "Parasail",
+    "budget_s": 35.0,
+    "stopped_early": true,
+    "t_first_reasoning": 1.08,
+    "t_first_content": null,
+    "reasoning_chars": 14678,
+    "content_chars": 0,
+    "usage": {
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "cost": null,
+      "reasoning_tokens": null
+    }
+  },
+  "pass2": {
+    "wall_s": 3.2,
+    "provider": "AkashML",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 6503,
+    "completion_tokens": 544,
+    "reasoning_tokens": 0,
+    "cost": 0.0011399
+  },
+  "total_wall_s": 38.21,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 1,
+    "evidence_quotes_verified": "3/3",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3"
+    ]
+  },
+  "analysis": "(Working notes, cut at the time budget)\nHere's a thinking process:\n\n1.  **Analyze User Input:**\n   - **Role:** Mona, back-office assistant of a dental practice.\n   - **Task:** Analyze unfiled documents for the owner.\n   - **Requirements:**\n     - For each document: state what makes it ambiguous and what facts would settle it.\n     - Group documents by same counterparty/ambiguity that one answer would settle.\n     - For each group: draft the question, 2-3 realistic answers, and the filing rule each implies (always X; depends on discriminator; or ask each time).\n     - Rank groups by number of documents and money affected. Max 7 questions.\n     - Format: Compact bullet list, under 250 words, no tables, no per-document walkthrough.\n     - Cite doc IDs and exact snippets.\n   - **Input Data:** 7 documents (d1-d7) with details, guesses, uncertainties, snippets, entities, categories.\n\n2.  **Deconstruct Requirements & Constraints:**\n   - *Under 250 words*: Very tight. Need to be extremely concise.\n   - *No per-document walkthrough*: Group first, then analyze.\n   - *Cite doc IDs and exact snippets*: Must include these in the analysis.\n   - *Structure per group*: Ambiguity & settlement fact -> Question -> 2-3 answers -> Filing rule per answer.\n   - *Rank by doc count & money*: d1, d3, d5, d6, d7, d2, d4 (roughly). Need to calculate totals per group.\n   - *Max 7 questions*: We have 7 docs, but can group them. I'll aim for 3-4 groups to save words.\n\n3.  **Identify Ambiguities & Groupings:**\n   - **Group 1: Prévia Assurances (d1, d2, d3)**\n     - *d1*: Personal pension (PER), but debited from SELARL account. Snippet: \"Prélèvement sur le compte FR76 3000...\". Fact needed: Is this a business expense or personal distribution?\n     - *d2*: Spouse's life insurance, same insurer. Snippet: \"Assuré : M. Paul Morel\". Fact needed: Is this personal or business-related? (Clearly personal, but needs confirmation for filing).\n     - *d3*: Practice subscribed provident cover for Hélène, debited from SELARL. Snippet: \"Souscripteur : SELARL... Cotisation annuelle : 1 184,00 €\". Fact needed: Confirm business expense status.\n     - *Grouping*: All Prévia. Ambiguity: Personal vs. Business allocation. One answer settles all.\n     - *Question*: \"Are Prévia contracts (d1 PER, d2 Vie, d3 Prévoyance Pro) exclusively personal, or are d1/d3 business expenses for the SELARL?\"\n     - *Answers & Rules*:\n       - All personal: Always file to `paul`/`helene` (personal insurance).\n       - d1/d3 business, d2 personal: Depends on contract type (pension/provident vs life).\n       - All business: Always file to `selarl-morel` (insurance.pension/provident).\n     - *Money*: d1 (520) + d3 (1184) = 1,704 EUR. d2 = 0. Total: 1,704 EUR. Docs: 3.\n\n   - **Group 2: Atelier Bois & Co (d5, d6)**\n     - *d5*: Invoice for works at LMNP address. Snippet: \"Chantier : 4 rue du Port\". Ambiguity: Site matches LMNP, but addressee is \"Mme Morel\". Fact needed: Confirm site/entity.\n     - *d6*: Quote for practice furniture. Snippet: \"Meuble de rangement salle de stérilisation\". Ambiguity: No site, addressee \"Dr Morel\". Fact needed: Confirm site/entity.\n     - *Grouping*: Same contractor. Ambiguity: SELARL vs LMNP allocation. One answer settles both.\n     - *Question*: \"For Atelier Bois & Co works (d5, d6), should d5 be billed to LMNP and d6 to SELARL, or both to the same entity?\"\n     - *Answers & Rules*:\n       - d5→LMNP, d6→SELARL: Depends on site address.\n       - Both→LMNP: Always file to `lmnp-port`.\n       - Both→SELARL: Always file to `selarl-morel`.\n     - *Money*: d5 (2340) + d6 (3910) = 6,250 EUR. Docs: 2.\n\n   - **Group 3: Personal/Joint Accounts & Telecom (d4, d7)**\n     - *d4*: Bank statement for joint account receiving LMNP rent. Snippet: \"Titulaire : M OU MME MOREL PAUL... LOYER 4 RUE DU PORT\". Ambiguity: Account not in registry, joint personal but holds business rent.\n     - *d7*: Telecom bill for LMNP flat, billed to Paul. Snippet: \"ligne installée au 4 rue du Port... Titulaire : M. Paul Morel\". Ambiguity: Personal name vs business site.\n     - *Grouping*: Both relate to LMNP flat operations vs personal. Ambiguity: Should LMNP-related personal bills be assigned to `lmnp-port` or kept personal?\n     - *Question*: \"For d4 (bank) and d7 (telecom) linked to 4 rue du Port, should they be assigned to the LMNP entity or remain personal?\"\n     - *Answers & Rules*:\n       - Both LMNP: Always file to `lmnp-port`.\n       - Both personal: Always file to `paul`/`helene`.\n       - Mixed: Depends on account/bill type.\n     - *Money*: d4 (0 explicit, but rent 650 mentioned), d7 (39.99). Total: ~690 EUR. Docs: 2.\n\n   Wait, I need to strictly follow: \"Group documents that one answer from the owner would settle together (same counterparty, same ambiguity).\"\n   Let's check groups:\n   - Prévia (d1,d2,d3): Same counterparty. Ambiguity: personal vs business.\n   - Atelier Bois (d5,d6): Same counterparty. Ambiguity: SELARL vs LMNP.\n   - d4 & d7: Different counterparties (Banque Rivage, Orélia). Can they be grouped? The prompt says \"same counterparty, same ambiguity\". So d4 and d7 shouldn't be grouped if counterparties differ. I'll keep them separate or group only if same counterparty. Actually, I'll just do 3 groups max to save words, or stick to Prévia and Atelier Bois. d4 and d7 are minor. I'll combine them into one group about \"LMNP personal-adjacent docs\" but the prompt says same counterparty. I'll just group Prévia and Atelier Bois. That's 2 groups. I can add d4/d7 as a third group if needed, but max 7 questions is fine. I'll stick to 2 main groups + 1 minor to be safe, or just 2 groups. Let's count words carefully.\n\n   Let's refine Group 1 (Prévia: d1, d2, d3):\n   - Ambiguity: Personal vs business allocation. Settlement: Confirm if PER/d3 are business expenses.\n   - Question: \"Are Prévia contracts d1 (PER), d2 (Vie), and d3 (Prévoyance Pro) personal, or should d1/d3 be booked to the SELARL?\"\n   - Answers/Rules:\n     - All personal: Always file to `helene`/`paul` (insurance.life/pension).\n     - d1/d3 business, d2 personal: Depends on contract type (pension/provident vs life).\n     - All business: Always file to `selarl-morel` (insurance.pension/provident).\n   - Money: 1,704 EUR. Docs: 3.\n\n   Group 2 (Atelier Bois: d5, d6):\n   - Ambiguity: SELARL vs LMNP site allocation. Settlement: Confirm project sites.\n   - Question: \"For Atelier Bois & Co works (d5, d6), should d5 (4 rue du Port) go to LMNP and d6 (stérilisation) to SELARL, or both to one entity?\"\n   - Answers/Rules:\n     - d5→LMNP, d6→SELARL: Depends on site address.\n     - Both→LMNP: Always file to `lmnp-port`.\n     - Both→SELARL: Always file to `selarl-morel`.\n   - Money: 6,250 EUR. Docs: 2.\n\n   Group 3 (d4, d7): Different counterparties, but same underlying ambiguity (LMNP personal-adjacent). I'll skip grouping them to strictly follow \"same counterparty\", or I'll just list them as a minor group. Actually, I'll just do 2 groups to save words, or combine d4/d7 into a \"LMNP personal bills\" group but note they share the \"LMNP vs personal\" ambiguity. The prompt says \"same counterparty, same ambiguity\". I'll stick to 2 groups. Wait, d4 and d7 are low value. I'll just present 2 groups. That's fine.\n\n   Let's count words and ensure formatting matches exactly.\n   Structure:\n   - Group 1 (Prévia: d1, d2, d3) [Rank 2: 3 docs, 1 704 €]\n     - Ambiguity: Personal vs business allocation. Settlement: Confirm if d1/d3 are business expenses.\n     - Question: \"Are Prévia contracts d1 (PER), d2 (Vie), and d3 (Prévoyance Pro) personal, or should d1/d3 be booked to the SELARL?\"\n     - Answers & Rules:\n       - All personal: Always file to `helene`/`paul` (insurance.life/pension).\n       - d1/d3 business, d2 personal: Depends on contract type.\n       - All business: Always file to `selarl-morel` (insurance.pension/provident).\n   - Group 2 (Atelier Bois: d5, d6) [Rank 1: 2 docs, 6 250 €]\n     - Ambiguity: SELARL vs LMNP site allocation. Settlement: Confirm project sites.\n     - Question: \"For Atelier Bois & Co works (d5, d6), should d5 (4 rue du Port) go to LMNP and d6 (stérilisation) to SELARL, or both to one entity?\"\n     - Answers & Rules:\n       - d5→LMNP, d6→SELARL: Depends on site address.\n       - Both→LMNP: Always file to `lmnp-port`.\n       - Both→SELARL: Always file to `selarl-morel`.\n   - Group 3 (d4, d7) [Rank 3: 2 docs, ~690 €]\n     - Ambiguity: LMNP personal-adjacent billing. Settlement: Confirm entity assignment for flat-linked docs.\n     - Question: \"For d4 (bank) and d7 (telecom) linked to 4 rue du Port, should they be assigned to LMNP or remain personal?\"\n     - Answers & Rules:\n       - Both LMNP: Always file to `lmnp-port`.\n       - Both personal: Always file to `paul`/`helene`.\n       - Mixed: Depends on account/bill type.\n\n   Check constraints:\n   - \"For each document, say what makes it ambiguous and which facts would settle it.\" -> I need to explicitly state this per doc or per group? The prompt says \"For each document, say what makes it ambiguous and which facts would settle it.\" then \"Group documents...\". I'll integrate the doc-level ambiguity into the group description to save words, or list them briefly. Given the 250-word limit, I'll be very tight.\n   - \"cite the document ids and the exact snippet that supports each point.\" -> I must include snippets.\n   - \"Rank the groups by how many documents and how much money they affect.\" -> I'll rank them.\n   - \"At most 7 questions.\" -> I have 3.\n   - \"Under 250 words; no tables, no per-document walkthrough.\"\n\n   Let's draft carefully, counting words.\n\n   Draft:\n   **Group 1: Prévia Assurances (d1, d2, d3) | Rank 2 (3 docs, 1 704 €)**\n   - *Ambiguity & Settlement*: d1 debited from SELARL but named \"Assurée : Mme Hélène Morel\" (PER); d3 \"Souscripteur : SELARL\" but covers Hélène; d2 \"Assuré : M. Paul Morel\". Fact: Confirm if d1/d3 are business expenses.\n   - *Question*: \"Are Prévia contracts d1 (PER), d2 (Vie), and d3 (Prévoyance Pro) personal, or should d1/d3 be booked to the SELARL?\"\n   - *Answers & Rules*:\n     - All personal: Always file to `helene`/`paul` (insurance.life/pension).\n     - d1/d3 business, d2 personal: Depends on contract type.\n     - All business: Always file to `selarl-morel` (insurance.pension/provident).\n\n   **Group 2: Atelier Bois & Co (d5, d6) | Rank 1 (2 docs, 6 250 €)**\n   - *Ambiguity & Settlement*: d5 \"Chantier : 4 rue du Port\" but addressee \"Mme Morel\"; d6 \"Meuble de rangement salle de stérilisation\" but addressee \"Dr Morel\". Fact: Confirm project sites.\n   - *Question*: \"For Atelier Bois & Co works (d5, d6), should d5 go to LMNP and d6 to SELARL, or both to one entity?\"\n   - *Answers & Rules*:\n     - d5→LMNP, d6→SELARL: Depends on site address.\n     - Both→LMNP: Always file to `lmnp-port`.\n     - Both→SELARL: Always file to `selarl-morel`.\n\n   **Group 3: LMNP Personal-Adjacent (d4, d7) | Rank 3 (2 docs, ~690 €)**\n   - *Ambiguity & Settlement*: d4 \"Titulaire : M OU MME MOREL PAUL\" holds LMNP rent; d7 \"Titulaire : M. Paul Morel\" but \"ligne installée au 4 rue du Port\". Fact: Confirm entity assignment for flat-linked docs.\n   - *Question*: \"For d4 (bank) and d7 (telecom) linked to 4 rue du Port, should they be assigned to LMNP or remain personal?\"\n   - *Answers & Rules*:\n     - Both LMNP: Always file to `lmnp-port`.\n     - Both personal: Always file to `paul`/`helene`.\n     - Mixed: Depends on account/bill type.\n\n   Word count check:\n   Group 1: ~78\n   Group 2: ~76\n   Group 3: ~78\n   Total: ~232 words. Very close to 250. I need to trim slightly to be safe.\n   Let's count exactly.\n   \"Group 1: Prévia Assurances (d1, d2, d3) | Rank 2 (3 docs, 1 704 €)\n   - Ambiguity & Settlement: d1 debited from SELARL but \"Assurée : Mme Hélène Morel\"; d3 \"Souscripteur : SELARL\" covers Hélène; d2 \"Assuré : M. Paul Morel\". Fact: Confirm if d1/d3 are business expenses.\n   - Question: \"Are Prévia contracts d1 (PER), d2 (Vie), and d3 (Prévoyance Pro) personal, or should d1/d3 be booked to the SELARL?\"\n   - Answers & Rules: All personal → Always file to `helene`/`paul`. d1/d3 business, d2 personal → Depends on contract type. All business → Always file to `selarl-morel`.\n\n   Group 2: Atelier Bois & Co (d5, d6) | Rank 1 (2 docs, 6 250 €)\n   - Ambiguity & Settlement: d5 \"Chantier : 4 rue du Port\" but addressee \"Mme Morel\"; d6 \"Meuble de rangement salle de stérilisation\" but addressee \"Dr Morel\". Fact: Confirm project sites.\n   - Question: \"For Atelier Bois & Co works (d5, d6), should d5 go to LMNP and d6 to SELARL, or both to one entity?\"\n   - Answers & Rules: d5→LMNP, d6→SELARL → Depends on site address. Both→LMNP → Always file to `lmnp-port`. Both→SELARL → Always file to `selarl-morel`.\n\n   Group 3: LMNP Personal-Adjacent (d4, d7) | Rank 3 (2 docs, ~690 €)\n   - Ambiguity & Settlement: d4 \"Titulaire : M OU MME MOREL PAUL\" holds LMNP rent; d7 \"Titulaire : M. Paul Morel\" but \"ligne installée au 4 rue du Port\". Fact: Confirm entity assignment for flat-linked docs.\n   - Question: \"For d4 (bank) and d7 (telecom) linked to 4 rue du Port, should they be assigned to LMNP or remain personal?\"\n   - Answers & Rules: Both LMNP → Always file to `lmnp-port`. Both personal → Always file to `paul`/`helene`. Mixed → Depends on account/bill type.\"\n\n   Word count: ~218. Perfect.\n   Checks:\n   - For each document, say what makes it ambiguous and which facts would settle it. -> Covered in each group's \"Ambiguity & Settlement\" line, citing doc IDs and snippets.\n   - Group documents that one answer settles together. -> Done.\n   - For each group, draft question, 2-3 realistic answers, filing rule each implies. -> Done.\n   - Rank groups by doc count and money. -> Done (Rank 1, 2, 3).\n   - At most 7 questions. -> 3 questions.\n   - Concrete, brief, cite doc ids and exact snippets. -> Done.\n   - Compact bullet list, under 250 words, no tables, no per-document walkthrough. -> Done.\n   One minor adjustment: The prompt says \"For each document, say what makes it ambiguous and which facts would settle it.\" I should make sure each doc is explicitly mentioned in the ambiguity section. I'll tweak slightly to ensure each doc ID is clearly tied to its snippet and ambiguity.\n   Let's adjust Group 1 slightly to explicitly cover d1, d2, d3:\n   \"- Ambiguity: d1 \"Prélèvement sur le compte FR76...\" debited from SELARL but is personal PER; d2 \"Assuré : M. Paul Morel\" is spouse's life policy; d3 \"Souscripteur : SELARL\" is practice-paid provident cover. Fact: Confirm business vs personal allocation.\"\n   This covers all three.\n   Group 2: \"- Ambiguity: d5 \"Chantier : 4 rue du Port\" matches LMNP but addressee is personal; d6 \"Meuble de rangement salle de stérilisation\" implies practice but addressee is 'Dr Morel'. Fact: Confirm project sites.\"\n   Group 3:\n",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Are Prévia contracts d1 (PER), d2 (Vie), and d3 (Prévoyance Pro) personal, or should d1/d3 be booked to the SELARL?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "All personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "insurance.pension"
+                }
+              ],
+              "action": {
+                "entity": "helene",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "a",
+            "label": "All personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "insurance.pension"
+                }
+              ],
+              "action": {
+                "entity": "helene",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

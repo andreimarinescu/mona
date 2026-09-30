@@ -1,0 +1,149 @@
+{
+  "prompt": "A patient asks whether they can pay a 1,850 EUR treatment in three instalments. Draft a two-sentence friendly reply from the practice manager.",
+  "rows": [
+    {
+      "route": "coreweave",
+      "mode": "think",
+      "rep": 0,
+      "served_by": "CoreWeave",
+      "error": null,
+      "t_first_reasoning": 0.63,
+      "t_first_content": 5.08,
+      "wall_s": 5.32,
+      "completion_tokens": 637,
+      "reasoning_tokens": 588,
+      "tok_per_s": 135.9,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "coreweave",
+      "mode": "no_think",
+      "rep": 0,
+      "served_by": "CoreWeave",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.43,
+      "wall_s": 0.98,
+      "completion_tokens": 58,
+      "reasoning_tokens": 0,
+      "tok_per_s": 104.8,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "siliconflow",
+      "mode": "think",
+      "rep": 0,
+      "served_by": "SiliconFlow",
+      "error": null,
+      "t_first_reasoning": 0.62,
+      "t_first_content": 6.2,
+      "wall_s": 6.58,
+      "completion_tokens": 829,
+      "reasoning_tokens": 763,
+      "tok_per_s": 139.2,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "siliconflow",
+      "mode": "no_think",
+      "rep": 0,
+      "served_by": "SiliconFlow",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 1.05,
+      "wall_s": 1.53,
+      "completion_tokens": 55,
+      "reasoning_tokens": 0,
+      "tok_per_s": 116.1,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "coreweave",
+      "mode": "think",
+      "rep": 1,
+      "served_by": "CoreWeave",
+      "error": null,
+      "t_first_reasoning": 0.44,
+      "t_first_content": 7.4,
+      "wall_s": 7.72,
+      "completion_tokens": 1034,
+      "reasoning_tokens": 985,
+      "tok_per_s": 141.9,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "coreweave",
+      "mode": "no_think",
+      "rep": 1,
+      "served_by": "CoreWeave",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 0.46,
+      "wall_s": 0.78,
+      "completion_tokens": 30,
+      "reasoning_tokens": 0,
+      "tok_per_s": 93.1,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    },
+    {
+      "route": "siliconflow",
+      "mode": "think",
+      "rep": 1,
+      "served_by": "SiliconFlow",
+      "error": null,
+      "t_first_reasoning": 1.16,
+      "t_first_content": 14.96,
+      "wall_s": 15.41,
+      "completion_tokens": 1303,
+      "reasoning_tokens": 1252,
+      "tok_per_s": 91.4,
+      "delta_keys": [
+        "content",
+        "reasoning",
+        "reasoning_details",
+        "role"
+      ]
+    },
+    {
+      "route": "siliconflow",
+      "mode": "no_think",
+      "rep": 1,
+      "served_by": "SiliconFlow",
+      "error": null,
+      "t_first_reasoning": null,
+      "t_first_content": 1.12,
+      "wall_s": 1.58,
+      "completion_tokens": 53,
+      "reasoning_tokens": 0,
+      "tok_per_s": 114.7,
+      "delta_keys": [
+        "content",
+        "role"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "_note": "Synthetic S6 fixture: fictional practice, people, companies and identifiers.",
+  "registry": {
+    "entities": [
+      {"id": "selarl-morel", "name": "SELARL Cabinet Dentaire Morel", "kind": "business", "legal_form": "SELARL", "siren": "900 000 001", "address": "8 place du Marché, 35000 Rennes", "fy_end": "12-31", "people": ["Hélène Morel"], "accounts": ["FR76 3000 4000 0100 0000 0932 118"]},
+      {"id": "lmnp-port", "name": "LMNP Rennes — Rue du Port", "kind": "business", "legal_form": "LMNP", "address": "4 rue du Port, 35000 Rennes", "fy_end": "12-31", "people": ["Hélène Morel", "Paul Morel"], "accounts": []},
+      {"id": "helene", "name": "Hélène Morel", "kind": "person", "address": "12 rue des Lilas, 35510 Cesson-Sévigné"},
+      {"id": "paul", "name": "Paul Morel", "kind": "person", "address": "12 rue des Lilas, 35510 Cesson-Sévigné"}
+    ],
+    "categories": ["insurance.pension", "insurance.life", "insurance.provident", "insurance.professional", "bank.statement", "supplier.invoice", "works.invoice", "works.quote", "telecom.bill"]
+  },
+  "documents": [
+    {
+      "doc_id": "d1", "counterparty": "Prévia Assurances", "doc_type": "avis d'échéance", "doc_date": "2025-04-14", "amount": "520.00 EUR", "addressee": "Mme Hélène Morel, 12 rue des Lilas, 35510 Cesson-Sévigné",
+      "snippets": ["Contrat Prévia Retraite PER n° PR-7741-02", "Assurée : Mme Hélène Morel", "Cotisation annuelle : 520,00 €", "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"],
+      "guess": {"entity": "selarl-morel", "category": "insurance.pension", "confidence": 0.55},
+      "uncertainty": "Personal pension contract of the owner, but the premium is debited from the SELARL account."
+    },
+    {
+      "doc_id": "d2", "counterparty": "Prévia Assurances", "doc_type": "relevé de situation annuel", "doc_date": "2025-03-02", "amount": null, "addressee": "M. Paul Morel, 12 rue des Lilas, 35510 Cesson-Sévigné",
+      "snippets": ["Contrat Prévia Vie Épargne n° PV-2290-11", "Assuré : M. Paul Morel", "Valeur de rachat au 31/12/2024 : 18 412,37 €"],
+      "guess": {"entity": "paul", "category": "insurance.life", "confidence": 0.62},
+      "uncertainty": "Same insurer as the practice contracts; insured person is the owner's spouse, who has no business entity."
+    },
+    {
+      "doc_id": "d3", "counterparty": "Prévia Assurances", "doc_type": "avis d'échéance", "doc_date": "2025-04-14", "amount": "1 184.00 EUR", "addressee": "SELARL Cabinet Dentaire Morel, 8 place du Marché, 35000 Rennes",
+      "snippets": ["Contrat Prévia Prévoyance Pro n° PP-5518-07", "Assurée : Dr Hélène Morel", "Souscripteur : SELARL Cabinet Dentaire Morel", "Cotisation annuelle : 1 184,00 €"],
+      "guess": {"entity": "selarl-morel", "category": "insurance.provident", "confidence": 0.58},
+      "uncertainty": "Provident cover for the owner herself, but subscribed and paid by the SELARL."
+    },
+    {
+      "doc_id": "d4", "counterparty": "Banque Rivage", "doc_type": "relevé de compte", "doc_date": "2025-05-31", "amount": null, "addressee": "M OU MME MOREL PAUL",
+      "snippets": ["Relevé de compte n° 5 du 01/05/2025 au 31/05/2025", "Compte courant FR76 1470 7000 2200 0044 7100 562", "Titulaire : M OU MME MOREL PAUL", "LOYER 4 RUE DU PORT MAI 650,00"],
+      "guess": {"entity": null, "category": "bank.statement", "confidence": 0.35},
+      "uncertainty": "Account number not in the registry; joint personal account, but it receives the rent of the LMNP flat."
+    },
+    {
+      "doc_id": "d5", "counterparty": "Atelier Bois & Co", "doc_type": "facture", "doc_date": "2025-06-20", "amount": "2 340.00 EUR", "addressee": "Mme Morel, 4 rue du Port, 35000 Rennes",
+      "snippets": ["Facture F-2025-0612", "Aménagement placard entrée et étagères cuisine", "Chantier : 4 rue du Port, 35000 Rennes", "Total TTC : 2 340,00 €"],
+      "guess": {"entity": "lmnp-port", "category": "works.invoice", "confidence": 0.6},
+      "uncertainty": "Carpenter used by both the practice and the rental flat; site address matches the LMNP."
+    },
+    {
+      "doc_id": "d6", "counterparty": "Atelier Bois & Co", "doc_type": "devis", "doc_date": "2025-07-08", "amount": "3 910.00 EUR", "addressee": "Dr Morel",
+      "snippets": ["Devis D-2025-0233", "Meuble de rangement salle de stérilisation", "Total TTC : 3 910,00 €"],
+      "guess": {"entity": "selarl-morel", "category": "works.quote", "confidence": 0.5},
+      "uncertainty": "No site address; the work description points to the practice but the addressee is just 'Dr Morel'."
+    },
+    {
+      "doc_id": "d7", "counterparty": "Orélia Télécom", "doc_type": "facture", "doc_date": "2025-06-05", "amount": "39.99 EUR", "addressee": "M. Paul Morel",
+      "snippets": ["Offre Box Fibre — ligne installée au 4 rue du Port, 35000 Rennes", "Montant du mois : 39,99 €", "Titulaire : M. Paul Morel"],
+      "guess": {"entity": "paul", "category": "telecom.bill", "confidence": 0.45},
+      "uncertainty": "Internet box at the LMNP flat, billed to the spouse personally."
+    }
+  ]
+}

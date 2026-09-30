@@ -1,0 +1,280 @@
+{
+  "tag": "fastc-run3-en",
+  "locale": "en",
+  "order": [
+    "akashml",
+    "parasail",
+    "deepinfra"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 50.2,
+    "provider": "AkashML",
+    "t_first_reasoning": 0.47,
+    "t_first_content": 42.65,
+    "reasoning_chars": 20335,
+    "content_chars": 1654,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 6604,
+      "cost": 0.0061429,
+      "reasoning_tokens": 5367
+    }
+  },
+  "pass2": {
+    "wall_s": 20.2,
+    "provider": "Parasail",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2530,
+    "completion_tokens": 1597,
+    "reasoning_tokens": 0,
+    "cost": 0.0019765
+  },
+  "total_wall_s": 70.4,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 3,
+    "evidence_quotes_verified": "7/7",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "\n\n• **Group 1: Atelier Bois & Co (d5, d6) | €6 250**\n  - *d5*: Ambiguous between LMNP/practice; settled by confirming site. Snippet: 'Chantier : 4 rue du Port'.\n  - *d6*: Ambiguous due to 'Dr Morel' addressee & no site; settled by confirming room location. Snippet: 'Meuble de rangement salle de stérilisation'.\n  - *Question*: “Do these apply to the practice or LMNP?”\n  - *Answers/Rules*: “Practice” → always `selarl-morel`; “Flat” → always `lmnp-port`; “Both” → depends on site address.\n\n• **Group 2: Prévia Assurances (d1, d3) | €1 704**\n  - *d1*: Debited from SELARL but names Hélène; settled by reimbursement status. Snippet: 'Prélèvement sur le compte FR76...'.\n  - *d3*: SELARL subscriber but Hélène insured; settled by benefit nature. Snippet: 'Souscripteur : SELARL...'.\n  - *Question*: “Are these Hélène premiums practice expenses or personal?”\n  - *Answers/Rules*: “Practice” → always `selarl-morel`; “Personal” → always `helene`; “Mixed” → depends on the insured person.\n\n• **Group 3: Paul/LMNP items (d2, d4, d7) | €19 062+**\n  - *d2*: Paul’s personal contract; settled by confirming no business entity. Snippet: 'Assuré : M. Paul Morel'.\n  - *d4*: Joint account receiving rent; settled by account purpose. Snippet: 'LOYER 4 RUE DU PORT MAI 650,00'.\n  - *d7*: Paul’s telecom at LMNP address; settled by subscriber vs site. Snippet: 'ligne installée au 4 rue du Port'.\n  - *Question*: “Are these personal, LMNP, or practice-related?”\n  - *Answers/Rules*: “Personal” → always `paul`; “LMNP” → always `lmnp-port`; “Practice” → always `selarl-morel`.\n\nRanked by impact: Group 3 (€19k+, 3 docs), Group 1 (€6.2k, 2 docs), Group 2 (€1.7k, 2 docs).",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Are the items related to Paul and the LMNP flat (d2, d4, d7) personal expenses, LMNP business expenses, or practice-related?",
+        "evidence": [
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          },
+          {
+            "doc_id": "d4",
+            "quote": "LOYER 4 RUE DU PORT MAI 650,00"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "ligne installée au 4 rue du Port, 35000 Rennes"
+          }
+        ],
+        "affected_doc_ids": [
+          "d2",
+          "d4",
+          "d7"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "paul",
+                "category": null,
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": null,
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Practice",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q2",
+        "text": "Do the Atelier Bois & Co works (d5, d6) apply to the practice or the LMNP flat?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Practice",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": null,
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Flat",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": null,
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Both",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "8 place du Marché, 35000 Rennes"
+                },
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "4 rue du Port, 35000 Rennes"
+                }
+              ],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      },
+      {
+        "id": "q3",
+        "text": "Are the Prévia Assurances premiums (d1, d3) Hélène's personal expenses or practice expenses?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d3"
+        ],
+        "impact": "low",
+        "options": [
+          {
+            "id": "a",
+            "label": "Practice",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": null,
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "helene",
+                "category": null,
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Mixed",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "insured_person",
+              "conditions": [
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Hélène Morel"
+                },
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "SELARL"
+                }
+              ],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

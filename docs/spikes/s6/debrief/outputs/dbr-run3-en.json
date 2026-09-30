@@ -1,0 +1,272 @@
+{
+  "tag": "dbr-run3-en",
+  "locale": "en",
+  "order": [
+    "akashml",
+    "coreweave",
+    "siliconflow"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 32.19,
+    "provider": "AkashML",
+    "budget_s": null,
+    "stopped_early": false,
+    "t_first_reasoning": 0.54,
+    "t_first_content": 29.04,
+    "reasoning_chars": 14137,
+    "content_chars": 1793,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 4718,
+      "cost": 0.0044455,
+      "reasoning_tokens": 3722
+    }
+  },
+  "pass2": {
+    "wall_s": 8.84,
+    "provider": "AkashML",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2580,
+    "completion_tokens": 1591,
+    "reasoning_tokens": 0,
+    "cost": 0.0016899
+  },
+  "total_wall_s": 41.03,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 3,
+    "evidence_quotes_verified": "7/7",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "\n\n**1. Atelier Bois & Co (d5, d6) | 2 docs, 6 250 €**\n- d5: Addressee “Mme Morel” clashes with snippet “Chantier : 4 rue du Port”. Settled by flat ownership confirmation.\n- d6: Addressee “Dr Morel” clashes with snippet “salle de stérilisation”. Settled by practice site confirmation.\n- Q: “Should d5 be filed to LMNP, and d6 to SELARL?”\n- A1: “Yes.” → Always file d5 to lmnp-port, d6 to selarl-morel.\n- A2: “Both SELARL.” → Always file to selarl-morel.\n- A3: “Mixed/Personal.” → Depends on a discriminator such as the site address; or ask each time.\n\n**2. Prévia Assurances (d1, d2, d3) | 3 docs, 1 704 €**\n- d1: Snippet “Prélèvement sur le compte FR76…118” (SELARL) clashes with “Assurée : Mme Hélène Morel”. Settled by benefit classification.\n- d2: Snippet “Assuré : M. Paul Morel” shows spouse savings. Settled by confirming personal status.\n- d3: Snippet “Souscripteur : SELARL…”, “Assurée : Dr Hélène Morel”. Settled by business-deductibility.\n- Q: “Are Hélène’s pension (d1) & provident (d3) business-deductible, and is Paul’s savings (d2) personal?”\n- A1: “Yes.” → Always file d1/d3 to selarl-morel, d2 to paul.\n- A2: “All personal.” → Always file to individuals.\n- A3: “Partially business.” → Depends on a discriminator such as the insured person; or ask each time.\n\n**3. Banque Rivage & Orélia (d4, d7) | 2 docs, ~690 €**\n- d4: Snippet “LOYER 4 RUE DU PORT” on unregistered joint account. Settled by account ownership.\n- d7: Snippet “ligne installée au 4 rue du Port” billed to Paul. Settled by expense allocation.\n- Q: “Are the LMNP rent receipt (d4) and internet bill (d7) LMNP business expenses?”\n- A1: “Yes.” → Always file to lmnp-port.\n- A2: “No, personal.” → Always file to paul/helene.\n- A3: “Depends.” → Depends on a discriminator such as the insured person; or ask each time.",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Should the carpenter invoice for the flat (d5) be filed to LMNP Rennes, and the quote for the practice (d6) to SELARL Morel?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, separate them",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "facture"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Both to SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "works.invoice",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Ask each time",
+            "rule_draft": {
+              "kind": "ask",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q2",
+        "text": "Are Hélène’s pension (d1) and provident (d3) contracts business-deductible expenses for SELARL, while Paul’s savings (d2) are personal?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          },
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, d1/d3 business, d2 personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": "doc_id",
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "avis d'échéance"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "All personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "helene",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Ask each time",
+            "rule_draft": {
+              "kind": "ask",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q3",
+        "text": "Should the LMNP rent receipt (d4) and the internet bill for the flat (d7) be classified as LMNP business expenses?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "LOYER 4 RUE DU PORT MAI 650,00"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "ligne installée au 4 rue du Port, 35000 Rennes"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4",
+          "d7"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, both LMNP expenses",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "No, personal expenses",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "paul",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Ask each time",
+            "rule_draft": {
+              "kind": "ask",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

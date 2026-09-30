@@ -1,0 +1,300 @@
+{
+  "tag": "dbr-run2-en",
+  "locale": "en",
+  "order": [
+    "akashml",
+    "coreweave",
+    "siliconflow"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 40.52,
+    "provider": "AkashML",
+    "budget_s": null,
+    "stopped_early": false,
+    "t_first_reasoning": 0.47,
+    "t_first_content": 37.68,
+    "reasoning_chars": 18709,
+    "content_chars": 1685,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 6158,
+      "cost": 0.0056423,
+      "reasoning_tokens": 4842
+    }
+  },
+  "pass2": {
+    "wall_s": 8.87,
+    "provider": "AkashML",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2529,
+    "completion_tokens": 1802,
+    "reasoning_tokens": 0,
+    "cost": 0.0018747
+  },
+  "total_wall_s": 49.39,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 4,
+    "evidence_quotes_verified": "7/7",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "\n\n• **Atelier Bois & Co (d5, d6 | €6 250)**\n  - *Ambiguity/Settlement:* d5 (`\"Chantier : 4 rue du Port\"`) and d6 (`\"Meuble de rangement salle de stérilisation\"`) lack clear entity linkage. Settles if owner confirms d5 is LMNP and d6 is SELARL.\n  - *Q:* Are the 4 rue du Port install and sterilization cabinet respectively for LMNP and SELARL?\n  - *A/Rules:* Yes → always file d5 as `lmnp-port/works.invoice`, d6 as `selarl-morel/works.quote`. No → depends on discriminator (site address).\n• **Prévia Assurances (d1, d2, d3 | €1 704 + €18 412 value)**\n  - *Ambiguity/Settlement:* d1 (`\"Prélèvement sur le compte FR76...\"`), d2 (`\"Assuré : M. Paul Morel\"`), and d3 (`\"Souscripteur : SELARL\"`) mix personal/business. Settles if owner confirms d1/d3 are business, d2 is personal.\n  - *Q:* Confirm d1/d3 are business provident/pension, and d2 is purely personal?\n  - *A/Rules:* Yes → always file d1/d3 as `selarl-morel/insurance.*`, d2 as `paul/insurance.life`. Mixed → depends on discriminator (insured person).\n• **Banque Rivage (d4 | €650 rent)**\n  - *Ambiguity/Settlement:* Joint personal account receives LMNP rent (`\"LOYER 4 RUE DU PORT MAI 650,00\"`). Settles if owner confirms account collects LMNP rents.\n  - *Q:* Is this account used to collect LMNP rents?\n  - *A/Rules:* Yes → always file as `lmnp-port/bank.statement`. No → depends on discriminator (account holder).\n• **Orélia Télécom (d7 | €40)**\n  - *Ambiguity/Settlement:* Fibre line at LMNP address billed to Paul (`\"Titulaire : M. Paul Morel\"`). Settles if owner confirms line is for LMNP.\n  - *Q:* Is this internet line for LMNP operations?\n  - *A/Rules:* Yes → always file as `lmnp-port/telecom.bill`. No → ask each time.",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Are the installation at 4 rue du Port (d5) and the sterilization cabinet (d6) respectively for the LMNP rental property and the SELARL dental practice?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, d5 is LMNP and d6 is SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "facture"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "No, different allocation",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "4 rue du Port"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q2",
+        "text": "Confirm that the pension contract (d1) and provident cover (d3) are business expenses for SELARL, while the life savings contract (d2) is purely personal for Paul?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, d1/d3 are business, d2 is personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "avis d'échéance"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Mixed or different",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "insured_person",
+              "conditions": [
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Hélène Morel"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.provident",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q3",
+        "text": "Is the joint personal account (d4) used specifically to collect rents for the LMNP property?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "LOYER 4 RUE DU PORT MAI 650,00"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, it collects LMNP rents",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "relevé de compte"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "No, it is a personal account",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "account_holder",
+              "conditions": [
+                {
+                  "field": "addressee",
+                  "op": "contains",
+                  "value": "Paul"
+                }
+              ],
+              "action": {
+                "entity": "paul",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      },
+      {
+        "id": "q4",
+        "text": "Is the internet line at 4 rue du Port (d7) used for LMNP operations?",
+        "evidence": [
+          {
+            "doc_id": "d7",
+            "quote": "Offre Box Fibre — ligne installée au 4 rue du Port, 35000 Rennes"
+          }
+        ],
+        "affected_doc_ids": [
+          "d7"
+        ],
+        "impact": "low",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, for LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "doc_type",
+                  "op": "equals",
+                  "value": "facture"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "telecom.bill",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "No, personal use",
+            "rule_draft": {
+              "kind": "ask",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

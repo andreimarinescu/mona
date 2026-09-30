@@ -1,0 +1,901 @@
+{
+  "pydantic_ai_version": "2.52.0",
+  "rows": [
+    {
+      "style": "openrouter_settings",
+      "sha12": "d946beb4fc08",
+      "label": "personal questionnaire",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 2.83,
+      "input_tokens": 2345,
+      "output_tokens": 162,
+      "reasoning_tokens": 0,
+      "cost": 0.00030255,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "null",
+        "category": "ok",
+        "counterparty": "null",
+        "doc_type": "ok",
+        "doc_date": "null",
+        "period_start": "null",
+        "period_end": "null",
+        "amount": "null",
+        "due_date": "null",
+        "addressee": "null"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "90f3898a7337",
+      "label": "accountant approval-of-accounts letter",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 7.62,
+      "input_tokens": 1586,
+      "output_tokens": 474,
+      "reasoning_tokens": 0,
+      "cost": 0.0007119,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "110c37b2aaa1",
+      "label": "insurer/pension notice (21 pp)",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 6.56,
+      "input_tokens": 2464,
+      "output_tokens": 466,
+      "reasoning_tokens": 0,
+      "cost": 0.0008356,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "paraphrase",
+        "category": "paraphrase",
+        "counterparty": "paraphrase",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "945a8bd4c054",
+      "label": "training-fund payment call",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 8.33,
+      "input_tokens": 1866,
+      "output_tokens": 583,
+      "reasoning_tokens": 0,
+      "cost": 0.0008629,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "ok",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "aaf7383d5692",
+      "label": "bank letter",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 7.67,
+      "input_tokens": 1701,
+      "output_tokens": 425,
+      "reasoning_tokens": 0,
+      "cost": 0.00068015,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "null",
+        "period_end": "null",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "2fa37b7d01cf",
+      "label": "insurance notice",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 3.55,
+      "input_tokens": 2698,
+      "output_tokens": 282,
+      "reasoning_tokens": 0,
+      "cost": 0.0006867,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "null",
+        "period_start": "null",
+        "period_end": "null",
+        "amount": "null",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "8701e7c358dc",
+      "label": "supplier invoice",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 7.47,
+      "input_tokens": 3647,
+      "output_tokens": 544,
+      "reasoning_tokens": 0,
+      "cost": 0.00109105,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "ok",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "c8bea28024ed",
+      "label": "car-rental receipt",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 10.03,
+      "input_tokens": 1673,
+      "output_tokens": 459,
+      "reasoning_tokens": 0,
+      "cost": 0.00070995,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "near_miss",
+        "doc_type": "near_miss",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "paraphrase",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "0ee7c1361fce",
+      "label": "local purchase invoice",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 3.87,
+      "input_tokens": 1781,
+      "output_tokens": 253,
+      "reasoning_tokens": 0,
+      "cost": 0.00041455,
+      "category_ok": false,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "null",
+        "period_start": "null",
+        "period_end": "null",
+        "amount": "null",
+        "due_date": "null",
+        "addressee": "null"
+      }
+    },
+    {
+      "style": "openrouter_settings",
+      "sha12": "437dfdbb789d",
+      "label": "payroll declaration (DSN)",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "enabled": false
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 7.96,
+      "input_tokens": 2156,
+      "output_tokens": 455,
+      "reasoning_tokens": 0,
+      "cost": 0.0007784,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "wrong_page",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "wrong_page"
+      }
+    },
+    {
+      "style": "unified_thinking_false",
+      "sha12": "d946beb4fc08",
+      "label": "personal questionnaire",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "effort": "none"
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 6.11,
+      "input_tokens": 2345,
+      "output_tokens": 162,
+      "reasoning_tokens": 0,
+      "cost": 0.00030255,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "null",
+        "category": "ok",
+        "counterparty": "null",
+        "doc_type": "ok",
+        "doc_date": "null",
+        "period_start": "null",
+        "period_end": "null",
+        "amount": "null",
+        "due_date": "null",
+        "addressee": "null"
+      }
+    },
+    {
+      "style": "unified_thinking_false",
+      "sha12": "90f3898a7337",
+      "label": "accountant approval-of-accounts letter",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "effort": "none"
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 7.52,
+      "input_tokens": 1586,
+      "output_tokens": 474,
+      "reasoning_tokens": 0,
+      "cost": 0.0007119,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "unified_thinking_false",
+      "sha12": "110c37b2aaa1",
+      "label": "insurer/pension notice (21 pp)",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "reasoning": {
+          "effort": "none"
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "Parasail",
+      "wall_s": 7.45,
+      "input_tokens": 2464,
+      "output_tokens": 468,
+      "reasoning_tokens": 0,
+      "cost": 0.0006264,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "paraphrase",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openai_compat",
+      "sha12": "d946beb4fc08",
+      "label": "personal questionnaire",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "reasoning": {
+          "enabled": false
+        },
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "openai",
+      "wall_s": 2.82,
+      "input_tokens": 2345,
+      "output_tokens": 162,
+      "reasoning_tokens": 0,
+      "cost": 0.0005137499999999999,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "null",
+        "category": "ok",
+        "counterparty": "null",
+        "doc_type": "ok",
+        "doc_date": "null",
+        "period_start": "null",
+        "period_end": "null",
+        "amount": "null",
+        "due_date": "null",
+        "addressee": "null"
+      }
+    },
+    {
+      "style": "openai_compat",
+      "sha12": "90f3898a7337",
+      "label": "accountant approval-of-accounts letter",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "reasoning": {
+          "enabled": false
+        },
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "openai",
+      "wall_s": 5.54,
+      "input_tokens": 1586,
+      "output_tokens": 474,
+      "reasoning_tokens": 0,
+      "cost": 0.0007118999999999999,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "ok",
+        "category": "ok",
+        "counterparty": "ok",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "ok",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    },
+    {
+      "style": "openai_compat",
+      "sha12": "110c37b2aaa1",
+      "label": "insurer/pension notice (21 pp)",
+      "valid": true,
+      "error": null,
+      "request": {
+        "model": "qwen/qwen3.6-35b-a3b",
+        "max_tokens": 2000,
+        "stream": false,
+        "temperature": 0,
+        "reasoning": {
+          "enabled": false
+        },
+        "provider": {
+          "order": [
+            "parasail",
+            "deepinfra",
+            "akashml"
+          ],
+          "allow_fallbacks": false,
+          "require_parameters": true,
+          "quantizations": [
+            "fp8",
+            "fp16",
+            "bf16"
+          ]
+        },
+        "usage": {
+          "include": true
+        },
+        "response_format": {
+          "type": "json_schema",
+          "strict": true
+        }
+      },
+      "served_by": "openai",
+      "wall_s": 9.64,
+      "input_tokens": 2464,
+      "output_tokens": 416,
+      "reasoning_tokens": 0,
+      "cost": 0.0007856,
+      "category_ok": true,
+      "fields": {
+        "entity_hint": "paraphrase",
+        "category": "paraphrase",
+        "counterparty": "paraphrase",
+        "doc_type": "ok",
+        "doc_date": "ok",
+        "period_start": "ok",
+        "period_end": "ok",
+        "amount": "null",
+        "due_date": "null",
+        "addressee": "ok"
+      }
+    }
+  ]
+}

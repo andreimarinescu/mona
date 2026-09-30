@@ -1,0 +1,258 @@
+{
+  "tag": "fastc-run2-en",
+  "locale": "en",
+  "order": [
+    "akashml",
+    "parasail",
+    "deepinfra"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 19.15,
+    "provider": "AkashML",
+    "t_first_reasoning": 0.43,
+    "t_first_content": 17.57,
+    "reasoning_chars": 11234,
+    "content_chars": 1217,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 3616,
+      "cost": 0.0034473,
+      "reasoning_tokens": 2922
+    }
+  },
+  "pass2": {
+    "wall_s": 7.25,
+    "provider": "AkashML",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2362,
+    "completion_tokens": 1525,
+    "reasoning_tokens": 0,
+    "cost": 0.0016087
+  },
+  "total_wall_s": 26.4,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 3,
+    "evidence_quotes_verified": "6/6",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "**1. Atelier Bois & Co (d5, d6) — 2 docs, 6 250 EUR**\n- *Ambiguity:* d5 site matches LMNP (“Chantier : 4 rue du Port”) but addressee is personal; d6 addressee is “Dr Morel” with no site.\n- *Question:* Are both carpenter jobs for the rental flat or the practice?\n- *Answers/Rules:* Both for LMNP → always LMNP. Both for SELARL → always SELARL. Split → depends on site address.\n\n**2. Prévia Assurances (d1, d2, d3) — 3 docs, 1 704 EUR**\n- *Ambiguity:* d1 debited from SELARL (“Prélèvement sur le compte FR76…”) but contract is personal (“Assurée : Mme Hélène Morel”); d2 is personal; d3 is business (“Souscripteur : SELARL”).\n- *Question:* Should d1 be treated as a business expense despite the personal contract?\n- *Answers/Rules:* All personal → always personal. d1 is business → depends on insured person. Mixed → ask each time.\n\n**3. Banque Rivage & Orélia (d4, d7) — 2 docs, ~690 EUR**\n- *Ambiguity:* d4 joint account receives LMNP rent (“LOYER 4 RUE DU PORT”); d7 telecom billed to Paul at LMNP address (“ligne installée au 4 rue du Port”).\n- *Question:* Consolidate Paul/LMNP-linked items under the LMNP entity?\n- *Answers/Rules:* Yes → always LMNP. No → always personal. Partial → depends on transaction nature.",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Are both carpenter jobs (d5, d6) for the rental flat (LMNP) or the practice (SELARL)?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Dr Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Both for LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Both for SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "works.quote",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Split by site",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "4 rue du Port, 35000 Rennes"
+                },
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "8 place du Marché, 35000 Rennes"
+                }
+              ],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      },
+      {
+        "id": "q2",
+        "text": "Should the personal pension premium (d1) be treated as a business expense since it is debited from the SELARL account?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d1",
+            "quote": "Assurée : Mme Hélène Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Treat as business expense",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Treat as personal expense",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "helene",
+                "category": "insurance.pension",
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "b"
+      },
+      {
+        "id": "q3",
+        "text": "Should items linked to Paul or the LMNP address (d4, d7) be consolidated under the LMNP entity?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "LOYER 4 RUE DU PORT MAI 650,00"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "ligne installée au 4 rue du Port, 35000 Rennes"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4",
+          "d7"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Yes, consolidate under LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "No, keep as personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [],
+              "action": {
+                "entity": "paul",
+                "category": "bank.statement",
+                "subcategory": null
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Depends on transaction nature",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "transaction_type",
+              "conditions": [
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Banque Rivage"
+                },
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Orélia Télécom"
+                }
+              ],
+              "action": {
+                "entity": null,
+                "category": null,
+                "subcategory": null
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

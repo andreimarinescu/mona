@@ -1,0 +1,282 @@
+{
+  "tag": "fastc-run4-fr",
+  "locale": "fr",
+  "order": [
+    "akashml",
+    "parasail",
+    "deepinfra"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 34.67,
+    "provider": "AkashML",
+    "t_first_reasoning": 0.49,
+    "t_first_content": 33.41,
+    "reasoning_chars": 22710,
+    "content_chars": 1471,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 7100,
+      "cost": 0.0065893,
+      "reasoning_tokens": 5878
+    }
+  },
+  "pass2": {
+    "wall_s": 11.94,
+    "provider": "Parasail",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2448,
+    "completion_tokens": 1679,
+    "reasoning_tokens": 0,
+    "cost": 0.0020462
+  },
+  "total_wall_s": 46.6,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 3,
+    "evidence_quotes_verified": "7/7",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "\n\n• **1. Atelier Bois & Co (d5, d6) | €6 250 | 2 docs**\n  - *Ambiguity*: d5 targets \"4 rue du Port\" (LMNP) but addressee \"Mme Morel\"; d6 targets sterilization room but addressee \"Dr Morel\" with no site. Settle by confirming site vs entity.\n  - *Question*: \"Do these carpenter documents relate to the LMNP flat or the SELARL clinic?\"\n  - *Rules*: d5=LMNP, d6=SELARL → always LMNP/SELARL (depends on discriminator: site address); Both SELARL → always SELARL; Both LMNP → always LMNP.\n• **2. Prévia Assurances (d1, d2, d3) | €1 704 | 3 docs**\n  - *Ambiguity*: d1 is Hélène’s PER debited from SELARL (\"Prélèvement sur le compte FR76...\"); d2 is Paul’s personal policy; d3 is Hélène’s cover paid by SELARL. Settle by confirming contract owner vs payer.\n  - *Question*: \"Are these Prévia contracts personal or business-linked?\"\n  - *Rules*: All personal → always personal; d1/d3 business, d2 personal → always SELARL/Personal (depends on discriminator: insured person); d1 reimbursed → always SELARL/Personal.\n• **3. Paul/LMNP Allocation (d4, d7) | €689,99 | 2 docs**\n  - *Ambiguity*: d4 is a joint statement receiving LMNP rent (\"LOYER 4 RUE DU PORT MAI 650,00\"); d7 is Paul’s telecom bill at the LMNP address. Settle by confirming account/bill ownership vs business use.\n  - *Question*: \"Should the joint account (d4) and Paul’s telecom bill (d7) be personal or allocated to LMNP?\"\n  - *Rules*: Both personal → always personal; Both LMNP → always LMNP; Mixed → ask each time.",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Les factures et devis d'Atelier Bois & Co concernent-ils le bien LMNP (4 rue du Port) ou la SELARL ?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "4 rue du Port, 35000 Rennes"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "8 place du Marché, 35000 Rennes"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Mixte",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "4 rue du Port, 35000 Rennes"
+                },
+                {
+                  "field": "site_address",
+                  "op": "equals",
+                  "value": "8 place du Marché, 35000 Rennes"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      },
+      {
+        "id": "q2",
+        "text": "Les contrats Prévia sont-ils personnels ou liés à la SELARL ?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Assurée : Mme Hélène Morel"
+          },
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "Personnel",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": "insured_person",
+              "conditions": [
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Hélène Morel"
+                },
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Paul Morel"
+                }
+              ],
+              "action": {
+                "entity": "helene",
+                "category": "insurance.pension",
+                "subcategory": "insurance.life"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "SELARL",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": "insured_person",
+              "conditions": [
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Dr Hélène Morel"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.provident",
+                "subcategory": "insurance.pension"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "b"
+      },
+      {
+        "id": "q3",
+        "text": "Le compte joint et la facture télécom de Paul doivent-ils être classés en personnel ou LMNP ?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "Titulaire : M OU MME MOREL PAUL"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "Titulaire : M. Paul Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4",
+          "d7"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "Personnel",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": "account_holder",
+              "conditions": [
+                {
+                  "field": "addressee",
+                  "op": "contains",
+                  "value": "Paul Morel"
+                }
+              ],
+              "action": {
+                "entity": "paul",
+                "category": "bank.statement",
+                "subcategory": "telecom.bill"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "LMNP",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": "business_use",
+              "conditions": [
+                {
+                  "field": "addressee",
+                  "op": "equals",
+                  "value": "LMNP Rennes — Rue du Port"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": "telecom.bill"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "a"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

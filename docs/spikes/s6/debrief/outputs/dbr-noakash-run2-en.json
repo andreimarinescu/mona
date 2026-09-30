@@ -1,0 +1,318 @@
+{
+  "tag": "dbr-noakash-run2-en",
+  "locale": "en",
+  "order": [
+    "coreweave",
+    "siliconflow"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": false
+  },
+  "pass1": {
+    "wall_s": 38.76,
+    "provider": "CoreWeave",
+    "budget_s": null,
+    "stopped_early": false,
+    "t_first_reasoning": 0.57,
+    "t_first_content": 36.37,
+    "reasoning_chars": 22260,
+    "content_chars": 1516,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 7012,
+      "cost": 0.00926325,
+      "reasoning_tokens": 6526
+    }
+  },
+  "pass2": {
+    "wall_s": 10.11,
+    "provider": "CoreWeave",
+    "finish_reason": "stop",
+    "reasoning_chars": 0,
+    "prompt_tokens": 2462,
+    "completion_tokens": 1949,
+    "reasoning_tokens": 0,
+    "cost": 0.00305175
+  },
+  "total_wall_s": 48.87,
+  "valid": true,
+  "error": null,
+  "checks": {
+    "n_questions": 3,
+    "evidence_quotes_verified": "7/7",
+    "suggested_in_options": true,
+    "depends_have_discriminator": true,
+    "docs_covered": [
+      "d1",
+      "d2",
+      "d3",
+      "d4",
+      "d5",
+      "d6",
+      "d7"
+    ]
+  },
+  "analysis": "• **Prévia Assurances (d1, d2, d3) | 3 docs, 1 704 €**\n  - *Ambiguity:* d1 (“Prélèvement sur le compte FR76…”) debited from SELARL but is personal PER; d2 (“Assuré : M. Paul Morel”) is spouse’s life insurance; d3 (“Souscripteur : SELARL”) covers Hélène personally. *Fact needed:* Contract ownership vs payment source.\n  - *Question:* Are these Prévia contracts business (SELARL), personal (Hélène/Paul), or LMNP?\n  - *Answers/Rules:* “All business” → always selarl-morel; “All personal” → always paul/helene; “Mixed” → depends on insured person/subscriber; ask each time.\n\n• **Atelier Bois & Co (d5, d6) | 2 docs, 6 250 €**\n  - *Ambiguity:* d5 (“Chantier : 4 rue du Port”) matches LMNP; d6 (“Meuble de rangement salle de stérilisation”) matches practice, but addressee is personal. *Fact needed:* Work location/beneficiary.\n  - *Question:* Do these works belong to the LMNP flat or the SELARL practice?\n  - *Answers/Rules:* “LMNP” → always lmnp-port; “SELARL” → always selarl-morel; “Split/Personal” → depends on site address; ask each time.\n\n• **Banque Rivage & Orélia (d4, d7) | 2 docs, ~730 €**\n  - *Ambiguity:* d4 (“LOYER 4 RUE DU PORT”) shows a joint account funding the LMNP; d7 (“ligne installée au 4 rue du Port”) is an ISP at the flat billed to Paul. *Fact needed:* Account/bill purpose.\n  - *Question:* Are the Rivage account and Orélia bill personal or LMNP business?\n  - *Answers/Rules:* “LMNP” → always lmnp-port; “Personal” → always paul/helene; “Mixed” → depends on account holder/site; ask each time.",
+  "questions": {
+    "questions": [
+      {
+        "id": "q1",
+        "text": "For the Prévia Assurances contracts (d1, d2, d3), should they be classified as business expenses for SELARL, personal expenses for Hélène/Paul, or mixed?",
+        "evidence": [
+          {
+            "doc_id": "d1",
+            "quote": "Prélèvement sur le compte FR76 3000 4000 0100 0000 0932 118"
+          },
+          {
+            "doc_id": "d2",
+            "quote": "Assuré : M. Paul Morel"
+          },
+          {
+            "doc_id": "d3",
+            "quote": "Souscripteur : SELARL Cabinet Dentaire Morel"
+          }
+        ],
+        "affected_doc_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "All business (SELARL)",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Prévia Assurances"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.pension",
+                "subcategory": "insurance.provident"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "All personal (Hélène/Paul)",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Prévia Assurances"
+                }
+              ],
+              "action": {
+                "entity": "helene",
+                "category": "insurance.pension",
+                "subcategory": "insurance.life"
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Mixed (Depends on insured/subscriber)",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "contract_role",
+              "conditions": [
+                {
+                  "field": "subscriber",
+                  "op": "equals",
+                  "value": "SELARL"
+                },
+                {
+                  "field": "insured_person",
+                  "op": "equals",
+                  "value": "Hélène Morel"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "insurance.provident",
+                "subcategory": "insurance.pension"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      },
+      {
+        "id": "q2",
+        "text": "For the Atelier Bois & Co works (d5, d6), do they belong to the LMNP rental flat or the SELARL dental practice?",
+        "evidence": [
+          {
+            "doc_id": "d5",
+            "quote": "Chantier : 4 rue du Port, 35000 Rennes"
+          },
+          {
+            "doc_id": "d6",
+            "quote": "Meuble de rangement salle de stérilisation"
+          }
+        ],
+        "affected_doc_ids": [
+          "d5",
+          "d6"
+        ],
+        "impact": "high",
+        "options": [
+          {
+            "id": "a",
+            "label": "LMNP Flat",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Atelier Bois & Co"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "SELARL Practice",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Atelier Bois & Co"
+                }
+              ],
+              "action": {
+                "entity": "selarl-morel",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Split/Personal (Depends on site address)",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "site_address",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "contains",
+                  "value": "4 rue du Port"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "works.invoice",
+                "subcategory": "works.quote"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      },
+      {
+        "id": "q3",
+        "text": "Are the Banque Rivage account (d4) and Orélia bill (d7) personal expenses or LMNP business expenses?",
+        "evidence": [
+          {
+            "doc_id": "d4",
+            "quote": "LOYER 4 RUE DU PORT MAI 650,00"
+          },
+          {
+            "doc_id": "d7",
+            "quote": "ligne installée au 4 rue du Port, 35000 Rennes"
+          }
+        ],
+        "affected_doc_ids": [
+          "d4",
+          "d7"
+        ],
+        "impact": "medium",
+        "options": [
+          {
+            "id": "a",
+            "label": "LMNP Business",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Banque Rivage"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": "telecom.bill"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "label": "Personal",
+            "rule_draft": {
+              "kind": "always",
+              "discriminator": null,
+              "conditions": [
+                {
+                  "field": "counterparty",
+                  "op": "equals",
+                  "value": "Banque Rivage"
+                }
+              ],
+              "action": {
+                "entity": "paul",
+                "category": "bank.statement",
+                "subcategory": "telecom.bill"
+              }
+            }
+          },
+          {
+            "id": "c",
+            "label": "Mixed (Depends on account holder/site)",
+            "rule_draft": {
+              "kind": "depends",
+              "discriminator": "account_holder",
+              "conditions": [
+                {
+                  "field": "site_address",
+                  "op": "contains",
+                  "value": "4 rue du Port"
+                }
+              ],
+              "action": {
+                "entity": "lmnp-port",
+                "category": "bank.statement",
+                "subcategory": "telecom.bill"
+              }
+            }
+          }
+        ],
+        "suggested_option_id": "c"
+      }
+    ]
+  },
+  "raw_pass2_content": null
+}

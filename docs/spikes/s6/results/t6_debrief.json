@@ -1,0 +1,668 @@
+{
+  "runs": [
+    {
+      "tag": "baseline-run1-en",
+      "locale": "en",
+      "total_wall_s": 111.67,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 4,
+        "evidence_quotes_verified": "9/9",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_wall_s": 86.24,
+      "pass2_wall_s": 25.43,
+      "pass1_provider": "Parasail",
+      "pass2_provider": "Parasail",
+      "pass1_reasoning_tokens": 4317,
+      "pass1_completion_tokens": 6057,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00894,
+      "order": [
+        "parasail",
+        "deepinfra",
+        "akashml"
+      ],
+      "concise": false
+    },
+    {
+      "tag": "fast-run1-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": false,
+      "total_wall_s": 41.6,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_wall_s": 23.94,
+      "pass2_wall_s": 17.65,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 3796,
+      "pass1_completion_tokens": 5342,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00722
+    },
+    {
+      "tag": "fastc-run1-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": true,
+      "total_wall_s": 31.57,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 4,
+        "evidence_quotes_verified": "9/9",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_wall_s": 22.37,
+      "pass2_wall_s": 9.21,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 4332,
+      "pass1_completion_tokens": 5222,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.0071
+    },
+    {
+      "tag": "fastc-run2-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": true,
+      "total_wall_s": 26.4,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "6/6",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_wall_s": 19.15,
+      "pass2_wall_s": 7.25,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 2922,
+      "pass1_completion_tokens": 3616,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00506
+    },
+    {
+      "tag": "fastc-run3-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": true,
+      "total_wall_s": 70.4,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_wall_s": 50.2,
+      "pass2_wall_s": 20.2,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "Parasail",
+      "pass1_reasoning_tokens": 5367,
+      "pass1_completion_tokens": 6604,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00812
+    },
+    {
+      "tag": "fastc-run4-fr",
+      "locale": "fr",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": true,
+      "total_wall_s": 46.6,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_wall_s": 34.67,
+      "pass2_wall_s": 11.94,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "Parasail",
+      "pass1_reasoning_tokens": 5878,
+      "pass1_completion_tokens": 7100,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00864
+    },
+    {
+      "tag": "fastc-b35-run1-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": true,
+      "total_wall_s": 38.21,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 1,
+        "evidence_quotes_verified": "3/3",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3"
+        ]
+      },
+      "pass1_budget_s": 35.0,
+      "pass1_stopped_early": true,
+      "pass1_wall_s": 35.02,
+      "pass2_wall_s": 3.2,
+      "pass1_provider": "Parasail",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": null,
+      "pass1_completion_tokens": null,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00114,
+      "pass1_cost_known": false
+    },
+    {
+      "tag": "fastc-b35-run2-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": true,
+      "total_wall_s": 37.08,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 5,
+        "evidence_quotes_verified": "12/12",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": 35.0,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 26.36,
+      "pass2_wall_s": 10.72,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 5661,
+      "pass1_completion_tokens": 6717,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00881,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "fastc-b35-run3-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "parasail",
+        "deepinfra"
+      ],
+      "concise": true,
+      "total_wall_s": 33.69,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 4,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": 35.0,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 24.12,
+      "pass2_wall_s": 9.58,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 4031,
+      "pass1_completion_tokens": 4986,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00648,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-run1-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "total_wall_s": 30.01,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 20.75,
+      "pass2_wall_s": 9.27,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 3334,
+      "pass1_completion_tokens": 4306,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00579,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-run2-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "total_wall_s": 49.39,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 4,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 40.52,
+      "pass2_wall_s": 8.87,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 4842,
+      "pass1_completion_tokens": 6158,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00752,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-run3-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "total_wall_s": 41.03,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 32.19,
+      "pass2_wall_s": 8.84,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 3722,
+      "pass1_completion_tokens": 4718,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00614,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-run4-fr",
+      "locale": "fr",
+      "order": [
+        "akashml",
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "total_wall_s": 38.63,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "6/6",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 27.25,
+      "pass2_wall_s": 11.38,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 3313,
+      "pass1_completion_tokens": 4366,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00569,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-noakash-run1-en",
+      "locale": "en",
+      "order": [
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "total_wall_s": 32.7,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "6/6",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 23.73,
+      "pass2_wall_s": 8.96,
+      "pass1_provider": "CoreWeave",
+      "pass2_provider": "CoreWeave",
+      "pass1_reasoning_tokens": 4196,
+      "pass1_completion_tokens": 4613,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00841,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-noakash-run2-en",
+      "locale": "en",
+      "order": [
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "total_wall_s": 48.87,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 38.76,
+      "pass2_wall_s": 10.11,
+      "pass1_provider": "CoreWeave",
+      "pass2_provider": "CoreWeave",
+      "pass1_reasoning_tokens": 6526,
+      "pass1_completion_tokens": 7012,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.01232,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-pass2-thinking-on",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "total_wall_s": 46.91,
+      "valid": false,
+      "error": "JSONDecodeError: Unterminated string starting at: line 63 column 24 (char 3041)",
+      "checks": null,
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 21.71,
+      "pass2_wall_s": 25.19,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 4044,
+      "pass1_completion_tokens": 4988,
+      "pass2_reasoning_tokens": 4556,
+      "cost": 0.01034,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-branches-run1-en",
+      "locale": "en",
+      "order": [
+        "akashml",
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "rule_shape": "branches",
+      "total_wall_s": 32.68,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 4,
+        "evidence_quotes_verified": "9/9",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 23.66,
+      "pass2_wall_s": 9.02,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 3908,
+      "pass1_completion_tokens": 4975,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.0071,
+      "pass1_cost_known": true
+    },
+    {
+      "tag": "dbr-branches-run2-fr",
+      "locale": "fr",
+      "order": [
+        "akashml",
+        "coreweave",
+        "siliconflow"
+      ],
+      "concise": true,
+      "rule_shape": "branches",
+      "total_wall_s": 49.58,
+      "valid": true,
+      "error": null,
+      "checks": {
+        "n_questions": 3,
+        "evidence_quotes_verified": "7/7",
+        "suggested_in_options": true,
+        "depends_have_discriminator": true,
+        "docs_covered": [
+          "d1",
+          "d2",
+          "d3",
+          "d4",
+          "d5",
+          "d6",
+          "d7"
+        ]
+      },
+      "pass1_budget_s": null,
+      "pass1_stopped_early": false,
+      "pass1_wall_s": 31.38,
+      "pass2_wall_s": 18.2,
+      "pass1_provider": "AkashML",
+      "pass2_provider": "AkashML",
+      "pass1_reasoning_tokens": 4926,
+      "pass1_completion_tokens": 5837,
+      "pass2_reasoning_tokens": 0,
+      "cost": 0.00876,
+      "pass1_cost_known": true
+    }
+  ]
+}

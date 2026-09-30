@@ -1,0 +1,46 @@
+{
+  "tag": "dbr-pass2-thinking-on",
+  "locale": "en",
+  "order": [
+    "akashml",
+    "coreweave",
+    "siliconflow"
+  ],
+  "concise": true,
+  "pass2_reasoning": {
+    "enabled": true
+  },
+  "pass1": {
+    "wall_s": 21.71,
+    "provider": "AkashML",
+    "budget_s": null,
+    "stopped_early": false,
+    "t_first_reasoning": 0.69,
+    "t_first_content": 20.11,
+    "reasoning_chars": 15521,
+    "content_chars": 1632,
+    "usage": {
+      "prompt_tokens": 1993,
+      "completion_tokens": 4988,
+      "cost": 0.0046885,
+      "reasoning_tokens": 4044
+    }
+  },
+  "pass2": {
+    "wall_s": 25.19,
+    "provider": "AkashML",
+    "finish_reason": "length",
+    "reasoning_chars": 17951,
+    "prompt_tokens": 2505,
+    "completion_tokens": 6000,
+    "reasoning_tokens": 4556,
+    "cost": 0.0056505
+  },
+  "total_wall_s": 46.91,
+  "valid": false,
+  "error": "JSONDecodeError: Unterminated string starting at: line 63 column 24 (char 3041)",
+  "checks": null,
+  "analysis": "- **Group 1: Prévia Assurances (d1, d2, d3)**\n  • d1 (“Cotisation annuelle : 520,00 €” debited from SELARL) & d3 (“Souscripteur : SELARL… Assurée : Dr Hélène Morel”) are ambiguous due to business payment vs personal insured. d2 (“Assuré : M. Paul Morel”) is ambiguous as spouse lacks a business entity. *Settle:* Owner’s classification intent.\n  • **Q:** Classify these contracts (“PER n° PR-7741-02”, “Épargne n° PV-2290-11”, “Prévoyance Pro n° PP-5518-07”) as personal or business/LMNP?\n  • **Answers/Rules:** All personal → always Hélène/Paul; d1/d3 business, d2 personal → depends on a discriminator (insured person); All business/LMNP → always selarl-morel/lmnp-port.\n- **Group 2: Atelier Bois & Co (d5, d6)**\n  • d5 (“Chantier : 4 rue du Port”) & d6 (“Meuble de rangement salle de stérilisation”) are ambiguous due to shared contractor and missing/overlapping site cues. *Settle:* Physical location of works.\n  • **Q:** Do these works serve the rental flat or the practice?\n  • **Answers/Rules:** SELARL → always selarl-morel; LMNP → always lmnp-port; Mixed → depends on a discriminator (site address).\n- **Group 3: Banque Rivage & Orélia (d4, d7)**\n  • d4 (“FR76 1470… LOYER 4 RUE DU PORT”) & d7 (“ligne installée au 4 rue du Port”) are ambiguous as personal accounts/utilities funding LMNP. *Settle:* Account/line ownership purpose.\n  • **Q:** Are the joint account and fibre line for LMNP operations or personal?\n  • **Answers/Rules:** LMNP → always lmnp-port; Personal → always paul; Mixed → depends on a discriminator.\n- **Ranking:** Group 2 (2 docs, 6 250 EUR) > Group 1 (3 docs, ~1 704 EUR) > Group 3 (2 docs, ~40 EUR).",
+  "questions": null,
+  "raw_pass2_content": "{\"questions\":[\n  {\n    \"id\": \"q1\",\n    \"text\": \"Do the carpentry works at 4 rue du Port and the sterilization room cabinet serve the rental flat or the dental practice?\",\n    \"evidence\": [\n      {\"doc_id\": \"d5\", \"quote\": \"Chantier : 4 rue du Port, 35000 Rennes\"},\n      {\"doc_id\": \"d6\", \"quote\": \"Meuble de rangement salle de stérilisation\"}\n    ],\n    \"affected_doc_ids\": [\"d5\", \"d6\"],\n    \"impact\": \"high\",\n    \"options\": [\n      {\n        \"id\": \"a\",\n        \"label\": \"Dental practice (SELARL)\",\n        \"rule_draft\": {\"kind\": \"always\", \"discriminator\": null, \"conditions\": [], \"action\": {\"entity\": \"selarl-morel\", \"category\": \"works.invoice\", \"subcategory\": null}}\n      },\n      {\n        \"id\": \"b\",\n        \"label\": \"Rental flat (LMNP)\",\n        \"rule_draft\": {\"kind\": \"always\", \"discriminator\": null, \"conditions\": [], \"action\": {\"entity\": \"lmnp-port\", \"category\": \"works.invoice\", \"subcategory\": null}}\n      },\n      {\n        \"id\": \"c\",\n        \"label\": \"Mixed / Depends on site\",\n        \"rule_draft\": {\"kind\": \"depends\", \"discriminator\": \"site_address\", \"conditions\": [{\"field\": \"site_address\", \"op\": \"equals\", \"value\": \"4 rue du Port, 35000 Rennes\"}, {\"field\": \"site_address\", \"op\": \"equals\", \"value\": \"8 place du Marché, 35000 Rennes\"}], \"action\": {\"entity\": \"lmnp-port\", \"category\": \"works.invoice\", \"subcategory\": null}}\n      }\n    ],\n    \"suggested_option_id\": \"c\"\n  },\n  {\n    \"id\": \"q2\",\n    \"text\": \"Should the Prévia pension, life savings, and professional provident contracts be classified as personal or business expenses?\",\n    \"evidence\": [\n      {\"doc_id\": \"d1\", \"quote\": \"Cotisation annuelle : 520,00 €\"},\n      {\"doc_id\": \"d2\", \"quote\": \"Valeur de rachat au 31/12/2024 : 18 412,37 €\"},\n      {\"doc_id\": \"d3\", \"quote\": \"Souscripteur : SELARL Cabinet Dentaire Morel\"}\n    ],\n    \"affected_doc_ids\": [\"d1\", \"d2\", \"d3\"],\n    \"impact\": \"medium\",\n    \"options\": [\n      {\n        \"id\": \"a\",\n        \"label\": \"All personal\",\n        \"rule_draft\": {\"kind\": \"always\", \"discriminator\": null, \"conditions\": [], \"action\": {\"entity\": \"helene\", \"category\": \"insurance.pension\", \"subcategory\": null}}\n      },\n      {\n        \"id\": \"b\",\n        \"label\": \"Mixed (d1/d3 business, d2 personal)\",\n        \"rule_draft\": {\"kind\": \"depends\", \"discriminator\": \"insured_person\", \"conditions\": [{\"field\": \"insured_person\", \"op\": \"equals\", \"value\": \"Hélène Morel\"}, {\"field\": \"insured_person\", \"op\": \"equals\", \"value\": \"Paul Morel\"}], \"action\": {\"entity\": \"selarl-morel\", \"category\": \"insurance.provident\", \"subcategory\": null}}\n      },\n      {\n        \"id\": \"c\",\n        \"label\": \"All business/LMNP\",\n        \"rule_draft\": {\"kind\": \"always\", \"discriminator\": null, \"conditions\": [], \"action\": {\"entity\": \"selarl-morel\", \"category\": \"insurance.provident\", \"subcategory\": null}}\n      }\n    ],\n    \"suggested_option_id\": \"b\"\n  },\n  {\n    \"id\": \"q3\",\n    \"text\": \"Are the joint bank account receiving rent and the fibre internet line at 4 rue du Port intended for LMNP operations or personal use?\",\n    \"evidence\": [\n      {\"doc_id\": \"d4\", \""
+}
