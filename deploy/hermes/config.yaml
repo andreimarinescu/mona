@@ -11,7 +11,7 @@ agent:
   reasoning_effort: "medium"
   max_turns: 12
 platform_toolsets:
-  api_server: [memory, skills, todo, mona]
+  api_server: [memory, mona]
 tools:
   tool_search:
     enabled: false

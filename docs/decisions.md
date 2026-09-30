@@ -2,6 +2,16 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D5 · 2026-09-30 · Operator rulings at the Hermes go/no-go (gate 0)
+
+- **Hermes: go.** Hermes 0.21.5 stays the one Mona brain (R19). The pydantic-ai chat engine stays cut. Evidence: S1, S2, S5 and S6 (`docs/spikes/`).
+- **Demo toolsets:** `platform_toolsets.api_server: [memory, mona]`. `skills` and `todo` are off for the demo, saving about 3k prompt tokens per call. Hermes skills (self-improving, trimmed catalog) come back after the demo, since Mona is meant to become a general agent. Roadmap item.
+- **Journal actor = who executed** (amends plan §9 / HANDOFF §6 "Telegram owner actions count as user"):
+  - Anything done through Mona's tools, whether from chat, Telegram or cron, is `mona`, tagged with the channel.
+  - Only direct actions in the web UI (clicks, card buttons, forms) are `user`.
+  - The Activity log's "by you" therefore means "done by you in the app".
+- **Stub files:** the 12 text-only corpus stubs stay replaced by synthetic fillers. Real PDFs can replace them later without contract changes.
+
 ## D4 · 2026-09-30 · W0 spike results folded into dev config (S5, S6)
 
 - **OpenRouter pins (dev).** Direct requests (pydantic-ai sub-tasks) send `provider: {order: [akashml, coreweave, siliconflow, parasail, deepinfra], allow_fallbacks: false, require_parameters: true, quantizations: [fp8, fp16, bf16]}`. Hermes has no `allow_fallbacks`/`quantizations` keys, so `deploy/hermes/config.yaml` uses `provider_routing.only` + `order` + `require_parameters`, which keeps the same five fp8+ providers. CoreWeave and SiliconFlow lack tool support, and `require_parameters` skips them on Hermes turns.
