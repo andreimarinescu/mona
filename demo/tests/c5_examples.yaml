@@ -1,0 +1,88 @@
+practice: {name: Cabinet Marchand, filing_language: fr}
+
+entities:
+  - {key: cabinet, folder_name: Cabinet Marchand, fy_end_month: 12, fy_end_day: 31, sub_units: []}
+  - {key: studio, folder_name: Studio Numérique, fy_end_month: 9, fy_end_day: 30, sub_units: []}
+  - key: lmnp
+    folder_name: LMNP
+    fy_end_month: 12
+    fy_end_day: 31
+    sub_units: [{key: angers-strasbourg, label: Angers-Strasbourg}]
+  - key: personal
+    folder_name: Personnel
+    fy_end_month: 12
+    fy_end_day: 31
+    sub_units: [{key: anna, label: Anna, person: anna}, {key: paul, label: Paul, person: paul}]
+
+categories:
+  - id: insurance
+    labels: {en: Insurance, fr: Assurances, ro: Asigurări}
+    subcategories:
+      - {key: per, labels: {en: PER, fr: PER, ro: PER}}
+      - {key: assurance_vie, labels: {en: Life insurance, fr: Assurance vie, ro: Asigurare de viață}}
+      - {key: prevoyance, labels: {en: Provident cover, fr: Prévoyance, ro: Prevoyance}}
+  - id: bank
+    labels: {en: Bank, fr: Banque, ro: Bancă}
+    subcategories:
+      - {key: releve, labels: {en: Account statement, fr: Relevé de compte, ro: Extras de cont}}
+  - id: annual_accounts
+    labels: {en: Annual accounts, fr: Documents annuels, ro: Documente anuale}
+    subcategories:
+      - {key: bilan, labels: {en: Balance sheet, fr: Bilan, ro: Bilanț}}
+      - {key: approbation, labels: {en: Approval of accounts, fr: Approbation des comptes, ro: Aprobarea conturilor}}
+  - id: tax
+    labels: {en: Taxes, fr: Impôts et taxes, ro: Impozite și taxe}
+    subcategories:
+      - {key: preparation, labels: {en: Preparatory items, fr: Éléments préparatoires, ro: Elemente pregătitoare}}
+  - id: payment_calls
+    labels: {en: Payment calls, fr: Appels de paiement, ro: Cereri de plată}
+    subcategories:
+      - {key: contribution_opco, labels: {en: OPCO contribution, fr: Contribution OPCO, ro: Contribuție OPCO}}
+
+templates:
+  - {category: insurance, path_template: "{entity}/Assurances/{counterparty}/{sub}/{year}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"}
+  - {category: bank, path_template: "{entity}/Banque/{fy}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"}
+  - {category: annual_accounts, path_template: "{entity}/Documents annuels/{fy}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"}
+  - {category: tax, path_template: "{entity}/Impôts et taxes/{year}", file_template: "{date:YYYY-MM-DD}_{issuer}_{sub}"}
+  - {category: payment_calls, path_template: "{entity}/Appels de paiement/{fy}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"}
+
+cases:
+  - id: 1a
+    doc: {entity: personal, unit: paul, category: insurance, subcategory: per, counterparty: AGIPI, reference: C-48213, doc_date: 2025-04-14}
+    path: Personnel/Paul/Assurances/AGIPI/PER/2025
+    file_name: 2025-04-14_AGIPI_PER_C-48213.pdf
+  - id: 1b
+    doc: {entity: personal, unit: anna, category: insurance, subcategory: assurance_vie, counterparty: AGIPI, doc_date: 2025-03-02}
+    path: Personnel/Anna/Assurances/AGIPI/Assurance vie/2025
+    file_name: 2025-03-02_AGIPI_Assurance-vie.pdf
+  - id: 2
+    doc: {entity: lmnp, unit: angers-strasbourg, category: bank, subcategory: releve, counterparty: Hello bank, doc_date: 2025-01-16, period_end: 2025-01-15}
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: 2025-01-16_Hello-bank_Releve-de-compte.pdf
+  - id: 3
+    doc: {entity: studio, category: annual_accounts, subcategory: approbation, counterparty: TALENZ, doc_date: 2026-01-20, period_end: 2025-09-30}
+    path: Studio Numérique/Documents annuels/2025
+    file_name: 2026-01-20_TALENZ_Approbation-des-comptes.pdf
+  - id: 4
+    doc: {entity: personal, category: tax, subcategory: preparation, counterparty: OXYLEO, doc_date: 2026-05-12}
+    path: Personnel/Impôts et taxes/2026
+    file_name: 2026-05-12_OXYLEO_Elements-preparatoires.pdf
+  - id: 5
+    doc: {entity: cabinet, category: payment_calls, subcategory: contribution_opco, counterparty: OPCO, reference: 2025-A-118, doc_date: 2026-02-27, period_end: 2025-12-31}
+    path: Cabinet Marchand/Appels de paiement/2025
+    file_name: 2026-02-27_OPCO_Contribution-OPCO_2025-A-118.pdf
+  - id: 6
+    doc: {entity: cabinet, category: insurance, subcategory: prevoyance, counterparty: UNIM, doc_date: 2025-11-03}
+    path: Cabinet Marchand/Assurances/UNIM/Prévoyance/2025
+    file_name: 2025-11-03_UNIM_Prevoyance.pdf
+  - id: 7
+    doc: {entity: studio, category: annual_accounts, subcategory: bilan, counterparty: TALENZ, doc_date: 2026-01-10, period_end: 2025-09-30}
+    path: Studio Numérique/Documents annuels/2025
+    file_name: 2026-01-10_TALENZ_Bilan.pdf
+  - id: 8
+    doc: {entity: cabinet, category: insurance, subcategory: prevoyance, counterparty: "AXA / AGIPI", reference: "N° 77/12", doc_date: 2025-06-01}
+    path: Cabinet Marchand/Assurances/AXA - AGIPI/Prévoyance/2025
+    file_name: 2025-06-01_AXA-AGIPI_Prevoyance_N-77-12.pdf
+  - id: 9
+    doc: {entity: cabinet, category: bank, path_template: "{entity}/{fy} {entity}/Documents annuels", period_end: 2025-12-31}
+    path: Cabinet Marchand/2025 Cabinet Marchand/Documents annuels

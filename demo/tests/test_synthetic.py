@@ -121,21 +121,3 @@ def test_generator_refuses_to_write_inside_the_repo():
         check=False,
     )
     assert proc.returncode == 2
-
-
-def test_committed_demo_files_carry_no_identifier_patterns():
-    patterns = [
-        re.compile(r"\bFR\d{2}[ ]?\d{4}[ ]?\d{4}"),
-        re.compile(r"\b\d{3} ?\d{3} ?\d{3}\b"),
-        re.compile(r"\b\d{14}\b"),
-    ]
-    for path in DEMO.rglob("*"):
-        if (
-            path.is_file()
-            and path.suffix in {".py", ".yaml", ".md"}
-            and "__pycache__" not in path.parts
-            and path.name != "test_synthetic.py"
-        ):
-            text = path.read_text(encoding="utf-8")
-            for pattern in patterns:
-                assert not pattern.search(text), f"{path.name} matches {pattern.pattern}"

@@ -60,8 +60,10 @@ def fake_digits(key: str, n: int) -> str:
 
 
 def fake_iban(key: str) -> str:
-    digits = fake_digits("iban:" + key, 23)
-    return "FR76" + "".join(digits[i : i + 4] for i in range(0, 20, 4)) + digits[20:]
+    bban = fake_digits("iban:" + key, 23)
+    check = 98 - int(bban + "152700", 10) % 97
+    digits = f"{check:02d}" + bban
+    return "FR" + digits[:2] + "".join(digits[i : i + 4] for i in range(2, 22, 4)) + digits[22:]
 
 
 def fake_siren(key: str) -> str:
@@ -81,8 +83,8 @@ def esc(text: str) -> str:
 class Ctx:
     def __init__(self, anchor: date, practice: dict):
         self.anchor = anchor
-        self.people = {p["id"]: p.get("display_name", p["id"]) for p in practice["people"]}
-        self.entities = {e["id"]: e["display_name"] for e in practice["entities"]}
+        self.people = {p["key"]: p["display_name"] for p in practice["people"] if isinstance(p["display_name"], str)}
+        self.entities = {e["key"]: e["display_name"] for e in practice["entities"]}
 
 
 def resolved_dates(doc: dict, anchor: date) -> dict[str, date]:
@@ -318,9 +320,9 @@ def main() -> int:
         json.dumps({"anchor": args.anchor.isoformat(), "docs": manifest}, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-    accounts = {d["account"]: fake_iban(d["account"]) for d in docs if "account" in d}
+    accounts = {d["account"]: {"iban": fake_iban(d["account"])} for d in docs if "account" in d}
     (out / "generated-identifiers.yaml").write_text(
-        yaml.safe_dump({"iban": accounts}, sort_keys=True), encoding="utf-8"
+        yaml.safe_dump({"accounts": accounts}, sort_keys=True), encoding="utf-8"
     )
     print(f"{len(docs)} documents, {errors} errors")
     return 1 if errors else 0

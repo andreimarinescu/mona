@@ -1,101 +1,57 @@
-version: 0
-todo: draft, re-key to canonical ids when C1/C5 freeze; identifier refs resolve against demo-data/seed/identifiers.yaml
-
+schema: mona.rules/v1
 rules:
-  - id: seed-personal-insurers
-    name: AGIPI, MAE and Abeille are personal insurers
+  - key: opco-selarl
+    name: OPCO contribution calls belong to the SELARL
+    state: active
+    source: seed
     priority: 10
-    source: seed
-    condition_text: Documents from AGIPI, MAE or Abeille belong to the family, filed under the insurer.
     conditions:
-      - {field: counterparty, op: in, value: [AGIPI, MAE, Abeille]}
-    action: {entity: personal, category: insurance}
+      - {field: counterparty, op: equals, value: opco-ep}
+    action: {entity: selarl-simina, category: payment_calls}
 
-  - id: seed-agipi-per-by-insured
-    name: AGIPI PER, filed under the insured person
-    priority: 20
-    source: seed
-    condition_text: AGIPI documents about a retirement savings plan (PER) go under the insured person, in the PER folder.
-    conditions:
-      - {field: counterparty, op: equals, value: AGIPI}
-      - {field: text, op: contains_any, value: ["plan d'épargne retraite", "adhésion FAR PER"]}
-    action:
-      entity: personal
-      sub_unit: {from: addressee}
-      category: insurance
-      subcategory: PER
-
-  - id: seed-agipi-life-by-insured
-    name: AGIPI life insurance, filed under the insured person
-    priority: 20
-    source: seed
-    condition_text: AGIPI life-insurance statements go under the insured person, in the Assurance vie folder.
-    conditions:
-      - {field: counterparty, op: equals, value: AGIPI}
-      - {field: text, op: contains_any, value: ["assurance vie", "assurance-vie", "situation annuelle"]}
-    action:
-      entity: personal
-      sub_unit: {from: addressee}
-      category: insurance
-      subcategory: Assurance vie
-
-  - id: seed-unim-business
-    name: UNIM is a business insurer
-    priority: 10
-    source: seed
-    condition_text: UNIM documents are business insurance.
-    todo: entity assumed to be the SELARL until Claudiu confirms
-    conditions:
-      - {field: counterparty, op: equals, value: UNIM}
-    action: {entity: selarl-simina, category: insurance}
-
-  - id: seed-hello-bank-lmnp
-    name: Hello bank statements for the LMNP account
-    priority: 30
-    source: seed
-    condition_text: Hello bank documents on the LMNP account go to LMNP, Angers-Strasbourg, Bank, by fiscal year.
-    conditions:
-      - {field: counterparty, op: equals, value: Hello bank}
-      - {field: iban, op: in, ref: identifiers.iban.lmnp_angers_strasbourg}
-    action:
-      entity: lmnp
-      sub_unit: angers-strasbourg
-      category: bank
-
-  - id: seed-talenz-mdd
+  - key: talenz-mdd
     name: TALENZ accounts for Medical Digital Design
-    priority: 30
+    state: active
     source: seed
-    condition_text: TALENZ accounting documents addressed to Medical Digital Design go to its annual documents, by fiscal year.
+    priority: 20
     conditions:
-      - {field: counterparty, op: equals, value: TALENZ}
-      - {field: siren, op: equals, ref: identifiers.entities.mdd.siren}
+      - {field: counterparty, op: equals, value: talenz}
+      - {field: text, op: contains, value: medical digital design}
     action: {entity: mdd, category: annual_accounts}
 
-  - id: seed-selarl-annual-accounts
-    name: SELARL accounts and tax packages
-    priority: 30
+  - key: selarl-annual-accounts
+    name: SELARL balance sheets and management summaries
+    state: active
     source: seed
-    condition_text: Balance sheets and management summaries of the SELARL go to its annual documents, by fiscal year.
+    priority: 20
     conditions:
-      - {field: siren, op: equals, ref: identifiers.entities.selarl-simina.siren}
+      - {field: text, op: contains, value: selarl docteur christine simina}
       - {field: text, op: contains_any, value: [bilan, soldes intermédiaires de gestion, liasse fiscale]}
     action: {entity: selarl-simina, category: annual_accounts}
 
-  - id: seed-oxyleo-personal-tax
+  - key: oxyleo-personal-tax
     name: OXYLEO income-tax preparation is personal
-    priority: 30
+    state: active
     source: seed
-    condition_text: OXYLEO income-tax documents go to Personal, Taxes, by year.
+    priority: 10
     conditions:
-      - {field: counterparty, op: equals, value: OXYLEO}
+      - {field: counterparty, op: equals, value: oxyleo}
     action: {entity: personal, category: tax}
 
-  - id: seed-opco-selarl
-    name: OPCO contributions belong to the SELARL
-    priority: 30
+  - key: unim-business
+    name: UNIM is a business insurer
+    state: active
     source: seed
-    condition_text: OPCO contribution calls go to the SELARL, Payment calls, by fiscal year.
+    priority: 10
     conditions:
-      - {field: counterparty, op: equals, value: OPCO}
-    action: {entity: selarl-simina, category: payment_calls}
+      - {field: counterparty, op: equals, value: unim}
+    action: {entity: selarl-simina, category: insurance}
+
+  - key: payroll-selarl
+    name: Payroll declarations belong to the SELARL
+    state: active
+    source: seed
+    priority: 10
+    conditions:
+      - {field: text, op: contains_any, value: [déclaration sociale nominative, bulletin de salaire, bulletin de paie]}
+    action: {entity: selarl-simina, category: payroll}

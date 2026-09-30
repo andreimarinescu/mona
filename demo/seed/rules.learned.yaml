@@ -1,0 +1,31 @@
+schema: mona.rules/v1
+rules:
+  - key: agipi-per-by-person
+    name: AGIPI PER, filed under the insured person
+    state: active
+    source: interview
+    priority: 20
+    conditions:
+      - {field: counterparty, op: equals, value: agipi}
+      - {field: text, op: contains_any, value: [plan d'épargne retraite, adhésion FAR PER]}
+    action: {entity: personal, unit: {from: person}, category: insurance, subcategory: per}
+
+  - key: agipi-assurance-vie-by-person
+    name: AGIPI life insurance, filed under the insured person
+    state: active
+    source: interview
+    priority: 20
+    conditions:
+      - {field: counterparty, op: equals, value: agipi}
+      - {field: text, op: contains_any, value: [assurance vie, assurance-vie, situation annuelle]}
+    action: {entity: personal, unit: {from: person}, category: insurance, subcategory: assurance_vie}
+
+  - key: hello-bank-lmnp
+    name: Hello bank statements of the LMNP accounts
+    state: active
+    source: interview
+    priority: 20
+    conditions:
+      - {field: counterparty, op: equals, value: hello-bank}
+      - {field: iban, op: entity, value: lmnp}
+    action: {entity: lmnp, unit: angers-strasbourg, category: bank}

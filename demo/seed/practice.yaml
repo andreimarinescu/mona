@@ -1,185 +1,357 @@
-version: 0
-todo: draft, re-key to canonical ids when C1/C5 freeze
-
 practice:
   name: Cabinet d'Orthodontie Dr Christine Simina
   filing_language: fr
-  ui_languages: [en, fr, ro]
 
 people:
-  - {id: claudiu, display_name: Claudiu Gamulescu}
-  - {id: christine, display_name: Dr Christine Simina}
-  - {id: child_1, display_name_ref: people.child_1}
-  - {id: child_2, display_name_ref: people.child_2}
+  - key: claudiu
+    display_name: Claudiu Gamulescu
+    short_name: Claudiu
+    aliases: {ref: people.claudiu.aliases}
+  - key: christine
+    display_name: Dr Christine Simina
+    short_name: Christine
+    aliases: {ref: people.christine.aliases}
+  - key: child-1
+    display_name: {ref: people.child-1.display_name}
+    short_name: {ref: people.child-1.short_name}
+    aliases: {ref: people.child-1.aliases}
+  - key: child-2
+    display_name: {ref: people.child-2.display_name}
+    short_name: {ref: people.child-2.short_name}
+    aliases: {ref: people.child-2.aliases}
 
 entities:
-  - id: selarl-simina
+  - key: selarl-simina
     display_name: Cabinet d'Orthodontie Dr Christine Simina
     folder_name: Cabinet Orthodontie
     legal_form: SELARL
+    siren: {ref: entities.selarl-simina.siren}
     visibility: practice
-    fiscal_year_end: "12-31"
-    fiscal_year_end_todo: confirm with Claudiu (question 7)
-    sub_units: []
-    linked_people: [christine]
+    fy_end_month: 12
+    fy_end_day: 31
     filing_language: fr
-    identifiers_ref: identifiers.entities.selarl-simina
-  - id: mdd
+    aliases: [SELARL Docteur Christine Simina, Cabinet d'Orthodontie Dr Christine Simina, Docteur Christine Simina]
+    addresses: {ref: entities.selarl-simina.addresses}
+    sort_order: 10
+    people:
+      - {person: christine}
+  - key: mdd
     display_name: Medical Digital Design
     folder_name: Medical Digital Design
     legal_form: SASU
+    siren: {ref: entities.mdd.siren}
     visibility: practice
-    fiscal_year_end: "09-30"
-    fiscal_year_end_todo: confirm with Claudiu (question 7)
-    sub_units: []
-    linked_people: [claudiu]
+    fy_end_month: 9
+    fy_end_day: 30
     filing_language: fr
-    identifiers_ref: identifiers.entities.mdd
-  - id: lmnp
+    aliases: [Medical Digital Design, SAS Medical Digital Design, Medical Digital Design SAS, MDD]
+    addresses: {ref: entities.mdd.addresses}
+    sort_order: 20
+    people:
+      - {person: claudiu}
+  - key: lmnp
     display_name: LMNP
     folder_name: LMNP
     legal_form: LMNP
     visibility: practice
-    fiscal_year_end: null
-    fiscal_year_end_todo: ask Claudiu (question 7)
-    sub_units:
-      - {id: angers-strasbourg, label: Angers-Strasbourg}
-    sub_units_todo: full sub-unit list and bank-account mapping (question 6)
-    linked_people: [claudiu, christine]
+    fy_end_month: 12
+    fy_end_day: 31
     filing_language: fr
-    identifiers_ref: identifiers.entities.lmnp
-  - id: sci-c-immobilier
+    aliases: [LMNP]
+    sort_order: 30
+    people:
+      - {person: claudiu}
+      - {person: christine}
+    sub_units:
+      - {key: angers-strasbourg, label: Angers-Strasbourg}
+  - key: sci-c-immobilier
     display_name: SCI C Immobilier
     folder_name: SCI C Immobilier
     legal_form: SCI
     visibility: practice
-    fiscal_year_end: null
-    fiscal_year_end_todo: ask Claudiu (question 7)
-    sub_units: []
-    linked_people: [claudiu, christine]
+    fy_end_month: 12
+    fy_end_day: 31
     filing_language: fr
-    identifiers_ref: identifiers.entities.sci-c-immobilier
-  - id: claudiu-ae
+    aliases: [SCI C Immobilier, C Immobilier]
+    sort_order: 40
+    people:
+      - {person: claudiu}
+      - {person: christine}
+  - key: claudiu-ae
     display_name: Claudiu Gamulescu (auto-entrepreneur)
     folder_name: Claudiu Gamulescu
     legal_form: EI
     visibility: practice
-    fiscal_year_end: null
-    fiscal_year_end_todo: ask Claudiu (question 7)
-    sub_units: []
-    linked_people: [claudiu]
+    fy_end_month: 12
+    fy_end_day: 31
     filing_language: fr
-  - id: low-tech
+    aliases: []
+    sort_order: 50
+    people:
+      - {person: claudiu}
+  - key: low-tech
     display_name: Association Low-Tech Alternatives
     folder_name: Low-Tech Alternatives
     legal_form: Association
     visibility: practice
-    fiscal_year_end: null
-    fiscal_year_end_todo: ask Claudiu (question 7)
-    sub_units: []
-    linked_people: [claudiu]
+    fy_end_month: 12
+    fy_end_day: 31
     filing_language: fr
-  - id: personal
+    aliases: [Association Low-Tech Alternatives, Low-Tech Alternatives]
+    sort_order: 60
+    people:
+      - {person: claudiu}
+  - key: personal
     display_name: Personnel (famille)
     folder_name: Personnel
     legal_form: null
     visibility: personal
-    fiscal_year_end: "12-31"
-    sub_units:
-      - {id: claudiu, label: Claudiu}
-      - {id: christine, label: Christine}
-      - {id: child_1, label_ref: people.child_1_short}
-      - {id: child_2, label_ref: people.child_2_short}
-    sub_units_todo: per-person split is a draft assumption (question 5)
-    linked_people: [claudiu, christine, child_1, child_2]
+    fy_end_month: 12
+    fy_end_day: 31
     filing_language: fr
-  - id: visitors
+    aliases: []
+    sort_order: 70
+    people:
+      - {person: claudiu}
+      - {person: christine}
+      - {person: child-1}
+      - {person: child-2}
+    sub_units:
+      - {key: claudiu, label: Claudiu, person: claudiu}
+      - {key: christine, label: Christine, person: christine}
+      - {key: child-1, label: {ref: people.child-1.short_name}, person: child-1}
+      - {key: child-2, label: {ref: people.child-2.short_name}, person: child-2}
+  - key: visitors
     display_name: Visitors
     folder_name: Visitors
     legal_form: null
     visibility: practice
-    fiscal_year_end: "12-31"
-    sub_units: []
-    linked_people: []
+    fy_end_month: 12
+    fy_end_day: 31
     filing_language: fr
+    aliases: []
     purge_after_hours: 24
+    sort_order: 80
 
 categories:
   - id: annual_accounts
     icon: tax
-    labels: {fr: Documents annuels, en: Annual accounts, ro: Documente anuale}
-    path_template: "{entity}/Documents annuels/{fy}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
-    subcategories: [Bilan, Soldes intermédiaires, Liasse fiscale, Approbation des comptes, Déclaration de revenus]
+    labels: {en: Annual accounts, fr: Documents annuels, ro: Documente anuale}
+    model_definition: 'The annual accounting and tax package of a company: balance sheet (bilan), income statement (compte de résultat), soldes intermédiaires de gestion, liasse fiscale, corporate tax returns and their preparatory checklists, and the accountant''s approval-of-accounts letters. Not payment demands.'
+    sort_order: 10
+    subcategories:
+      - {key: bilan, labels: {en: Balance sheet, fr: Bilan, ro: Bilanț}, sort_order: 10}
+      - {key: soldes_intermediaires, labels: {en: Intermediate management balances, fr: Soldes intermédiaires de gestion, ro: Solduri intermediare de gestiune}, sort_order: 20}
+      - {key: liasse_fiscale, labels: {en: Tax return package, fr: Liasse fiscale, ro: Liasă fiscală}, sort_order: 30}
+      - {key: etats_financiers, labels: {en: Financial statements, fr: États financiers, ro: Situații financiare}, sort_order: 40}
+      - {key: approbation, labels: {en: Approval of accounts, fr: Approbation des comptes, ro: Aprobarea conturilor}, sort_order: 50}
   - id: payment_calls
     icon: invoice
-    labels: {fr: Appels de paiement, en: Payment calls, ro: Cereri de plată}
-    path_template: "{entity}/Appels de paiement/{fy}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
-    subcategories: [Appel de cotisations, Contribution OPCO, Avis de mise en recouvrement, Relance, Saisie administrative]
+    labels: {en: Payment calls, fr: Appels de paiement, ro: Cereri de plată}
+    model_definition: 'Payment calls and payment demands from social bodies and the tax office: URSSAF, CARCDSF, OPCO, appel de cotisation, SIE avis de mise en recouvrement, lettre de majoration, saisie administrative à tiers détenteur.'
+    sort_order: 20
+    subcategories:
+      - {key: appel_cotisations, labels: {en: Contribution call, fr: Appel de cotisations, ro: Cerere de contribuții}, sort_order: 10}
+      - {key: contribution_opco, labels: {en: OPCO contribution, fr: Contribution OPCO, ro: Contribuție OPCO}, sort_order: 20}
+      - {key: avis_mise_recouvrement, labels: {en: Recovery notice, fr: Avis de mise en recouvrement, ro: Aviz de recuperare}, sort_order: 30}
+      - {key: relance, labels: {en: Reminder, fr: Relance, ro: Somație de plată}, sort_order: 40}
+      - {key: saisie, labels: {en: Administrative seizure, fr: Saisie administrative, ro: Poprire administrativă}, sort_order: 50}
   - id: supplier_invoices
     icon: invoice
-    labels: {fr: Factures fournisseurs, en: Supplier invoices, ro: Facturi furnizori}
-    path_template: "{entity}/Factures reçues/{counterparty}/{year}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
-    subcategories: [Facture, Avoir, Bon de livraison, Devis]
+    labels: {en: Supplier invoices, fr: Factures fournisseurs, ro: Facturi furnizori}
+    model_definition: 'Recurring supplier invoices and letters: dental and medical suppliers and their delivery notes, water, electricity and telecom bills and meter letters.'
+    sort_order: 30
+    subcategories:
+      - {key: facture, labels: {en: Invoice, fr: Facture, ro: Factură}, sort_order: 10}
+      - {key: avoir, labels: {en: Credit note, fr: Avoir, ro: Notă de credit}, sort_order: 20}
+      - {key: bon_livraison, labels: {en: Delivery note, fr: Bon de livraison, ro: Aviz de livrare}, sort_order: 30}
+      - {key: devis, labels: {en: Quote, fr: Devis, ro: Ofertă}, sort_order: 40}
   - id: misc_expenses
     icon: invoice
-    labels: {fr: Dépenses diverses, en: Miscellaneous expenses, ro: Cheltuieli diverse}
-    path_template: "{entity}/Dépenses diverses/{year}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
-    subcategories: [Ticket de caisse, Facture, Colis]
+    labels: {en: Miscellaneous expenses, fr: Dépenses diverses, ro: Cheltuieli diverse}
+    model_definition: 'One-off local purchases not from a recurring supplier: shop and DIY receipts, local fuel and parking, post office, contractor quotes and payment reminders, shipping labels.'
+    sort_order: 40
+    subcategories:
+      - {key: ticket, labels: {en: Receipt, fr: Ticket de caisse, ro: Bon fiscal}, sort_order: 10}
+      - {key: facture, labels: {en: Invoice, fr: Facture, ro: Factură}, sort_order: 20}
+      - {key: colis, labels: {en: Parcel, fr: Colis, ro: Colet}, sort_order: 30}
   - id: sales_invoices
     icon: invoice
-    labels: {fr: Factures émises, en: Sales invoices, ro: Facturi emise}
-    path_template: "{entity}/Factures émises/{year}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
-    subcategories: [Facture, Avoir]
+    labels: {en: Sales invoices, fr: Factures émises, ro: Facturi emise}
+    model_definition: Invoices issued by the practice or one of its companies to its clients (the entity is the seller).
+    sort_order: 50
+    subcategories:
+      - {key: facture, labels: {en: Invoice, fr: Facture, ro: Factură}, sort_order: 10}
+      - {key: avoir, labels: {en: Credit note, fr: Avoir, ro: Notă de credit}, sort_order: 20}
   - id: bank
     icon: bank
-    labels: {fr: Banque, en: Bank, ro: Bancă}
-    path_template: "{entity}/Banque/{fy}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
-    subcategories: [Relevé de compte, Relevé de frais, Avis]
+    labels: {en: Bank, fr: Banque, ro: Bancă}
+    model_definition: 'Bank statements and bank letters: relevé de compte, relevé de frais, bank notices.'
+    sort_order: 60
+    subcategories:
+      - {key: releve, labels: {en: Account statement, fr: Relevé de compte, ro: Extras de cont}, sort_order: 10}
+      - {key: frais, labels: {en: Fee statement, fr: Relevé de frais, ro: Extras de comisioane}, sort_order: 20}
+      - {key: avis, labels: {en: Bank notice, fr: Avis, ro: Aviz bancar}, sort_order: 30}
   - id: payroll
     icon: payroll
-    labels: {fr: Paie et social, en: Payroll, ro: Salarizare}
-    path_template: "{entity}/Paie et social/{year}"
-    file_template: "{date:YYYY-MM-DD}_{sub}_{reference}"
-    subcategories: [Déclaration sociale nominative, Bulletin de salaire]
+    labels: {en: Payroll, fr: Paie et social, ro: Salarizare}
+    model_definition: 'Payroll documents: déclaration sociale nominative (DSN), bulletins de salaire or de paie.'
+    sort_order: 70
+    subcategories:
+      - {key: dsn, labels: {en: Nominative social declaration, fr: Déclaration sociale nominative, ro: Declarație socială nominativă}, sort_order: 10}
+      - {key: bulletin, labels: {en: Payslip, fr: Bulletin de salaire, ro: Fluturaș de salariu}, sort_order: 20}
   - id: insurance
     icon: insurance
-    labels: {fr: Assurances, en: Insurance, ro: Asigurări}
-    path_template: "{entity}/Assurances/{counterparty}/{sub}/{year}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"
-    subcategories: [PER, Assurance vie, Santé, Prévoyance, Multirisque, Responsabilité civile]
+    labels: {en: Insurance, fr: Assurances, ro: Asigurări}
+    model_definition: 'Insurance and pension contracts and notices: AGIPI, Abeille, MAE, La Médicale, UNIM, mutuelle, prévoyance, PER, assurance vie.'
+    sort_order: 80
+    subcategories:
+      - {key: per, labels: {en: PER, fr: PER, ro: PER}, sort_order: 10}
+      - {key: assurance_vie, labels: {en: Life insurance, fr: Assurance vie, ro: Asigurare de viață}, sort_order: 20}
+      - {key: sante, labels: {en: Health insurance, fr: Santé, ro: Asigurare de sănătate}, sort_order: 30}
+      - {key: prevoyance, labels: {en: Provident cover, fr: Prévoyance, ro: Prevoyance}, sort_order: 40}
+      - {key: multirisque, labels: {en: Multi-risk, fr: Multirisque, ro: Multirisc}, sort_order: 50}
+      - {key: responsabilite_civile, labels: {en: Liability, fr: Responsabilité civile, ro: Răspundere civilă}, sort_order: 60}
   - id: training
     icon: training
-    labels: {fr: Formations, en: Training, ro: Formări}
-    path_template: "{entity}/Formations/{year}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
-    subcategories: [Attestation, Facture, Support de cours]
+    labels: {en: Training, fr: Formations, ro: Formări}
+    model_definition: Training, courses, certifications and course handouts.
+    sort_order: 90
+    subcategories:
+      - {key: attestation, labels: {en: Certificate, fr: Attestation, ro: Atestat}, sort_order: 10}
+      - {key: facture, labels: {en: Invoice, fr: Facture, ro: Factură}, sort_order: 20}
+      - {key: support, labels: {en: Course material, fr: Support de cours, ro: Suport de curs}, sort_order: 30}
   - id: travel
     icon: travel
-    labels: {fr: Déplacements, en: Travel, ro: Deplasări}
-    path_template: "{entity}/Déplacements/{year}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
-    subcategories: [Transport, Hotel, Location de voiture, Restaurant, Parking]
+    labels: {en: Travel, fr: Déplacements, ro: Deplasări}
+    model_definition: 'Travel expenses: car rental, hotels, transport, and any receipt from a trip away from home (airport shops, duty-free, restaurants, fuel and souvenirs abroad, airport parking, receipts in Spanish or English).'
+    sort_order: 100
+    subcategories:
+      - {key: transport, labels: {en: Transport, fr: Transport, ro: Transport}, sort_order: 10}
+      - {key: hotel, labels: {en: Hotel, fr: Hôtel, ro: Hotel}, sort_order: 20}
+      - {key: location_voiture, labels: {en: Car rental, fr: Location de voiture, ro: Închiriere de mașină}, sort_order: 30}
+      - {key: restaurant, labels: {en: Restaurant, fr: Restaurant, ro: Restaurant}, sort_order: 40}
+      - {key: parking, labels: {en: Parking, fr: Parking, ro: Parcare}, sort_order: 50}
   - id: tax
     icon: tax
-    labels: {fr: Impôts et taxes, en: Taxes, ro: Impozite și taxe}
-    path_template: "{entity}/Impôts et taxes/{year}"
-    file_template: "{date:YYYY-MM-DD}_{issuer}_{sub}"
-    subcategories: [Avis d'imposition, Taxe foncière, Éléments préparatoires, Courrier du fisc]
+    labels: {en: Taxes, fr: Impôts et taxes, ro: Impozite și taxe}
+    model_definition: 'Tax documents of a person or household that are not payment demands: avis d''imposition, taxe foncière, taxe d''habitation, income-tax preparation documents from a tax adviser. A company''s tax package is annual_accounts; tax payment demands are payment_calls.'
+    sort_order: 110
+    subcategories:
+      - {key: avis_imposition, labels: {en: Tax notice, fr: Avis d'imposition, ro: Aviz de impunere}, sort_order: 10}
+      - {key: taxe_fonciere, labels: {en: Property tax, fr: Taxe foncière, ro: Taxă funciară}, sort_order: 20}
+      - {key: preparation, labels: {en: Preparatory items, fr: Éléments préparatoires, ro: Elemente pregătitoare}, sort_order: 30}
+      - {key: declaration_revenus, labels: {en: Income-tax return, fr: Déclaration de revenus, ro: Declarație de venituri}, sort_order: 40}
+      - {key: courrier_fisc, labels: {en: Tax office letter, fr: Courrier du fisc, ro: Corespondență fiscală}, sort_order: 50}
+  - id: health
+    icon: personal
+    labels: {en: Health, fr: Santé, ro: Sănătate}
+    model_definition: 'Personal medical and wellness documents: prescriptions, care instructions, health questionnaires, and health-insurance letters (CPAM, Assurance Maladie).'
+    sort_order: 120
+    subcategories:
+      - {key: ordonnance, labels: {en: Prescription, fr: Ordonnance, ro: Rețetă}, sort_order: 10}
+      - {key: questionnaire, labels: {en: Health questionnaire, fr: Questionnaire de santé, ro: Chestionar de sănătate}, sort_order: 20}
+      - {key: cpam, labels: {en: Health insurance letter, fr: Courrier CPAM, ro: Corespondență CPAM}, sort_order: 30}
   - id: patient_documents
     icon: personal
-    labels: {fr: Documents patients, en: Patient documents, ro: Documente pacienți}
-    path_template: "{entity}/Documents patients/{year}"
-    file_template: "{date:YYYY-MM-DD}_{sub}_{reference}"
-    subcategories: [Devis, Ordonnance, Conseils post-soins]
+    labels: {en: Patient documents, fr: Documents patients, ro: Documente pacienți}
+    model_definition: 'Documents about the practice''s patients: treatment quotes (devis), prescriptions and post-care instructions the practice gave to a patient.'
+    sort_order: 130
+    subcategories:
+      - {key: devis, labels: {en: Quote, fr: Devis, ro: Ofertă}, sort_order: 10}
+      - {key: ordonnance, labels: {en: Prescription, fr: Ordonnance, ro: Rețetă}, sort_order: 20}
+      - {key: conseils_post_soins, labels: {en: Post-care advice, fr: Conseils post-soins, ro: Sfaturi post-tratament}, sort_order: 30}
   - id: general
     icon: personal
-    labels: {fr: Documents généraux, en: General documents, ro: Documente generale}
-    path_template: "{entity}/Documents généraux/{year}"
-    file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"
-    subcategories: [Contrat, Courrier, État civil, Autre]
+    labels: {en: General documents, fr: Documents généraux, ro: Documente generale}
+    model_definition: 'Other readable documents that fit no category above: contracts, general letters, civil-status certificates, personal letters, real-estate estimates, notes, magazine pages, catalogues. A readable private document belongs here, not in unknown.'
+    sort_order: 140
+    subcategories:
+      - {key: contrat, labels: {en: Contract, fr: Contrat, ro: Contract}, sort_order: 10}
+      - {key: courrier, labels: {en: Letter, fr: Courrier, ro: Corespondență}, sort_order: 20}
+      - {key: etat_civil, labels: {en: Civil status, fr: État civil, ro: Stare civilă}, sort_order: 30}
+      - {key: autre, labels: {en: Other, fr: Autre, ro: Altele}, sort_order: 40}
+
+templates:
+  - {category: annual_accounts, path_template: '{entity}/Documents annuels/{fy}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}'}
+  - {category: payment_calls, path_template: '{entity}/Appels de paiement/{fy}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}'}
+  - {category: supplier_invoices, path_template: '{entity}/Factures reçues/{counterparty}/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}'}
+  - {category: misc_expenses, path_template: '{entity}/Dépenses diverses/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}'}
+  - {category: sales_invoices, path_template: '{entity}/Factures émises/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}'}
+  - {category: bank, path_template: '{entity}/Banque/{fy}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}'}
+  - {category: payroll, path_template: '{entity}/Paie et social/{year}', file_template: '{date:YYYY-MM-DD}_{sub}_{reference}'}
+  - {category: insurance, path_template: '{entity}/Assurances/{counterparty}/{sub}/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}'}
+  - {category: training, path_template: '{entity}/Formations/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}'}
+  - {category: travel, path_template: '{entity}/Déplacements/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}'}
+  - {category: tax, path_template: '{entity}/Impôts et taxes/{year}', file_template: '{date:YYYY-MM-DD}_{issuer}_{sub}'}
+  - {category: health, path_template: '{entity}/Santé/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}'}
+  - {category: patient_documents, path_template: '{entity}/Documents patients/{year}', file_template: '{date:YYYY-MM-DD}_{sub}_{reference}'}
+  - {category: general, path_template: '{entity}/Documents généraux/{year}', file_template: '{date:YYYY-MM-DD}_{counterparty}_{sub}'}
+
+accounts:
+  - key: lmnp-hello
+    entity: lmnp
+    sub_unit: angers-strasbourg
+    bank_counterparty: hello-bank
+    label: Hello bank · LMNP
+    currency: EUR
+    iban: {ref: accounts.lmnp-hello.iban}
+  - key: lmnp-hello-demo
+    entity: lmnp
+    sub_unit: angers-strasbourg
+    bank_counterparty: hello-bank
+    label: Hello bank · LMNP (demo)
+    currency: EUR
+    iban: {ref: accounts.lmnp-hello-demo.iban}
+
+counterparties:
+  - key: opco-ep
+    name: OPCO EP
+    kind: social
+    siren: {ref: counterparties.opco-ep.siren}
+    aliases: [OPCO, OPCO EP, Cpco ep, Opérateur de compétences des Entreprises de Proximité]
+  - key: talenz
+    name: TALENZ
+    kind: accountant
+    siren: null
+    aliases: [TALENZ]
+  - key: oxyleo
+    name: OXYLEO
+    kind: accountant
+    siren: null
+    aliases: [OXYLEO]
+  - key: unim
+    name: UNIM
+    kind: insurer
+    siren: null
+    aliases: [UNIM]
+  - key: agipi
+    name: AGIPI
+    kind: insurer
+    siren: {ref: counterparties.agipi.siren}
+    aliases: [AGIPI]
+  - key: mae
+    name: MAE
+    kind: insurer
+    siren: null
+    aliases: [MAE]
+  - key: abeille
+    name: Abeille
+    kind: insurer
+    siren: null
+    aliases: [Abeille]
+  - key: la-medicale
+    name: La Médicale
+    kind: insurer
+    siren: null
+    aliases: [La Médicale]
+  - key: hello-bank
+    name: Hello bank
+    kind: bank
+    siren: null
+    aliases: [Hello bank, Hello bank!]
+  - key: urssaf
+    name: URSSAF
+    kind: social
+    siren: null
+    aliases: [URSSAF, URSSAF Pays de la Loire, URSSAF des Pays de la Loire]

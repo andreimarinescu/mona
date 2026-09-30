@@ -22,8 +22,9 @@ docs:
       entity: personal
       sub_unit: christine
       category: insurance
-      subcategory: PER
+      subcategory: per
       counterparty: AGIPI
+      fiscal_year: 2026
       path: Personnel/Christine/Assurances/AGIPI/PER/2026
       file_name: 2026-10-14_AGIPI_PER_PER-DEMO-0417.pdf
 
@@ -44,9 +45,9 @@ docs:
     expected:
       entity: personal
       category: tax
-      subcategory: Éléments préparatoires
+      subcategory: preparation
       counterparty: OXYLEO
-      issuer: OXYLEO
+      fiscal_year: 2026
       path: Personnel/Impôts et taxes/2026
       file_name: 2026-10-11_OXYLEO_Elements-preparatoires.pdf
 
@@ -57,7 +58,7 @@ docs:
     out: releve-compte-decembre-janvier
     sender: {name: Hello bank, lines: [Service clients (document fictif), TSA 00000, 75000 Paris]}
     addressee: {person: claudiu, lines: [10 rue Fictive, 53000 Laval]}
-    account: iban_lmnp_angers_strasbourg
+    account: lmnp-hello-demo
     reference: REL-DEMO-0126
     dates: {doc: {ym: [0, 1, 15]}, period_start: {ym: [-1, 12, 15]}, period_end: {ym: [0, 1, 15]}}
     object: "Relevé de compte chèques"
@@ -73,8 +74,9 @@ docs:
       entity: lmnp
       sub_unit: angers-strasbourg
       category: bank
-      subcategory: Relevé de compte
+      subcategory: releve
       counterparty: Hello bank
+      fiscal_year: 2026
       path: LMNP/Angers-Strasbourg/Banque/2026
       file_name: 2026-01-15_Hello-bank_Releve-de-compte.pdf
 
@@ -98,8 +100,9 @@ docs:
     expected:
       entity: selarl-simina
       category: payment_calls
-      subcategory: Appel de cotisations
+      subcategory: appel_cotisations
       counterparty: URSSAF
+      fiscal_year: 2026
       path: Cabinet Orthodontie/Appels de paiement/2026
       file_name: 2026-10-18_URSSAF_Appel-de-cotisations_URS-DEMO-3391.pdf
 
@@ -123,8 +126,9 @@ docs:
     expected:
       entity: mdd
       category: payment_calls
-      subcategory: Avis de mise en recouvrement
+      subcategory: avis_mise_recouvrement
       counterparty: SIE Mayenne
+      fiscal_year: 2025
       path: Medical Digital Design/Appels de paiement/2025
       file_name: 2026-10-16_SIE-Mayenne_Avis-de-mise-en-recouvrement_SIE-DEMO-7742.pdf
 
@@ -147,8 +151,8 @@ docs:
     expected:
       entity: selarl-simina
       category: patient_documents
-      subcategory: Devis
-      counterparty: Cabinet Orthodontie
+      subcategory: devis
+      fiscal_year: 2026
       path: Cabinet Orthodontie/Documents patients/2026
       file_name: 2026-10-08_Devis_DEV-DEMO-0231.pdf
 
@@ -170,8 +174,8 @@ docs:
     expected:
       entity: selarl-simina
       category: patient_documents
-      subcategory: Ordonnance
-      counterparty: Cabinet Orthodontie
+      subcategory: ordonnance
+      fiscal_year: 2026
       path: Cabinet Orthodontie/Documents patients/2026
       file_name: 2026-10-09_Ordonnance_ORD-DEMO-0518.pdf
 
@@ -192,8 +196,8 @@ docs:
     expected:
       entity: selarl-simina
       category: patient_documents
-      subcategory: Conseils post-soins
-      counterparty: Cabinet Orthodontie
+      subcategory: conseils_post_soins
+      fiscal_year: 2026
       path: Cabinet Orthodontie/Documents patients/2026
       file_name: 2026-10-10_Conseils-post-soins_CPS-DEMO-0042.pdf
 
@@ -218,8 +222,9 @@ docs:
     expected:
       entity: selarl-simina
       category: supplier_invoices
-      subcategory: Facture
+      subcategory: facture
       counterparty: Dentalis Fournitures
+      fiscal_year: 2026
       path: Cabinet Orthodontie/Factures reçues/Dentalis Fournitures/2026
       file_name: 2026-10-12_Dentalis-Fournitures_Facture_FA-DEMO-5580.pdf
 
@@ -241,8 +246,9 @@ docs:
     expected:
       entity: visitors
       category: supplier_invoices
-      subcategory: Facture
+      subcategory: facture
       counterparty: Eaux du Bocage
+      fiscal_year: 2026
       path: Visitors/Factures reçues/Eaux du Bocage/2026
       file_name: 2026-10-05_Eaux-du-Bocage_Facture_EB-DEMO-1206.jpg
 

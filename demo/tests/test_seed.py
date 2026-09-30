@@ -1,163 +1,217 @@
+import copy
+import re
 from datetime import date
+from pathlib import Path
 
 import pytest
+import rules_schema
 import templates
+import textnorm
 import yaml
 
-PRACTICE = templates.load_practice()
-RULES = templates.load_rules()
-DOCS = yaml.safe_load((templates.SEED_DIR.parent / "synthetic" / "docs.yaml").read_text(encoding="utf-8"))
+DEMO = Path(__file__).resolve().parents[1]
+ROOT = DEMO.parent
 ICONS = {"bank", "invoice", "tax", "insurance", "payroll", "training", "travel", "personal"}
-ENTITIES = {e["id"]: e for e in PRACTICE["entities"]}
-CATEGORIES = {c["id"]: c for c in PRACTICE["categories"]}
+CATEGORY_IDS = {
+    "annual_accounts",
+    "payment_calls",
+    "supplier_invoices",
+    "misc_expenses",
+    "sales_invoices",
+    "bank",
+    "payroll",
+    "insurance",
+    "training",
+    "travel",
+    "tax",
+    "health",
+    "patient_documents",
+    "general",
+}
+KEY = re.compile(r"^[a-z][a-z0-9-]{1,39}$")
+MAX_DAY = {2: 28, 4: 30, 6: 30, 9: 30, 11: 30}
+PRESEEDED = {
+    "opco-selarl",
+    "talenz-mdd",
+    "selarl-annual-accounts",
+    "oxyleo-personal-tax",
+    "unim-business",
+    "payroll-selarl",
+}
+LEARNED = {"agipi-per-by-person", "agipi-assurance-vie-by-person", "hello-bank-lmnp"}
 
 
-def test_entities_are_well_formed():
-    assert len(ENTITIES) == len(PRACTICE["entities"])
-    for e in ENTITIES.values():
-        assert e["visibility"] in {"practice", "personal"}
-        assert e["filing_language"] == "fr"
-        if e["fiscal_year_end"] is None:
-            assert "fiscal_year_end_todo" in e
-        else:
-            month, day = (int(p) for p in e["fiscal_year_end"].split("-"))
-            date(2024, month, day)
+def contract_definitions() -> dict[str, str]:
+    text = (ROOT / "docs" / "contracts" / "C5-classification.md").read_text(encoding="utf-8")
+    section = text.split("### 5.6 Category definitions")[1].split("`health` is new")[0]
+    out = {}
+    for line in section.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if line.startswith("|") and len(cells) == 3 and cells[1].startswith("`") and "unknown" not in cells[1]:
+            out[cells[1].strip("`").split()[0]] = cells[2]
+    return out
 
 
-def test_categories_are_well_formed():
-    assert len(CATEGORIES) == len(PRACTICE["categories"])
-    for c in CATEGORIES.values():
+def test_practice_keys_and_entities(practice):
+    assert {p["key"] for p in practice["people"]} == {"claudiu", "christine", "child-1", "child-2"}
+    keys = [e["key"] for e in practice["entities"]]
+    assert len(keys) == len(set(keys)) and all(KEY.match(k) for k in keys)
+    assert len({e["folder_name"] for e in practice["entities"]}) == len(keys)
+    visitors = [e for e in practice["entities"] if e.get("purge_after_hours")]
+    assert [e["key"] for e in visitors] == ["visitors"]
+    for e in practice["entities"]:
+        assert e["visibility"] in {"practice", "personal"} and e["filing_language"] == "fr"
+        date(2024, e["fy_end_month"], e["fy_end_day"])
+        assert e["fy_end_day"] <= MAX_DAY.get(e["fy_end_month"], 31)
+
+
+def test_sub_units_and_people_links(practice):
+    people = {p["key"] for p in practice["people"]}
+    entities = {e["key"]: e for e in practice["entities"]}
+    assert [u["key"] for u in entities["lmnp"]["sub_units"]] == ["angers-strasbourg"]
+    assert {u["person"] for u in entities["personal"]["sub_units"]} == people
+    for e in entities.values():
+        unit_keys = [u["key"] for u in e.get("sub_units", [])]
+        assert len(unit_keys) == len(set(unit_keys))
+        assert {p["person"] for p in e.get("people", [])} <= people
+        for unit in e.get("sub_units", []):
+            assert unit.get("person", next(iter(people))) in people
+
+
+def test_categories_follow_c5_5_6(practice):
+    cats = {c["id"]: c for c in practice["categories"]}
+    assert set(cats) == CATEGORY_IDS
+    definitions = contract_definitions()
+    assert set(definitions) == CATEGORY_IDS
+    for cid, c in cats.items():
+        assert c["model_definition"] == definitions[cid]
         assert c["icon"] in ICONS
-        assert set(c["labels"]) == {"fr", "en", "ro"}
-        assert templates.template_tokens(c["path_template"]) <= templates.TOKENS
-        assert templates.template_tokens(c["file_template"]) <= templates.TOKENS
+        assert set(c["labels"]) == {"en", "fr", "ro"} and all(c["labels"].values())
+        sub_keys = [s["key"] for s in c["subcategories"]]
+        assert sub_keys and len(sub_keys) == len(set(sub_keys))
+        for s in c["subcategories"]:
+            assert re.match(r"^[a-z][a-z0-9_]{0,39}$", s["key"])
+            assert set(s["labels"]) == {"en", "fr", "ro"} and all(s["labels"].values())
+    assert cats["health"]["icon"] == "personal"
 
 
-@pytest.mark.parametrize("category", sorted(CATEGORIES))
-def test_every_category_renders_without_unknown_tokens(category):
-    meta = {
-        "entity": "selarl-simina",
-        "category": category,
-        "subcategory": "Facture",
-        "counterparty": "Exemple SA",
-        "issuer": "Exemple SA",
-        "reference": "REF-1",
-    }
-    path = templates.render_path(PRACTICE, meta, date(2026, 10, 14))
-    name = templates.render_file_name(PRACTICE, meta, date(2026, 10, 14))
-    assert "{" not in path and "}" not in path and "//" not in path and path
-    assert "{" not in name and "__" not in name and name.startswith("2026-10-14_") and name.endswith(".pdf")
-    assert name.isascii() and " " not in name
+def test_one_default_template_per_category_and_all_parse(practice):
+    defaults = [t["category"] for t in practice["templates"] if "entity" not in t]
+    assert sorted(defaults) == sorted(CATEGORY_IDS)
+    for t in practice["templates"]:
+        templates.parse(t["path_template"], "path")
+        templates.parse(t["file_template"], "file")
 
 
-def test_unknown_token_is_rejected():
-    bad = {
-        "categories": [
-            {"id": "x", "path_template": "{entity}/{nope}", "labels": {"fr": "X"}, "file_template": "{date}"}
-        ],
-        "entities": PRACTICE["entities"],
-        "practice": PRACTICE["practice"],
-    }
-    with pytest.raises(ValueError):
-        templates.render_path(bad, {"entity": "mdd", "category": "x"}, date(2026, 1, 1))
+def test_counterparties_and_accounts(practice):
+    cps = practice["counterparties"]
+    assert len({c["key"] for c in cps}) == len(cps) and all(KEY.match(c["key"]) for c in cps)
+    norms = [textnorm.norm(c["name"]) for c in cps]
+    assert len(norms) == len(set(norms))
+    owners: dict[str, str] = {}
+    for c in cps:
+        for a in [c["name"], *c["aliases"]]:
+            assert owners.setdefault(textnorm.norm(a), c["key"]) == c["key"], f"alias {a} belongs to two counterparties"
+    entities = {e["key"]: e for e in practice["entities"]}
+    cp_keys = {c["key"] for c in cps}
+    raw = yaml.safe_load((DEMO / "seed" / "practice.yaml").read_text(encoding="utf-8"))
+    for a in raw["accounts"]:
+        assert a["entity"] in entities and a["bank_counterparty"] in cp_keys
+        assert a["sub_unit"] in {u["key"] for u in entities[a["entity"]]["sub_units"]}
+        assert set(a["iban"]) == {"ref"} and a["currency"] in {"EUR", "RON"}
 
 
-def test_folders_keep_accents_and_file_names_drop_them():
-    meta = {"entity": "personal", "category": "tax", "subcategory": "Éléments préparatoires", "issuer": "OXYLEO"}
-    assert templates.render_path(PRACTICE, meta, date(2026, 10, 11)) == "Personnel/Impôts et taxes/2026"
-    assert (
-        templates.render_file_name(PRACTICE, meta, date(2026, 10, 11)) == "2026-10-11_OXYLEO_Elements-preparatoires.pdf"
-    )
+def test_refs_resolve_against_the_overlay(overlay):
+    if overlay is None:
+        pytest.skip("private overlay not available")
+    raw = yaml.safe_load((DEMO / "seed" / "practice.yaml").read_text(encoding="utf-8"))
+    refs: list[str] = []
+
+    def walk(node):
+        if isinstance(node, dict):
+            refs.extend([node["ref"]] if set(node) == {"ref"} else [])
+            [walk(v) for v in node.values()]
+        elif isinstance(node, list):
+            [walk(v) for v in node]
+
+    walk(raw)
+    assert refs
+    for ref in refs:
+        assert templates.resolve_refs({"ref": ref}, overlay) not in (None, []), ref
+
+
+@pytest.mark.parametrize("name", ["rules.yaml", "rules.learned.yaml"])
+def test_rules_files_validate(practice, name):
+    assert rules_schema.validate(templates.load_rules(name), practice) == []
+
+
+def test_tiers_are_disjoint_and_complete():
+    seeded = {r["key"] for r in templates.load_rules()["rules"]}
+    learned = {r["key"] for r in templates.load_rules("rules.learned.yaml")["rules"]}
+    assert seeded == PRESEEDED and learned == LEARNED and not seeded & learned
+    for r in templates.load_rules()["rules"]:
+        assert r["source"] == "seed" and "unit" not in r["action"]
+    for r in templates.load_rules("rules.learned.yaml")["rules"]:
+        assert r["source"] == "interview"
+
+
+def test_person_splits_exist_only_through_learned_rules(practice):
+    units = [r for r in templates.load_rules("rules.learned.yaml")["rules"] if "unit" in r["action"]]
+    assert {r["key"] for r in units} == LEARNED
+    assert [r["key"] for r in units if r["action"]["unit"] == {"from": "person"}] == [
+        "agipi-per-by-person",
+        "agipi-assurance-vie-by-person",
+    ]
+
+
+def _mutated(rule_patch):
+    doc = copy.deepcopy(templates.load_rules())
+    rule_patch(doc["rules"][0])
+    return doc
 
 
 @pytest.mark.parametrize(
-    ("period_end", "fy_end", "expected"),
+    ("patch", "needle"),
     [
-        (date(2024, 9, 30), "09-30", 2024),
-        (date(2024, 10, 1), "09-30", 2025),
-        (date(2025, 1, 15), "12-31", 2025),
-        (date(2025, 1, 15), None, 2025),
-        (date(2024, 12, 31), "12-31", 2024),
+        (
+            lambda r: r["conditions"].__setitem__(0, {"field": "counterparty", "op": "starts", "value": "opco-ep"}),
+            "bad field/op",
+        ),
+        (
+            lambda r: r["conditions"].__setitem__(0, {"field": "counterparty", "op": "equals", "value": "nobody"}),
+            "unresolved",
+        ),
+        (lambda r: r["action"].update(entity="visitors"), "Visitors"),
+        (lambda r: r["action"].update(unit="nowhere"), "unknown sub-unit"),
+        (lambda r: r["action"].update(subcategory="per"), "not under"),
+        (lambda r: r["action"].update(path="{entity}/{nope}"), "unknown token"),
+        (lambda r: r.update(conditions=[r["conditions"][0]] * 9), "1 to 8 conditions"),
+        (
+            lambda r: r["conditions"].append({"field": "text", "op": "contains", "value": "FR" + "76" + "1" * 23}),
+            "IBAN literal",
+        ),
+        (lambda r: r["conditions"].append({"field": "siren", "op": "equals", "value": "12345"}), "9 digits"),
+        (lambda r: r.update(state="paused"), "bad state"),
     ],
 )
-def test_fiscal_year(period_end, fy_end, expected):
-    assert templates.fiscal_year(period_end, fy_end) == expected
+def test_validator_rejects_bad_rules(practice, patch, needle):
+    errors = rules_schema.validate(_mutated(patch), practice)
+    assert any(needle in e for e in errors), errors
 
 
-def test_lmnp_bank_statement_lands_in_sub_unit_folder():
-    meta = {
-        "entity": "lmnp",
-        "sub_unit": "angers-strasbourg",
-        "category": "bank",
-        "subcategory": "Relevé de compte",
-        "counterparty": "Hello bank",
-    }
-    assert (
-        templates.render_path(PRACTICE, meta, date(2025, 3, 15), date(2025, 3, 15))
-        == "LMNP/Angers-Strasbourg/Banque/2025"
-    )
-
-
-def test_rules_reference_known_entities_categories_and_units():
-    rules = RULES["rules"]
-    assert len({r["id"] for r in rules}) == len(rules)
-    for r in rules:
-        assert r["conditions"] and r["condition_text"] and r["source"] == "seed"
-        for cond in r["conditions"]:
-            assert ("value" in cond) ^ ("ref" in cond)
-            if "ref" in cond:
-                assert cond["ref"].startswith("identifiers.")
-        action = r["action"]
-        assert action["entity"] in ENTITIES and action["category"] in CATEGORIES
-        unit = action.get("sub_unit")
-        if isinstance(unit, str):
-            assert unit in {u["id"] for u in ENTITIES[action["entity"]]["sub_units"]}
-        if "subcategory" in action:
-            assert action["subcategory"] in CATEGORIES[action["category"]]["subcategories"]
-
-
-def test_seed_rules_cover_the_six_feedback_cases():
-    ids = {r["id"] for r in RULES["rules"]}
-    assert {
-        "seed-agipi-per-by-insured",
-        "seed-agipi-life-by-insured",
-        "seed-hello-bank-lmnp",
-        "seed-talenz-mdd",
-        "seed-oxyleo-personal-tax",
-        "seed-opco-selarl",
-        "seed-unim-business",
-    } <= ids
-
-
-@pytest.mark.parametrize("doc", [d for d in DOCS["docs"] if "path" in d.get("expected", {})], ids=lambda d: d["id"])
-def test_synthetic_expected_path_and_name_match_the_templates(doc):
-    exp = doc["expected"]
-    anchor = DOCS["reference_anchor"]
-    dates = {k: templates_date(v, anchor) for k, v in doc["dates"].items()}
-    meta = {
-        "entity": exp["entity"],
-        "sub_unit": exp.get("sub_unit"),
-        "category": exp["category"],
-        "subcategory": exp["subcategory"],
-        "counterparty": exp["counterparty"],
-        "issuer": exp.get("issuer", ""),
-        "reference": doc.get("reference", ""),
-    }
-    ext = exp["file_name"].rsplit(".", 1)[1]
-    assert templates.render_path(PRACTICE, meta, dates["doc"], dates.get("period_end")) == exp["path"]
-    assert templates.render_file_name(PRACTICE, meta, dates["doc"], ext) == exp["file_name"]
-
-
-def templates_date(spec, anchor):
-    from datetime import timedelta
-
-    if "offset" in spec:
-        return anchor + timedelta(days=spec["offset"])
-    dy, month, day = spec["ym"]
-    return date(anchor.year + dy, month, day)
-
-
-def test_empty_tokens_drop_their_path_segment_and_file_name_part():
-    meta = {"entity": "personal", "category": "insurance", "counterparty": "MAE", "reference": "R-1"}
-    assert templates.render_path(PRACTICE, meta, date(2025, 8, 31)) == "Personnel/Assurances/MAE/2025"
-    assert templates.render_file_name(PRACTICE, meta, date(2025, 8, 31)) == "2025-08-31_MAE_R-1.pdf"
+def test_every_category_renders_for_every_entity(practice):
+    reg = templates.Registry.from_practice(practice)
+    for cid, cat in reg.categories.items():
+        for key in reg.entities:
+            doc = templates.Doc(
+                entity=key,
+                category=cid,
+                subcategory=cat["subcategories"][0]["key"],
+                counterparty="Exemple SA",
+                reference="REF-1",
+                doc_date=date(2026, 10, 14),
+                arrived_on=date(2026, 10, 20),
+            )
+            out = templates.render(reg, doc)
+            assert "{" not in out.path and "{" not in out.file_name and out.file_name.startswith("2026-10-14_")
+            assert out.file_name.isascii() and "__" not in out.file_name

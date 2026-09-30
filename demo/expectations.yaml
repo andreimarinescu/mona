@@ -1,0 +1,845 @@
+schema: mona.expectations/v1
+anchor: '2026-10-20'
+thresholds: {high: 85, low: 60}
+tiers: {before: rules.yaml, after: rules.yaml + rules.learned.yaml}
+docs:
+- id: 945a8bd4c054
+  label: OPCO contribution call, SELARL
+  group: live
+  position: 1
+  cases: [feedback-opco]
+  source: corpus
+  values: private
+  before:
+    basis: rule
+    rule: opco-selarl
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payment_calls
+    subcategory: contribution_opco
+    counterparty: OPCO EP
+    counterparty_key: opco-ep
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Appels de paiement/2024
+    file_name: private
+  after: same
+- id: syn-sie-letter
+  label: SIE payment demand, Medical Digital Design
+  group: live
+  position: 2
+  source: synthetic
+  values: synthetic
+  before:
+    basis: model
+    outcome: file
+    reasons: []
+    band: model
+    entity: mdd
+    category: payment_calls
+    subcategory: avis_mise_recouvrement
+    counterparty: SIE Mayenne
+    fiscal_year: 2025
+    path: Medical Digital Design/Appels de paiement/2025
+    file_name: 2026-10-16_SIE-Mayenne_Avis-de-mise-en-recouvrement_SIE-DEMO-7742.pdf
+  after: same
+- id: 79e0ba30cd98
+  label: SELARL balance sheet
+  group: live
+  position: 3
+  cases: [feedback-talenz]
+  source: corpus
+  values: private
+  before:
+    basis: rule
+    rule: selarl-annual-accounts
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: annual_accounts
+    subcategory: bilan
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Documents annuels/2024
+    file_name: private
+  after: same
+- id: 162ae8e85e14
+  label: TALENZ financial statements, Medical Digital Design (FY 10-01 to 09-30)
+  group: live
+  position: 4
+  cases: [feedback-talenz, fy-crossing]
+  source: corpus
+  values: private
+  note: 'no issue date printed: doc_date taken as the period end'
+  before:
+    basis: rule
+    rule: talenz-mdd
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: mdd
+    category: annual_accounts
+    subcategory: etats_financiers
+    counterparty: TALENZ
+    counterparty_key: talenz
+    fiscal_year: 2024
+    path: Medical Digital Design/Documents annuels/2024
+    file_name: private
+  after: same
+- id: 90f3898a7337
+  label: TALENZ approval-of-accounts letter, Medical Digital Design
+  group: live
+  position: 5
+  cases: [feedback-talenz]
+  source: corpus
+  values: private
+  before:
+    basis: rule
+    rule: talenz-mdd
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: mdd
+    category: annual_accounts
+    subcategory: approbation
+    counterparty: TALENZ
+    counterparty_key: talenz
+    fiscal_year: 2024
+    path: Medical Digital Design/Documents annuels/2024
+    file_name: private
+  after: same
+- id: d6759080655c
+  label: SELARL management summary
+  group: live
+  position: 6
+  cases: [feedback-talenz]
+  source: corpus
+  values: private
+  before:
+    basis: rule
+    rule: selarl-annual-accounts
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: annual_accounts
+    subcategory: soldes_intermediaires
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Documents annuels/2024
+    file_name: private
+  after: same
+- id: syn-oxyleo-prep
+  label: OXYLEO income-tax preparation letter (personal)
+  group: live
+  position: 7
+  cases: [feedback-oxyleo]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: rule
+    rule: oxyleo-personal-tax
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: personal
+    category: tax
+    subcategory: preparation
+    counterparty: OXYLEO
+    counterparty_key: oxyleo
+    fiscal_year: 2026
+    path: Personnel/Impôts et taxes/2026
+    file_name: 2026-10-11_OXYLEO_Elements-preparatoires.pdf
+  after: same
+- id: 83ef9c3e34b2
+  label: La Médicale multi-risk notice, SCI
+  group: live
+  position: 8
+  source: corpus
+  values: private
+  note: 'entity may queue: the addressee is the SCI short name'
+  before:
+    basis: model
+    outcome: file
+    reasons: []
+    band: model
+    entity: sci-c-immobilier
+    category: insurance
+    subcategory: multirisque
+    counterparty: La Médicale
+    counterparty_key: la-medicale
+    fiscal_year: 2026
+    path: SCI C Immobilier/Assurances/La Médicale/Multirisque/2025
+    file_name: private
+  after: same
+- id: 437dfdbb789d
+  label: DSN payroll declaration, SELARL
+  group: live
+  position: 9
+  source: corpus
+  values: private
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: syn-supplier-rotated
+  label: Supplier invoice, rotated two-page scan
+  group: live
+  position: 10
+  cases: [rotated-scan]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: model
+    outcome: file
+    reasons: []
+    band: model
+    entity: selarl-simina
+    category: supplier_invoices
+    subcategory: facture
+    counterparty: Dentalis Fournitures
+    fiscal_year: 2026
+    path: Cabinet Orthodontie/Factures reçues/Dentalis Fournitures/2026
+    file_name: 2026-10-12_Dentalis-Fournitures_Facture_FA-DEMO-5580.pdf
+  after: same
+- id: 110c37b2aaa1
+  label: AGIPI life-insurance statement, insured person 1
+  group: live
+  position: 11
+  cases: [feedback-agipi, same-insurer-two-persons]
+  source: corpus
+  values: private
+  note: 'category and counterparty are read, the entity is not: no rule names a person'
+  before:
+    basis: model
+    outcome: queue
+    reasons: [entity]
+    band: model
+    suggestion: {category: insurance, counterparty: AGIPI}
+  after:
+    basis: rule
+    rule: agipi-assurance-vie-by-person
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: personal
+    unit: child-1
+    category: insurance
+    subcategory: assurance_vie
+    counterparty: AGIPI
+    counterparty_key: agipi
+    fiscal_year: 2025
+    path: Personnel/@child-1/Assurances/AGIPI/Assurance vie/2025
+    file_name: private
+- id: 86c269dd3165
+  label: AGIPI life-insurance statement, insured person 2
+  group: live
+  position: 12
+  cases: [feedback-agipi, same-insurer-two-persons]
+  source: corpus
+  values: private
+  before:
+    basis: model
+    outcome: queue
+    reasons: [entity]
+    band: model
+    suggestion: {category: insurance, counterparty: AGIPI}
+  after:
+    basis: rule
+    rule: agipi-assurance-vie-by-person
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: personal
+    unit: child-2
+    category: insurance
+    subcategory: assurance_vie
+    counterparty: AGIPI
+    counterparty_key: agipi
+    fiscal_year: 2025
+    path: Personnel/@child-2/Assurances/AGIPI/Assurance vie/2025
+    file_name: private
+- id: syn-agipi-per
+  label: AGIPI PER notice (synthetic stand-in for the text-only original)
+  group: live
+  position: 13
+  cases: [feedback-agipi]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: model
+    outcome: queue
+    reasons: [entity]
+    band: model
+    suggestion: {category: insurance, counterparty: AGIPI}
+  after:
+    basis: rule
+    rule: agipi-per-by-person
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: personal
+    unit: christine
+    category: insurance
+    subcategory: per
+    counterparty: AGIPI
+    counterparty_key: agipi
+    fiscal_year: 2026
+    path: Personnel/Christine/Assurances/AGIPI/PER/2026
+    file_name: 2026-10-14_AGIPI_PER_PER-DEMO-0417.pdf
+- id: d4e32792cb51
+  label: Hello bank statement, LMNP account (1 of 3)
+  group: live
+  position: 14
+  cases: [feedback-hello-bank]
+  source: corpus
+  values: private
+  note: 'no issue date printed: doc_date taken as the period end; the model may read the counterparty as BNP Paribas'
+  before:
+    basis: model
+    outcome: queue
+    reasons: [entity]
+    band: model
+    suggestion: {category: bank, counterparty: Hello bank}
+  after:
+    basis: rule
+    rule: hello-bank-lmnp
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+- id: 03f336dd6ee3
+  label: Hello bank statement, LMNP account (2 of 3)
+  group: live
+  position: 15
+  cases: [feedback-hello-bank]
+  source: corpus
+  values: private
+  note: 'no issue date printed: doc_date taken as the period end; the model may read the counterparty as BNP Paribas'
+  before:
+    basis: model
+    outcome: queue
+    reasons: [entity]
+    band: model
+    suggestion: {category: bank, counterparty: Hello bank}
+  after:
+    basis: rule
+    rule: hello-bank-lmnp
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+- id: 051809a11573
+  label: Hello bank statement, LMNP account (3 of 3)
+  group: live
+  position: 16
+  cases: [feedback-hello-bank]
+  source: corpus
+  values: private
+  note: 'no issue date printed: doc_date taken as the period end; the model may read the counterparty as BNP Paribas'
+  before:
+    basis: model
+    outcome: queue
+    reasons: [entity]
+    band: model
+    suggestion: {category: bank, counterparty: Hello bank}
+  after:
+    basis: rule
+    rule: hello-bank-lmnp
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+- id: 2fa37b7d01cf
+  label: UNIM member-space letter
+  group: live
+  position: 17
+  cases: [feedback-unim]
+  source: corpus
+  values: private
+  note: 'no date printed: {year} and {date} fall back to the arrival date'
+  before:
+    basis: rule
+    rule: unim-business
+    outcome: queue
+    reasons: [low]
+    band: low
+    confidence: 55
+    entity: selarl-simina
+    category: insurance
+    counterparty: UNIM
+    counterparty_key: unim
+    fiscal_year: 2026
+    path: Cabinet Orthodontie/Assurances/UNIM/2026
+    file_name: private
+  after: same
+- id: syn-unreadable
+  label: Degraded scan, unreadable
+  group: live
+  position: 18
+  source: synthetic
+  values: synthetic
+  before:
+    basis: none
+    outcome: unreadable
+    reasons: [unreadable]
+  after: same
+- id: syn-duplicate-urssaf
+  label: Byte-identical copy of the pre-filed URSSAF call
+  group: live
+  position: 19
+  cases: [duplicate]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: none
+    outcome: duplicate
+    reasons: []
+  after: same
+  duplicate_of: syn-urssaf-call
+- id: 2a7f59091e07
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: 3bb97ca05844
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: bc1aa08e13ec
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: 804e66355f40
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: 18bd5e19bab9
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: a0315e754e52
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: b9c89da3fa92
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: 56d901f94557
+  label: DSN payroll declaration, SELARL (pre-filed)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed overnight'
+  before:
+    basis: rule
+    rule: payroll-selarl
+    outcome: filed
+    reasons: []
+    band: high
+    confidence: 95
+    entity: selarl-simina
+    category: payroll
+    subcategory: dsn
+    fiscal_year: 2024
+    path: Cabinet Orthodontie/Paie et social/2024
+    file_name: private
+  after: same
+- id: 749383ec4112
+  label: Hello bank statement, LMNP account (pre-filed by the user)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed by the user'
+  before:
+    basis: user
+    outcome: filed
+    reasons: []
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+  after: same
+- id: 85f83829b38d
+  label: Hello bank statement, LMNP account (pre-filed by the user)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed by the user'
+  before:
+    basis: user
+    outcome: filed
+    reasons: []
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+  after: same
+- id: 70bb174428a1
+  label: Hello bank statement, LMNP account (pre-filed by the user)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed by the user'
+  before:
+    basis: user
+    outcome: filed
+    reasons: []
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+  after: same
+- id: 0a1de5b3b9d0
+  label: Hello bank statement, LMNP account (pre-filed by the user)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed by the user'
+  before:
+    basis: user
+    outcome: filed
+    reasons: []
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+  after: same
+- id: e1574a7af51f
+  label: Hello bank statement, LMNP account (pre-filed by the user)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed by the user'
+  before:
+    basis: user
+    outcome: filed
+    reasons: []
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+  after: same
+- id: a5a2e4a2b529
+  label: Hello bank statement, LMNP account (pre-filed by the user)
+  group: prefiled
+  source: corpus
+  values: private
+  note: 'history: filed by the user'
+  before:
+    basis: user
+    outcome: filed
+    reasons: []
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2025
+    path: LMNP/Angers-Strasbourg/Banque/2025
+    file_name: private
+  after: same
+- id: syn-urssaf-call
+  label: URSSAF payment call due in 3 days (pre-filed)
+  group: prefiled
+  source: synthetic
+  values: synthetic
+  note: 'history: filed overnight'
+  before:
+    basis: model
+    outcome: filed
+    reasons: []
+    entity: selarl-simina
+    category: payment_calls
+    subcategory: appel_cotisations
+    counterparty: URSSAF
+    counterparty_key: urssaf
+    fiscal_year: 2026
+    path: Cabinet Orthodontie/Appels de paiement/2026
+    file_name: 2026-10-18_URSSAF_Appel-de-cotisations_URS-DEMO-3391.pdf
+  after: same
+- id: syn-hello-fy-crossing
+  label: Hello bank statement across the year end (synthetic)
+  group: extra
+  cases: [feedback-hello-bank, fy-crossing]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: model
+    outcome: queue
+    reasons: [entity]
+    band: model
+    suggestion: {category: bank, counterparty: Hello bank}
+  after:
+    basis: rule
+    rule: hello-bank-lmnp
+    outcome: file
+    reasons: []
+    band: high
+    confidence: 95
+    entity: lmnp
+    unit: angers-strasbourg
+    category: bank
+    subcategory: releve
+    counterparty: Hello bank
+    counterparty_key: hello-bank
+    fiscal_year: 2026
+    path: LMNP/Angers-Strasbourg/Banque/2026
+    file_name: 2026-01-15_Hello-bank_Releve-de-compte.pdf
+- id: syn-patient-devis
+  label: Patient treatment quote
+  group: extra
+  cases: [patient-showcase]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: model
+    outcome: file
+    reasons: []
+    band: model
+    entity: selarl-simina
+    category: patient_documents
+    subcategory: devis
+    fiscal_year: 2026
+    path: Cabinet Orthodontie/Documents patients/2026
+    file_name: 2026-10-08_Devis_DEV-DEMO-0231.pdf
+  after: same
+- id: syn-patient-ordonnance
+  label: Patient prescription
+  group: extra
+  cases: [patient-showcase]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: model
+    outcome: file
+    reasons: []
+    band: model
+    entity: selarl-simina
+    category: patient_documents
+    subcategory: ordonnance
+    fiscal_year: 2026
+    path: Cabinet Orthodontie/Documents patients/2026
+    file_name: 2026-10-09_Ordonnance_ORD-DEMO-0518.pdf
+  after: same
+- id: syn-patient-care-sheet
+  label: Patient post-care sheet
+  group: extra
+  cases: [patient-showcase]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: model
+    outcome: file
+    reasons: []
+    band: model
+    entity: selarl-simina
+    category: patient_documents
+    subcategory: conseils_post_soins
+    fiscal_year: 2026
+    path: Cabinet Orthodontie/Documents patients/2026
+    file_name: 2026-10-10_Conseils-post-soins_CPS-DEMO-0042.pdf
+  after: same
+- id: syn-visitor-photo
+  label: Phone photo of a visitor letter (Visitors batch)
+  group: extra
+  cases: [visitor]
+  source: synthetic
+  values: synthetic
+  before:
+    basis: visitor
+    outcome: file
+    reasons: []
+    band: model
+    entity: visitors
+    category: supplier_invoices
+    subcategory: facture
+    counterparty: Eaux du Bocage
+    fiscal_year: 2026
+    path: Visitors/Factures reçues/Eaux du Bocage/2026
+    file_name: 2026-10-05_Eaux-du-Bocage_Facture_EB-DEMO-1206.jpg
+  after: same
