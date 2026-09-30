@@ -1,0 +1,115 @@
+{
+ "syn-agipi-per": {
+  "file": "agipi-per-avis-echeance.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "AGIPI                                                 Dr Christine Simina\nAssociation d'assurance (document fictif)             10 rue Fictive\n1 avenue de l'Exemple                                 53000 Laval\n67000 Strasbourg\n\n\n                                                                               Laval, le 14/10/2026\n\n\nObjet : Votre plan d'épargne retraite (PER), avis d'échéance de versement\nRéférence : PER-DEMO-0417\n\nChère Adhérente,\n\nNous vous informons que le prochain versement sur votre plan d'épargne retraite, référence\nPER-DEMO-0417, est de 480,00 €.\n\nCe montant sera prélevé le 01/11/2026 sur le compte indiqué dans votre dossier.\n\nVotre plan d'épargne retraite (PER) reste géré par AGIPI.\n"
+  ]
+ },
+ "syn-oxyleo-prep": {
+  "file": "oxyleo-elements-preparatoires.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "OXYLEO                                                    Claudiu Gamulescu\nCabinet d'expertise comptable (document fictif)           10 rue Fictive\n8 rue de l'Exemple                                        53000 Laval\n53000 Laval\n\n\n                                                                                     Laval, le 11/10/2026\n\n\nObjet : REVENUS 2025 : éléments préparatoires\nRéférence : OXY-DEMO-2025\n\nMerci de préparer les pièces suivantes pour votre déclaration de revenus 2025.\n\nAvis d'imposition de l'an dernier, attestations bancaires, justificatifs de dons et de frais de garde.\n\nVotre situation personnelle ou familiale a-t-elle évolué ? Merci de nous le signaler avant la date limite.\n"
+  ]
+ },
+ "syn-hello-fy-crossing": {
+  "file": "releve-compte-decembre-janvier.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "Hello bank                                      Claudiu Gamulescu\nService clients (document fictif)               10 rue Fictive\nTSA 00000                                       53000 Laval\n75000 Paris\n\n\n                                                                         Laval, le 15/01/2026\n\n\nObjet : Relevé de compte chèques\nRéférence : REL-DEMO-0126\n\nRELEVÉ DE COMPTE du 15/12/2025 au 15/01/2026\nIBAN : FR7996552251204406110255010\n\nSOLDE CRÉDITEUR AU 15/12/2025 : 2 799,61 €\n\nDate        Nature des opérations                                     Débit            Crédit\n\n16.12       PRLV SEPA COMPTABILITE DEMO                              75,00 €\n\n17.12       VIREMENT SEPA EMIS APPEL DE FONDS COPRO                 394,08 €\n\n20.12       VIR SEPA RECU LOYER DEMO ANGERS                                          880,00 €\n\n04.01       PRLV SEPA ASSURANCE DEMO                                 36,13 €\n\n11.01       VIR SEPA RECU LOYER DEMO ANGERS                                           38,00 €\n\nNOUVEAU SOLDE AU 15/01/2026 : 3 212,40 €\n"
+  ]
+ },
+ "syn-urssaf-call": {
+  "file": "urssaf-appel-cotisations.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "URSSAF Pays de la Loire                               Cabinet d'Orthodontie Dr Christine Simina\nService recouvrement (document fictif)                4 rue Fictive\n3 place de l'Exemple                                  53000 Laval\n44000 Nantes                                          SIREN 551 772 335\n\n\n                                                                               Laval, le 18/10/2026\n\n\nObjet : Appel de cotisations, 3e trimestre 2026\nRéférence : URS-DEMO-3391\n\nMadame, Monsieur,\n\nNous vous informons que le montant des cotisations dues au titre du 3e trimestre 2026 s'élève à 1\n842,00 €.\n\nCette somme doit nous parvenir au plus tard le 23/10/2026. Passé ce délai, une majoration de retard\nsera appliquée.\n\nRéférence à rappeler lors du paiement : URS-DEMO-3391.\n"
+  ]
+ },
+ "syn-sie-letter": {
+  "file": "sie-avis-mise-en-recouvrement.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "SIE Mayenne                                            Medical Digital Design\nService des impôts des entreprises (document fictif)   12 rue Fictive\n5 rue de l'Exemple                                     53000 Laval\n53000 Laval                                            SIREN 310 605 306\n\n\n                                                                                Laval, le 16/10/2026\n\n\nObjet : Avis de mise en recouvrement, TVA de l'exercice clos le 30/09/2025\nRéférence : SIE-DEMO-7742\n\nMadame, Monsieur,\n\nAprès examen de votre dossier, la somme de 4 316,00 € reste due au titre de la TVA de l'exercice\nclos le 30/09/2025.\n\nVous devez régler ce montant avant le 03/11/2026. À défaut, des majorations et des poursuites\npourront être engagées.\n\nSi vous ne pouvez pas payer en une seule fois, vous pouvez demander un délai de paiement au\ncomptable public en indiquant la référence SIE-DEMO-7742.\n"
+  ]
+ },
+ "syn-patient-devis": {
+  "file": "devis-orthodontie.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "Cabinet d'Orthodontie Dr Christine Simina                     M. Patient Exemple\n4 rue Fictive                                                 Dossier patient fictif\n53000 Laval\n\n\n                                                                                       Laval, le 08/10/2026\n\n\nObjet : Devis pour traitement orthodontique\nRéférence : DEV-DEMO-0231\n\nIdentification du praticien : Dr Christine Simina (fictif).\n\nTraitement proposé : appareil multi-attaches, 18 mois de traitement, contrôles mensuels.\n\nMontant total des honoraires : 1 250,00 €, hors soins à tarif opposable.\n\nDurée de validité du devis : 1 an.\n"
+  ]
+ },
+ "syn-patient-ordonnance": {
+  "file": "ordonnance.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "Cabinet d'Orthodontie Dr Christine Simina               M. Patient Exemple\n4 rue Fictive                                           Dossier patient fictif\n53000 Laval\n\n\n                                                                                 Laval, le 09/10/2026\n\n\nObjet : Ordonnance\nRéférence : ORD-DEMO-0518\n\nLe 09/10/2026, pour M. Patient Exemple.\n\nBain de bouche antiseptique sans alcool, 2 fois par jour pendant 7 jours.\n\nAntalgique de palier 1 en cas de douleur, selon la notice.\n\nÀ renouveler : non.\n"
+  ]
+ },
+ "syn-patient-care-sheet": {
+  "file": "conseils-post-soins.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "Cabinet d'Orthodontie Dr Christine Simina               M. Patient Exemple\n4 rue Fictive                                           Dossier patient fictif\n53000 Laval\n\n\n                                                                                   Laval, le 10/10/2026\n\n\nObjet : Conseils après la pose de l'appareil\nRéférence : CPS-DEMO-0042\n\nBrossez-vous les dents après chaque repas, avec une brosse souple.\n\nÉvitez les aliments durs ou collants pendant les premières semaines.\n\nEn cas de fil ou de bague qui blesse, appliquez la cire fournie et appelez le cabinet.\n"
+  ]
+ },
+ "syn-supplier-rotated": {
+  "file": "scan-facture-fournisseur.pdf",
+  "mime": "application/pdf",
+  "method": "ocr",
+  "pages": [
+   "Dentalis Fournitures                                   Cabinet d'Orthodontie Dr Christine Simina\nMatériel dentaire (document fictif)                    4 rue Fictive\n21 zone de l'Exemple                                   53000 Laval\n35000 Rennes\n\n\n                                                                                 Laval, le 12/10/2026\n\n\n\nObjet : Facture FA-DEMO-5580\n\nRéférence : FA-DEMO-5580\n\n\nDétail de la commande : 4 boîtes de gants, 2 lots de fraises, 1 lampe de polymérisation.\n\nTotal TTC : 386,40 €.\n",
+   "Facture FA-DEMO-5580, page 2\n\nConditions de règlement : 30 jours à réception de la facture, soit avant le 11/11/2026.\n\nAucun escompte pour paiement anticipé. Indemnité forfaitaire de recouvrement : 40 EUR.\n"
+  ]
+ },
+ "syn-visitor-photo": {
+  "file": "photo-facture-eau.jpg",
+  "mime": "image/jpeg",
+  "method": "ocr",
+  "pages": [
+   "Eaux du Bocage                             Visiteur Exemple\nService des     eaux   (document fictif)\n                                           3 rue Fictive\n2 chemin de   l'Exempi\n                                           53000 Laval\n   00 Laval\n\n\n\n\n                                                              Lale\n                                                                va 05/10/\n                                                                       l,2026\n\nObjet : Facture d'eau, période du semestre\n\nRéférence : EB-DEMO-1206\n\n\n\nMontant à payer : 74.25 €\n\n\n\n\nRéférence client : EB-DEMO-1206.\n"
+  ]
+ },
+ "syn-unreadable": {
+  "file": "scan-illisible.pdf",
+  "mime": "application/pdf",
+  "method": "ocr",
+  "pages": [
+   "oe\n\n\n\n\nSe\n"
+  ]
+ },
+ "syn-test-opco": {
+  "file": "opco-appel-contribution.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "OPCO EP                                                 Cabinet d'Orthodontie Dr Christine Simina\nOpérateur de compétences (document fictif)              4 rue Fictive\n7 rue de l'Exemple                                      53000 Laval\n75000 Paris\n\n\n                                                                                   Laval, le 12/10/2026\n\n\nObjet : Appel de contribution à la formation professionnelle\nRéférence : OPCO-DEMO-0042\n\nMadame, Monsieur,\n\nAu titre de la contribution à la formation professionnelle, le montant dû s'élève à 212,00 €.\n\nMerci de régler cette somme avant le 09/11/2026, en rappelant la référence OPCO-DEMO-0042.\n"
+  ]
+ },
+ "syn-test-talenz": {
+  "file": "talenz-approbation-comptes.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "TALENZ                                                  Medical Digital Design\nExpertise comptable (document fictif)                   12 rue Fictive\n9 avenue de l'Exemple                                   53000 Laval\n53000 Laval\n\n\n                                                                                 Laval, le 13/10/2026\n\n\nObjet : Approbation des comptes de l'exercice clos le 30/09/2025\nRéférence : TAL-DEMO-0901\n\nMadame, Monsieur,\n\nVeuillez trouver ci-joint le procès-verbal d'approbation des comptes de Medical Digital Design pour\nl'exercice clos le 30/09/2025.\n\nNous restons à votre disposition pour toute question.\n"
+  ]
+ },
+ "syn-test-unim": {
+  "file": "unim-avis-prevoyance.pdf",
+  "mime": "application/pdf",
+  "method": "pdftotext",
+  "pages": [
+   "UNIM                                                Cabinet d'Orthodontie Dr Christine Simina\nPrévoyance des professions de santé (document       4 rue Fictive\nfictif)                                             53000 Laval\n5 place de l'Exemple\n75000 Paris\n\n\n                                                                             Laval, le 15/10/2026\n\n\nObjet : Avis d'échéance de votre contrat de prévoyance\nRéférence : UNIM-DEMO-0771\n\nMadame, Monsieur,\n\nLa cotisation de votre contrat de prévoyance, référence UNIM-DEMO-0771, s'élève à 96,50 €.\n\nElle sera prélevée le 14/11/2026.\n"
+  ]
+ }
+}

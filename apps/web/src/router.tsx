@@ -70,6 +70,14 @@ const devRoutes = import.meta.env.DEV
       createRoute({
         getParentRoute: () => rootRoute,
         path: '/dev/pdf',
+        validateSearch: (search: Record<string, unknown>): { file?: string; page?: number; q?: string } => {
+          const out: { file?: string; page?: number; q?: string } = {};
+          if (typeof search.file === 'string' && search.file.startsWith('/')) out.file = search.file;
+          if (typeof search.q === 'string') out.q = search.q;
+          const page = Number(search.page);
+          if (Number.isInteger(page) && page >= 1) out.page = page;
+          return out;
+        },
         component: lazyRouteComponent(() => import('./routes/dev/PdfFind'), 'PdfFind'),
       }),
     ]

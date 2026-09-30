@@ -1,3 +1,5 @@
+import os
+import tempfile
 from pathlib import Path
 
 import psycopg
@@ -15,6 +17,7 @@ from tests.rows import CLEANUP
 
 SEED = Path(__file__).parent / "fixtures" / "seed"
 SERVICE_KEY = "k" * 32
+os.environ.setdefault("MONA_DATA_DIR", tempfile.mkdtemp(prefix="mona-test-data-"))
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -118,3 +121,53 @@ def seeded_engine(services_seed_template):
             yield engine
         finally:
             engine.dispose()
+
+
+def _demo_template(tier: str):
+    from sqlalchemy import create_engine
+
+    from tests.pg import alembic, conninfo_for, scratch_db, sqlalchemy_url_for
+    from tests.pipeline_world import apply_jobs_schema, load_demo_seed
+
+    with scratch_db() as db:
+        alembic(db, "upgrade", "head")
+        apply_jobs_schema(conninfo_for(db))
+        engine = create_engine(sqlalchemy_url_for(db))
+        load_demo_seed(engine, sqlalchemy_url_for(db), tier)
+        engine.dispose()
+        yield db
+
+
+@pytest.fixture(scope="session")
+def l1m2_demo_template():
+    """A database at head with the Procrastinate schema and demo/seed (pre-seeded tier)."""
+    yield from _demo_template("preseeded")
+
+
+@pytest.fixture(scope="session")
+def l1m2_learned_template():
+    """The same, with the rules the demo learns live (rules.learned.yaml) loaded too."""
+    yield from _demo_template("all")
+
+
+def _engine_on(template: str):
+    from sqlalchemy import create_engine
+
+    from tests.pg import scratch_db, sqlalchemy_url_for
+
+    with scratch_db(template=template) as db:
+        engine = create_engine(sqlalchemy_url_for(db), pool_size=8)
+        try:
+            yield engine
+        finally:
+            engine.dispose()
+
+
+@pytest.fixture
+def l1m2_demo_engine(l1m2_demo_template):
+    yield from _engine_on(l1m2_demo_template)
+
+
+@pytest.fixture
+def l1m2_learned_engine(l1m2_learned_template):
+    yield from _engine_on(l1m2_learned_template)

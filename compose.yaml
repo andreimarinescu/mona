@@ -8,6 +8,7 @@ x-python: &python
     MONA_DATA_DIR: /data
     PROCRASTINATE_APP: mona.jobs.app
     PROCRASTINATE_LOG_LEVEL: info
+    MONA_LLM_MODEL: ${MONA_LLM_MODEL:-qwen/qwen3.7-flash}
     HERMES_URL: http://hermes:8642
     PYTHONDONTWRITEBYTECODE: "1"
   volumes:
@@ -69,11 +70,11 @@ services:
 
   worker-llm:
     <<: *python
-    command: procrastinate worker --queues llm --concurrency 1
+    command: mona worker --queues llm --concurrency 1
 
   worker-cpu:
     <<: *python
-    command: procrastinate worker --queues cpu --concurrency 3
+    command: mona worker --queues cpu --concurrency 3
 
   web:
     image: node:24

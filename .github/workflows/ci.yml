@@ -45,6 +45,8 @@ jobs:
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-17
           echo "PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump" >> "$GITHUB_ENV"
+      - name: poppler-utils (pdftotext for the extraction tests)
+        run: sudo apt-get install -y poppler-utils
       - run: make py-check
 
   e2e:

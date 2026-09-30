@@ -1,0 +1,32 @@
+# Synthetic overlay for demo/seed: fictional identifiers only. lmnp-hello-demo is the IBAN the
+# synthetic generator prints on syn-hello-fy-crossing; lmnp-hello is the public French sample.
+people:
+  claudiu:
+    aliases: [M. Claudiu Gamulescu, Gamulescu Claudiu]
+  christine:
+    aliases: [Christine Simina, Mme Christine Simina]
+  child-1:
+    display_name: Alex Exemple
+    short_name: Alex
+    aliases: [Alex Exemple]
+  child-2:
+    display_name: Sam Exemple
+    short_name: Sam
+    aliases: [Sam Exemple]
+entities:
+  selarl-simina:
+    siren: "999999998"
+    addresses: [4 rue Fictive, 53000 Laval]
+  mdd:
+    siren: "888888880"
+    addresses: [12 rue Fictive, 53000 Laval]
+counterparties:
+  opco-ep:
+    siren: "777777772"
+  agipi:
+    siren: "555555556"
+accounts:
+  lmnp-hello:
+    iban: FR76 3000 6000 0112 3456 7890 189
+  lmnp-hello-demo:
+    iban: FR79 9655 2251 2044 0611 0255 010

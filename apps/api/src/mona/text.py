@@ -25,3 +25,11 @@ def norm(s: str) -> str:
 def contains_word(haystack: str, needle: str) -> bool:
     """C5 §2 whole-word match; both sides already normalised."""
     return re.search(rf"(?<![0-9a-z]){re.escape(needle)}(?![0-9a-z])", haystack) is not None
+
+
+_COMMA_BELOW = str.maketrans("ŞşŢţ", "ȘșȚț")
+
+
+def ro_comma_below(s: str) -> str:
+    """A6 (C8 §7 rule 2): Romanian ş/ţ written with the cedilla become ș/ț."""
+    return s.translate(_COMMA_BELOW)

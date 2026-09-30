@@ -1,6 +1,7 @@
 """`file_document` (C5 §1.2, C7 §4) and what runs inside a filing's step C."""
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
@@ -47,6 +48,20 @@ def finish_batch_if_done(conn: Connection, batch_id: str, now: datetime) -> bool
     if finished is not None:
         finished.append(batch_id)
     return True
+
+
+@contextmanager
+def batch_done_calls(ctx: Ctx) -> Iterator[None]:
+    """Call the batch-end hook once for each batch the enclosed commits marked `done`."""
+    token = _finished.set([])
+    try:
+        yield
+        finished = list(_finished.get() or [])
+    finally:
+        _finished.reset(token)
+    if ctx.on_batch_done:
+        for batch_id in finished:
+            ctx.on_batch_done(batch_id)
 
 
 def due_date_verified(conn: Connection, doc: Mapping[str, Any]) -> bool:

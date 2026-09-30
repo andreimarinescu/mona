@@ -28,3 +28,15 @@ Errors are `ServiceError(code, message, field=, valid=, hint=)` with C4 §2.4 co
 | `resolve_counterparty(conn, value)`, `learn_alias(conn, extracted, counterparty_id, *, actor, via, at, group_id)` | id / outcome | C5 §6.2.1, §6.2.5 |
 
 DTO builders for other read paths: `mona.services.dto.document_summary`, `journal_entry`, `journal_group`, `rule`, `path_state`. Rule rows: `mona.rules.store` (`save_rule`, `set_state`, `journal_rule`, `record_firing`, `record_correction`, `write_export` for `/data/config/rules.yaml` after every committed rule write). CLI: `mona rules import <file>`, `mona rules export`.
+
+## Pipeline (`mona.pipeline`, C5 §1)
+
+| Function | Returns | Contract |
+|---|---|---|
+| `ingest_files(ctx, [Upload(bytes_or_path, original_name)], *, source='drop', visitor=False, title=None, batch_id=None)` | `Intake(batch_id, items=[IntakeItem(id, original_name, sha256, size_bytes, outcome, document_id, reject_reason, deleted)], batch_done)` | C1 §4.1, C7 §8.4. One batch per call (created with its `intake_batch` group), files written to `inbox/<id>.<ext>`, `extract_text` queued in upload order in the same transaction, after every row exists. `duplicate` points to the existing document (`deleted=True` when it is in the trash); `rejected` carries `empty`, `too_large`, `unsupported_type` or `unreadable_file`. A batch with no accepted document is `done` at once and the batch-end hook runs |
+| `ingest_file(ctx, content, original_name, *, source, visitor, batch_id=None)` | `Intake` | One file; its own batch unless `batch_id` names a running one. The upload endpoint uses `ingest_files` for a multi-file drop so the batch can't finish between two files |
+| `mona.pipeline.runtime.get_context()`, `runtime.startup()` | `Ctx` / recovered entries | The process context from settings, and C7 §4.3 recovery; the api lifespan does the same and keeps the context on `app.state.pipeline` |
+| `mona.pipeline.model.LlmClient` | `complete(system, user, schema) -> ModelResult` | C5 §5.1, D9, D11: the one model client. OpenRouter (`reasoning.enabled=false`; D4 pins only for Qwen 3.6) or llama-server (`chat_template_kwargs.enable_thinking=false`) by `MONA_LLM_BACKEND`; `:free` models refused |
+| `mona.pipeline.hooks` | — | `batch_done` and `document_settled` call `ctx.on_batch_done` / `ctx.on_document_settled` after the commit (C6 fills them in) |
+
+Jobs (`mona.jobs`): `extract_text`, `render_thumbnail`, `classify_document` (queue `llm`), `file_document`, and `recover_pending` every minute. Workers start with `mona worker --queues cpu|llm`. `mona pipeline run <files…> [--inline] [--visitor] [--report out.json]` ingests one batch and prints each document's outcome and stage timings; `mona pipeline evidence --out cases.json` lists every verified quote's `findQuery` for the pdf.js check (`apps/web/e2e/findquery.spec.ts`).

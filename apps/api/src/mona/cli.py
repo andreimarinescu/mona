@@ -116,3 +116,81 @@ def rules_export(
         output.write_text(out, encoding="utf-8")
     else:
         typer.echo(out, nl=False)
+
+
+@app.command()
+def worker(
+    queues: Annotated[str, typer.Option(help="Comma-separated queues: cpu, llm.")] = "cpu",
+    concurrency: Annotated[int, typer.Option(help="Jobs run in parallel.")] = 1,
+) -> None:
+    """Run a Procrastinate worker after the pipeline startup (C7 §1.2 check, §4.3 recovery)."""
+    import logging
+
+    from mona.jobs import app as jobs_app
+    from mona.pipeline import runtime
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    wanted = [q.strip() for q in queues.split(",") if q.strip()]
+    runtime.get_context()
+    if "cpu" in wanted:
+        runtime.startup()
+    jobs_app.run_worker(queues=wanted, concurrency=concurrency)
+
+
+pipeline_app = typer.Typer(no_args_is_help=True, help="Run documents through the pipeline.")
+app.add_typer(pipeline_app, name="pipeline")
+
+
+@pipeline_app.command("run")
+def pipeline_run(
+    files: Annotated[list[Path], typer.Argument(help="PDF, JPEG or PNG files, in drop order.")],
+    visitor: Annotated[bool, typer.Option(help="A visitor batch (R38).")] = False,
+    inline: Annotated[
+        bool, typer.Option(help="Run the jobs in this process instead of the stack's workers.")
+    ] = False,
+    timeout: Annotated[int, typer.Option(help="Seconds to wait for the batch.")] = 1800,
+    report: Annotated[Path | None, typer.Option(help="Also write the results as JSON.")] = None,
+) -> None:
+    """Ingest the files as one batch, wait until it is done, print each document's outcome."""
+    import logging
+
+    from mona.pipeline import runtime
+    from mona.pipeline.intake import Upload, ingest_files
+    from mona.pipeline.report import batch_report, format_report, wait_for_batch
+
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
+    ctx = runtime.get_context()
+    runtime.startup()
+    intake = ingest_files(ctx, [Upload(f, f.name) for f in files], visitor=visitor)
+    typer.echo(f"batch {intake.batch_id}: " + ", ".join(i.outcome for i in intake.items))
+    run_jobs = None
+    if inline:
+        from mona.jobs import app as jobs_app
+
+        def run_jobs() -> None:
+            jobs_app.run_worker(queues=["cpu", "llm"], wait=False, install_signal_handlers=False)
+
+    if not wait_for_batch(ctx, intake.batch_id, timeout, run_jobs):
+        typer.echo("the batch did not finish in time", err=True)
+    rows = batch_report(ctx, intake.batch_id)
+    typer.echo(format_report(rows))
+    if report:
+        import json
+
+        report.write_text(json.dumps(rows, indent=2, ensure_ascii=False, default=str))
+
+
+@pipeline_app.command("evidence")
+def pipeline_evidence(
+    out: Annotated[Path, typer.Option(help="Where to write the cases (JSON).")],
+    batch: Annotated[str | None, typer.Option(help="Only this batch.")] = None,
+) -> None:
+    """Write every verified quote's findQuery, page and viewer PDF, for the pdf.js check."""
+    import json
+
+    from mona.pipeline import runtime
+    from mona.pipeline.report import evidence_cases
+
+    cases = evidence_cases(runtime.get_context(), batch)
+    out.write_text(json.dumps(cases, indent=1, ensure_ascii=False))
+    typer.echo(f"{len(cases)} cases → {out}")

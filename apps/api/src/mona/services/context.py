@@ -18,6 +18,7 @@ class Ctx:
     ops: FileOps
     clock: Callable[[], datetime] = utcnow
     on_batch_done: Callable[[str], None] | None = None
+    on_document_settled: Callable[[str], None] | None = None
 
     @property
     def data_dir(self) -> Path:
@@ -39,6 +40,7 @@ def make_context(
     clock: Callable[[], datetime] = utcnow,
     fs: Fs | None = None,
     on_batch_done: Callable[[str], None] | None = None,
+    on_document_settled: Callable[[str], None] | None = None,
 ) -> Ctx:
     """Resolve the roots, check they share one filesystem (C7 §1.2), wire the hooks."""
     from mona.services.pipeline import on_commit, on_failed
@@ -47,4 +49,4 @@ def make_context(
     roots.check_single_filesystem()
     commit = partial(on_commit, textcache=roots.data / "textcache")
     ops = FileOps(engine, roots, clock=clock, fs=fs, on_commit=commit, on_failed=on_failed)
-    return Ctx(engine, ops, clock, on_batch_done)
+    return Ctx(engine, ops, clock, on_batch_done, on_document_settled)

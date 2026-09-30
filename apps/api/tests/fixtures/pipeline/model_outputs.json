@@ -1,0 +1,629 @@
+{
+ "model": "qwen/qwen3.7-flash",
+ "prompt_version": "c5-v1",
+ "note": "recorded from the lane smoke run (D9 test model), 2026-10-01",
+ "outputs": {
+  "syn-agipi-per": {
+   "title": "AGIPI, Avis d'échéance PER, ref PER-DEMO-0417",
+   "category": "insurance",
+   "subcategory": "payroll.dsn",
+   "entity": {
+    "value": "personal",
+    "quote": "Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "AGIPI",
+    "quote": "Association d'assurance (document fictif)",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "PER-DEMO-0417",
+    "quote": "Référence : PER-DEMO-0417",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "avis_echeance",
+    "quote": "avis d'échéance de versement",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-14",
+    "quote": "Laval, le 14/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": {
+    "value": 480.0,
+    "currency": "EUR",
+    "quote": "est de 480,00 €",
+    "page": 1
+   },
+   "due_date": {
+    "value": "2026-11-01",
+    "quote": "prélevé le 01/11/2026",
+    "page": 1
+   },
+   "addressee": {
+    "value": "Dr Christine Simina",
+    "quote": "Dr Christine Simina",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is an AGIPI notice addressed to Dr Christine Simina regarding a PER (Plan d'Épargne Retraite) payment."
+  },
+  "syn-oxyleo-prep": {
+   "title": "OXYLEO - REVENUS 2025 : éléments préparatoires",
+   "category": "tax",
+   "subcategory": "tax.preparation",
+   "entity": {
+    "value": "claudiu-ae",
+    "quote": "Clau diu Gamulescu",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "oxyleo",
+    "quote": "OXYLEO",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "OXY-DEMO-2025",
+    "quote": "Référence : OXY-DEMO-2025",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "éléments préparatoires",
+    "quote": "Objet : REVENUS 2025 : éléments préparatoires",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-11",
+    "quote": "Laval, le 11/10/2026",
+    "page": 1
+   },
+   "period_start": {
+    "value": "2025-01-01",
+    "quote": "REVENUS 2025",
+    "page": 1
+   },
+   "period_end": {
+    "value": "2025-12-31",
+    "quote": "REVENUS 2025",
+    "page": 1
+   },
+   "amount": null,
+   "due_date": null,
+   "addressee": {
+    "value": "Claudiu Gamulescu",
+    "quote": "Clau diu Gamulescu",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is addressed to Claudiu Gamulescu from Oxyleo regarding 'REVENUS 2025' preparatory elements for tax declaration, matching the house rule for Oxyleo counterparty."
+  },
+  "syn-hello-fy-crossing": {
+   "title": "Hellobank, Relevé de compte chèques, déc.-janv. 2026",
+   "category": "bank",
+   "subcategory": "bank.releve",
+   "entity": {
+    "value": "personal",
+    "quote": "Hello bank Claudiu Gamulescu",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "Hello bank",
+    "quote": "Hello bank",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "REL-DEMO-0126",
+    "quote": "Référence : REL-DEMO-0126",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Relevé de compte chèques",
+    "quote": "Objet : Relevé de compte chèques",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-01-15",
+    "quote": "Laval, le 15/01/2026",
+    "page": 1
+   },
+   "period_start": {
+    "value": "2025-12-15",
+    "quote": "du 15/12/2025",
+    "page": 1
+   },
+   "period_end": {
+    "value": "2026-01-15",
+    "quote": "au 15/01/2026",
+    "page": 1
+   },
+   "amount": null,
+   "due_date": null,
+   "addressee": {
+    "value": "Claudiu Gamulescu",
+    "quote": "Claudiu Gamulescu",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is a bank statement (relevé de compte) addressed to Claudiu Gamulescu from Hello bank."
+  },
+  "syn-urssaf-call": {
+   "title": "URSSAF, Appel de cotisations T3 2026",
+   "category": "payment_calls",
+   "subcategory": "payroll.dsn",
+   "entity": {
+    "value": "selarl-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "urssaf-pays-de-la-loire",
+    "quote": "URSSAF Pays de la Loire",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "URS-DEMO-3391",
+    "quote": "Référence : URS-DEMO-3391",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "appel_cotisations",
+    "quote": "Objet : Appel de cotisations",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-18",
+    "quote": "Laval, le 18/10/2026",
+    "page": 1
+   },
+   "period_start": {
+    "value": "2026-07-01",
+    "quote": "3e trimestre 2026",
+    "page": 1
+   },
+   "period_end": {
+    "value": "2026-09-30",
+    "quote": "3e trimestre 2026",
+    "page": 1
+   },
+   "amount": {
+    "value": 1842.0,
+    "currency": "EUR",
+    "quote": "1 842,00 €",
+    "page": 1
+   },
+   "due_date": {
+    "value": "2026-10-23",
+    "quote": "au plus tard le 23/10/2026",
+    "page": 1
+   },
+   "addressee": {
+    "value": "cabinet-dorthodontie-dr-christine-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is an URSSAF contribution call addressed to the SELARL practice for the 3rd quarter of 2026."
+  },
+  "syn-sie-letter": {
+   "title": "SIE, Avis de mise en recouvrement TVA, exercice clos 30/09/2025",
+   "category": "payment_calls",
+   "subcategory": "supplier_invoices.avoir",
+   "entity": {
+    "value": "mdd",
+    "quote": "Medical Digital Design",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "SIE Mayenne",
+    "quote": "SIE Mayenne",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "SIE-DEMO-7742",
+    "quote": "Référence : SIE-DEMO-7742",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Avis de mise en recouvrement",
+    "quote": "Objet : Avis de mise en recouvrement",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-16",
+    "quote": "Laval, le 16/10/2026",
+    "page": 1
+   },
+   "period_start": {
+    "value": "2024-10-01",
+    "quote": "exercice clos le 30/09/2025",
+    "page": 1
+   },
+   "period_end": {
+    "value": "2025-09-30",
+    "quote": "exercice clos le 30/09/2025",
+    "page": 1
+   },
+   "amount": {
+    "value": 4316.0,
+    "currency": "EUR",
+    "quote": "4 316,00 €",
+    "page": 1
+   },
+   "due_date": {
+    "value": "2026-11-03",
+    "quote": "avant le 03/11/2026",
+    "page": 1
+   },
+   "addressee": {
+    "value": "Madame, Monsieur",
+    "quote": "Madame, Monsieur,",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is an 'Avis de mise en recouvrement' addressed to Medical Digital Design (MDD) for unpaid VAT."
+  },
+  "syn-patient-devis": {
+   "title": "Devis orthodontie - Dr Christine Simina",
+   "category": "patient_documents",
+   "subcategory": "patient_documents.devis",
+   "entity": {
+    "value": "selarl-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": null,
+   "issuer": null,
+   "reference": {
+    "value": "DEV-DEMO-0231",
+    "quote": "Référence : DEV-DEMO-0231",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Devis pour traitement orthodontique",
+    "quote": "Objet : Devis pour traitement orthodontique",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-08",
+    "quote": "Laval, le 08/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": {
+    "value": 1250.0,
+    "currency": "EUR",
+    "quote": "Montant total des honoraires : 1 250,00 €",
+    "page": 1
+   },
+   "due_date": null,
+   "addressee": {
+    "value": "M. Patient Exemple",
+    "quote": "M. Patient Exemple",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is a quote ('Devis') issued by the orthodontic practice to a patient."
+  },
+  "syn-patient-ordonnance": {
+   "title": "Ordonnance - Cabinet d'Orthodontie Dr Christine Simina",
+   "category": "patient_documents",
+   "subcategory": "bank.releve",
+   "entity": {
+    "value": "selarl-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": null,
+   "issuer": null,
+   "reference": {
+    "value": "ORD-DEMO-0518",
+    "quote": "Référence : ORD-DEMO-0518",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "ordonnance",
+    "quote": "Objet : Ordonnance",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-09",
+    "quote": "Laval, le 09/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": null,
+   "due_date": null,
+   "addressee": {
+    "value": "M. Patient Exemple",
+    "quote": "M. Patient Exemple",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is explicitly titled 'Ordonnance' issued by the orthodontic cabinet to a patient."
+  },
+  "syn-patient-care-sheet": {
+   "title": "Cabinet d'Orthodontie Dr Christine Simina, Conseils après la pose de l'appareil",
+   "category": "patient_documents",
+   "subcategory": "training.support",
+   "entity": {
+    "value": "selarl-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": null,
+   "issuer": null,
+   "reference": {
+    "value": "CPS-DEMO-0042",
+    "quote": "Référence : CPS-DEMO-0042",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Conseils post-soins",
+    "quote": "Objet : Conseils après la pose de l'appareil",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-10",
+    "quote": "Laval, le 10/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": null,
+   "due_date": null,
+   "addressee": {
+    "value": "M. Patient Exemple",
+    "quote": "M. Patient Exemple",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is addressed to a patient ('M. Patient Exemple') and contains post-care advice ('Brossez-vous les dents...'), issued by the orthodontic practice."
+  },
+  "syn-supplier-rotated": {
+   "title": "Dentalis Fournitures, Facture FA-DEMO-5580, 12/10/2026",
+   "category": "supplier_invoices",
+   "subcategory": "supplier_invoices.facture",
+   "entity": {
+    "value": "selarl-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "Dentalis Fournitures",
+    "quote": "Dentalis Fournitures",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "FA-DEMO-5580",
+    "quote": "Référence : FA-DEMO-5580",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Facture",
+    "quote": "Objet : Facture FA-DEMO-5580",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-12",
+    "quote": "Laval, le 12/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": {
+    "value": 386.4,
+    "currency": "EUR",
+    "quote": "Total TTC : 386,40 €.",
+    "page": 1
+   },
+   "due_date": {
+    "value": "2026-11-11",
+    "quote": "soit avant le 11/11/2026.",
+    "page": 2
+   },
+   "addressee": {
+    "value": "Cabinet d'Orthodontie Dr Christine Simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is a supplier invoice from Dentalis Fournitures addressed to the practice."
+  },
+  "syn-visitor-photo": {
+   "title": "Facture d'eau Eaux du Bocage, oct. 2026",
+   "category": "supplier_invoices",
+   "subcategory": "supplier_invoices.facture",
+   "entity": null,
+   "counterparty": {
+    "value": "Eaux du Bocage",
+    "quote": "Eaux du Bocage",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "EB-DEMO-1206",
+    "quote": "Référence : EB-DEMO-1206",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Facture d'eau",
+    "quote": "Objet : Facture d'eau",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-05",
+    "quote": "Lale va 05/10/ l,2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": {
+    "value": 74.25,
+    "currency": "EUR",
+    "quote": "Montant à payer : 74.25 €",
+    "page": 1
+   },
+   "due_date": null,
+   "addressee": null,
+   "confidence": 0.9,
+   "reason": "The document is a water bill from 'Eaux du Bocage' with a clear amount and reference, fitting the supplier invoices category for utilities."
+  },
+  "syn-test-opco": {
+   "title": "OPCO EP, Appel de contribution à la formation professionnelle, 12/10/2026",
+   "category": "payment_calls",
+   "subcategory": "payment_calls.contribution_opco",
+   "entity": {
+    "value": "selarl-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "opco-ep",
+    "quote": "OPCO EP",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "OPCO-DEMO-0042",
+    "quote": "Référence : OPCO-DEMO-0042",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Appel de contribution à la formation professionnelle",
+    "quote": "Objet : Appel de contribution à la formation professionnelle",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-12",
+    "quote": "Laval, le 12/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": {
+    "value": 212.0,
+    "currency": "EUR",
+    "quote": "montant dû s'élève à 212,00 €",
+    "page": 1
+   },
+   "due_date": {
+    "value": "2026-11-09",
+    "quote": "avant le 09/11/2026",
+    "page": 1
+   },
+   "addressee": {
+    "value": "Cabinet d'Orthodontie Dr Christine Simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "confidence": 1.0,
+   "reason": "The document is addressed to the practice and explicitly states 'Appel de contribution à la formation professionnelle' from 'OPCO EP', matching the house rule for opco-ep counterparty."
+  },
+  "syn-test-talenz": {
+   "title": "TALENZ, Approbation des comptes MDD, exercice clos 30/09/2025",
+   "category": "annual_accounts",
+   "subcategory": "supplier_invoices.facture",
+   "entity": {
+    "value": "mdd",
+    "quote": "Medical Digital Design",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "talenz",
+    "quote": "TALENZ",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "TAL-DEMO-0901",
+    "quote": "Référence : TAL-DEMO-0901",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "approbation",
+    "quote": "Approbation des comptes",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-13",
+    "quote": "13/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": {
+    "value": "2025-09-30",
+    "quote": "clos le 30/09/2025",
+    "page": 1
+   },
+   "amount": null,
+   "due_date": null,
+   "addressee": null,
+   "confidence": 0.95,
+   "reason": "The document is an approval of accounts for Medical Digital Design issued by Talenz, matching the house rule for 'medical digital design' and 'approbation'."
+  },
+  "syn-test-unim": {
+   "title": "UNIM, Avis d'échéance de prévoyance, 15/10/2026",
+   "category": "insurance",
+   "subcategory": "supplier_invoices.facture",
+   "entity": {
+    "value": "selarl-simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "counterparty": {
+    "value": "unim",
+    "quote": "UNIM",
+    "page": 1
+   },
+   "issuer": null,
+   "reference": {
+    "value": "UNIM-DEMO-0771",
+    "quote": "Référence : UNIM-DEMO-0771",
+    "page": 1
+   },
+   "doc_type": {
+    "value": "Avis d'échéance de votre contrat de prévoyance",
+    "quote": "Objet : Avis d'échéance de votre contrat de prévoyance",
+    "page": 1
+   },
+   "doc_date": {
+    "value": "2026-10-15",
+    "quote": "Laval, le 15/10/2026",
+    "page": 1
+   },
+   "period_start": null,
+   "period_end": null,
+   "amount": {
+    "value": 96.5,
+    "currency": "EUR",
+    "quote": "s'élève à 96,50 €",
+    "page": 1
+   },
+   "due_date": {
+    "value": "2026-11-14",
+    "quote": "Elle sera prélevée le 14/11/2026",
+    "page": 1
+   },
+   "addressee": {
+    "value": "Cabinet d'Orthodontie Dr Christine Simina",
+    "quote": "Cabinet d'Orthodontie Dr Christine Simina",
+    "page": 1
+   },
+   "confidence": 0.95,
+   "reason": "The document is an 'Avis d'échéance' from UNIM addressed to the practice, mentioning a 'contrat de prévoyance' amount."
+  }
+ }
+}
