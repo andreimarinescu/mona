@@ -1,0 +1,14 @@
+# Synthetic overlay: fictional identifiers; the IBAN is the public French documentation sample.
+people:
+  anna: Anna Marchand
+entities:
+  cabinet:
+    siren: "999999998"
+    address: 12 rue des Lilas, 49000 Angers
+  studio:
+    siren: "888888880"
+counterparties:
+  talenz:
+    siren: "777777772"
+iban:
+  lmnp-hello: FR76 3000 6000 0112 3456 7890 189

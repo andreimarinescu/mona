@@ -1,0 +1,115 @@
+# Synthetic practice (C5 §8.5 fictional registry). Identifiers come from overlay.yaml.
+practice:
+  name: Cabinet Marchand
+  filing_language: fr
+  owner_name: Anna Marchand
+  locale: en
+
+people:
+  - key: anna
+    display_name: {ref: people.anna}
+    short_name: Anna
+    aliases: [Mme Anna Marchand, Marchand Anna]
+  - key: paul
+    display_name: Paul Marchand
+    short_name: Paul
+    aliases: [M. Paul Marchand]
+
+entities:
+  - key: cabinet
+    display_name: Cabinet Marchand SELARL
+    folder_name: Cabinet Marchand
+    legal_form: SELARL
+    siren: {ref: entities.cabinet.siren}
+    aliases: [CABINET MARCHAND]
+    addresses: [{ref: entities.cabinet.address}]
+    people:
+      - {person: anna, role: gérante}
+  - key: studio
+    display_name: Studio Numérique SASU
+    folder_name: Studio Numérique
+    legal_form: SASU
+    siren: {ref: entities.studio.siren}
+    fy_end_month: 9
+    fy_end_day: 30
+    people:
+      - {person: paul, role: président}
+  - key: lmnp
+    display_name: LMNP Marchand
+    folder_name: LMNP
+    legal_form: LMNP
+    sub_units:
+      - {key: angers-strasbourg, label: Angers-Strasbourg}
+  - key: personal
+    display_name: Personnel
+    folder_name: Personnel
+    visibility: personal
+    sub_units:
+      - {key: anna, label: Anna, person: anna}
+      - {key: paul, label: Paul, person: paul}
+    people:
+      - {person: anna}
+      - {person: paul}
+  - key: visitors
+    display_name: Visitors
+    folder_name: Visitors
+    purge_after_hours: 24
+
+categories:
+  - id: insurance
+    icon: insurance
+    labels: {en: Insurance, fr: Assurances, ro: Asigurări}
+    model_definition: Insurance contracts, notices and statements.
+    subcategories:
+      - {key: per, labels: {en: Retirement savings (PER), fr: PER, ro: PER}}
+      - {key: assurance_vie, labels: {en: Life insurance, fr: Assurance vie, ro: Asigurare de viață}}
+      - {key: prevoyance, labels: {en: Provident insurance, fr: Prévoyance, ro: Asigurare de risc}}
+  - id: bank
+    icon: bank
+    labels: {en: Bank, fr: Banque, ro: Bancă}
+    model_definition: Bank statements and bank notices.
+    subcategories:
+      - {key: releve, labels: {en: Account statement, fr: Relevé de compte, ro: Extras de cont}, sort_order: 10}
+  - id: annual_accounts
+    icon: tax
+    labels: {en: Annual accounts, fr: Documents annuels, ro: Documente anuale}
+    model_definition: Balance sheets, approvals and other year-end accounting documents.
+    subcategories:
+      - {key: bilan, labels: {en: Balance sheet, fr: Bilan, ro: Bilanț}}
+      - {key: approbation, labels: {en: Approval of accounts, fr: Approbation des comptes, ro: Aprobarea conturilor}}
+  - id: tax
+    icon: tax
+    labels: {en: Taxes, fr: Impôts et taxes, ro: Impozite și taxe}
+    model_definition: Tax notices and tax preparation documents.
+    subcategories:
+      - {key: preparation, labels: {en: Preparation, fr: Éléments préparatoires, ro: Documente pregătitoare}}
+  - id: payment_calls
+    icon: invoice
+    labels: {en: Payment calls, fr: Appels de paiement, ro: Cereri de plată}
+    model_definition: Calls for contributions and payment demands.
+    subcategories:
+      - {key: contribution_opco, labels: {en: OPCO contribution, fr: Contribution OPCO, ro: Contribuție OPCO}}
+
+templates:
+  - {category: insurance, path_template: "{entity}/Assurances/{counterparty}/{sub}/{year}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"}
+  - {category: bank, path_template: "{entity}/Banque/{fy}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"}
+  - {category: annual_accounts, path_template: "{entity}/Documents annuels/{fy}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}"}
+  - {category: tax, path_template: "{entity}/Impôts et taxes/{year}", file_template: "{date:YYYY-MM-DD}_{issuer}_{sub}"}
+  - {category: payment_calls, path_template: "{entity}/Appels de paiement/{fy}", file_template: "{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}"}
+  - {category: tax, entity: studio, path_template: "{entity}/Fiscal/{fy}", file_template: "{date:YYYY-MM-DD}_{issuer}"}
+
+counterparties:
+  - {key: agipi, name: AGIPI, kind: insurer, aliases: [AGIPI Assurance, A.G.I.P.I.]}
+  - {key: hello-bank, name: Hello bank, kind: bank, aliases: ["Hello bank!"]}
+  - {key: talenz, name: TALENZ, kind: accountant, siren: {ref: counterparties.talenz.siren}}
+  - {key: oxyleo, name: OXYLEO, kind: accountant}
+  - {key: opco, name: OPCO EP, kind: social, aliases: [OPCO]}
+  - {key: unim, name: UNIM, kind: insurer}
+
+accounts:
+  - key: lmnp-hello
+    entity: lmnp
+    sub_unit: angers-strasbourg
+    label: Hello bank · LMNP
+    bank_counterparty: hello-bank
+    iban: {ref: iban.lmnp-hello}

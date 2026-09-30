@@ -36,3 +36,45 @@ def openapi(
     schema = create_app().openapi()
     output.write_text(json.dumps(schema, indent=2, ensure_ascii=False) + "\n")
     typer.echo(f"wrote {output}")
+
+
+seed_app = typer.Typer(no_args_is_help=True, help="Seed the registry and rules (C1 §9).")
+app.add_typer(seed_app, name="seed")
+
+
+@seed_app.command("load")
+def seed_load(
+    directory: Annotated[Path, typer.Argument(help="Holds practice.yaml and rules.yaml.")],
+    tier: Annotated[
+        str, typer.Option(help="preseeded: rules.yaml; all: also rules.learned.yaml.")
+    ] = "preseeded",
+    overlay: Annotated[
+        Path | None,
+        typer.Option(help="Private identifiers overlay; defaults to MONA_SEED_OVERLAY."),
+    ] = None,
+) -> None:
+    """Load the seed in one transaction; loading the same files again changes nothing."""
+    import logging
+
+    from mona.db import get_sync_engine
+    from mona.seed.files import SeedError
+    from mona.seed.loader import RULE_FILES, load_seed
+    from mona.settings import get_settings
+
+    if tier not in RULE_FILES:
+        raise typer.BadParameter(f"choose one of {', '.join(RULE_FILES)}", param_hint="--tier")
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    settings = get_settings()
+    try:
+        with get_sync_engine().begin() as conn:
+            summary = load_seed(
+                conn,
+                directory,
+                settings=settings,
+                tier=tier,  # type: ignore[arg-type]
+                overlay=overlay or settings.mona_seed_overlay,
+            )
+    except SeedError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1) from None
+    typer.echo(str(summary))

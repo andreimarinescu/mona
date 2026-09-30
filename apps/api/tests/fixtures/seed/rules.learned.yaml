@@ -1,0 +1,16 @@
+schema: mona.rules/v1
+rules:
+  - key: agipi-per-by-person
+    name: AGIPI PER, filed under the insured person
+    source: interview
+    conditions:
+      - {field: counterparty, op: equals, value: AGIPI}
+      - {field: text, op: contains_any, value: ["plan d'épargne retraite", PER]}
+    action: {entity: personal, unit: {from: person}, category: insurance, subcategory: per}
+  - key: hello-bank-lmnp
+    name: Hello bank statements for the LMNP account
+    source: interview
+    conditions:
+      - {field: counterparty, op: equals, value: Hello bank}
+      - {field: iban, op: account, value: lmnp-hello}
+    action: {entity: lmnp, unit: angers-strasbourg, category: bank}

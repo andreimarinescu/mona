@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     mona_service_key: SecretStr | None = None
     openrouter_api_key: SecretStr | None = None
     mona_owner_password: SecretStr | None = None
+    mona_iban_pepper: SecretStr | None = None
+    mona_seed_overlay: Path | None = None
     hermes_api_key: SecretStr | None = None
     hermes_url: str = "http://hermes:8642"
 

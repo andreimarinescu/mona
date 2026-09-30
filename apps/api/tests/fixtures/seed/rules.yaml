@@ -1,0 +1,27 @@
+schema: mona.rules/v1
+rules:
+  - key: opco-cabinet
+    name: OPCO contributions belong to the SELARL
+    conditions:
+      - {field: counterparty, op: equals, value: OPCO}
+    action: {entity: cabinet, category: payment_calls, subcategory: contribution_opco}
+  - key: talenz-studio
+    name: TALENZ accounts for Studio Numérique
+    priority: 30
+    conditions:
+      - {field: counterparty, op: equals, value: TALENZ}
+      - {field: siren, op: entity, value: studio}
+    action: {entity: studio, category: annual_accounts}
+  - key: oxyleo-personal-tax
+    name: OXYLEO income-tax preparation is personal
+    conditions:
+      - {field: counterparty, op: equals, value: OXYLEO}
+    action: {entity: personal, category: tax, subcategory: preparation}
+  - key: unim-business
+    name: UNIM is a business insurer
+    state: disabled
+    conditions:
+      - {field: counterparty, op: equals, value: UNIM}
+      - {field: amount, op: between, value: [10, 5000]}
+      - {field: text, op: contains, value: résiliation, negate: true}
+    action: {entity: cabinet, category: insurance, subcategory: prevoyance}
