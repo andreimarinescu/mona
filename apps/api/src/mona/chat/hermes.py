@@ -9,7 +9,8 @@ import httpx
 
 from mona.settings import get_settings
 
-TIMEOUT = httpx.Timeout(connect=5.0, read=120.0, write=30.0, pool=5.0)
+CONNECT_S = 5.0
+TIMEOUT = httpx.Timeout(connect=CONNECT_S, read=130.0, write=30.0, pool=CONNECT_S)
 
 
 class HermesError(Exception):
@@ -18,6 +19,13 @@ class HermesError(Exception):
     def __init__(self, code: str) -> None:
         super().__init__(code)
         self.code = code
+
+
+def _error_code(res: httpx.Response) -> str | None:
+    try:
+        return res.json()["error"]["code"]
+    except (ValueError, KeyError, TypeError):
+        return None
 
 
 class HermesClient:
@@ -31,15 +39,19 @@ class HermesClient:
             transport=transport,
         )
 
-    async def create_session(self, title: str) -> str:
-        """Hermes session titles must be unique; callers pass the conversation id."""
+    async def ensure_session(self, conversation_id: str) -> None:
+        """C3 §4.1: id and title are both the conversation id; `session_exists` is success."""
         try:
-            res = await self._client.post("/api/sessions", json={"title": title})
+            res = await self._client.post(
+                "/api/sessions", json={"id": conversation_id, "title": conversation_id}
+            )
         except httpx.HTTPError as e:
             raise HermesError("hermes_unreachable") from e
-        if res.status_code >= 400:
-            raise HermesError(f"hermes_http_{res.status_code}")
-        return res.json()["session"]["id"]
+        if res.status_code == 201:
+            return
+        if res.status_code == 409 and _error_code(res) == "session_exists":
+            return
+        raise HermesError(f"hermes_http_{res.status_code}")
 
     async def session_messages(self, session_id: str) -> list[dict[str, Any]]:
         res = await self._client.get(f"/api/sessions/{session_id}/messages")

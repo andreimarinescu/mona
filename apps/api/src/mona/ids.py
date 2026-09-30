@@ -35,11 +35,14 @@ PREFIXES: dict[str, str] = {
 _ID = re.compile(r"([a-z]{3})_[0-9a-hjkmnp-tv-z]{26}")
 
 
-def new_id(prefix: str) -> str:
-    """`<prefix>_` + a lowercase Crockford ULID (48-bit ms time, 80 random bits)."""
+def new_ulid() -> str:
+    """A lowercase Crockford ULID (48-bit ms time, 80 random bits)."""
     value = (int(time.time() * 1000) << 80) | int.from_bytes(os.urandom(10), "big")
-    chars = [_CROCKFORD[(value >> shift) & 31] for shift in range(125, -1, -5)]
-    return f"{prefix}_{''.join(chars)}"
+    return "".join(_CROCKFORD[(value >> shift) & 31] for shift in range(125, -1, -5))
+
+
+def new_id(prefix: str) -> str:
+    return f"{prefix}_{new_ulid()}"
 
 
 def is_id(value: object, prefix: str | None = None) -> bool:

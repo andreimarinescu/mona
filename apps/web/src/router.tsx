@@ -58,8 +58,13 @@ const devRoutes = import.meta.env.DEV
       createRoute({
         getParentRoute: () => rootRoute,
         path: '/dev/chat',
-        validateSearch: (search: Record<string, unknown>): { c?: string } =>
-          typeof search.c === 'string' ? { c: search.c } : {},
+        validateSearch: (search: Record<string, unknown>): { c?: string; route?: string; summary?: string } => {
+          const out: { c?: string; route?: string; summary?: string } = {};
+          for (const key of ['c', 'route', 'summary'] as const) {
+            if (typeof search[key] === 'string') out[key] = search[key];
+          }
+          return out;
+        },
         component: lazyRouteComponent(() => import('./routes/dev/Chat'), 'Chat'),
       }),
       createRoute({

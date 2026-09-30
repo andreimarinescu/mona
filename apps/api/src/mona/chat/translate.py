@@ -59,7 +59,7 @@ class Translator:
         self._text_n = 0
         self._reasoning_started = 0.0
         self.reasoning_ms = 0.0
-        self._running: set[str] = set()
+        self._seen_calls: set[str] = set()
         self.completed_tools: list[str] = []
         self.finish_reason: str | None = None
         self.usage: dict[str, Any] | None = None
@@ -140,13 +140,13 @@ class Translator:
             "dynamic": True,
         }
         if p.get("status") == "running":
-            self._running.add(call_id)
+            self._seen_calls.add(call_id)
             return self.close() + [started]
         if p.get("status") == "completed":
             out = self.close()
-            if call_id not in self._running:
+            if call_id not in self._seen_calls:
+                self._seen_calls.add(call_id)
                 out.append(started)
-            self._running.discard(call_id)
             self.completed_tools.append(name)
             out.append(
                 {

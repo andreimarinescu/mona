@@ -1,10 +1,20 @@
+from pathlib import Path
+
 import psycopg
 import pytest
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict
+from sqlalchemy import create_engine
 
+from mona.db import get_engine, get_sessionmaker, get_sync_engine, get_sync_sessionmaker
 from mona.migrate import migrate
-from mona.settings import get_settings
+from mona.seed.loader import load_seed
+from mona.settings import Settings, get_settings
+from tests.pg import alembic, scratch_db, sqlalchemy_url_for
+from tests.rows import CLEANUP
+
+SEED = Path(__file__).parent / "fixtures" / "seed"
+SERVICE_KEY = "k" * 32
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -17,9 +27,48 @@ def database() -> None:
     migrate()
 
 
+@pytest.fixture(scope="session")
+def seeded_template(database):
+    """A migrated database holding the synthetic seed (all rule tiers)."""
+    with scratch_db() as db:
+        alembic(db, "upgrade", "head")
+        engine = create_engine(sqlalchemy_url_for(db))
+        try:
+            with engine.begin() as conn:
+                load_seed(
+                    conn,
+                    SEED,
+                    settings=Settings(database_url=sqlalchemy_url_for(db), mona_owner_password="x"),
+                    tier="all",
+                    overlay=SEED / "overlay.yaml",
+                )
+        finally:
+            engine.dispose()
+        yield db
+
+
+def _clear_caches() -> None:
+    for f in (get_settings, get_engine, get_sessionmaker, get_sync_engine, get_sync_sessionmaker):
+        f.cache_clear()
+
+
+@pytest.fixture(scope="module")
+async def app_db(seeded_template):
+    """Points get_settings()/get_engine() at a fresh copy of the seeded database."""
+    with scratch_db(template=seeded_template) as db, pytest.MonkeyPatch.context() as mp:
+        mp.setenv("DATABASE_URL", sqlalchemy_url_for(db))
+        mp.setenv("MONA_SERVICE_KEY", SERVICE_KEY)
+        _clear_caches()
+        try:
+            yield db
+        finally:
+            await get_engine().dispose()
+            _clear_caches()
+
+
 @pytest.fixture
-def clean_spike() -> None:
+def clean(app_db) -> str:
     with psycopg.connect(get_settings().libpq_url) as conn:
-        conn.execute(
-            "TRUNCATE spike_card_events, spike_chat_turns, spike_conversations, spike_interviews"
-        )
+        for stmt in CLEANUP:
+            conn.execute(stmt)
+    return app_db

@@ -7,7 +7,7 @@ import type {
 import { useAuiState } from '@assistant-ui/react';
 import { useTranslation } from 'react-i18next';
 import { Badge, Button, Card, ConfidenceMeter, Icon, Spinner, format, type Lang } from '@mona/ui';
-import type { DocCardData, InterviewCardData } from './types';
+import type { DeadlineCardData, DocCardData, InterviewCardData } from './types';
 
 function useLang(): Lang {
   const { i18n } = useTranslation();
@@ -49,7 +49,7 @@ export function UserText({ text }: TextMessagePartProps) {
 export function ToolActivityChip({ toolName, result }: ToolCallMessagePartProps) {
   const { t, i18n } = useTranslation();
   const live = result === undefined;
-  const key = i18n.exists(`dev.chat.tool.${toolName}.done`) ? toolName : 'generic';
+  const key = i18n.exists(`chat.tool.${toolName}.done`) ? toolName : 'generic';
   return (
     <span
       data-testid="tool-chip"
@@ -58,7 +58,7 @@ export function ToolActivityChip({ toolName, result }: ToolCallMessagePartProps)
       className="inline-flex items-center gap-2 text-text-muted"
     >
       {live ? <Spinner size={16} /> : <Icon name="check" />}
-      {t(`dev.chat.tool.${key}.${live ? 'running' : 'done'}`)}
+      {t(`chat.tool.${key}.${live ? 'running' : 'done'}`)}
     </span>
   );
 }
@@ -85,6 +85,29 @@ export function DocCard({ data }: DataMessagePartProps<DocCardData>) {
           {doc.dueDate && <span>{t('dev.chat.doc.due', { date: format.date(doc.dueDate, lang, 'medium') })}</span>}
           <span className="font-code text-text-muted">{[...doc.path, doc.fileName].join(' / ')}</span>
           {doc.confidence != null && <ConfidenceMeter value={doc.confidence} lang={lang} />}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+export function DeadlineCard({ data }: DataMessagePartProps<DeadlineCardData>) {
+  const deadline: DeadlineCardData = data;
+  const { t } = useTranslation();
+  const lang = useLang();
+  return (
+    <div data-card="deadline" data-id={deadline.id}>
+      <Card
+        eyebrow={deadline.entityName}
+        title={deadline.label}
+        meta={t('dev.chat.doc.due', { date: format.date(deadline.dueDate, lang, 'medium') })}
+      >
+        <div className="flex items-center gap-2">
+          {deadline.amount && (
+            <strong>{format.money(deadline.amount.value, deadline.amount.currency, lang)}</strong>
+          )}
+          {deadline.daysLeft < 0 && <Badge tone="danger">{t('dev.chat.deadline.overdue')}</Badge>}
+          {deadline.daysLeft === 0 && <Badge tone="warning">{t('dev.chat.deadline.today')}</Badge>}
         </div>
       </Card>
     </div>

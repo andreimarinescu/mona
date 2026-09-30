@@ -6,7 +6,7 @@ export interface Money {
   currency: string;
 }
 
-/** The subset of C1 `DocumentSummary` the spike card shows. */
+/** The subset of C1 `DocumentSummary` the dev card shows. */
 export interface DocCardData {
   id: string;
   title: string;
@@ -19,6 +19,18 @@ export interface DocCardData {
   dueDate: string | null;
   status: DocStatus;
   confidence: number | null;
+}
+
+/** The subset of C1 `Deadline` the dev card shows. */
+export interface DeadlineCardData {
+  id: string;
+  documentId: string | null;
+  label: string;
+  entityName: string;
+  dueDate: string;
+  amount?: Money;
+  status: 'open' | 'done' | 'dismissed';
+  daysLeft: number;
 }
 
 export interface InterviewQuestion {
@@ -42,7 +54,10 @@ export interface MonaMetadata {
   reasoningMs?: number;
 }
 
-export type MonaUIMessage = UIMessage<MonaMetadata, { doc: DocCardData; interview: InterviewCardData }>;
+export type MonaUIMessage = UIMessage<
+  MonaMetadata,
+  { doc: DocCardData; deadline: DeadlineCardData; interview: InterviewCardData }
+>;
 
 export interface PageContext {
   route: string;

@@ -10,7 +10,7 @@ import { Banner, Spinner } from '@mona/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DocCard, InterviewCard, MonaText, ThinkingBlock, ToolActivityChip, UserText } from './parts';
+import { DeadlineCard, DocCard, InterviewCard, MonaText, ThinkingBlock, ToolActivityChip, UserText } from './parts';
 import { monaTransport } from './transport';
 import type { MonaUIMessage, PageContext } from './types';
 
@@ -30,7 +30,7 @@ function AssistantMessage() {
           Text: MonaText,
           Reasoning: ThinkingBlock,
           tools: { Fallback: ToolActivityChip },
-          data: { by_name: { doc: DocCard, interview: InterviewCard } },
+          data: { by_name: { doc: DocCard, deadline: DeadlineCard, interview: InterviewCard } },
         }}
       />
     </MessagePrimitive.Root>

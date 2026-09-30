@@ -13,6 +13,22 @@ const golden: UIMessageChunk[] = JSON.parse(
 );
 
 const doc = (title: string) => ({ type: 'data-doc', id: 'doc_urssaf_q3', data: { id: 'doc_urssaf_q3', title } });
+const deadline = {
+  type: 'data-deadline',
+  id: 'ddl_1',
+  data: {
+    id: 'ddl_1',
+    documentId: 'doc_urssaf_q3',
+    label: 'URSSAF 3e trimestre',
+    entityId: 'ent_1',
+    entityName: 'Cabinet Marchand',
+    dueDate: '2026-10-14',
+    amount: { value: 1284, currency: 'EUR' },
+    status: 'open',
+    daysLeft: 14,
+    reminder: null,
+  },
+};
 
 function adapterStream(): string {
   const chunks: unknown[] = [
@@ -21,7 +37,7 @@ function adapterStream(): string {
   ];
   for (const c of golden) {
     chunks.push(c);
-    if (c.type === 'tool-output-available') chunks.push(doc('first'), doc('URSSAF appel de cotisation T3'));
+    if (c.type === 'tool-output-available') chunks.push(doc('first'), doc('URSSAF appel de cotisation T3'), deadline);
   }
   chunks.push({ type: 'finish-step' }, { type: 'finish', finishReason: 'stop', messageMetadata: { reasoningMs: 1200 } });
   return chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('') + 'data: [DONE]\n\n';
@@ -59,13 +75,36 @@ describe('adapter stream (S1 fixture through the Python translator)', () => {
       'reasoning',
       'dynamic-tool',
       'data-doc',
+      'data-deadline',
       'reasoning',
       'text',
     ]);
     const tool = message.parts[2];
     expect(tool).toMatchObject({ type: 'dynamic-tool', toolName: 'get_document', state: 'output-available' });
     expect(message.parts[3]).toMatchObject({ id: 'doc_urssaf_q3', data: { title: 'URSSAF appel de cotisation T3' } });
-    expect(message.parts[5]).toMatchObject({ type: 'text', text: expect.stringMatching(/^\s*Vous regardez/) });
+    expect(message.parts[4]).toMatchObject({ id: 'ddl_1', data: { daysLeft: 14, amount: { value: 1284 } } });
+    expect(message.parts[6]).toMatchObject({ type: 'text', text: expect.stringMatching(/^\s*Vous regardez/) });
+  });
+});
+
+describe('a live capture of the adapter (list_deadlines turn)', () => {
+  it('validates chunk by chunk and yields reasoning, the tool, three deadline cards and text', async () => {
+    const sse = readFileSync(new URL('./fixtures/adapter-live-deadlines.sse', import.meta.url), 'utf8');
+    const message = await readMessage(sse);
+    expect(message.metadata).toMatchObject({ replyLanguage: 'en', reasoningMs: expect.any(Number) });
+    expect(message.parts.map((p) => p.type)).toEqual([
+      'step-start',
+      'reasoning',
+      'dynamic-tool',
+      'data-deadline',
+      'data-deadline',
+      'data-deadline',
+      'reasoning',
+      'text',
+    ]);
+    expect(message.parts[2]).toMatchObject({ toolName: 'list_deadlines', state: 'output-available' });
+    const card = message.parts.find((p) => p.type === 'data-deadline');
+    expect(card).toMatchObject({ data: { label: expect.any(String), daysLeft: expect.any(Number), status: 'open' } });
   });
 });
 

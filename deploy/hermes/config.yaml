@@ -1,17 +1,21 @@
 model:
-  default: "qwen/qwen3.6-35b-a3b"
+  default: "${MONA_CHAT_MODEL}"
   provider: "openrouter"
   base_url: "https://openrouter.ai/api/v1"
   context_length: 65536
 provider_routing:
-  only: [akashml, coreweave, siliconflow, parasail, deepinfra]
-  order: [akashml, coreweave, siliconflow, parasail, deepinfra]
-  require_parameters: true
+  models:
+    "qwen/qwen3.6-35b-a3b":
+      only: [akashml, coreweave, siliconflow, parasail, deepinfra]
+      order: [akashml, coreweave, siliconflow, parasail, deepinfra]
+      require_parameters: true
 agent:
   reasoning_effort: "medium"
   max_turns: 12
 platform_toolsets:
   api_server: [memory, mona]
+  telegram: [memory, mona_tg]
+  cron: [mona_tg]
 tools:
   tool_search:
     enabled: false
@@ -48,6 +52,17 @@ mcp_servers:
     url: "http://api:8765/mcp"
     headers:
       Authorization: "Bearer ${MONA_SERVICE_KEY}"
+      X-Mona-Channel: "web"
+    sampling:
+      enabled: false
+    tools:
+      resources: false
+      prompts: false
+  mona_tg:
+    url: "http://api:8765/mcp"
+    headers:
+      Authorization: "Bearer ${MONA_SERVICE_KEY}"
+      X-Mona-Channel: "telegram"
     sampling:
       enabled: false
     tools:

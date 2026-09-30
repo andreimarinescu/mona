@@ -82,7 +82,7 @@
       "findEvent": "Find via event bus"
     },
     "chat": {
-      "title": "Chat (S5 spike)",
+      "title": "Chat (dev harness)",
       "composer": {
         "placeholder": "Ask Mona…",
         "send": "Send"
@@ -91,24 +91,6 @@
         "live": "Mona is thinking…",
         "done": "Thought for {{seconds}} seconds",
         "doneShort": "Mona's thinking"
-      },
-      "tool": {
-        "search_documents": {
-          "running": "Searching the archive…",
-          "done": "Searched the archive"
-        },
-        "get_document": {
-          "running": "Opening the document…",
-          "done": "Opened the document"
-        },
-        "start_interview": {
-          "running": "Preparing questions…",
-          "done": "Questions on their way"
-        },
-        "generic": {
-          "running": "Working…",
-          "done": "Done"
-        }
       },
       "doc": {
         "open": "Open",
@@ -123,7 +105,83 @@
         "stream_interrupted": "The answer was cut off. Try again.",
         "internal": "Something went wrong. Try again."
       },
-      "loading": "Loading the conversation…"
+      "loading": "Loading the conversation…",
+      "deadline": {
+        "today": "Due today",
+        "overdue": "Overdue"
+      }
+    }
+  },
+  "chat": {
+    "tool": {
+      "search_documents": {
+        "running": "Searching the archive…",
+        "done": "Searched the archive"
+      },
+      "get_document": {
+        "running": "Opening the document…",
+        "done": "Opened the document"
+      },
+      "sum_amounts": {
+        "running": "Adding up amounts…",
+        "done": "Added up the amounts"
+      },
+      "list_review_queue": {
+        "running": "Checking the review queue…",
+        "done": "Checked the review queue"
+      },
+      "correct_document": {
+        "running": "Correcting the document…",
+        "done": "Corrected the document"
+      },
+      "start_interview": {
+        "running": "Preparing questions…",
+        "done": "Questions on their way"
+      },
+      "answer_question": {
+        "running": "Recording your answer…",
+        "done": "Recorded your answer"
+      },
+      "preview_rule": {
+        "running": "Previewing the rule…",
+        "done": "Previewed the rule"
+      },
+      "apply_rule": {
+        "running": "Applying the rule…",
+        "done": "Applied the rule"
+      },
+      "list_deadlines": {
+        "running": "Checking deadlines…",
+        "done": "Checked deadlines"
+      },
+      "schedule_reminder": {
+        "running": "Setting a reminder…",
+        "done": "Set a reminder"
+      },
+      "draft_reply": {
+        "running": "Starting a draft…",
+        "done": "Draft on its way"
+      },
+      "export_accountant_pack": {
+        "running": "Preparing the export…",
+        "done": "Export on its way"
+      },
+      "ingest_attachment": {
+        "running": "Reading the attachment…",
+        "done": "Added to intake"
+      },
+      "get_brief": {
+        "running": "Gathering the brief…",
+        "done": "Gathered the brief"
+      },
+      "undo": {
+        "running": "Undoing…",
+        "done": "Undone"
+      },
+      "generic": {
+        "running": "Working…",
+        "done": "Done"
+      }
     }
   }
 }

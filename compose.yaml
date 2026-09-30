@@ -45,6 +45,20 @@ services:
   api:
     <<: *python
     command: uvicorn mona.app:app --host 0.0.0.0 --port 8765 --reload --reload-dir /app/src
+    volumes:
+      - ./apps/api:/app
+      - ./data:/data
+      - type: volume
+        source: hermes_data
+        target: /opt/data/cache
+        read_only: true
+        volume:
+          subpath: cache
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      hermes-seed:
+        condition: service_completed_successfully
     ports:
       - 127.0.0.1:${API_PORT:-8765}:8765
     healthcheck:
@@ -81,7 +95,11 @@ services:
     entrypoint: ["sh", "-c"]
     command:
       - >-
-        for f in config.yaml SOUL.md; do
+        set -e;
+        for d in memories cache cache/documents cache/images; do
+        [ -d /opt/data/$$d ] || install -d -m 755 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /opt/data/$$d;
+        done;
+        for f in config.yaml SOUL.md memories/MEMORY.md memories/USER.md; do
         [ -e /opt/data/$$f ] || install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/$$f /opt/data/$$f;
         done
     restart: "no"
@@ -100,6 +118,7 @@ services:
       API_SERVER_PORT: "8642"
       API_SERVER_MODEL_NAME: mona
       MONA_SERVICE_KEY: ${MONA_SERVICE_KEY:?set MONA_SERVICE_KEY in .env}
+      MONA_CHAT_MODEL: ${MONA_CHAT_MODEL:-qwen/qwen3.7-flash}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?set OPENROUTER_API_KEY in .env}
     ports:
       - 127.0.0.1:${HERMES_PORT:-8642}:8642

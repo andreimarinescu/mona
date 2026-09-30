@@ -18,6 +18,18 @@ const doc = {
   status: 'filed',
   confidence: 0.93,
 };
+const deadline = {
+  id: 'ddl_1',
+  documentId: 'doc_urssaf_q3',
+  label: 'URSSAF 3e trimestre',
+  entityId: 'ent_1',
+  entityName: 'Cabinet Marchand',
+  dueDate: '2026-10-14',
+  amount: { value: 1284, currency: 'EUR' },
+  status: 'open',
+  daysLeft: -2,
+  reminder: null,
+};
 const interview = {
   id: 'int_1',
   status: 'ready',
@@ -44,14 +56,18 @@ function sse(): string {
   for (const c of golden) {
     chunks.push(c);
     if (c.type === 'tool-output-available') {
-      chunks.push({ type: 'data-doc', id: doc.id, data: doc }, { type: 'data-interview', id: interview.id, data: interview });
+      chunks.push(
+        { type: 'data-doc', id: doc.id, data: doc },
+        { type: 'data-deadline', id: deadline.id, data: deadline },
+        { type: 'data-interview', id: interview.id, data: interview },
+      );
     }
   }
   chunks.push({ type: 'finish-step' }, { type: 'finish', finishReason: 'stop', messageMetadata: { reasoningMs: 2400 } });
   return chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('') + 'data: [DONE]\n\n';
 }
 
-test('/dev/chat renders reasoning, tool chip, text and data-doc/data-interview parts', async ({ page }) => {
+test('/dev/chat renders reasoning, tool chip, text and data-doc/deadline/interview parts', async ({ page }) => {
   const problems: string[] = [];
   page.on('pageerror', (err) => problems.push(err.message));
   let body: Record<string, unknown> | undefined;
@@ -73,6 +89,8 @@ test('/dev/chat renders reasoning, tool chip, text and data-doc/data-interview p
   await expect(reply.locator('[data-testid="thinking"]').first()).toContainText('Thought for 2 seconds');
   await expect(reply.locator('[data-testid="tool-chip"][data-tool="get_document"]')).toHaveText('Opened the document');
   await expect(reply.locator('[data-card="doc"]')).toContainText('URSSAF appel de cotisation T3');
+  await expect(reply.locator('[data-card="deadline"][data-id="ddl_1"]')).toContainText('URSSAF 3e trimestre');
+  await expect(reply.locator('[data-card="deadline"]')).toContainText('Overdue');
   await expect(reply.locator('[data-card="interview"] button[data-option]')).toHaveCount(3);
   await expect(reply.locator('[data-testid="mona-text"]')).toContainText('Vous regardez');
   await expect(page).toHaveURL(/\?c=cnv_mock/);
@@ -82,4 +100,22 @@ test('/dev/chat renders reasoning, tool chip, text and data-doc/data-interview p
     locale: 'en',
   });
   expect(problems).toEqual([]);
+});
+
+test('/dev/chat sends the page context given in the URL', async ({ page }) => {
+  let body: Record<string, unknown> | undefined;
+  await page.route('**/api/chat', async (route) => {
+    body = route.request().postDataJSON();
+    await route.fulfill({
+      status: 200,
+      headers: { 'content-type': 'text/event-stream', 'x-vercel-ai-ui-message-stream': 'v1' },
+      body: sse(),
+    });
+  });
+  await page.goto('/dev/chat?route=%2Fdocuments%2Fdoc_x&summary=Document%20doc_x%2C%20page%201');
+  await page.getByRole('textbox', { name: 'Ask Mona…' }).fill('What is this?');
+  await page.getByRole('button', { name: 'Send' }).click();
+  await expect(page.locator('[data-role="assistant"] [data-testid="mona-text"]')).toBeVisible();
+  expect(body?.pageContext).toEqual({ route: '/documents/doc_x', summary: 'Document doc_x, page 1' });
+  await expect(page).toHaveURL(/route=%2Fdocuments%2Fdoc_x/);
 });

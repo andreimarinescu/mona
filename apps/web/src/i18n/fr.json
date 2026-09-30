@@ -84,7 +84,7 @@
       "findEvent": "Trouver via le bus d’événements"
     },
     "chat": {
-      "title": "Discussion (spike S5)",
+      "title": "Discussion (banc de dev)",
       "composer": {
         "placeholder": "Demandez à Mona…",
         "send": "Envoyer"
@@ -93,24 +93,6 @@
         "live": "Mona réfléchit…",
         "done": "A réfléchi {{seconds}} secondes",
         "doneShort": "Réflexion de Mona"
-      },
-      "tool": {
-        "search_documents": {
-          "running": "Recherche dans les archives…",
-          "done": "Archives consultées"
-        },
-        "get_document": {
-          "running": "Ouverture du document…",
-          "done": "Document ouvert"
-        },
-        "start_interview": {
-          "running": "Préparation des questions…",
-          "done": "Questions en route"
-        },
-        "generic": {
-          "running": "En cours…",
-          "done": "Terminé"
-        }
       },
       "doc": {
         "open": "Ouvrir",
@@ -125,7 +107,83 @@
         "stream_interrupted": "La réponse a été interrompue. Réessayez.",
         "internal": "Un problème est survenu. Réessayez."
       },
-      "loading": "Chargement de la conversation…"
+      "loading": "Chargement de la conversation…",
+      "deadline": {
+        "today": "Échéance aujourd'hui",
+        "overdue": "En retard"
+      }
+    }
+  },
+  "chat": {
+    "tool": {
+      "search_documents": {
+        "running": "Recherche dans les archives…",
+        "done": "Archives consultées"
+      },
+      "get_document": {
+        "running": "Ouverture du document…",
+        "done": "Document ouvert"
+      },
+      "sum_amounts": {
+        "running": "Adding up amounts…",
+        "done": "Added up the amounts"
+      },
+      "list_review_queue": {
+        "running": "Checking the review queue…",
+        "done": "Checked the review queue"
+      },
+      "correct_document": {
+        "running": "Correcting the document…",
+        "done": "Corrected the document"
+      },
+      "start_interview": {
+        "running": "Préparation des questions…",
+        "done": "Questions en route"
+      },
+      "answer_question": {
+        "running": "Recording your answer…",
+        "done": "Recorded your answer"
+      },
+      "preview_rule": {
+        "running": "Previewing the rule…",
+        "done": "Previewed the rule"
+      },
+      "apply_rule": {
+        "running": "Applying the rule…",
+        "done": "Applied the rule"
+      },
+      "list_deadlines": {
+        "running": "Checking deadlines…",
+        "done": "Checked deadlines"
+      },
+      "schedule_reminder": {
+        "running": "Setting a reminder…",
+        "done": "Set a reminder"
+      },
+      "draft_reply": {
+        "running": "Starting a draft…",
+        "done": "Draft on its way"
+      },
+      "export_accountant_pack": {
+        "running": "Preparing the export…",
+        "done": "Export on its way"
+      },
+      "ingest_attachment": {
+        "running": "Reading the attachment…",
+        "done": "Added to intake"
+      },
+      "get_brief": {
+        "running": "Gathering the brief…",
+        "done": "Gathered the brief"
+      },
+      "undo": {
+        "running": "Undoing…",
+        "done": "Undone"
+      },
+      "generic": {
+        "running": "En cours…",
+        "done": "Terminé"
+      }
     }
   }
 }

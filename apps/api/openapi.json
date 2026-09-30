@@ -54,11 +54,81 @@
               "text/event-stream": {}
             }
           },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "Not Found"
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
           },
           "409": {
-            "description": "Conflict"
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conversations": {
+      "get": {
+        "summary": "Conversations",
+        "operationId": "listConversations",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationSummary"
+                  },
+                  "title": "Response Listconversations"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -104,6 +174,16 @@
               }
             }
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -120,12 +200,31 @@
   },
   "components": {
     "schemas": {
+      "ApiError": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ApiError"
+      },
       "ChatRequest": {
         "properties": {
           "conversationId": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "pattern": "^cnv_[0-9a-hjkmnp-tv-z]{26}$"
               },
               {
                 "type": "null"
@@ -150,8 +249,25 @@
               "ro"
             ],
             "title": "Locale"
+          },
+          "replyLanguage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "en",
+                  "fr",
+                  "ro"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replylanguage"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "message",
@@ -159,6 +275,22 @@
           "locale"
         ],
         "title": "ChatRequest"
+      },
+      "ConversationSummary": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "ErrorBody": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorBody"
       },
       "HTTPValidationError": {
         "properties": {
@@ -217,6 +349,7 @@
             "title": "Summary"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "route",

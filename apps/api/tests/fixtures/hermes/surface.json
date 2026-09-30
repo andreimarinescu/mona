@@ -1,0 +1,43 @@
+{
+  "platform_toolsets": {
+    "api_server": [
+      "memory",
+      "mona"
+    ],
+    "telegram": [
+      "memory",
+      "mona_tg"
+    ],
+    "cron": [
+      "mona_tg"
+    ]
+  },
+  "model_visible_tools": {
+    "api_server": [
+      "mcp__mona__get_brief",
+      "mcp__mona__get_document",
+      "mcp__mona__list_deadlines",
+      "mcp__mona__list_review_queue",
+      "mcp__mona__search_documents",
+      "mcp__mona__sum_amounts",
+      "memory"
+    ],
+    "telegram": [
+      "mcp__mona_tg__get_brief",
+      "mcp__mona_tg__get_document",
+      "mcp__mona_tg__list_deadlines",
+      "mcp__mona_tg__list_review_queue",
+      "mcp__mona_tg__search_documents",
+      "mcp__mona_tg__sum_amounts",
+      "memory"
+    ],
+    "cron": [
+      "mcp__mona_tg__get_brief",
+      "mcp__mona_tg__get_document",
+      "mcp__mona_tg__list_deadlines",
+      "mcp__mona_tg__list_review_queue",
+      "mcp__mona_tg__search_documents",
+      "mcp__mona_tg__sum_amounts"
+    ]
+  }
+}

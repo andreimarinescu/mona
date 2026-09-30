@@ -1,0 +1,208 @@
+data: {"type": "start", "messageId": "01m3syg4kwkt3z1d2hjcn3aj9x", "messageMetadata": {"conversationId": "cnv_01m3syg4jzwwy9ya29q9xqyzkx", "turnId": "trn_01m3syg4kwbr5kcanfnb2wxb78", "replyLanguage": "en"}}
+
+data: {"type": "start-step"}
+
+data: {"type": "reasoning-start", "id": "r1"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "The"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " user wants"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " to know"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " what is"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " due this month."}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " I should use the"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " list_dead"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "lines tool to show"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " upcoming"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " deadlines. Since we"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "'re in September "}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "2"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "026 ("}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "based"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " on the conversation start"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " date being September "}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "30"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": ", 20"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "26), \""}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "this month\" would"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " be September 2"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "0"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "26. I"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": "'ll"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " call list_deadlines"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " with a"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " reasonable limit and include"}
+
+data: {"type": "reasoning-delta", "id": "r1", "delta": " overdue ones.\n"}
+
+data: {"type": "reasoning-end", "id": "r1"}
+
+data: {"type": "tool-input-available", "toolCallId": "call_61f0e5e4a84b462a89a234aa", "toolName": "list_deadlines", "input": {}, "dynamic": true}
+
+data: {"type": "tool-output-available", "toolCallId": "call_61f0e5e4a84b462a89a234aa", "output": {"status": "completed"}, "dynamic": true}
+
+data: {"type": "data-deadline", "id": "ddl_01m3sycakxew2bbhypf7t7pndg", "data": {"id": "ddl_01m3sycakxew2bbhypf7t7pndg", "documentId": "doc_01m3sycajspmajcedkgekmkvgn", "label": "OPCO EP contribution", "entityId": "ent_01m3sy3nkx4vk0ewq54d74b71v", "entityName": "Cabinet Marchand SELARL", "dueDate": "2026-09-25", "amount": {"value": 300.0, "currency": "EUR"}, "status": "open", "daysLeft": -5, "reminder": null}}
+
+data: {"type": "data-deadline", "id": "ddl_01m3sycakm70hvjy0tvjx4ywtj", "data": {"id": "ddl_01m3sycakm70hvjy0tvjx4ywtj", "documentId": "doc_01m3sycahy1442rzqf4h8js9q8", "label": "URSSAF 3e trimestre", "entityId": "ent_01m3sy3nkx4vk0ewq54d74b71v", "entityName": "Cabinet Marchand SELARL", "dueDate": "2026-09-30", "amount": {"value": 1284.0, "currency": "EUR"}, "status": "open", "daysLeft": 0, "reminder": null}}
+
+data: {"type": "data-deadline", "id": "ddl_01m3sycam4aagnaj4hc35axxpb", "data": {"id": "ddl_01m3sycam4aagnaj4hc35axxpb", "documentId": null, "label": "TVA Studio Numérique", "entityId": "ent_01m3sy3nm0ha0mp70tjzbee2vk", "entityName": "Studio Numérique SASU", "dueDate": "2026-10-20", "amount": {"value": 640.0, "currency": "EUR"}, "status": "open", "daysLeft": 20, "reminder": null}}
+
+data: {"type": "reasoning-start", "id": "r2"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": "The"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": " results show"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": " "}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": "3 deadlines."}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": " Let me present them"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": " clearly"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": ", starting with the"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": " amounts"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": " and due dates as"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": " Claudiu prefers"}
+
+data: {"type": "reasoning-delta", "id": "r2", "delta": ".\n"}
+
+data: {"type": "reasoning-end", "id": "r2"}
+
+data: {"type": "text-start", "id": "t1"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "\n\nHere are"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " the deadlines for this"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " month and"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " the coming week:"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "\n\n**"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "Overdue (already"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " past):**\n1"}
+
+data: {"type": "text-delta", "id": "t1", "delta": ". **OPCO"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " EP"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " contribution — €3"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "00**,"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " due 25"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " Sep → Cabinet March"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "and SEL"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "ARL *(5"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " days"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " overdue)*\n\n**"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "Due"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " today:**\n2"}
+
+data: {"type": "text-delta", "id": "t1", "delta": ". **"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "URSSAF "}
+
+data: {"type": "text-delta", "id": "t1", "delta": "3e trimestre —"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " €1 2"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "8"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "4**, due "}
+
+data: {"type": "text-delta", "id": "t1", "delta": "30 Sep →"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " Cabinet March"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "and SELARL"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "\n\n**Due in"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " 20 days"}
+
+data: {"type": "text-delta", "id": "t1", "delta": ":**"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "\n3. **"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "TVA Studio Num"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "érique — €6"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "40**, due"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " "}
+
+data: {"type": "text-delta", "id": "t1", "delta": "20 Oct →"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " Studio Numérique SAS"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "U\n\nThe UR"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "SSAF payment is"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " due today. The"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " TVA for Studio Num"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "érique will"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " be due on "}
+
+data: {"type": "text-delta", "id": "t1", "delta": "20 October"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " — I can set"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " a reminder for you"}
+
+data: {"type": "text-delta", "id": "t1", "delta": " if you'd like"}
+
+data: {"type": "text-delta", "id": "t1", "delta": "."}
+
+data: {"type": "text-end", "id": "t1"}
+
+data: {"type": "finish-step"}
+
+data: {"type": "finish", "finishReason": "stop", "messageMetadata": {"reasoningMs": 1698}}
+
+data: [DONE]
+

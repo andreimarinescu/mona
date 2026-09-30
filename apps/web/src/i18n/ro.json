@@ -84,7 +84,7 @@
       "findEvent": "Caută prin magistrala de evenimente"
     },
     "chat": {
-      "title": "Chat (spike S5)",
+      "title": "Chat (banc de dev)",
       "composer": {
         "placeholder": "Întrebați-o pe Mona…",
         "send": "Trimiteți"
@@ -93,24 +93,6 @@
         "live": "Mona se gândește…",
         "done": "S-a gândit {{seconds}} secunde",
         "doneShort": "Raționamentul Monei"
-      },
-      "tool": {
-        "search_documents": {
-          "running": "Caută în arhivă…",
-          "done": "A căutat în arhivă"
-        },
-        "get_document": {
-          "running": "Deschide documentul…",
-          "done": "A deschis documentul"
-        },
-        "start_interview": {
-          "running": "Pregătește întrebările…",
-          "done": "Întrebările sunt pe drum"
-        },
-        "generic": {
-          "running": "Lucrează…",
-          "done": "Gata"
-        }
       },
       "doc": {
         "open": "Deschideți",
@@ -125,7 +107,83 @@
         "stream_interrupted": "Răspunsul a fost întrerupt. Încercați din nou.",
         "internal": "Ceva nu a mers. Încercați din nou."
       },
-      "loading": "Se încarcă conversația…"
+      "loading": "Se încarcă conversația…",
+      "deadline": {
+        "today": "Scadent azi",
+        "overdue": "Întârziat"
+      }
+    }
+  },
+  "chat": {
+    "tool": {
+      "search_documents": {
+        "running": "Caută în arhivă…",
+        "done": "A căutat în arhivă"
+      },
+      "get_document": {
+        "running": "Deschide documentul…",
+        "done": "A deschis documentul"
+      },
+      "sum_amounts": {
+        "running": "Adding up amounts…",
+        "done": "Added up the amounts"
+      },
+      "list_review_queue": {
+        "running": "Checking the review queue…",
+        "done": "Checked the review queue"
+      },
+      "correct_document": {
+        "running": "Correcting the document…",
+        "done": "Corrected the document"
+      },
+      "start_interview": {
+        "running": "Pregătește întrebările…",
+        "done": "Întrebările sunt pe drum"
+      },
+      "answer_question": {
+        "running": "Recording your answer…",
+        "done": "Recorded your answer"
+      },
+      "preview_rule": {
+        "running": "Previewing the rule…",
+        "done": "Previewed the rule"
+      },
+      "apply_rule": {
+        "running": "Applying the rule…",
+        "done": "Applied the rule"
+      },
+      "list_deadlines": {
+        "running": "Checking deadlines…",
+        "done": "Checked deadlines"
+      },
+      "schedule_reminder": {
+        "running": "Setting a reminder…",
+        "done": "Set a reminder"
+      },
+      "draft_reply": {
+        "running": "Starting a draft…",
+        "done": "Draft on its way"
+      },
+      "export_accountant_pack": {
+        "running": "Preparing the export…",
+        "done": "Export on its way"
+      },
+      "ingest_attachment": {
+        "running": "Reading the attachment…",
+        "done": "Added to intake"
+      },
+      "get_brief": {
+        "running": "Gathering the brief…",
+        "done": "Gathered the brief"
+      },
+      "undo": {
+        "running": "Undoing…",
+        "done": "Undone"
+      },
+      "generic": {
+        "running": "Lucrează…",
+        "done": "Gata"
+      }
     }
   }
 }
