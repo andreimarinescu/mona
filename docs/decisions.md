@@ -2,6 +2,15 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D3 · 2026-09-30 · Hermes integration facts from S1/S2 (details: `docs/spikes/s1/README.md`)
+
+- **Image.** Hermes 0.21.5 is `nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7`; there is no `0.21.5` tag. The profile is the `/opt/data` volume; start the image with `gateway run` under its own entrypoint.
+- **Adapter path.** The HermesEngine adapter uses `POST /v1/chat/completions` with `X-Hermes-Session-Id`. It's the only path that streams reasoning live (`delta.reasoning_content`). Tool lifecycle comes from `event: hermes.tool.progress`.
+- **Overlays.** The page-context line and the card-action notes are sent as `system` messages in that request; Hermes applies them as the turn's ephemeral system prompt. The overlay also names the reply language.
+- **Cards.** No stream path carries tool results, so cards come only from `card_events` (C1/C3).
+- **Networking.** Every service runs on the compose network; the laptop's ufw drops container → host traffic.
+- **Egress.** Hermes ingests `OPENROUTER_API_KEY` from its environment into a credential pool regardless of config. The prod assertion (C9) checks that the key is absent from the Hermes container env and from `$HERMES_HOME/.env`.
+
 ## D2 · 2026-09-30 · Operator rulings at W0 start
 
 - Signing sittings happen at each gate: Hermes go/no-go, contract set A verdict, set B verdict, then each milestone. The orchestrator announces the batch; Andrei folds, signs and pushes.

@@ -1,0 +1,51 @@
+model:
+  default: "qwen/qwen3.6-35b-a3b"
+  provider: "openrouter"
+  base_url: "https://openrouter.ai/api/v1"
+  context_length: 65536
+agent:
+  reasoning_effort: "medium"
+  max_turns: 12
+platform_toolsets:
+  api_server: [memory, skills, todo, mona]
+tools:
+  tool_search:
+    enabled: false
+skills:
+  write_approval: true
+  project_discovery: false
+auxiliary:
+  vision: {provider: main}
+  compression: {provider: main}
+  skills_hub: {provider: main}
+  approval: {provider: main}
+  review: {provider: main}
+  mcp: {provider: main}
+  title_generation: {enabled: false, provider: main}
+  memory_query_rewrite: {provider: main}
+  tts_audio_tags: {provider: main}
+  triage_specifier: {provider: main}
+  kanban_decomposer: {provider: main}
+  profile_describer: {provider: main}
+  goal_judge: {provider: main}
+  curator: {provider: main}
+  monitor: {provider: main}
+  background_review: {enabled: false, provider: main}
+  moa_reference: {provider: main}
+  moa_aggregator: {provider: main}
+curator:
+  enabled: false
+updates:
+  check: false
+openrouter:
+  response_cache: false
+mcp_servers:
+  mona:
+    url: "http://mona-s1-mcp:8799/mcp"
+    headers:
+      Authorization: "Bearer ${MONA_SERVICE_KEY}"
+    sampling:
+      enabled: false
+    tools:
+      resources: false
+      prompts: false

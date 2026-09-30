@@ -1,0 +1,195 @@
+{
+ "reliability": [
+  {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document",
+    "mcp__mona__get_document",
+    "mcp__mona__sum_amounts"
+   ],
+   "content": "We have two documents for AGIPI, both under the **Personnel** entity:\n\n- **AGIPI PER avis d'échéance** — €520\n- **AGIPI Assurance Vie relevé annuel** — €1 200\n\n**Total: €1 720**\n\nNote: these appear to be payment demands / annual statements rather than proof of payment. If you need to confirm whether the amounts were actually settled, let me know — I can look for corresponding receipts or bank entries.",
+   "reasoning_chars": 385,
+   "first_reasoning_s": 0.74,
+   "first_content_s": 4.19,
+   "total_s": 4.65,
+   "prompt": "How much did we pay AGIPI in total?",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__list_deadlines"
+   ],
+   "content": "Two payments coming up:\n\n1. **EDF facture septembre** — €214,37, due **5 October 2026**\n2. **URSSAF appel de cotisation T3** — €1 284,00, due **14 October 2026**\n\nTotal: **€1 498,37**\n\nShall I set reminders — say on 2 October for EDF and 10 October for URSSAF?",
+   "reasoning_chars": 203,
+   "first_reasoning_s": 0.75,
+   "first_content_s": 2.44,
+   "total_s": 2.84,
+   "prompt": "What's due in the next 30 days?",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document"
+   ],
+   "content": "Trouvée : EDF facture septembre — **214,37 €**, échéance le 5 octobre 2026 (entité : Cabinet Marchand).",
+   "reasoning_chars": 431,
+   "first_reasoning_s": 1.39,
+   "first_content_s": 3.51,
+   "total_s": 3.71,
+   "prompt": "Find the EDF invoice and tell me the amount.",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document",
+    "mcp__mona__search_documents"
+   ],
+   "content": "Dans l'archive, je ne trouve qu'un seul document URSSAF :\n\n- **Appel de cotisation T3** — €1 284,00, échéance le 14 octobre 2026 (Cabinet Marchand).\n\nC'est une demande de paiement à venir, pas un justificatif de règlement. Aucune trace de versement URSSAF n'apparaît dans l'archive pour le moment. Voulez-vous que je vérifie ailleurs ou que je vous rappelle l'échéance ?",
+   "reasoning_chars": 808,
+   "first_reasoning_s": 0.56,
+   "first_content_s": 4.87,
+   "total_s": 5.34,
+   "prompt": "Combien avons-nous payé à l'URSSAF ?",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__search_documents"
+   ],
+   "content": "Avem **2 documente** AGIPI în arhivă:\n\n1. **AGIPI PER avis d'échéance** (`d_agipi_per`)\n2. **AGIPI Assurance Vie relevé annuel** (`d_agipi_av`)\n\nDoriți să vă detaliez conținutul unuia dintre ele?",
+   "reasoning_chars": 221,
+   "first_reasoning_s": 0.73,
+   "first_content_s": 2.15,
+   "total_s": 2.18,
+   "prompt": "Câte documente AGIPI avem în arhivă?",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document",
+    "mcp__mona__get_document"
+   ],
+   "content": "No — it's the other way round.\n\n- **EDF** (facture septembre): due **5 October** (€214.37)\n- **URSSAF** (appel de cotisation T3): due **14 October** (€1 284.00)\n\nEDF comes first by nine days.",
+   "reasoning_chars": 428,
+   "first_reasoning_s": 0.69,
+   "first_content_s": 3.75,
+   "total_s": 3.95,
+   "prompt": "Is the URSSAF payment due before the EDF one?",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__search_documents",
+    "mcp__mona__sum_amounts",
+    "mcp__mona__get_document",
+    "mcp__mona__get_document"
+   ],
+   "content": "Let me search for documents related to EDF and URSSAF.\n\n\n\n\n\n\nFound one EDF document and one URSSAF document. Let me sum their amounts.\n\n\n\n\n\nLet me get the individual breakdown.\n\n\n\n\n\n\nHere's the breakdown:\n\n- **EDF facture septembre** — €214,37 — due 5 Oct 2026\n- **URSSAF appel de cotisation T3** — €1 284,00 — due 14 Oct 2026\n\n**Total: €1 498,37**",
+   "reasoning_chars": 556,
+   "first_reasoning_s": 0.65,
+   "first_content_s": 0.85,
+   "total_s": 5.01,
+   "prompt": "Sum the EDF and URSSAF amounts.",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__list_resources",
+    "mcp__mona__search_documents",
+    "mcp__mona__list_deadlines",
+    "mcp__mona__search_documents",
+    "mcp__mona__search_documents",
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document",
+    "mcp__mona__get_document",
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document",
+    "mcp__mona__get_document"
+   ],
+   "content": "Two documents are filed under **Personnel**:\n\n1. **AGIPI PER avis d'échéance** — €520.00, no due date\n2. **AGIPI Assurance Vie relevé annuel** — €1,200.00, no due date",
+   "reasoning_chars": 1929,
+   "first_reasoning_s": 0.9,
+   "first_content_s": 12.63,
+   "total_s": 13.24,
+   "prompt": "Which documents are filed under Personnel?",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document"
+   ],
+   "content": "La lettre URSSAF — appel de cotisation T3 — a pour date d'échéance le **14 octobre 2026**, pour un montant de **1 284,00 €** au profit du Cabinet Marchand.\n\nJe vous ai trouvé le document : *« URSSAF appel de cotisation T3 »* (ID: d_urssaf_q3).",
+   "reasoning_chars": 247,
+   "first_reasoning_s": 0.67,
+   "first_content_s": 2.31,
+   "total_s": 2.6,
+   "prompt": "Give me the due date of the URSSAF letter.",
+   "ok_tools": true,
+   "ok_answer": true
+  },
+  {
+   "tools": [
+    "mcp__mona__list_deadlines"
+   ],
+   "content": "Here are all the upcoming deadlines:\n\n| Document | Amount | Due Date |\n|----------|--------|----------|\n| EDF facture septembre (d_edf_sept) | €214.37 | 5 Oct 2026 |\n| URSSAF appel de cotisation T3 (d_urssaf_q3) | €1,284.00 | 14 Oct 2026 |\n\n**Total: €1,498.37**\n\nTwo deadlines to watch in the coming weeks. Want a reminder on the 1st for the EDF bill and the 10th for URSSAF?",
+   "reasoning_chars": 518,
+   "first_reasoning_s": 0.84,
+   "first_content_s": 3.39,
+   "total_s": 4.03,
+   "prompt": "List every deadline with its amount.",
+   "ok_tools": true,
+   "ok_answer": true
+  }
+ ],
+ "notes": {
+  "turn1": {
+   "tools": [
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document",
+    "mcp__mona__get_document"
+   ],
+   "content": "Both AGIPI documents are **personal** — they're filed under the entity **Personnel**:\n\n- **AGIPI PER avis d'échéance** — €520 (PER / retraite)\n- **AGIPI Assurance Vie relevé annuel** — €1 200 (Assurance Vie)\n\nAGIPI manages individual retirement and life insurance products, so these are personal finance/retirement documents, not business paperwork.",
+   "reasoning_chars": 608,
+   "first_reasoning_s": 0.73,
+   "first_content_s": 2.86,
+   "total_s": 3.82
+  },
+  "turn2_system_overlay": {
+   "tools": [],
+   "content": "Under the rule we set: **Personnel / Assurances / {insured person}** — each AGIPI letter goes into a subfolder named after the insured person, under the *Assurances* folder inside *Personnel*.\n\nFor example, if the next letter is for Madame Martin, it would go to: `Personnel / Assurances / Martin /`.",
+   "reasoning_chars": 850,
+   "first_reasoning_s": 0.7,
+   "first_content_s": 1.56,
+   "total_s": 1.83
+  },
+  "prefixed_user_message": {
+   "tools": [
+    "mcp__mona__list_deadlines",
+    "mcp__mona__search_documents",
+    "mcp__mona__get_document",
+    "mcp__mona__get_document"
+   ],
+   "content": "Let me check the deadlines and current AGIPI documents to give you a concrete answer.\n\n\n\n\n\n\nThe rule is clear: **Personnel / Assurances / {nom de l'assuré}**.\n\nThe next AGIPI letter will be filed under `Personnel / Assurances / <nom de la personne assurée>` — one subfolder per insured person, as you decided.\n\nTwo AGIPI docs are already in the archive:\n| Document | Amount | Entity |\n|---|---|---|\n| AGIPI PER avis d'échéance | 520 € | Personnel |\n| AGIPI Assurance Vie relevé annuel | 1 200 € | Personnel |\n\nBoth are currently under `Personnel` but **not** under the `Assurances / {assuré}` subfolder yet. If you want, I can move them now to match the new structure — just tell me who the insured person is for each.\n\nNo AGIPI deadlines are coming up in the next 90 days, so there's no urgent folder to prepare for an upcoming payment.",
+   "reasoning_chars": 1217,
+   "first_reasoning_s": 0.65,
+   "first_content_s": 1.06,
+   "total_s": 4.19
+  },
+  "note": "Card actions since your last reply (the user did these in the app; treat them as done and don't contradict them): Answered interview question Q2 'Who holds the AGIPI contracts?' with 'Always personal, split by insured person'. A rule was created and applied: AGIPI -> Personnel / Assurances / {insured}."
+ }
+}
