@@ -10,6 +10,21 @@ Some artboards have Tweaks for language and theme. Those are review levers for t
 
 All names, companies, amounts, SIRENs and IBAN fragments are fictional. The URSSAF letter drawn in the document viewer is marked as a mock-up.
 
+## v1 demo scope
+
+v1 is everything on the Desktop, States and Mobile pages except the pieces below. Artboards for whole screens that wait are kept on the canvas and titled "Later — not in v1", so the design is ready when they come back.
+
+Not in v1:
+
+- Reports (artboard 11). It's out of the sidebar and the mobile More menu; Home's Ingestion card links to the activity log instead.
+- Document viewer v2, the evidence overlay (see §7). v1 ships the pdf.js viewer with quoted evidence.
+- Rule version history: versions, condition diffs and roll back. Rules keep source, fired, last fired, corrections since and on/off.
+- Scanner-folder and email intake. v1 takes documents dropped into Intake and photos or files sent to Mona on Telegram.
+- A recovery key in Settings › Profile & lock (name, password and auto-lock remain).
+- The dark theme. v1 is light only: set `data-theme="light"` on `<html>` so an OS in dark mode doesn't switch it. The dark tokens and the dark artboards stay for later.
+
+Mona's Telegram bot is set up by the installer, not by the user; the first-run checklist only says so.
+
 ## 2. Routes and the shell
 
 | Route | Screen (artboard) |
@@ -25,11 +40,11 @@ All names, companies, amounts, SIRENs and IBAN fragments are fictional. The URSS
 | `/rules`, `/rules/:ruleId` | 8 · Rules |
 | `/entities`, `/entities/categories/:categoryId` | 9 · Entities & taxonomy |
 | `/activity` | 10 · Activity log |
-| `/reports` | 11 · Reports |
+| `/reports` | 11 · Reports · later, not in v1 |
 | `/settings#profile` … `#about` | 12 · Settings, one page with anchored sections |
 | dialog over `/archive` | 13 · Accountant export |
 
-`AppShell` is `Sidebar` (248px) plus the routed page, plus the `ChatPanel` and the toast region on top. Below 1024px the sidebar becomes `MobileTabBar` (Home, Review, Chat, Archive, More); Rules, Entities, Activity, Reports and Settings live under More because they're desk work.
+`AppShell` is `Sidebar` (248px) plus the routed page, plus the `ChatPanel` and the toast region on top. Below 1024px the sidebar becomes `MobileTabBar` (Home, Review, Chat, Archive, More); Rules, Entities, Activity and Settings live under More because they're desk work.
 
 The chat panel is non-modal: it sits over the right 460px of the page, the page stays scrollable and clickable, and the panel knows what the page is showing ("Mona can see: Archive, search 'URSSAF', 14 results"). Opening it doesn't change the route; keep its open state and conversation id in app state so it survives navigation.
 
@@ -64,7 +79,7 @@ These are the names used on the canvas component sheet and in this document; kee
 | Component | What it is | Built from |
 |---|---|---|
 | `MonaBrief` | The morning sentence in Fraunces, with inline links to its sources, plus the primary action and a "written at 07:02 from N journal entries" caption | MonaAvatar, Button |
-| `ActionCard` | Card with a heading, optional count, a "see all" link and up to three rows. Variants: `ReviewQueueCard`, `DueCard`, `ActivityCard`, `IngestionCard` | Card, Badge |
+| `ActionCard` | Card with a heading, optional count, a "see all" link and up to three rows. Variants: `ReviewQueueCard`, `DueCard`, `ActivityCard`, `IngestionCard` (its link goes to the activity log in v1) | Card, Badge |
 | `DateTile` | Weekday and day number; urgent (≤ 3 days) on accent-soft, otherwise sunken. The "in 2 days" text carries the urgency. | none |
 | `Sparkline` | Fourteen daily bars, today in accent, with an `aria-label` sentence | none |
 | `ChatEntry` | The pill composer pinned to the bottom of Home. Same component as `ChatComposer`, larger. | MonaAvatar, Button |
@@ -124,20 +139,20 @@ These are the names used on the canvas component sheet and in this document; kee
 | Component | What it is | Built from |
 |---|---|---|
 | `RulesTable` / `RuleRow` | Name and destination, source chip (interview, correction, seed), fired, last fired, corrections since (flagged in words above 2), on/off | Switch |
-| `RuleVersionHistory` | Versions with a condition diff and Roll back | Button |
+| `RuleVersionHistory` | Versions with a condition diff and Roll back. Later, not in v1 | Button |
 | `LearnedPanel` | "What Mona learned this week", in her voice, with what each lesson moved | MonaAvatar |
 | `EntityCard` | Monogram arch tile, name, legal form, SIREN, masked IBANs, fiscal-year end, sub-units, people, visibility (practice or personal; personal entities stay out of Telegram notifications and accountant exports) | AvatarGroup, Icon |
 | `CategoryTree` | ARIA tree with category icons and counts | CategoryIcon |
 | `CategoryEditor` | Labels per language, `TemplateField` for path and file name, preview, "used by" entities | Input, Checkbox |
-| `TemplateField` | Literal text plus token chips (`{entity}`, `{year}`, `{date:YYYY-MM-DD}`, `{issuer}`, `{reference}`) | |
+| `TemplateField` | Literal text plus token chips: `{entity}`, `{year}`, `{fy}` (the fiscal year the document covers), `{category}`, `{sub}`, `{counterparty}`, `{issuer}`, `{reference}`, `{date:YYYY-MM-DD}`. `{year}` comes from the document's date; `{fy}` from the period it covers, using the entity's fiscal-year end, so annual documents land in the right year: `{entity}/{fy} {entity}/Documents annuels` files a 2025 tax return that arrives in May 2026 under `Cabinet Marchand/2025 Cabinet Marchand/Documents annuels` | |
 | `ActivityFilters` | Actor (all, by Mona, by you), entity, kind of change, search | SegmentedControl, Select, SearchField |
 | `ActivityBatch` / `ActivityItem` | Batch with "Undo whole batch" and expandable children; single items with Undo or Redo | StatusPill, Button, Badge |
-| `KpiTile`, `StackedBarChart`, `LineChart`, `BarList` | Reports. Two series told apart by lightness as well as hue, a legend in words, and an `aria-label` sentence on every chart | |
-| `SettingsSection`, `ProfileSection`, `StatusTile`, `DataFlowDiagram` | Settings. Profile & lock is the name, password, recovery key and auto-lock; the data-flow diagram is the Privacy section: this computer, Telegram, exports | Switch, LanguageSwitch, Button |
+| `KpiTile`, `StackedBarChart`, `LineChart`, `BarList` | Reports, later, not in v1. Two series told apart by lightness as well as hue, a legend in words, and an `aria-label` sentence on every chart | |
+| `SettingsSection`, `ProfileSection`, `StatusTile`, `DataFlowDiagram` | Settings. Profile & lock is the name, password and auto-lock; the data-flow diagram is the Privacy section: this computer, Telegram, exports | Switch, LanguageSwitch, Button |
 
 ### States
 
-`FirstRunChecklist` (language, entities, archive folder, first documents, Telegram), `OfflineState`, and Mona's `EmptyState` with the four illustrations. Loading uses `Skeleton` in the shape of the final layout, with Mona's avatar in its `thinking` state and a sentence saying what she's doing.
+`FirstRunChecklist` (language, entities, archive folder, first documents; Telegram is an information row, not a step, because the installer sets up the bot), `OfflineState`, and Mona's `EmptyState` with the four illustrations. Loading uses `Skeleton` in the shape of the final layout, with Mona's avatar in its `thinking` state and a sentence saying what she's doing.
 
 ## 4. Behaviour the pictures can't show
 
@@ -157,7 +172,7 @@ These are the names used on the canvas component sheet and in this document; kee
 
 **Formatting.** Every number, amount, date and relative time goes through `Mona.format` with the page language: `€1,284.00` / `1 284,00 €` / `1.284,00 €`, `62%` / `62 %`. French no-break spaces are U+00A0. Romanian uses comma-below ș ț. Expect French and Romanian strings to run about 30% longer: nothing on the canvas has a fixed height where text wraps, and the Home brief grows from two lines to three.
 
-**Theme.** Light by default, dark on `data-theme="dark"`, the OS preference when unset. The dark theme is on the Languages & themes page for Home, Chat and Review queue; every other artboard has a theme Tweak.
+**Theme.** v1 is light only, with `data-theme="light"` pinned on `<html>` and no theme control anywhere. The tokens already support dark (`data-theme="dark"`, or the OS preference when unset), and the dark artboards on the Languages & themes page show it, for whenever it comes back.
 
 ## 5. Accessibility checklist
 
@@ -191,14 +206,14 @@ interface ExtractedField { key: 'issuer' | 'account' | 'period' | 'amount' | 'du
 interface DocumentSummary {
   id: string; title: string; originalName: string; fileName: string; path: string[];
   entityId: string; categoryId: string; date: string; amount?: { value: number; currency: 'EUR' | 'RON' };
-  status: DocStatus; reasons?: Reason[]; confidence?: number; arrivedAt: string; source: 'scanner' | 'email' | 'telegram' | 'drop';
+  status: DocStatus; reasons?: Reason[]; confidence?: number; arrivedAt: string; source: 'drop' | 'telegram'; // 'scanner' | 'email' later
 }
 
 interface Suggestion { entityId: string; categoryId: string; fileName: string; path: string[]; confidence: number; sentence: string; evidence: Evidence[] }
 
 interface Rule {
   id: string; name: string; condition: string; destination: string[]; enabled: boolean;
-  source: 'interview' | 'correction' | 'seed'; version: number;
+  source: 'interview' | 'correction' | 'seed'; version: number; // keep versions in the data; the history UI is later
   firedCount: number; lastFiredAt?: string; correctionsSince: number;
 }
 
@@ -239,7 +254,7 @@ The v2 design (highlight boxes drawn over the page, numbered to match the fields
 
 Cost: the iframe, one extraction contract change, a verification function, and about ten lines of glue for the find call.
 
-**v2 (artboard "7 · Document viewer — v2, evidence overlay (later)").**
+**v2 (artboard "7 · Document viewer, v2 evidence overlay · Later — not in v1").**
 
 1. Replace the iframe with `pdfjs-dist`'s `PDFViewer` component so you own the page layers.
 2. Get word boxes. For scans, take the hOCR or ALTO output from the OCR step. For born-digital PDFs, use `page.getTextContent()`: each item has a transform and a width, which gives its rectangle in PDF points.
@@ -255,13 +270,16 @@ Cost: the iframe, one extraction contract change, a verification function, and a
 4. Archive (search, facets, folder tree) and Document viewer v1.
 5. Chat: thread, composer, streaming, thinking and tool chips, then the cards (`DocCard`, `DeadlineCard`, `InterviewCard`, `RulePreviewCard`, `DraftCard`), then the slide-over panel.
 6. Home (`MonaBrief` and the action cards), which only summarises what the steps above produce.
-7. Rules, entities and taxonomy, activity log, reports, settings, the accountant export.
-8. First run, loading, offline and error states, then Document viewer v2.
+7. Rules, entities and taxonomy, activity log, settings, the accountant export.
+8. First run, loading, offline and error states.
+
+After v1: Reports, Document viewer v2, rule version history, scanner-folder and email intake, the dark theme.
 
 ## 9. Open items
 
 - The model is Qwen 3.6; the exact variant isn't chosen yet, so Settings › System status shows `Qwen 3.6 · [VARIANT]`. Read the name, quantisation and memory use from the runtime rather than hard-coding them.
 - The app version is set at launch (About shows `[SET AT LAUNCH]`); read it from the build.
+- The unlock screen's hint still says "Use the recovery key you saved at setup", but v1 has no recovery key in Settings. Decide the v1 path for a forgotten password (for example, the installer resets it) and change that line.
 - Brand-owner check of the five derived one-colour or dark files (stacked mono black and white, wordmark mono black and white, small dark avatar).
 - Add the sixteen icons in `assets/icons/` to Mona's `Icon` component, and propose `ReasonChip` and the eleven token extensions to the design system.
 - Multi-user support is out of scope for now (see "One profile" in §4). If it comes back, it needs roles, per-entity visibility and a journal actor per person; the entity cards already record the people linked to each entity.

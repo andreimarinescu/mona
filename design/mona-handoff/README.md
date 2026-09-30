@@ -35,7 +35,7 @@ Mona never looks like purple or blue gradients, sparkles, robots or brains, toot
 
 Load `tokens.css` once, before any other stylesheet. It declares the three `@font-face` rules (paths are relative to the CSS file, so keep `fonts/` beside it), the primitives, and the semantic tokens for both themes.
 
-The light theme is the default. Put `data-theme="dark"` on `<html>` to switch; `data-theme` also works on any subtree, which is how a single preview can show both. With no `data-theme` anywhere, the page follows the operating system. Always set `lang` on `<html>` (`en`, `fr` or `ro`) so hyphenation and screen readers use the right language.
+v1 ships light only: put `data-theme="light"` on `<html>` so an operating system in dark mode doesn't switch it. The dark theme is kept for later. Put `data-theme="dark"` on `<html>` to switch; `data-theme` also works on any subtree, which is how a single preview can show both. With no `data-theme` anywhere, the page follows the operating system. Always set `lang` on `<html>` (`en`, `fr` or `ro`) so hyphenation and screen readers use the right language.
 
 Build the UI from the semantic tokens (`--bg`, `--surface`, `--text`, `--accent`…). The `--brand-*` primitives are for the logo, print and illustration only, and they don't change in dark mode.
 
@@ -142,7 +142,7 @@ Only Mona gets the arcade avatar. People get initials on a tinted circle, never 
 
 `illustrations/` holds the four empty-state scenes (all filed, inbox, no results, offline), 240 × 180, flat, no people, readable on both themes. Use them only for empty states, above a `title` headline and one sentence in Mona's voice.
 
-`icons/` holds sixteen Lucide icons (ISC licence) that the screens use and Mona's `Icon` component doesn't carry yet: house, message-square, inbox, list-checks, archive, route, building-2, history, chart-column, settings, paperclip, globe, upload, clock, hard-drive, menu. They follow the same grammar (2px stroke, round caps and joins, `currentColor`) and should be added to the bundle under these Lucide names. Icons never replace words for actions that change data, and an icon-only button always has an `aria-label` and a tooltip.
+`icons/` holds sixteen Lucide icons (ISC licence) that the screens use and Mona's `Icon` component doesn't carry yet: house, message-square, inbox, list-checks, archive, route, building-2, history, chart-column, settings, paperclip, globe, upload, clock, hard-drive, menu. They follow the same grammar (2px stroke, round caps and joins, `currentColor`) and should be added to the bundle under these Lucide names. `chart-column` is only for Reports, which isn't in v1. Icons never replace words for actions that change data, and an icon-only button always has an `aria-label` and a tooltip.
 
 ## Voice, briefly
 
