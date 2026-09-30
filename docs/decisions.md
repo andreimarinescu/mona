@@ -2,6 +2,19 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D7 · 2026-09-30 · Contract set A frozen at v1.0 (Andrei's verdict)
+
+- C1, C3 (shape), C4, C5 and C7 are frozen at 1.0 in `docs/contracts/`. Changes now go only through `amendments.md`.
+- **Gate trail:** the drafts, the review findings (`~/DevFiles/mona-hq/orchestrator/review/w1a-gate-findings.md`), the fold report and the verification pass. Summary in vault `mona-hq/audits/`.
+- **Product behaviour settled by the set:**
+  - Delete goes to trash and is undoable.
+  - Only due dates on or after arrival become deadlines.
+  - Sub-units (person splits) come only from rules.
+  - New `health` category.
+  - The transcript is served from our `chat_turns`, not from Hermes.
+  - Model-output cache: whether it's on during the stage run is decided after the Oct 8 mona timings (demo script v2).
+- **Lanes unblocked:** L1 (pipeline and filing), L2 (API, MCP, adapter). L3/L4 wait for set B (C2, C6, C8, C9).
+
 ## D6 · 2026-09-30 · Signing sittings run by the orchestrator (operator request)
 
 - **Who runs it.** The orchestrator signs and pushes at each gate (D2 cadence) with `tools/sitting.sh [<branch>]`, the Mona port of the pilot-protocol system:
