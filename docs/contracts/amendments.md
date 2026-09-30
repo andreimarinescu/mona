@@ -4,4 +4,6 @@ Changes to frozen contracts C1–C9, numbered A1, A2, … in the order they're m
 
 Each entry: number, date, contract and section, the change, the reason, and the lanes it affects.
 
-None yet. Set A (C1, C3 shape, C4, C5, C7) freezes on Oct 2; set B (C2, C6, C8, C9) on Oct 3.
+Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8, C9) is still to come.
+
+None yet.
