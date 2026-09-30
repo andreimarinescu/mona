@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 COMPOSE ?= docker compose
 WEB := npm --workspace apps/web run
+UI := npm --workspace packages/ui run
 
 POSTGRES_PASSWORD ?= $(shell sed -n 's/^POSTGRES_PASSWORD=//p' .env 2>/dev/null)
 POSTGRES_PORT ?= 55432
@@ -28,6 +29,9 @@ db:
 check: db web-check py-check
 
 web-check:
+	$(UI) lint
+	$(UI) typecheck
+	$(UI) test
 	$(WEB) lint
 	$(WEB) typecheck
 	$(WEB) test

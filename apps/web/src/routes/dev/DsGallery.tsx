@@ -14,13 +14,14 @@ import {
   Menu,
   MonaAvatar,
   Progress,
+  ReasonChip,
   Select,
   StatusPill,
   Table,
   Tag,
   Toast,
   format,
-} from '../../ds';
+} from '@mona/ui';
 
 function Family({ name, children }: { name: string; children: ReactNode }) {
   return (
@@ -30,6 +31,11 @@ function Family({ name, children }: { name: string; children: ReactNode }) {
     </section>
   );
 }
+
+const HANDOFF_ICONS = [
+  'archive', 'building-2', 'chart-column', 'clock', 'globe', 'hard-drive', 'history', 'house',
+  'inbox', 'list-checks', 'menu', 'message-square', 'paperclip', 'route', 'settings', 'upload',
+] as const;
 
 const rows = [
   { id: 'a', date: '2026-09-22', name: 'URSSAF appel T3', amount: format.money(1284, 'EUR', 'fr') },
@@ -119,6 +125,17 @@ export function DsGallery() {
         <Icon name="search" />
         <Icon name="calendar" />
         <Icon name="loader" spin label="Loading" />
+      </Family>
+      <Family name="HandoffIcons">
+        {HANDOFF_ICONS.map((name) => (
+          <Icon key={name} name={name} label={name} />
+        ))}
+      </Family>
+      <Family name="ReasonChip">
+        <ReasonChip reason="low" />
+        <ReasonChip reason="entity" />
+        <ReasonChip reason="conflict" />
+        <ReasonChip reason="unreadable" />
       </Family>
       <Family name="CategoryIcon">
         <CategoryIcon category="tax" />

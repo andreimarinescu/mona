@@ -5,7 +5,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'public', 'src/api/schema.gen.ts', 'test-results', 'playwright-report'] },
+  { ignores: ['dist'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
@@ -14,7 +14,8 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true, varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
     },
   },
-  { files: ['src/ds/parity/**'], rules: { '@typescript-eslint/no-explicit-any': 'off', 'react-refresh/only-export-components': 'off' } },
+  { files: ['src/types.ts'], rules: { '@typescript-eslint/no-explicit-any': 'off' } },
 );

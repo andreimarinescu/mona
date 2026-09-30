@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { DocCard, InterviewCard, MonaText, ThinkingBlock, ToolActivityChip, UserText } from '../../chat/parts';
 import { monaTransport } from '../../chat/transport';
 import type { MonaUIMessage } from '../../chat/types';
-import { Banner, Spinner } from '../../ds';
+import { Banner, Spinner } from '@mona/ui';
 
 const PAGE_CONTEXT = { route: '/dev/chat', summary: 'Chat page' };
 

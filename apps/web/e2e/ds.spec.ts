@@ -10,7 +10,7 @@ test('/dev/ds renders every family without console errors or warnings', async ({
   await page.goto('/dev/ds');
   const families = [
     'Button', 'Input', 'Select', 'StatusPill', 'ConfidenceMeter', 'Card', 'Dialog', 'Toast', 'MonaAvatar',
-    'Citation', 'Icon', 'CategoryIcon', 'Banner', 'Progress', 'Badge', 'Tag', 'Table', 'Menu',
+    'Citation', 'Icon', 'HandoffIcons', 'ReasonChip', 'CategoryIcon', 'Banner', 'Progress', 'Badge', 'Tag', 'Table', 'Menu',
   ];
   for (const name of families) {
     await expect(page.locator(`section[data-family="${name}"] > div > *`).first()).toBeVisible();

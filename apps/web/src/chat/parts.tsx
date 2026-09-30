@@ -6,7 +6,7 @@ import type {
 } from '@assistant-ui/react';
 import { useAuiState } from '@assistant-ui/react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Card, ConfidenceMeter, Icon, Spinner, format, type Lang } from '../ds';
+import { Badge, Button, Card, ConfidenceMeter, Icon, Spinner, format, type Lang } from '@mona/ui';
 import type { DocCardData, InterviewCardData } from './types';
 
 function useLang(): Lang {

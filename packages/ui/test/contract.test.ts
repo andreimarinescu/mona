@@ -1,0 +1,67 @@
+import type * as Contract from '@design/mona-design-system/components/index';
+import { describe, expect, it } from 'vitest';
+import * as Ui from '../src';
+
+export const buttonConforms: typeof Contract.Button = Ui.Button;
+export const inputConforms: typeof Contract.Input = Ui.Input;
+export const selectConforms: typeof Contract.Select = Ui.Select;
+export const tabsConforms: typeof Contract.Tabs = Ui.Tabs;
+export const statusPillConforms: typeof Contract.StatusPill = Ui.StatusPill;
+export const confidenceMeterConforms: typeof Contract.ConfidenceMeter = Ui.ConfidenceMeter;
+export const cardConforms: typeof Contract.Card = Ui.Card;
+export const tableConforms: typeof Contract.Table = Ui.Table;
+export const toastConforms: typeof Contract.Toast = Ui.Toast;
+export const toastStackConforms: typeof Contract.ToastStack = Ui.ToastStack;
+export const dialogConforms: typeof Contract.Dialog = Ui.Dialog;
+export const drawerConforms: typeof Contract.Drawer = Ui.Drawer;
+export const tooltipConforms: typeof Contract.Tooltip = Ui.Tooltip;
+export const monaAvatarConforms: typeof Contract.MonaAvatar = Ui.MonaAvatar;
+export const languageSwitchConforms: typeof Contract.LanguageSwitch = Ui.LanguageSwitch;
+export const themeToggleConforms: typeof Contract.ThemeToggle = Ui.ThemeToggle;
+export const citationConforms: typeof Contract.Citation = Ui.Citation;
+export const sourceListConforms: typeof Contract.SourceList = Ui.SourceList;
+export const emptyStateConforms: typeof Contract.EmptyState = Ui.EmptyState;
+export const iconConforms: typeof Contract.Icon = Ui.Icon;
+export const categoryIconConforms: typeof Contract.CategoryIcon = Ui.CategoryIcon;
+export const formFieldConforms: typeof Contract.FormField = Ui.FormField;
+export const checkboxConforms: typeof Contract.Checkbox = Ui.Checkbox;
+export const radioGroupConforms: typeof Contract.RadioGroup = Ui.RadioGroup;
+export const switchConforms: typeof Contract.Switch = Ui.Switch;
+export const textareaConforms: typeof Contract.Textarea = Ui.Textarea;
+export const segmentedControlConforms: typeof Contract.SegmentedControl = Ui.SegmentedControl;
+export const comboboxConforms: typeof Contract.Combobox = Ui.Combobox;
+export const searchFieldConforms: typeof Contract.SearchField = Ui.SearchField;
+export const fileInputConforms: typeof Contract.FileInput = Ui.FileInput;
+export const linkConforms: typeof Contract.Link = Ui.Link;
+export const popoverConforms: typeof Contract.Popover = Ui.Popover;
+export const menuConforms: typeof Contract.Menu = Ui.Menu;
+export const bannerConforms: typeof Contract.Banner = Ui.Banner;
+export const progressConforms: typeof Contract.Progress = Ui.Progress;
+export const spinnerConforms: typeof Contract.Spinner = Ui.Spinner;
+export const skeletonConforms: typeof Contract.Skeleton = Ui.Skeleton;
+export const badgeConforms: typeof Contract.Badge = Ui.Badge;
+export const tagConforms: typeof Contract.Tag = Ui.Tag;
+export const breadcrumbsConforms: typeof Contract.Breadcrumbs = Ui.Breadcrumbs;
+export const paginationConforms: typeof Contract.Pagination = Ui.Pagination;
+export const accordionConforms: typeof Contract.Accordion = Ui.Accordion;
+export const avatarConforms: typeof Contract.Avatar = Ui.Avatar;
+export const avatarGroupConforms: typeof Contract.AvatarGroup = Ui.AvatarGroup;
+export const descriptionListConforms: typeof Contract.DescriptionList = Ui.DescriptionList;
+export const listConforms: typeof Contract.List = Ui.List;
+export const listItemConforms: typeof Contract.ListItem = Ui.ListItem;
+export const stackConforms: typeof Contract.Stack = Ui.Stack;
+export const inlineConforms: typeof Contract.Inline = Ui.Inline;
+export const gridConforms: typeof Contract.Grid = Ui.Grid;
+export const containerConforms: typeof Contract.Container = Ui.Container;
+export const formatConforms: Contract.MonaFormat = Ui.format;
+export const i18nConforms: Window['Mona']['i18n'] = Ui.i18n;
+
+const COMPONENTS = ['Button', 'Input', 'Select', 'Tabs', 'StatusPill', 'ConfidenceMeter', 'Card', 'Table', 'Toast', 'ToastStack', 'Dialog', 'Drawer', 'Tooltip', 'MonaAvatar', 'LanguageSwitch', 'ThemeToggle', 'Citation', 'SourceList', 'EmptyState', 'Icon', 'CategoryIcon', 'FormField', 'Checkbox', 'RadioGroup', 'Switch', 'Textarea', 'SegmentedControl', 'Combobox', 'SearchField', 'FileInput', 'Link', 'Popover', 'Menu', 'Banner', 'Progress', 'Spinner', 'Skeleton', 'Badge', 'Tag', 'Breadcrumbs', 'Pagination', 'Accordion', 'Avatar', 'AvatarGroup', 'DescriptionList', 'List', 'ListItem', 'Stack', 'Inline', 'Grid', 'Container'] as const;
+
+describe('contract conformance', () => {
+  it('exports every component in index.d.ts as a function, plus format and i18n', () => {
+    for (const name of COMPONENTS) expect(typeof Ui[name], name).toBe('function');
+    expect(Ui.format).toBeTypeOf('object');
+    expect(Object.keys(Ui.i18n)).toEqual(expect.arrayContaining(['STATUS', 'CONFIDENCE', 'CATEGORY', 'LANGS', 'UI']));
+  });
+});

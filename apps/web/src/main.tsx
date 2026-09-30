@@ -1,5 +1,5 @@
 import '@design/mona-handoff/tokens.css';
-import '@design/mona-design-system/components/bundle.css';
+import '@mona/ui';
 import './styles/app.css';
 import './i18n';
 

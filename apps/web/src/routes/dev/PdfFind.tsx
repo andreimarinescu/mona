@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '../../ds';
+import { Button, Input } from '@mona/ui';
 import { SAMPLE_PHRASE, dispatchFind, findHash, type PdfViewerApp } from '../../pdfjs/find';
 
 const VIEWER = '/pdfjs/web/viewer.html?file=/dev/sample.pdf';

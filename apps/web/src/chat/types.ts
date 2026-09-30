@@ -1,5 +1,5 @@
 import type { UIMessage } from 'ai';
-import type { DocStatus, Lang } from '../ds';
+import type { DocStatus, Lang } from '@mona/ui';
 
 export interface Money {
   value: number;
