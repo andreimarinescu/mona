@@ -74,6 +74,8 @@ run --dry-run
 check "dry run exits 0" '[ $rc = 0 ]'
 check "dry run plans 3 signatures" 'grep -q "3 signature" "$ROOT/out"'
 check "dry run asks nothing" '[ ! -s "$ROOT/zenity-log" ]'
+echo dirty >> f1; run --dry-run; git checkout -q f1
+check "a refused dry run shows no dialog" '[ $rc = 3 ] && [ ! -s "$ROOT/zenity-log" ]'
 check "dry run leaves main" '[ "$(git rev-parse main)" = "$tip" ]'
 
 fresh; tip=$(git rev-parse main); rt=$(remote_tip)
@@ -122,6 +124,38 @@ echo 2b > f2; git commit -q -am "change 2 again"; echo clash >> f2; git commit -
 tip=$(git rev-parse main)
 run
 check "a conflicting fold stops without a retry prompt" '[ $rc = 3 ] && [ "$(git rev-parse main)" = "$tip" ] && ! grep -q -- "--ok-label=Retry" "$ROOT/zenity-log"'
+
+fresh; signed_base=$(git rev-parse origin/main); git push -q origin main
+echo more > f4; git add f4; git commit -q -m "change 4"; tip=$(git rev-parse main)
+run --from "$signed_base"
+check "republish exits 0" '[ $rc = 0 ]'
+check "republish force-pushes: remote equals main" '[ "$(remote_tip)" = "$(git rev-parse main)" ]'
+check "republish signs every commit above the base" '[ -z "$(git log --format=%G? "$signed_base..main" | grep -v "^G$")" ] && [ "$(git rev-list --count "$signed_base..main")" = 4 ]'
+check "republish keeps the tree" '[ "$(git rev-parse main^{tree})" = "$(git rev-parse "$tip^{tree}")" ]'
+check "republish warns about the rewrite in the permission text" 'grep -q "rewrites 4 commit" "$ROOT/zenity-log"'
+
+fresh; signed_base=$(git rev-parse origin/main); git push -q origin main
+squashed=$(git commit-tree -p "$signed_base" -m "changes 1-3" "$(git rev-parse main^{tree})"); git reset -q --hard "$squashed"
+echo more > f4; git add f4; git commit -q -m "change 4"; tip=$(git rev-parse main)
+run --from "$signed_base"
+check "republish of folded pushed commits exits 0" '[ $rc = 0 ] && [ "$(remote_tip)" = "$(git rev-parse main)" ]'
+check "republish of folded pushed commits signs 2" '[ "$(calls)" = 2 ] && [ "$(git rev-parse main^{tree})" = "$(git rev-parse "$tip^{tree}")" ]'
+
+fresh; signed_base=$(git rev-parse origin/main); git push -q origin main
+squashed=$(git commit-tree -p "$signed_base" -m "changes 1-3" "$(git rev-parse main^{tree})"); git reset -q --hard "$squashed"; tip=$(git rev-parse main)
+git clone -q "$ROOT/remote.git" "$ROOT/other"
+(cd "$ROOT/other" && echo other > g && git add g && git commit -q -m other && git push -q origin main)
+rm -rf "$ROOT/other"; rt=$(remote_tip)
+run --from "$signed_base"
+check "republish refuses a remote that moved since the plan" '[ $rc = 3 ] && [ "$(calls)" = 0 ] && [ "$(git rev-parse main)" = "$tip" ] && [ "$(remote_tip)" = "$rt" ]'
+
+fresh; git push -q origin main
+run --from "$(git rev-parse main)"
+check "--from at the tip has nothing to sign" '[ $rc = 0 ] && [ ! -s "$ROOT/zenity-log" ]'
+
+fresh; git push -q origin main; other=$(git commit-tree -m stray "$(git rev-parse HEAD^{tree})")
+run --from "$other"
+check "--from outside the branch is refused" '[ $rc = 2 ]'
 
 fresh; git push -q origin main
 run

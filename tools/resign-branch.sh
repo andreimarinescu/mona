@@ -2,7 +2,7 @@
 #
 # resign-branch.sh — replay an unsigned agent branch with every commit signed, right before a push.
 #
-#   tools/resign-branch.sh [-C <path>] [--dry-run] <base> [<branch>]
+#   tools/resign-branch.sh [-C <path>] [--dry-run] [--republish] <base> [<branch>]
 #   tools/resign-branch.sh [-C <path>] --drop-archive <branch>
 #
 # Spec: vault pilot_protocol/specs/cosift-phase2-plan.md §3.1. Exit codes: 2 usage, 3 refused
@@ -122,12 +122,16 @@ drop_archive() {
 }
 
 main() {
-  local dry='' base new total unpushed fx ids
+  local dry='' republish='' base new total unpushed fx ids
   if [ "${1:-}" = -C ]; then [ $# -ge 2 ] || usage; cd "$2"; shift 2; fi
-  case ${1:-} in
-    --drop-archive) shift; drop_archive "$@"; return ;;
-    --dry-run) dry=1; shift ;;
-  esac
+  while :; do
+    case ${1:-} in
+      --drop-archive) shift; drop_archive "$@"; return ;;
+      --dry-run) dry=1; shift ;;
+      --republish) republish=1; shift ;;
+      *) break ;;
+    esac
+  done
   [ $# -ge 1 ] && [ $# -le 2 ] || usage
   base=$1
   W=$(git rev-parse --show-toplevel 2>/dev/null || true)
@@ -144,7 +148,10 @@ main() {
   [ "$total" -gt 0 ] || refuse "nothing to replay: $branch has no commits over $base"
   [ -z "$(git rev-list --merges "$mb..$branch")" ] || refuse "$mb..$branch contains merge commits"
   unpushed=$(git rev-list --count "$mb..$branch" --not --remotes)
-  [ "$unpushed" = "$total" ] || refuse "$((total - unpushed)) commit(s) in the range are already on a remote"
+  if [ "$unpushed" != "$total" ]; then
+    [ -n "$republish" ] || refuse "$((total - unpushed)) commit(s) in the range are already on a remote"
+    say "republish: $((total - unpushed)) commit(s) already on a remote get rewritten; the push must be forced"
+  fi
   plan_range
 
   W=$(worktree_of "$branch")

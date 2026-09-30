@@ -92,6 +92,7 @@ Newest first. Lanes re-read this file at every commit boundary; an entry binds e
   - A fixup-fold conflict stops without a retry.
 - **Before a sitting,** the orchestrator folds lane commits into one commit per card (tree-identical), to keep the signature count low.
 - **After a sitting,** active lane branches move with `git rebase --onto <branch> refs/archive/unsigned/<branch> <lane>`. The archive is then dropped with `tools/resign-branch.sh --drop-archive <branch>`.
+- **Republish:** if unsigned commits reach `origin` (for example a manual push), the next sitting runs `tools/sitting.sh --from <last signed commit on origin>`. That re-signs everything above it and force-pushes with a lease; the permission dialog names the rewritten commits.
 - **Lanes** never push. The orchestrator uses GitHub freely; SSH calls to the private repo ask for a FIDO touch through zenity, which is expected (operator, 2026-09-30).
 
 ## D5 · 2026-09-30 · Operator rulings at the Hermes go/no-go (gate 0)

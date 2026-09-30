@@ -132,6 +132,18 @@ case_pushed() {
   check "no archive" no_archive work
 }
 
+case_republish() {
+  CASE=republish; new_repo
+  commit a.txt a1 "add a"; g push -q origin work; commit b.txt b1 "add b"
+  local old; old=$(tip work)
+  run --republish main
+  check "succeeds" rc 0
+  check "says it rewrites pushed commits" said 'already on a remote get rewritten'
+  check "tree unchanged" eq "$(g rev-parse "work^{tree}")" "$(g rev-parse "$old^{tree}")"
+  check "both signed" eq "$(g log --format=%G? main..work | sort -u | tr -d '\n')" "G"
+  check "archive kept" eq "$(g rev-parse refs/archive/unsigned/work)" "$old"
+}
+
 case_merge() {
   CASE=merge; new_repo
   commit a.txt a1 "add a"
@@ -364,7 +376,7 @@ case_nothing() {
   check "names it" said 'nothing to replay'
 }
 
-for c in happy dry_run pushed merge fixup_outside squash conflict bad_key tampered_tree tampered_ref stacked \
+for c in happy dry_run pushed republish merge fixup_outside squash conflict bad_key tampered_tree tampered_ref stacked \
          unfinished interrupt terminate other_worktree base_advanced not_checked_out drop_archive dirty nothing; do
   "case_$c"
 done

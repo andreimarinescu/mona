@@ -2,7 +2,8 @@
 #
 # sitting.sh — one signing sitting: ask the operator (zenity), sign every unpushed commit on a branch, push, verify.
 #
-#   tools/sitting.sh [-C <repo>] [--dry-run] [--remote <name>] [<branch>]    (branch defaults to main)
+#   tools/sitting.sh [-C <repo>] [--dry-run] [--remote <name>] [--from <signed commit>] [<branch>]    (branch defaults to main)
+#   --from re-signs everything above that commit, including commits already pushed, and force-pushes with a lease.
 #
 # Exit codes: 0 pushed, 2 usage, 3 declined or refused (nothing changed), 4 stopped after failed attempts.
 set -euo pipefail
@@ -12,10 +13,10 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 RESIGN=${SITTING_RESIGN:-$HERE/resign-branch.sh}
 ZENITY=${SITTING_ZENITY:-zenity}
 TITLE="Mona signing sitting"
-remote=origin dry='' CP='' SSHHOST='' branch='' base=''
+remote=origin dry='' CP='' SSHHOST='' branch='' base='' rbase='' from_arg='' rflag=''
 
 say() { printf 'sitting: %s\n' "$*" >&2; }
-usage() { sed -n '5p' "$0" | sed 's/^# *//' >&2; exit $EX_USAGE; }
+usage() { sed -n '5,6p' "$0" | sed 's/^# *//' >&2; exit $EX_USAGE; }
 ask() { "$ZENITY" --question --no-wrap --title="$TITLE" --text="$1" 2>/dev/null; }
 tell() { "$ZENITY" --info --no-wrap --title="$TITLE" --text="$1" 2>/dev/null || true; }
 again() {
@@ -23,11 +24,11 @@ again() {
 
 Three wrong PINs in a row lock the YubiKey until it is unplugged and plugged back in." 2>/dev/null
 }
-stop() { say "stopped: $*"; tell "Stopped: $*"; exit "${2:-$EX_FAILED}"; }
+stop() { say "stopped: $1"; [ -n "$dry" ] || tell "Stopped: $1"; exit "${2:-$EX_FAILED}"; }
 
 sign_once() {  # a fold conflict is not a missed PIN: stop instead of offering a retry
   local out rc=0
-  out=$("$RESIGN" "$base" "$branch" 2>&1) || rc=$?
+  out=$("$RESIGN" $rflag "$rbase" "$branch" 2>&1) || rc=$?
   printf '%s\n' "$out" >&2
   if [ $rc -ne 0 ] && printf '%s' "$out" | grep -q 'fold stopped'; then
     stop "the fixup fold conflicts; nothing was signed" $EX_DECLINED
@@ -68,24 +69,33 @@ main() {
     case $1 in
       --dry-run) dry=1 ;;
       --remote) [ $# -ge 2 ] || usage; remote=$2; shift ;;
+      --from) [ $# -ge 2 ] || usage; from_arg=$2; shift ;;
       -*) usage ;;
       *) break ;;
     esac
     shift
   done
   [ $# -le 1 ] || usage
-  local tip n sigs list plan from
+  local tip n sigs list plan from rewritten=0 lease=''
   branch=${1:-main}
   base="refs/remotes/$remote/$branch"
   git rev-parse -q --verify "refs/heads/$branch" >/dev/null || stop "no local branch $branch" $EX_USAGE
   git rev-parse -q --verify "$base" >/dev/null || stop "no $remote/$branch yet; the first push is manual" $EX_USAGE
   tip=$(git rev-parse "refs/heads/$branch")
-  n=$(git rev-list --count "$base..$branch")
-  [ "$n" -gt 0 ] || { say "nothing to sign: $branch has no commits over $remote/$branch"; exit 0; }
+  rbase=$base
+  if [ -n "$from_arg" ]; then
+    rbase=$(git rev-parse -q --verify "$from_arg^{commit}") || stop "unknown commit $from_arg" $EX_USAGE
+    git merge-base --is-ancestor "$rbase" "$branch" || stop "$from_arg is not an ancestor of $branch" $EX_USAGE
+    git merge-base --is-ancestor "$rbase" "$base" || stop "$from_arg is not on $remote/$branch" $EX_USAGE
+    rflag=--republish
+    rewritten=$(git rev-list --count "$rbase..$base")
+  fi
+  n=$(git rev-list --count "$rbase..$branch")
+  [ "$n" -gt 0 ] || { say "nothing to sign: $branch has no commits over ${from_arg:-$remote/$branch}"; exit 0; }
 
-  plan=$("$RESIGN" --dry-run "$base" "$branch" 2>&1) || stop "$(printf '%s' "$plan" | tail -1)" $EX_DECLINED
+  plan=$("$RESIGN" --dry-run $rflag "$rbase" "$branch" 2>&1) || stop "$(printf '%s' "$plan" | tail -1)" $EX_DECLINED
   sigs=$(printf '%s\n' "$plan" | sed -n 's/^resign: sign: *\([0-9]*\) commit.*/\1/p')
-  list=$(git log --reverse --format='  • %s' "$base..$branch" | grep -v '^  • fixup! ' | head -20)
+  list=$(git log --reverse --format='  • %s' "$rbase..$branch" | grep -v '^  • fixup! ' | head -20)
   say "plan: $sigs signature(s) for $n commit(s) on $branch, then push to $remote"
   [ -z "$dry" ] || { printf '%s\n%s\n' "$plan" "$list" >&2; exit 0; }
 
@@ -93,20 +103,29 @@ main() {
   [ -z "$(git remote get-url --push "$remote" | grep -E '^(ssh://|[^/]*@[^/]*:)' || true)" ] || conn=1
   ask "Sign and push $branch of $(basename "$(git rev-parse --show-toplevel)")?
 
-$sigs signature(s) for $n commit(s), then push to $remote.
+$sigs signature(s) for $n commit(s), then push to $remote.$([ "$rewritten" = 0 ] || printf '\nThis rewrites %s commit(s) already on %s (a force push with lease).' "$rewritten" "$remote")
 You'll be asked for the YubiKey PIN and a touch $((sigs + conn)) time(s)$([ $conn = 0 ] || echo " ($conn for the GitHub connection)").
 
 $list" || { say "declined by the operator; nothing changed"; exit $EX_DECLINED; }
 
+  local planned; planned=$(git rev-parse "$base")
   setup_ssh
   attempt "Connecting to $remote" git fetch -q "$remote" "$branch" || stop "could not reach $remote; nothing was signed"
-  git merge-base --is-ancestor "$base" "$branch" \
-    || stop "$remote/$branch moved and is not an ancestor of $branch; reconcile first, nothing was signed" $EX_DECLINED
+  if [ -n "$from_arg" ]; then
+    [ "$(git rev-parse "$base")" = "$planned" ] \
+      || stop "$remote/$branch moved since the plan; reconcile first, nothing was signed" $EX_DECLINED
+  else
+    git merge-base --is-ancestor "$base" "$branch" \
+      || stop "$remote/$branch moved and is not an ancestor of $branch; reconcile first, nothing was signed" $EX_DECLINED
+  fi
   [ "$(git rev-parse "refs/heads/$branch")" = "$tip" ] || stop "$branch moved during the sitting; nothing was signed" $EX_DECLINED
-  from=$(git rev-parse "$base")
+  from=$(git rev-parse "$rbase")
+  lease=$(git rev-parse "$base")
 
   attempt "Signing" sign_once || stop "signing failed; $branch is restored unsigned at ${tip:0:12}"
-  attempt "Pushing to $remote" git push -q "$remote" "$branch" \
+  local push=(git push -q "$remote" "$branch")
+  [ "$rewritten" = 0 ] || push=(git push -q --force-with-lease="refs/heads/$branch:$lease" "$remote" "$branch")
+  attempt "Pushing to $remote" "${push[@]}" \
     || stop "push failed; $branch is signed locally, retry with: git push $remote $branch"
 
   [ "$(git rev-parse "$base")" = "$(git rev-parse "refs/heads/$branch")" ] || stop "$remote/$branch does not match $branch after the push"
