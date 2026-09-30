@@ -2,6 +2,21 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D6 · 2026-09-30 · Signing sittings run by the orchestrator (operator request)
+
+- **Who runs it.** The orchestrator signs and pushes at each gate (D2 cadence) with `tools/sitting.sh [<branch>]`, the Mona port of the pilot-protocol system:
+  - a zenity question first: the commit list and the number of PIN + touch prompts. Declining changes nothing.
+  - then one GitHub SSH master (a single PIN + touch for fetch and push);
+  - then `tools/resign-branch.sh`: a two-pass fold-then-sign with tree, signature and identity checks. The unsigned tip is kept at `refs/archive/unsigned/<branch>`;
+  - then push and verify.
+- **Missed PINs.**
+  - `~/.local/bin/git-ssh-sign` retries each signature up to 3 times.
+  - `sitting.sh` offers up to 3 attempts per step (connect, sign, push). Each retry dialog reminds the operator that 3 wrong PINs in a row lock the key until it's re-plugged.
+  - A fixup-fold conflict stops without a retry.
+- **Before a sitting,** the orchestrator folds lane commits into one commit per card (tree-identical), to keep the signature count low.
+- **After a sitting,** active lane branches move with `git rebase --onto <branch> refs/archive/unsigned/<branch> <lane>`. The archive is then dropped with `tools/resign-branch.sh --drop-archive <branch>`.
+- **Lanes** never push. The orchestrator uses GitHub freely; SSH calls to the private repo ask for a FIDO touch through zenity, which is expected (operator, 2026-09-30).
+
 ## D5 · 2026-09-30 · Operator rulings at the Hermes go/no-go (gate 0)
 
 - **Hermes: go.** Hermes 0.21.5 stays the one Mona brain (R19). The pydantic-ai chat engine stays cut. Evidence: S1, S2, S5 and S6 (`docs/spikes/`).
