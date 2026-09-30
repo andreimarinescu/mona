@@ -3,8 +3,75 @@
     "name": "Mona",
     "tagline": "Vos papiers, réglés — ici, au cabinet."
   },
-  "home": {
-    "status": "Mona est en cours d’installation."
+  "nav": {
+    "home": "Accueil",
+    "chat": "Discussion",
+    "intake": "Réception",
+    "review": "À vérifier",
+    "archive": "Archives",
+    "rules": "Règles",
+    "entities": "Entités et classement",
+    "activity": "Journal d’activité",
+    "settings": "Paramètres",
+    "document": "Document",
+    "unlock": "Déverrouiller Mona",
+    "reviewCount_one": "{{n}} document à vérifier",
+    "reviewCount_many": "{{n}} de documents à vérifier",
+    "reviewCount_other": "{{n}} documents à vérifier"
+  },
+  "shell": {
+    "skip": "Aller au contenu",
+    "sidebar": "Barre latérale",
+    "mainNav": "Navigation principale",
+    "scope": {
+      "label": "Affichage",
+      "all": "Toutes les entités"
+    },
+    "ask": {
+      "label": "Demander à Mona"
+    },
+    "user": {
+      "caption": "Profil · verrouiller",
+      "menu": "Menu du compte",
+      "profile": "Profil",
+      "lock": "Verrouiller"
+    },
+    "status": {
+      "ok": "Sur cet ordinateur",
+      "queue": "file {{n}}",
+      "offline": "Mona est hors ligne",
+      "checking": "Vérification…"
+    },
+    "tabs": {
+      "review": "À vérifier",
+      "more": "Plus",
+      "moreMenu": "Autres écrans"
+    },
+    "chat": {
+      "title": "Mona",
+      "close": "Fermer la discussion",
+      "sees": "Mona voit : {{summary}}"
+    }
+  },
+  "placeholder": {
+    "title": "Cet écran arrive bientôt",
+    "body": "Mona l’affichera ici dans une prochaine étape.",
+    "reference": "Référence : {{id}}",
+    "scope": "Affichage : {{scope}}"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page introuvable",
+      "body": "Il n’y a rien à cette adresse.",
+      "home": "Retour à l’accueil"
+    }
+  },
+  "toast": {
+    "filed_one": "{{n}} document classé",
+    "filed_many": "{{n}} de documents classés",
+    "filed_other": "{{n}} documents classés",
+    "undo": "Annuler",
+    "failed": "Un problème est survenu"
   },
   "dev": {
     "ds": {

@@ -3,8 +3,73 @@
     "name": "Mona",
     "tagline": "Paperwork, handled — right here in the practice."
   },
-  "home": {
-    "status": "Mona is being set up."
+  "nav": {
+    "home": "Home",
+    "chat": "Chat",
+    "intake": "Intake",
+    "review": "Review queue",
+    "archive": "Archive",
+    "rules": "Rules",
+    "entities": "Entities & taxonomy",
+    "activity": "Activity log",
+    "settings": "Settings",
+    "document": "Document",
+    "unlock": "Unlock Mona",
+    "reviewCount_one": "{{n}} document to review",
+    "reviewCount_other": "{{n}} documents to review"
+  },
+  "shell": {
+    "skip": "Skip to content",
+    "sidebar": "Sidebar",
+    "mainNav": "Main navigation",
+    "scope": {
+      "label": "Showing",
+      "all": "All entities"
+    },
+    "ask": {
+      "label": "Ask Mona"
+    },
+    "user": {
+      "caption": "Profile · lock",
+      "menu": "Account menu",
+      "profile": "Profile",
+      "lock": "Lock"
+    },
+    "status": {
+      "ok": "On this computer",
+      "queue": "queue {{n}}",
+      "offline": "Mona is offline",
+      "checking": "Checking…"
+    },
+    "tabs": {
+      "review": "Review",
+      "more": "More",
+      "moreMenu": "More screens"
+    },
+    "chat": {
+      "title": "Mona",
+      "close": "Close chat",
+      "sees": "Mona can see: {{summary}}"
+    }
+  },
+  "placeholder": {
+    "title": "This screen is on its way",
+    "body": "Mona will show it here in a later step of the build.",
+    "reference": "Reference: {{id}}",
+    "scope": "Showing: {{scope}}"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "body": "There is nothing at this address.",
+      "home": "Back to Home"
+    }
+  },
+  "toast": {
+    "filed_one": "Filed {{n}} document",
+    "filed_other": "Filed {{n}} documents",
+    "undo": "Undo",
+    "failed": "Something went wrong"
   },
   "dev": {
     "ds": {

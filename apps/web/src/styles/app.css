@@ -68,3 +68,25 @@
   --container-lg: var(--container-lg);
   --container-xl: var(--container-xl);
 }
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 100;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-pill);
+  background: var(--inverse);
+  color: var(--text-inverse);
+  font: var(--type-label);
+  transform: translateY(-300%);
+}
+
+.skip-link:focus {
+  transform: none;
+}

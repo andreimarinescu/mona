@@ -3,8 +3,75 @@
     "name": "Mona",
     "tagline": "Actele, rezolvate — aici, în cabinet."
   },
-  "home": {
-    "status": "Mona este în curs de configurare."
+  "nav": {
+    "home": "Acasă",
+    "chat": "Conversație",
+    "intake": "Primire",
+    "review": "De verificat",
+    "archive": "Arhivă",
+    "rules": "Reguli",
+    "entities": "Entități și clasificare",
+    "activity": "Jurnal de activitate",
+    "settings": "Setări",
+    "document": "Document",
+    "unlock": "Deblocați Mona",
+    "reviewCount_one": "{{n}} document de verificat",
+    "reviewCount_few": "{{n}} documente de verificat",
+    "reviewCount_other": "{{n}} de documente de verificat"
+  },
+  "shell": {
+    "skip": "Treceți la conținut",
+    "sidebar": "Bară laterală",
+    "mainNav": "Navigare principală",
+    "scope": {
+      "label": "Afișare",
+      "all": "Toate entitățile"
+    },
+    "ask": {
+      "label": "Întrebați-o pe Mona"
+    },
+    "user": {
+      "caption": "Profil · blocare",
+      "menu": "Meniul contului",
+      "profile": "Profil",
+      "lock": "Blocați"
+    },
+    "status": {
+      "ok": "Pe acest calculator",
+      "queue": "coadă {{n}}",
+      "offline": "Mona este offline",
+      "checking": "Se verifică…"
+    },
+    "tabs": {
+      "review": "De verificat",
+      "more": "Mai mult",
+      "moreMenu": "Alte ecrane"
+    },
+    "chat": {
+      "title": "Mona",
+      "close": "Închideți conversația",
+      "sees": "Mona vede: {{summary}}"
+    }
+  },
+  "placeholder": {
+    "title": "Acest ecran vine în curând",
+    "body": "Mona îl va afișa aici într-un pas următor.",
+    "reference": "Referință: {{id}}",
+    "scope": "Afișare: {{scope}}"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Pagina nu a fost găsită",
+      "body": "Nu există nimic la această adresă.",
+      "home": "Înapoi acasă"
+    }
+  },
+  "toast": {
+    "filed_one": "{{n}} document arhivat",
+    "filed_few": "{{n}} documente arhivate",
+    "filed_other": "{{n}} de documente arhivate",
+    "undo": "Anulați",
+    "failed": "Ceva nu a mers"
   },
   "dev": {
     "ds": {
