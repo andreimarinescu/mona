@@ -15,3 +15,11 @@ def database() -> None:
         if not conn.execute("SELECT 1 FROM pg_database WHERE datname = %s", (dbname,)).fetchone():
             conn.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname)))
     migrate()
+
+
+@pytest.fixture
+def clean_spike() -> None:
+    with psycopg.connect(get_settings().libpq_url) as conn:
+        conn.execute(
+            "TRUNCATE spike_card_events, spike_chat_turns, spike_conversations, spike_interviews"
+        )

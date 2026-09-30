@@ -1,0 +1,731 @@
+[
+ {
+  "type": "reasoning-start",
+  "id": "r1"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "The"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " user"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " is"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " asking"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " about"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " the"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " document"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " they"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "'re"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " viewing"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": ","
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " which"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " is"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " d"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "_ur"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "ss"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "af"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "_q"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "3"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " —"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " a"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " UR"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "SS"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "AF"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " cot"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "isation"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " statement"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "."
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " They"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " want"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " to"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " know"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " what"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " it"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " is"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " and"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " its"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " due"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " date"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "."
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " Let"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " me"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " fetch"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " the"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " document"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": " details"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "."
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r1",
+  "delta": "\n"
+ },
+ {
+  "type": "reasoning-end",
+  "id": "r1"
+ },
+ {
+  "type": "tool-input-available",
+  "toolCallId": "chatcmpl-tool-8e55056018ba2970",
+  "toolName": "get_document",
+  "input": {},
+  "dynamic": true
+ },
+ {
+  "type": "tool-output-available",
+  "toolCallId": "chatcmpl-tool-8e55056018ba2970",
+  "output": {
+   "status": "completed"
+  },
+  "dynamic": true
+ },
+ {
+  "type": "reasoning-start",
+  "id": "r2"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": "I"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " have"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " the"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " document"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " details"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": "."
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " Let"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " me"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " answer"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " the"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " user"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": "'s"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " question"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": " directly"
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": "."
+ },
+ {
+  "type": "reasoning-delta",
+  "id": "r2",
+  "delta": "\n"
+ },
+ {
+  "type": "reasoning-end",
+  "id": "r2"
+ },
+ {
+  "type": "text-start",
+  "id": "t1"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "\n\n\n\nVous"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " regarde"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "z"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " **"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "l"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "'app"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "el"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " de"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " cot"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "isation"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " UR"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "SS"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "AF"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " du"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " "
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "3"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "e"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " trimestre"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "**"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " pour"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " le"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " **"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "C"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "abinet"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " March"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "and"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "**,"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " d"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "'un"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " montant"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " de"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " **"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "1"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " "
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "2"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "8"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "4"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": ","
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "0"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "0"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " €"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "**,"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " payable"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " au"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " plus"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " tard"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " le"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " **"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "1"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "4"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " octobre"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " "
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "2"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "0"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "2"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "6"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "**."
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "\n\n"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "Sou"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "ha"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "itez"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "-vous"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " que"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " je"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " vous"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " mette"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " un"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " rappel"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " avant"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " l"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "'é"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "ché"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": "ance"
+ },
+ {
+  "type": "text-delta",
+  "id": "t1",
+  "delta": " ?"
+ },
+ {
+  "type": "text-end",
+  "id": "t1"
+ }
+]

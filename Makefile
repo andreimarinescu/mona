@@ -33,8 +33,8 @@ web-check:
 	$(WEB) build
 
 api-client:
-	cd apps/web && npx openapi-typescript ../api/openapi.json -o node_modules/.cache/schema.gen.ts >/dev/null \
-		&& diff -u src/api/schema.gen.ts node_modules/.cache/schema.gen.ts \
+	cd apps/web && npx openapi-typescript ../api/openapi.json -o ../../node_modules/.cache/schema.gen.ts >/dev/null \
+		&& diff -u src/api/schema.gen.ts ../../node_modules/.cache/schema.gen.ts \
 		|| { echo "apps/web/src/api/schema.gen.ts is stale: run npm run gen:api -w apps/web"; exit 1; }
 
 py-check:

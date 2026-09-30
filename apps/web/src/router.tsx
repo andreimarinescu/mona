@@ -20,6 +20,13 @@ const devRoutes = import.meta.env.DEV
       }),
       createRoute({
         getParentRoute: () => rootRoute,
+        path: '/dev/chat',
+        validateSearch: (search: Record<string, unknown>): { c?: string } =>
+          typeof search.c === 'string' ? { c: search.c } : {},
+        component: lazyRouteComponent(() => import('./routes/dev/Chat'), 'Chat'),
+      }),
+      createRoute({
+        getParentRoute: () => rootRoute,
         path: '/dev/pdf',
         component: lazyRouteComponent(() => import('./routes/dev/PdfFind'), 'PdfFind'),
       }),

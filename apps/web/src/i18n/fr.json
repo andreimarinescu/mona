@@ -7,12 +7,58 @@
     "status": "Mona est en cours d’installation."
   },
   "dev": {
-    "ds": { "title": "Échantillon du design system" },
+    "ds": {
+      "title": "Échantillon du design system"
+    },
     "pdf": {
       "title": "Vérification de la recherche pdf.js",
       "query": "Phrase à trouver",
       "findHash": "Trouver via le hash de l’URL",
       "findEvent": "Trouver via le bus d’événements"
+    },
+    "chat": {
+      "title": "Discussion (spike S5)",
+      "composer": {
+        "placeholder": "Demandez à Mona…",
+        "send": "Envoyer"
+      },
+      "thinking": {
+        "live": "Mona réfléchit…",
+        "done": "A réfléchi {{seconds}} secondes",
+        "doneShort": "Réflexion de Mona"
+      },
+      "tool": {
+        "search_documents": {
+          "running": "Recherche dans les archives…",
+          "done": "Archives consultées"
+        },
+        "get_document": {
+          "running": "Ouverture du document…",
+          "done": "Document ouvert"
+        },
+        "start_interview": {
+          "running": "Préparation des questions…",
+          "done": "Questions en route"
+        },
+        "generic": {
+          "running": "En cours…",
+          "done": "Terminé"
+        }
+      },
+      "doc": {
+        "open": "Ouvrir",
+        "due": "Échéance {{date}}"
+      },
+      "interview": {
+        "affects": "Documents concernés : {{count}}",
+        "suggested": "Suggéré"
+      },
+      "error": {
+        "mona_offline": "Mona est hors ligne pour le moment. Réessayez dans un instant.",
+        "stream_interrupted": "La réponse a été interrompue. Réessayez.",
+        "internal": "Un problème est survenu. Réessayez."
+      },
+      "loading": "Chargement de la conversation…"
     }
   }
 }

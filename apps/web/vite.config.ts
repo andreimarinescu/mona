@@ -9,6 +9,8 @@ const apiUrl = process.env.MONA_API_URL ?? 'http://localhost:8765';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // compose mounts a volume at apps/web/node_modules, so Docker leaves a root-owned dir on the host
+  cacheDir: '../../node_modules/.vite-web',
   resolve: {
     alias: { '@design': designDir },
   },

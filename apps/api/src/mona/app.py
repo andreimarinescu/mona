@@ -6,7 +6,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mona import __version__
+from mona.chat.router import router as chat_router
 from mona.db import get_engine
+from mona.spike.mcp import build_mcp_app
 
 
 class Health(BaseModel):
@@ -30,8 +32,11 @@ async def health(response: Response, engine: Annotated[AsyncEngine, Depends(get_
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Mona", version=__version__)
+    mcp_app = build_mcp_app()
+    app = FastAPI(title="Mona", version=__version__, lifespan=mcp_app.lifespan)
     app.include_router(router)
+    app.include_router(chat_router)
+    app.add_route("/mcp", mcp_app)
     return app
 
 

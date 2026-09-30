@@ -7,12 +7,58 @@
     "status": "Mona is being set up."
   },
   "dev": {
-    "ds": { "title": "Design system sample" },
+    "ds": {
+      "title": "Design system sample"
+    },
     "pdf": {
       "title": "pdf.js find check",
       "query": "Phrase to find",
       "findHash": "Find via URL hash",
       "findEvent": "Find via event bus"
+    },
+    "chat": {
+      "title": "Chat (S5 spike)",
+      "composer": {
+        "placeholder": "Ask Mona…",
+        "send": "Send"
+      },
+      "thinking": {
+        "live": "Mona is thinking…",
+        "done": "Thought for {{seconds}} seconds",
+        "doneShort": "Mona's thinking"
+      },
+      "tool": {
+        "search_documents": {
+          "running": "Searching the archive…",
+          "done": "Searched the archive"
+        },
+        "get_document": {
+          "running": "Opening the document…",
+          "done": "Opened the document"
+        },
+        "start_interview": {
+          "running": "Preparing questions…",
+          "done": "Questions on their way"
+        },
+        "generic": {
+          "running": "Working…",
+          "done": "Done"
+        }
+      },
+      "doc": {
+        "open": "Open",
+        "due": "Due {{date}}"
+      },
+      "interview": {
+        "affects": "Documents affected: {{count}}",
+        "suggested": "Suggested"
+      },
+      "error": {
+        "mona_offline": "Mona is offline right now. Try again in a moment.",
+        "stream_interrupted": "The answer was cut off. Try again.",
+        "internal": "Something went wrong. Try again."
+      },
+      "loading": "Loading the conversation…"
     }
   }
 }

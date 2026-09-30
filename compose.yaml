@@ -8,6 +8,7 @@ x-python: &python
     MONA_DATA_DIR: /data
     PROCRASTINATE_APP: mona.jobs.app
     PROCRASTINATE_LOG_LEVEL: info
+    HERMES_URL: http://hermes:8642
     PYTHONDONTWRITEBYTECODE: "1"
   volumes:
     - ./apps/api:/app
@@ -75,7 +76,48 @@ services:
     depends_on:
       - api
 
+  hermes-seed:
+    image: &hermes-image nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        for f in config.yaml SOUL.md; do
+        [ -e /opt/data/$$f ] || install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/$$f /opt/data/$$f;
+        done
+    restart: "no"
+    volumes:
+      - ./deploy/hermes:/seed:ro
+      - hermes_data:/opt/data
+
+  hermes:
+    image: *hermes-image
+    command: gateway run
+    environment:
+      HERMES_UID: ${HERMES_UID:-1000}
+      HERMES_GID: ${HERMES_GID:-1000}
+      API_SERVER_KEY: ${HERMES_API_KEY:?set HERMES_API_KEY in .env}
+      API_SERVER_HOST: 0.0.0.0
+      API_SERVER_PORT: "8642"
+      API_SERVER_MODEL_NAME: mona
+      MONA_SERVICE_KEY: ${MONA_SERVICE_KEY:?set MONA_SERVICE_KEY in .env}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?set OPENROUTER_API_KEY in .env}
+    ports:
+      - 127.0.0.1:${HERMES_PORT:-8642}:8642
+    volumes:
+      - hermes_data:/opt/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8642/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+    depends_on:
+      hermes-seed:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  hermes_data:
   web_node_modules:
   web_app_node_modules:

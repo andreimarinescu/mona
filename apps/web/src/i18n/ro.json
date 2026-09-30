@@ -7,12 +7,58 @@
     "status": "Mona este în curs de configurare."
   },
   "dev": {
-    "ds": { "title": "Mostră din sistemul de design" },
+    "ds": {
+      "title": "Mostră din sistemul de design"
+    },
     "pdf": {
       "title": "Verificare căutare pdf.js",
       "query": "Frază de căutat",
       "findHash": "Caută prin hash-ul URL",
       "findEvent": "Caută prin magistrala de evenimente"
+    },
+    "chat": {
+      "title": "Chat (spike S5)",
+      "composer": {
+        "placeholder": "Întrebați-o pe Mona…",
+        "send": "Trimiteți"
+      },
+      "thinking": {
+        "live": "Mona se gândește…",
+        "done": "S-a gândit {{seconds}} secunde",
+        "doneShort": "Raționamentul Monei"
+      },
+      "tool": {
+        "search_documents": {
+          "running": "Caută în arhivă…",
+          "done": "A căutat în arhivă"
+        },
+        "get_document": {
+          "running": "Deschide documentul…",
+          "done": "A deschis documentul"
+        },
+        "start_interview": {
+          "running": "Pregătește întrebările…",
+          "done": "Întrebările sunt pe drum"
+        },
+        "generic": {
+          "running": "Lucrează…",
+          "done": "Gata"
+        }
+      },
+      "doc": {
+        "open": "Deschideți",
+        "due": "Scadent {{date}}"
+      },
+      "interview": {
+        "affects": "Documente vizate: {{count}}",
+        "suggested": "Sugerat"
+      },
+      "error": {
+        "mona_offline": "Mona este offline acum. Încercați din nou în câteva clipe.",
+        "stream_interrupted": "Răspunsul a fost întrerupt. Încercați din nou.",
+        "internal": "Ceva nu a mers. Încercați din nou."
+      },
+      "loading": "Se încarcă conversația…"
     }
   }
 }

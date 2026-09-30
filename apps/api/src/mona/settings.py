@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     openrouter_api_key: SecretStr | None = None
     mona_owner_password: SecretStr | None = None
     hermes_api_key: SecretStr | None = None
+    hermes_url: str = "http://hermes:8642"
 
     @property
     def libpq_url(self) -> str:
