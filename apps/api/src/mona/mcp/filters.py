@@ -162,11 +162,7 @@ async def document_clauses(
     status: str = "any",
 ) -> list[Any] | None:
     """WHERE clauses for the common filters; None when the counterparty matches nothing."""
-    clauses: list[Any] = [
-        Document.deleted_at.is_(None),
-        Document.status.in_(STATUSES[status]),
-        scope.visible_entity_clause(Document.entity_id),
-    ]
+    clauses: list[Any] = [*scope.document_clauses(), Document.status.in_(STATUSES[status])]
     if entity is not None:
         clauses.append(Document.entity_id == (await resolve_entity(scope, entity)).id)
     if category is not None:

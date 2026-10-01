@@ -1,13 +1,16 @@
 """`POST /api/chat` (the HermesEngine adapter) and the conversation endpoints (C3 §2, §7)."""
 
+from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import func, select
+from sqlalchemy import func, literal, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from mona.api.deps import Feed, FeedLimit, decode_cursor, encode_cursor
+from mona.api.errors import ApiFailure, errors
 from mona.chat.hermes import HermesClient, get_hermes
 from mona.chat.stream import run_turn
 from mona.chat.transcript import ui_messages
@@ -15,10 +18,10 @@ from mona.chat.turns import TurnInProgress, open_turn
 from mona.db import get_engine
 from mona.db.models import ChatTurn, Conversation
 from mona.dto.base import Dto, Timestamp
+from mona.text import norm
 
 router = APIRouter(prefix="/api")
 
-MAX_BODY = 32 * 1024
 STREAM_HEADERS = {
     "cache-control": "no-cache",
     "connection": "keep-alive",
@@ -26,18 +29,6 @@ STREAM_HEADERS = {
     "x-accel-buffering": "no",
 }
 Lang = Literal["en", "fr", "ro"]
-
-
-class ApiFailure(Exception):
-    """An error before any stream byte, as `{"error": {"code", "message"}}` (C3 §2)."""
-
-    def __init__(self, status: int, code: str, message: str) -> None:
-        super().__init__(message)
-        self.status, self.code, self.message = status, code, message
-
-    def response(self) -> JSONResponse:
-        body = {"error": {"code": self.code, "message": self.message}}
-        return JSONResponse(body, status_code=self.status)
 
 
 class PageContext(BaseModel):
@@ -62,15 +53,6 @@ class ChatRequest(BaseModel):
         return v.strip() if isinstance(v, str) else v
 
 
-class ApiError(BaseModel):
-    code: str
-    message: str
-
-
-class ErrorBody(BaseModel):
-    error: ApiError
-
-
 class ConversationSummary(Dto):
     id: str
     title: str
@@ -84,9 +66,7 @@ class ConversationSummary(Dto):
     response_class=StreamingResponse,
     responses={
         200: {"content": {"text/event-stream": {}}},
-        400: {"model": ErrorBody},
-        404: {"model": ErrorBody},
-        409: {"model": ErrorBody},
+        **errors(400, 401, 403, 404, 409, 423),
     },
 )
 async def chat(
@@ -118,34 +98,51 @@ async def chat(
     )
 
 
-@router.get("/conversations", operation_id="listConversations")
+@router.get("/conversations", operation_id="listConversations", responses=errors(400, 401, 423))
 async def conversations(
     engine: Annotated[AsyncEngine, Depends(get_engine)],
-    limit: Annotated[int, Query(ge=1, le=200)] = 50,
-) -> list[ConversationSummary]:
+    q: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
+    cursor: Annotated[str | None, Query(max_length=400)] = None,
+    limit: FeedLimit = 30,
+) -> Feed[ConversationSummary]:
+    """C2 §13: newest `lastMessageAt` first; `q` matches `norm(title)`."""
+    after = decode_cursor(cursor, {"q": q})
     turns = (
         select(func.count(ChatTurn.id))
         .where(ChatTurn.conversation_id == Conversation.id)
         .scalar_subquery()
     )
+    stmt = select(Conversation.id, Conversation.title, Conversation.last_message_at, turns)
+    if after is not None:
+        at, cid = datetime.fromisoformat(after[0]), after[1]
+        stmt = stmt.where(
+            tuple_(Conversation.last_message_at, Conversation.id) < tuple_(literal(at), cid)
+        )
+    stmt = stmt.order_by(Conversation.last_message_at.desc(), Conversation.id.desc())
+    wanted = norm(q) if q else None
+    items: list[ConversationSummary] = []
     async with engine.connect() as conn:
-        rows = (
-            await conn.execute(
-                select(Conversation.id, Conversation.title, Conversation.last_message_at, turns)
-                .order_by(Conversation.last_message_at.desc(), Conversation.id.desc())
-                .limit(limit)
+        for r in (await conn.execute(stmt)).all():
+            if wanted and wanted not in norm(r[1]):
+                continue
+            items.append(
+                ConversationSummary(id=r[0], title=r[1], last_message_at=r[2], turn_count=r[3])
             )
-        ).all()
-    return [
-        ConversationSummary(id=r[0], title=r[1], last_message_at=r[2], turn_count=r[3])
-        for r in rows
-    ]
+            if len(items) > limit:
+                break
+    more = len(items) > limit
+    items = items[:limit]
+    last = items[-1] if more else None
+    next_cursor = (
+        encode_cursor([last.last_message_at.isoformat(), last.id], {"q": q}) if last else None
+    )
+    return Feed[ConversationSummary](items=items, next_cursor=next_cursor)
 
 
 @router.get(
     "/conversations/{conversation_id}/messages",
     operation_id="getConversationMessages",
-    responses={404: {"model": ErrorBody}},
+    responses=errors(401, 404, 423),
 )
 async def conversation_messages(
     conversation_id: str, engine: Annotated[AsyncEngine, Depends(get_engine)]

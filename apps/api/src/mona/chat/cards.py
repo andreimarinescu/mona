@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
-from mona.db.models import CardEvent
+from mona.db.models import CardEvent, Profile
 from mona.dto.load import SUBJECT_KEYS, card_payload
 
 logger = logging.getLogger(__name__)
@@ -18,12 +18,38 @@ CARD_REF = re.compile(r"crd_[0-9a-hjkmnp-tv-z]{26}")
 Chunk = dict[str, Any]
 
 
+CARD_MOVES = 20
+
+
+async def rule_preview_payload(conn: AsyncConnection, rule_id: str) -> dict | None:
+    """C3 §5.5 `data-rulePreview`: the C1 §11.5 `RulePreview` in the profile locale, `moves`
+    capped at 20."""
+    import anyio.to_thread
+
+    from mona.api.deps import get_ctx
+    from mona.services import ServiceError, preview_rule
+
+    lang = (await conn.execute(select(Profile.locale))).scalar() or "en"
+    try:
+        preview = await anyio.to_thread.run_sync(
+            lambda: preview_rule(get_ctx(), rule_id, lang=lang)
+        )
+    except ServiceError:
+        return None
+    data = preview.model_dump(mode="json")
+    data["moves"] = data["moves"][:CARD_MOVES]
+    return data
+
+
 async def card_chunk(conn: AsyncConnection, kind: str, subject: dict[str, str]) -> Chunk | None:
     """The `data-<kind>` chunk for a card from current state; None if the subject is gone."""
     subject_id = subject.get(SUBJECT_KEYS.get(kind, ""))
     if subject_id is None:
         return None
-    data = await card_payload(conn, kind, subject_id)
+    if kind == "rulePreview":
+        data = await rule_preview_payload(conn, subject_id)
+    else:
+        data = await card_payload(conn, kind, subject_id)
     return {"type": f"data-{kind}", "id": subject_id, "data": data} if data is not None else None
 
 

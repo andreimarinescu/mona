@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 // Needs the compose stack with Hermes and `python -m tests.live_fixtures` output in MONA_LIVE_FIXTURES:
-// E2E_BASE_URL=<web> MONA_LIVE=1 MONA_LIVE_FIXTURES=<json>.
+// E2E_BASE_URL=<web> MONA_LIVE=1 MONA_LIVE_FIXTURES=<json> MONA_OWNER_PASSWORD=<the seeded password>.
 test.skip(!process.env.MONA_LIVE, 'live Hermes stack not requested (MONA_LIVE=1)');
 test.describe.configure({ mode: 'serial', timeout: 240_000 });
 
@@ -60,6 +60,16 @@ async function turn(page: Page, name: string, text: string) {
 async function tools(reply: ReturnType<Page['locator']>) {
   return reply.locator('[data-testid="tool-chip"]').evaluateAll((els) => els.map((e) => e.getAttribute('data-tool')));
 }
+
+// The web has no unlock screen or CSRF middleware yet (L3), so the test unlocks and adds the token.
+test.beforeEach(async ({ page }) => {
+  const res = await page.request.post('/api/auth/unlock', { data: { password: process.env.MONA_OWNER_PASSWORD } });
+  expect(res.ok()).toBe(true);
+  const { csrfToken } = (await res.json()) as { csrfToken: string };
+  await page.route('**/api/chat', (route) =>
+    route.continue({ headers: { ...route.request().headers(), 'x-csrf-token': csrfToken } }),
+  );
+});
 
 test.afterAll(() => {
   const label = process.env.LIVE_TIMING_LABEL ?? 'run';
@@ -119,4 +129,23 @@ test('a French prompt gets a French reply', async ({ page }) => {
   const text = (await reply.locator('[data-testid="mona-text"]').allTextContents()).join(' ');
   console.log(`french tools: ${JSON.stringify(await tools(reply))}; reply: ${text.slice(0, 120)}`);
   expect(language(text)).toBe('fr');
+});
+
+test('move the URSSAF letter to the SCI: correct_document, a card, and an undo that restores it', async ({ page }) => {
+  const id = fixtures.urssaf;
+  const folder = async () =>
+    ((await (await page.request.get(`/api/documents/${id}`)).json()) as { path: string[] }).path[0];
+  expect(await folder()).toBe('Cabinet Marchand');
+  await page.goto('/dev/chat');
+  const moved = await turn(page, 'move', 'Move the URSSAF letter to the SCI.');
+  const called = await tools(moved);
+  console.log(`move tools: ${JSON.stringify(called)}`);
+  expect(called).toContain('correct_document');
+  await expect(moved.locator(`[data-card="doc"][data-id="${id}"]`).first()).toBeVisible();
+  expect(await folder()).toBe(fixtures.sci_folder);
+  const undone = await turn(page, 'undo', 'Undo that, please.');
+  const undoTools = await tools(undone);
+  console.log(`undo tools: ${JSON.stringify(undoTools)}`);
+  expect(undoTools).toContain('undo');
+  expect(await folder()).toBe('Cabinet Marchand');
 });

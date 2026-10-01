@@ -94,12 +94,19 @@ class Excluded(Strict):
     reason: Literal["no_amount", "not_found", "other_currency"]
 
 
+class Titled(Strict):
+    id: str = DocId
+    title: str = Field(max_length=160)
+
+
 class SumResult(Carded):
     count: int
     totals: list[Total]
     document_ids: list[str] = Field(max_length=25)
     listed: int
+    documents: list[Titled] = Field(max_length=10)
     excluded: list[Excluded] = Field(max_length=10)
+    truncated: bool = False
 
 
 class Suggestion(Strict):

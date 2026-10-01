@@ -325,7 +325,13 @@ def _ids(conn: Connection, table: str, column: str = "key") -> dict[str, str]:
 def _write_settings(conn: Connection, p: PracticeFile, settings: Settings, s: Summary) -> bytes:
     info = p.practice
     values: dict[str, Any] = {"practice_name": info.name, "filing_language": info.filing_language}
-    for name in ("confidence_high", "confidence_low", "badge_hours", "debrief_queue_threshold"):
+    for name in (
+        "confidence_high",
+        "confidence_low",
+        "badge_hours",
+        "debrief_queue_threshold",
+        "debrief_early_min",
+    ):
         if getattr(info, name) is not None:
             values[name] = getattr(info, name)
     row = conn.execute(select(T["settings"])).mappings().first()
@@ -344,6 +350,8 @@ def _write_settings(conn: Connection, p: PracticeFile, settings: Settings, s: Su
 
 def _write_profile(conn: Connection, p: PracticeFile, settings: Settings, s: Summary) -> None:
     values = {"name": p.practice.owner_name or p.practice.name, "locale": p.practice.locale}
+    if p.practice.auto_lock_minutes is not None:
+        values["auto_lock_minutes"] = p.practice.auto_lock_minutes
     exists = conn.execute(select(T["profile"].c.singleton)).first()
     if exists is None:
         password = settings.mona_owner_password

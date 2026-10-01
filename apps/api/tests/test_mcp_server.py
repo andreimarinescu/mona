@@ -23,6 +23,7 @@ READ_TOOLS = {
     "list_deadlines",
     "get_brief",
 }
+WRITE_TOOLS = {"correct_document", "preview_rule", "apply_rule", "undo"}
 L4_TOOLS = {
     "start_interview",
     "answer_question",
@@ -77,7 +78,7 @@ async def test_a_body_over_64_kib_is_413():
 
 async def test_only_tools_are_registered():
     tools = await list_tools()
-    assert {t["name"] for t in tools} == READ_TOOLS | L4_TOOLS
+    assert {t["name"] for t in tools} == READ_TOOLS | WRITE_TOOLS | L4_TOOLS
     async with mcp_client() as c:
         for method, key in (("resources/list", "resources"), ("prompts/list", "prompts")):
             assert rpc_result(await rpc(c, method))[key] == []
@@ -159,7 +160,8 @@ async def test_unexpected_failures_are_internal_without_details(monkeypatch, cap
     monkeypatch.setattr(read, "scope_for", broken)
     res = await call("search_documents", {"query": "x"})
     assert res.is_error and res.data["error"]["code"] == "internal"
-    assert "secret" not in res.text and "secret detail" in caplog.text
+    assert "secret" not in res.text and "secret" not in caplog.text
+    assert "tool search_documents failed [RuntimeError]" in caplog.text
 
 
 async def test_a_tool_over_its_time_budget_is_internal(monkeypatch):

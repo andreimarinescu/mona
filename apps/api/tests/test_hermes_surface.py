@@ -53,3 +53,17 @@ def test_profile_seed_ships_empty_cache_dirs_and_no_hand_written_memory():
     assert [p.name for p in (seed / "memories").iterdir()] == ["README.md"]
     for sub in ("documents", "images"):
         assert [p.name for p in (seed / "cache" / sub).iterdir()] == [".gitkeep"]
+
+
+def test_prod_lockdown_capture_resolves_no_disabled_toolset():
+    """C9 §8 test 5, captured on the pinned image with `tests/hermes_lockdown.py`."""
+    from mona.privacy import DISABLED_TOOLSETS, PLATFORM_TOOLSETS
+
+    lock = json.loads((Path(__file__).parent / "fixtures" / "hermes" / "lockdown.json").read_text())
+    assert lock["disabled_toolsets"] == list(DISABLED_TOOLSETS)
+    assert lock["terminal_backend"] == "docker"
+    resolved = lock["platform_tools"]
+    assert len(resolved) > 3
+    for platform, tools in resolved.items():
+        assert not set(tools) & set(DISABLED_TOOLSETS), platform
+    assert {p: resolved[p] for p in PLATFORM_TOOLSETS} == PLATFORM_TOOLSETS

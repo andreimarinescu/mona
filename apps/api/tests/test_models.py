@@ -53,7 +53,7 @@ def test_models_cover_every_table(migrated_db):
     tables -= {"alembic_version"}
     tables = {t for t in tables if not t.startswith(IGNORED_PREFIXES)}
     assert tables == set(Base.metadata.tables)
-    assert len(tables) == 34
+    assert len(tables) == 35
 
 
 async def test_async_session_uses_server_defaults(migrated_db):

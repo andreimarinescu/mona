@@ -42,8 +42,9 @@ def test_new_ids_sort_by_creation_time():
 
 
 def test_prefixes_cover_c1_table():
-    assert len(PREFIXES) == 25
-    assert len(set(PREFIXES.values())) == 25
+    assert len(PREFIXES) == 26
+    assert len(set(PREFIXES.values())) == 26
+    assert PREFIXES["auth_sessions"] == "ses"
     assert PREFIXES["card_action_notes"] == "not" and PREFIXES["card_events"] == "crd"
 
 

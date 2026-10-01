@@ -1,6 +1,5 @@
 """C2 §11 endpoints (test 17, notes, polling) and the C4 §3.6/§3.7 tools (tests 12, 16)."""
 
-import httpx
 import pytest
 from sqlalchemy import select
 
@@ -9,6 +8,7 @@ from mona.interviews import answers, service
 from mona.interviews.generate import generate_interview
 from mona.services.registry import T
 from tests import rows
+from tests.api_client import api_client
 from tests.l4_world import RecordedModel, World, fixture
 from tests.mcp_http import call
 
@@ -17,8 +17,7 @@ pytestmark = pytest.mark.usefixtures("l4_db")
 
 @pytest.fixture
 async def api():
-    transport = httpx.ASGITransport(app=create_app())
-    async with httpx.AsyncClient(transport=transport, base_url="http://api:8765") as c:
+    async with api_client(create_app()) as c:
         yield c
 
 

@@ -8,7 +8,6 @@ import hashlib
 import json
 import logging
 from collections.abc import Awaitable, Callable, Iterable
-from dataclasses import dataclass
 from typing import Any, Literal
 
 from fastmcp import FastMCP
@@ -16,19 +15,12 @@ from fastmcp.exceptions import ToolError, ValidationError
 from fastmcp.server.dependencies import get_http_headers
 from fastmcp.server.middleware import Middleware
 from pydantic import ValidationError as PydanticValidationError
-from sqlalchemy import func, insert, select, true
+from sqlalchemy import func, insert, select
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from mona.db.models import (
-    Account,
-    CardEvent,
-    ChatTurn,
-    Entity,
-    EntityPerson,
-    Person,
-    SubUnit,
-)
+from mona.db.models import CardEvent, ChatTurn
 from mona.ids import new_id
+from mona.visibility import RuleVisibility, Scope, rule_visibility, scope_for
 
 logger = logging.getLogger(__name__)
 
@@ -172,82 +164,6 @@ def page_of(total: int, offset: int, limit: int, params: dict[str, Any]) -> str 
     return encode_cursor(offset + limit, params) if offset + limit < total else None
 
 
-# --- scope: channel + visibility (§2.6) ---
-
-
-@dataclass
-class Scope:
-    conn: AsyncConnection
-    channel: Channel
-    hidden_entities: frozenset[str]
-
-    def entity_visible(self, entity_id: str | None) -> bool:
-        return entity_id is None or entity_id not in self.hidden_entities
-
-    def visible_entity_clause(self, column: Any) -> Any:
-        """SQL: rows whose entity column is null or visible on this channel."""
-        if not self.hidden_entities:
-            return true()
-        return column.is_(None) | column.not_in(self.hidden_entities)
-
-
-async def scope_for(conn: AsyncConnection, ch: Channel) -> Scope:
-    hidden: frozenset[str] = frozenset()
-    if ch != "web":
-        hidden = frozenset(
-            (await conn.execute(select(Entity.id).where(Entity.visibility == "personal")))
-            .scalars()
-            .all()
-        )
-    return Scope(conn, ch, hidden)
-
-
-@dataclass
-class RuleVisibility:
-    """§2.6 rules: hidden when the action or any condition points at a personal entity."""
-
-    personal_keys: frozenset[str]
-    personal_accounts: frozenset[str]
-    personal_people: frozenset[str]
-
-    def visible(self, conditions: list[dict[str, Any]], action: dict[str, Any]) -> bool:
-        if action.get("entity") in self.personal_keys:
-            return False
-        for c in conditions:
-            field, op, value = c.get("field"), c.get("op"), c.get("value")
-            values = value if isinstance(value, list) else [value]
-            if field == "entity" and any(v in self.personal_keys for v in values):
-                return False
-            if (field, op) in {("addressee", "is_entity"), ("iban", "entity"), ("siren", "entity")}:
-                if value in self.personal_keys:
-                    return False
-            if (field, op) == ("iban", "account") and value in self.personal_accounts:
-                return False
-            if (field, op) in {("addressee", "is_person"), ("person", "mentions")}:
-                if value in self.personal_people:
-                    return False
-        return True
-
-
-async def rule_visibility(scope: Scope) -> RuleVisibility | None:
-    """None on `web`, where every rule is visible."""
-    if not scope.hidden_entities:
-        return None
-    conn, hidden = scope.conn, scope.hidden_entities
-    keys = (await conn.execute(select(Entity.key).where(Entity.id.in_(hidden)))).scalars()
-    accounts = (
-        await conn.execute(select(Account.key).where(Account.entity_id.in_(hidden)))
-    ).scalars()
-    linked = select(EntityPerson.person_id).where(EntityPerson.entity_id.in_(hidden))
-    units = select(SubUnit.person_id).where(
-        SubUnit.entity_id.in_(hidden), SubUnit.person_id.is_not(None)
-    )
-    people = (
-        await conn.execute(select(Person.key).where(Person.id.in_(linked.union(units))))
-    ).scalars()
-    return RuleVisibility(frozenset(keys), frozenset(accounts), frozenset(people))
-
-
 # --- card events (§2.5, C3 §5.2) ---
 
 
@@ -291,3 +207,6 @@ async def write_cards(
 
 
 PLACEHOLDER_REF = "crd_" + "0" * 26
+
+
+__all__ = ["RuleVisibility", "Scope", "rule_visibility", "scope_for"]

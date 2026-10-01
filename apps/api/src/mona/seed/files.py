@@ -48,6 +48,8 @@ class PracticeInfo(_File):
     confidence_low: int | None = None
     badge_hours: int | None = None
     debrief_queue_threshold: int | None = None
+    debrief_early_min: int | None = Field(None, ge=1, le=50)
+    auto_lock_minutes: int | None = Field(None, ge=1, le=1440)
 
 
 class PersonIn(_File):

@@ -1,4 +1,25 @@
 {
+  "review": {
+    "sentence": {
+      "default": "Aș arhiva acest document de la {{counterparty}}{{docType}} la {{entity}}, {{category}}.",
+      "default_anon": "Aș arhiva acest document{{docType}} la {{entity}}, {{category}}.",
+      "low": "Cred că acest document de la {{counterparty}}{{docType}} aparține de {{entity}}, dar nu sunt suficient de sigură ca să-l arhivez.",
+      "low_anon": "Cred că acest document{{docType}} aparține de {{entity}}, dar nu sunt suficient de sigură ca să-l arhivez.",
+      "entity": "Din acest document de la {{counterparty}}{{docType}} nu reiese clar cărei entități îi aparține.",
+      "entity_anon": "Din acest document{{docType}} nu reiese clar cărei entități îi aparține.",
+      "conflict": "Două dintre regulile dumneavoastră sunt în conflict pentru acest document de la {{counterparty}}{{docType}}, așa că l-am păstrat pentru dumneavoastră.",
+      "conflict_anon": "Două dintre regulile dumneavoastră sunt în conflict pentru acest document{{docType}}, așa că l-am păstrat pentru dumneavoastră.",
+      "asked": "Ați cerut să vedeți de fiecare dată documentele de acest tip.",
+      "asked_anon": "Ați cerut să vedeți de fiecare dată documentele de acest tip.",
+      "unreadable": "Nu reușesc să citesc acest document. L-ați putea scana din nou sau face o fotografie mai clară?",
+      "unreadable_anon": "Nu reușesc să citesc acest document. L-ați putea scana din nou sau face o fotografie mai clară?"
+    }
+  },
+  "interview": {
+    "option": {
+      "ask": "Întrebați-mă de fiecare dată"
+    }
+  },
   "export": {
     "csv": {
       "file": "Fișier",
@@ -11,11 +32,6 @@
       "amount": "Sumă",
       "currency": "Monedă",
       "dueDate": "Scadență"
-    }
-  },
-  "interview": {
-    "option": {
-      "ask": "Întrebați-mă de fiecare dată"
     }
   }
 }

@@ -776,6 +776,23 @@ class PracticeSettings(Base):
     confidence_low: Mapped[int] = _small(server_default="60")
     badge_hours: Mapped[int] = _small(server_default="24")
     debrief_queue_threshold: Mapped[int] = _small(server_default="5")
+    debrief_early_min: Mapped[int] = _small(server_default="5")
     iban_salt: Mapped[bytes]
     created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = _updated()
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+    __table_args__ = (
+        Index("auth_sessions_live", "expires_at", postgresql_where=text("revoked_at IS NULL")),
+    )
+
+    id: Mapped[str] = _id("ses")
+    token_hash: Mapped[str] = mapped_column(unique=True)
+    created_at: Mapped[datetime] = _created()
+    expires_at: Mapped[datetime]
+    last_active_at: Mapped[datetime] = _created()
+    revoked_at: Mapped[datetime | None]
+    user_agent: Mapped[str | None]
     updated_at: Mapped[datetime] = _updated()

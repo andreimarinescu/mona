@@ -1,0 +1,167 @@
+{
+  "disabled_toolsets": [
+    "terminal",
+    "code_execution",
+    "file",
+    "web",
+    "browser",
+    "computer_use",
+    "delegation",
+    "image_gen",
+    "tts",
+    "vision",
+    "session_search",
+    "cronjob",
+    "skills",
+    "todo"
+  ],
+  "terminal_backend": "docker",
+  "platform_tools": {
+    "api_server": [
+      "memory",
+      "mona"
+    ],
+    "bluebubbles": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "cli": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "cron": [
+      "mona_tg"
+    ],
+    "dingtalk": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "discord": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "email": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "feishu": [
+      "clarify",
+      "connections",
+      "feishu_doc",
+      "feishu_drive",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "homeassistant": [
+      "clarify",
+      "connections",
+      "homeassistant",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "matrix": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "mattermost": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "qqbot": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "signal": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "slack": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "telegram": [
+      "memory",
+      "mona_tg"
+    ],
+    "webhook": [
+      "clarify",
+      "mona",
+      "mona_tg"
+    ],
+    "wecom": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "wecom_callback": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "weixin": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "whatsapp": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "whatsapp_cloud": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg"
+    ],
+    "yuanbao": [
+      "clarify",
+      "connections",
+      "memory",
+      "mona",
+      "mona_tg",
+      "yuanbao"
+    ]
+  }
+}

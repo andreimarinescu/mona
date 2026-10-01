@@ -152,12 +152,11 @@ def worker(
     concurrency: Annotated[int, typer.Option(help="Jobs run in parallel.")] = 1,
 ) -> None:
     """Run a Procrastinate worker after the pipeline startup (C7 §1.2 check, §4.3 recovery)."""
-    import logging
-
     from mona.jobs import app as jobs_app
+    from mona.logs import configure_logging
     from mona.pipeline import runtime
 
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    configure_logging()
     wanted = [q.strip() for q in queues.split(",") if q.strip()]
     runtime.get_context()
     if "cpu" in wanted:
@@ -371,3 +370,8 @@ def ops_fingerprint(
     from mona.demo.fingerprint import fingerprint
 
     typer.echo(json.dumps(fingerprint(_ops_env(), hermes_only=hermes_only, files=files), indent=1))
+
+
+from mona.cli_ops import register  # noqa: E402
+
+register(app)

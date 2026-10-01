@@ -1,4 +1,25 @@
 {
+  "review": {
+    "sentence": {
+      "default": "I would file this document from {{counterparty}}{{docType}} under {{entity}}, {{category}}.",
+      "default_anon": "I would file this document{{docType}} under {{entity}}, {{category}}.",
+      "low": "I think this document from {{counterparty}}{{docType}} belongs to {{entity}}, but I'm not sure enough to file it.",
+      "low_anon": "I think this document{{docType}} belongs to {{entity}}, but I'm not sure enough to file it.",
+      "entity": "This document from {{counterparty}}{{docType}} doesn't say clearly which entity it belongs to.",
+      "entity_anon": "This document{{docType}} doesn't say clearly which entity it belongs to.",
+      "conflict": "Two of your rules disagree about this document from {{counterparty}}{{docType}}, so I've kept it for you.",
+      "conflict_anon": "Two of your rules disagree about this document{{docType}}, so I've kept it for you.",
+      "asked": "You asked to see documents like this one each time.",
+      "asked_anon": "You asked to see documents like this one each time.",
+      "unreadable": "I can't read this document. Could you scan it again, or take a clearer photo?",
+      "unreadable_anon": "I can't read this document. Could you scan it again, or take a clearer photo?"
+    }
+  },
+  "interview": {
+    "option": {
+      "ask": "Ask me each time"
+    }
+  },
   "export": {
     "csv": {
       "file": "File",
@@ -11,11 +32,6 @@
       "amount": "Amount",
       "currency": "Currency",
       "dueDate": "Due date"
-    }
-  },
-  "interview": {
-    "option": {
-      "ask": "Ask me each time"
     }
   }
 }

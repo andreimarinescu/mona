@@ -30,6 +30,7 @@ PREFIXES: dict[str, str] = {
     "card_events": "crd",
     "card_action_notes": "not",
     "drafts": "drf",
+    "auth_sessions": "ses",
 }
 
 _ID = re.compile(r"([a-z]{3})_[0-9a-hjkmnp-tv-z]{26}")

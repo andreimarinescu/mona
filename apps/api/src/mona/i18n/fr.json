@@ -1,4 +1,25 @@
 {
+  "review": {
+    "sentence": {
+      "default": "Je classerais ce document de {{counterparty}}{{docType}} dans {{entity}}, {{category}}.",
+      "default_anon": "Je classerais ce document{{docType}} dans {{entity}}, {{category}}.",
+      "low": "Je pense que ce document de {{counterparty}}{{docType}} relève de {{entity}}, mais je n'en suis pas assez sûre pour le classer.",
+      "low_anon": "Je pense que ce document{{docType}} relève de {{entity}}, mais je n'en suis pas assez sûre pour le classer.",
+      "entity": "Ce document de {{counterparty}}{{docType}} n'indique pas clairement à quelle entité il se rapporte.",
+      "entity_anon": "Ce document{{docType}} n'indique pas clairement à quelle entité il se rapporte.",
+      "conflict": "Deux de vos règles se contredisent pour ce document de {{counterparty}}{{docType}} ; je l'ai donc gardé pour vous.",
+      "conflict_anon": "Deux de vos règles se contredisent pour ce document{{docType}} ; je l'ai donc gardé pour vous.",
+      "asked": "Vous avez demandé à voir chaque fois les documents de ce type.",
+      "asked_anon": "Vous avez demandé à voir chaque fois les documents de ce type.",
+      "unreadable": "Je n'arrive pas à lire ce document. Pourriez-vous le numériser à nouveau, ou prendre une photo plus nette ?",
+      "unreadable_anon": "Je n'arrive pas à lire ce document. Pourriez-vous le numériser à nouveau, ou prendre une photo plus nette ?"
+    }
+  },
+  "interview": {
+    "option": {
+      "ask": "Me demander à chaque fois"
+    }
+  },
   "export": {
     "csv": {
       "file": "Fichier",
@@ -11,11 +32,6 @@
       "amount": "Montant",
       "currency": "Devise",
       "dueDate": "Échéance"
-    }
-  },
-  "interview": {
-    "option": {
-      "ask": "Me demander à chaque fois"
     }
   }
 }

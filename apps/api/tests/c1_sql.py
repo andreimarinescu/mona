@@ -3,7 +3,10 @@
 import re
 from pathlib import Path
 
-C1 = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "C1-domain.md"
+CONTRACTS = Path(__file__).resolve().parents[3] / "docs" / "contracts"
+C1 = CONTRACTS / "C1-domain.md"
+C2 = CONTRACTS / "C2-rest-api.md"
+AMENDMENTS = CONTRACTS / "amendments.md"
 
 TIMESTAMP = "timestamptz NOT NULL DEFAULT now()"
 ID_CHECK = "CHECK (id ~ '^{}_[0-9a-hjkmnp-tv-z]{{26}}$')"
@@ -93,9 +96,18 @@ def translate_table(src: str) -> tuple[str, list[str]]:
     return f"CREATE TABLE {name} (\n  " + ",\n  ".join(columns) + "\n)", fks
 
 
+def _a9_column() -> str:
+    """Amendment A9's `debrief_early_min` line, added at the end as the migration does."""
+    section = AMENDMENTS.read_text().split("## A9 ", 1)[1].split("\n## ", 1)[0]
+    line = next(x for x in section.splitlines() if x.strip().startswith("debrief_early_min"))
+    column = " ".join(line.partition("--")[0].split()).rstrip(",")
+    return f"ALTER TABLE settings ADD COLUMN {column}"
+
+
 def contract_ddl() -> list[str]:
     creates, fks, others = [], [], []
-    for block in sql_blocks(C1.read_text()):
+    auth = [b for b in sql_blocks(C2.read_text()) if b.lstrip().startswith("auth_sessions")]
+    for block in sql_blocks(C1.read_text()) + auth:
         for kind, src in statements(block):
             if kind == "table":
                 ddl, table_fks = translate_table(src)
@@ -105,4 +117,4 @@ def contract_ddl() -> list[str]:
                 others.append(" ".join(re.sub(r"--[^\n]*", "", src).split()))
     search = [s for s in others if "TEXT SEARCH" in s]
     indexes = [s for s in others if s not in search]
-    return search + creates + fks + indexes
+    return search + creates + fks + indexes + [_a9_column()]

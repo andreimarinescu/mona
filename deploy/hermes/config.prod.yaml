@@ -1,0 +1,88 @@
+model:
+  default: "${MONA_LLM_MODEL}"
+  provider: "custom"
+  base_url: "${MONA_LLM_BASE_URL}"
+  context_length: 65536
+agent:
+  reasoning_effort: "medium"
+  max_turns: 12
+  disabled_toolsets:
+    - terminal
+    - code_execution
+    - file
+    - web
+    - browser
+    - computer_use
+    - delegation
+    - image_gen
+    - tts
+    - vision
+    - session_search
+    - cronjob
+    - skills
+    - todo
+terminal:
+  backend: "docker"
+  docker_network: false
+platform_toolsets:
+  api_server: [memory, mona]
+  telegram: [memory, mona_tg]
+  cron: [mona_tg]
+tools:
+  tool_search:
+    enabled: false
+skills:
+  write_approval: true
+  project_discovery: false
+memory:
+  write_approval: false
+auxiliary:
+  vision: {provider: main}
+  compression: {provider: main}
+  skills_hub: {provider: main}
+  approval: {provider: main}
+  review: {provider: main}
+  mcp: {provider: main}
+  title_generation: {enabled: false, provider: main}
+  memory_query_rewrite: {provider: main}
+  tts_audio_tags: {provider: main}
+  triage_specifier: {provider: main}
+  kanban_decomposer: {provider: main}
+  profile_describer: {provider: main}
+  goal_judge: {provider: main}
+  curator: {provider: main}
+  monitor: {provider: main}
+  background_review: {enabled: false, provider: main}
+  moa_reference: {provider: main}
+  moa_aggregator: {provider: main}
+curator:
+  enabled: false
+updates:
+  check: false
+openrouter:
+  response_cache: false
+telemetry:
+  shared_metrics:
+    enabled: false
+    send: false
+mcp_servers:
+  mona:
+    url: "http://api:8765/mcp"
+    headers:
+      Authorization: "Bearer ${MONA_SERVICE_KEY}"
+      X-Mona-Channel: "web"
+    sampling:
+      enabled: false
+    tools:
+      resources: false
+      prompts: false
+  mona_tg:
+    url: "http://api:8765/mcp"
+    headers:
+      Authorization: "Bearer ${MONA_SERVICE_KEY}"
+      X-Mona-Channel: "telegram"
+    sampling:
+      enabled: false
+    tools:
+      resources: false
+      prompts: false

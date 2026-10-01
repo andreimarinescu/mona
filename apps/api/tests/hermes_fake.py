@@ -8,6 +8,7 @@ import httpx
 
 from mona.app import create_app
 from mona.chat.hermes import HermesClient, get_hermes
+from tests.api_client import api_client
 
 BODY = {
     "message": "What am I looking at?",
@@ -104,7 +105,7 @@ def app_with(fake: FakeHermes):
 async def post_chat(fake: FakeHermes, body: dict | None = None, **overrides: Any):
     body = {**BODY, **(body or {}), **overrides}
     transport = httpx.ASGITransport(app=app_with(fake))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         res = await c.post("/api/chat", json=body)
     return res, parse(res.text) if res.status_code == 200 else None
 

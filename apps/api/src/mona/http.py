@@ -61,8 +61,11 @@ class BodyLimit:
         return None
 
 
-async def refuse(send: Send, status: int, body: dict[str, Any]) -> None:
+async def refuse(
+    send: Send, status: int, body: dict[str, Any], headers: dict[str, str] | None = None
+) -> None:
     raw = json.dumps(body).encode()
+    extra = [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()]
     await send(
         {
             "type": "http.response.start",
@@ -70,6 +73,7 @@ async def refuse(send: Send, status: int, body: dict[str, Any]) -> None:
             "headers": [
                 (b"content-type", b"application/json"),
                 (b"content-length", b"%d" % len(raw)),
+                *extra,
             ],
         }
     )

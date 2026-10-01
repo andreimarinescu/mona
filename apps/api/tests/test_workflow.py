@@ -5,7 +5,6 @@ import io
 import zipfile
 from datetime import timedelta
 
-import httpx
 import pytest
 from docx import Document as DocxDocument
 from sqlalchemy import select
@@ -17,6 +16,7 @@ from mona.services.registry import T
 from mona.workflow import drafts, exports
 from mona.workflow.common import get_ctx
 from tests import rows
+from tests.api_client import api_client
 from tests.l4_world import World
 from tests.mcp_http import call
 
@@ -26,8 +26,7 @@ TODAY = clock.paris_today()
 
 @pytest.fixture
 async def api():
-    transport = httpx.ASGITransport(app=create_app())
-    async with httpx.AsyncClient(transport=transport, base_url="http://api:8765") as c:
+    async with api_client(create_app()) as c:
         yield c
 
 

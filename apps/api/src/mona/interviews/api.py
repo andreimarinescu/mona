@@ -129,7 +129,9 @@ async def get_interview(interview_id: str, request: Request) -> Response:
     return etagged(request, await _load(interview_id))
 
 
-@router.get("", operation_id="listInterviews", response_model=Page[dto.Interview])
+@router.get(
+    "", operation_id="listInterviews", response_model=Page[dto.Interview], responses=errors(400)
+)
 async def list_interviews(
     status: dto.InterviewStatus | None = None,
     kind: dto.InterviewKind | None = None,

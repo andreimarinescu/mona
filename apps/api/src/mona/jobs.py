@@ -91,3 +91,16 @@ def purge_visitors(timestamp: int) -> int:
     from mona.pipeline.runtime import get_context
 
     return len(purge(get_context().ops).purged)
+
+
+@app.periodic(cron="23 4 * * *")
+@app.task(name="purge_auth_sessions", queue="cpu")
+async def purge_auth_sessions(timestamp: int) -> int:
+    """C2 §2.2: expired and revoked sessions older than 7 days."""
+    from mona.api.session import delete_stale
+    from mona.db import get_engine
+
+    async with get_engine().begin() as conn:
+        n = await delete_stale(conn)
+    logger.info("deleted %d stale sessions", n)
+    return n

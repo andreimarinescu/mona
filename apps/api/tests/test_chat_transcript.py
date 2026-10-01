@@ -7,6 +7,7 @@ from mona.chat.stream import run_turn
 from mona.chat.turns import open_turn
 from mona.db import get_engine
 from tests import rows
+from tests.api_client import api_client
 from tests.fixtures import S5_TWO_TOOLS_STREAM
 from tests.hermes_fake import FakeHermes, app_with, chunk, meta, parse, post_chat, tool_event
 from tests.mcp_http import call
@@ -92,7 +93,7 @@ async def test_reload_rebuilds_closed_aborted_and_offline_turns_without_hermes()
 
     stub = NoHermes()
     transport = httpx.ASGITransport(app=app_with(stub))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         res = await c.get(f"/api/conversations/{cid}/messages")
     assert res.status_code == 200 and stub.requests == []
     msgs = res.json()
@@ -193,7 +194,7 @@ async def test_reload_uses_current_state_skips_gone_subjects_and_dedupes_cards()
             "UPDATE documents SET deleted_at = now(), location = 'trash' WHERE id = %s", (gone,)
         )
     transport = httpx.ASGITransport(app=app_with(NoHermes()))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         msgs = (await c.get(f"/api/conversations/{cid}/messages")).json()
     assistant = msgs[1]["parts"]
     assert [p["type"] for p in assistant] == ["data-doc", "text"]
@@ -202,6 +203,6 @@ async def test_reload_uses_current_state_skips_gone_subjects_and_dedupes_cards()
 
 async def test_reload_of_an_unknown_conversation_is_404():
     transport = httpx.ASGITransport(app=app_with(NoHermes()))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         res = await c.get("/api/conversations/cnv_" + "0" * 26 + "/messages")
     assert res.status_code == 404 and res.json()["error"]["code"] == "not_found"

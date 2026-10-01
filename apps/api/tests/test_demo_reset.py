@@ -46,8 +46,8 @@ VALUES ('ans_{ULID}', 'qst_{ULID}', 'a', 'user', 'ui');
 UPDATE rules SET source = 'interview' WHERE key = (SELECT min(key) FROM rules);
 """
 AUTH_SESSIONS = """
-CREATE TABLE IF NOT EXISTS auth_sessions (id text PRIMARY KEY, created_at timestamptz NOT NULL);
-INSERT INTO auth_sessions VALUES ('ses_1', now());
+INSERT INTO auth_sessions (id, token_hash, expires_at)
+VALUES ('ses_01m3aaaaaaaaaaaaaaaaaaaaaa', repeat('a', 64), now() + interval '1 day');
 """
 FTS = "SELECT count(*) FROM documents WHERE fts @@ plainto_tsquery('mona', 'appel')"
 VERIFIED = """

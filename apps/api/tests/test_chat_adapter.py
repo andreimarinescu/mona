@@ -6,6 +6,7 @@ import pytest
 
 from mona.chat import stream as chat_stream
 from tests import rows
+from tests.api_client import api_client
 from tests.fixtures import S1_OVERLAY_STREAM
 from tests.hermes_fake import (
     BODY,
@@ -119,7 +120,7 @@ async def test_request_validation_is_400_and_unknown_conversation_is_404():
 
 async def test_a_body_over_32_kib_is_refused():
     transport = httpx.ASGITransport(app=app_with(FakeHermes(S1)))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         res = await c.post(
             "/api/chat",
             content=json.dumps({**BODY, "padding": "x" * 33_000}),
@@ -136,7 +137,7 @@ async def test_a_chunked_body_over_32_kib_is_refused():
         yield b'"}'
 
     transport = httpx.ASGITransport(app=app_with(FakeHermes(S1)))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         res = await c.post(
             "/api/chat", content=chunks(), headers={"content-type": "application/json"}
         )
@@ -354,7 +355,7 @@ async def test_upstream_keepalives_are_forwarded():
         [": keepalive", "", chunk({"content": "Hi"}), chunk({}, "stop"), "data: [DONE]"]
     )
     transport = httpx.ASGITransport(app=app_with(FakeHermes(body)))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         res = await c.post("/api/chat", json={**BODY, "conversationId": cid})
     assert ": keepalive\n\n" in res.text
     assert types(parse(res.text))[-3:] == ["finish-step", "finish", "[DONE]"]
@@ -369,7 +370,7 @@ async def test_adapter_writes_its_own_keepalive_while_upstream_is_silent(monkeyp
         return sse_body([chunk({"content": "Hi"}), chunk({}, "stop"), "data: [DONE]"])
 
     transport = httpx.ASGITransport(app=app_with(FakeHermes(slow)))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+    async with api_client(transport) as c:
         res = await c.post("/api/chat", json={**BODY, "conversationId": cid})
     assert res.text.count(": keepalive\n\n") >= 2
 
@@ -389,7 +390,7 @@ async def test_two_concurrent_posts_on_one_conversation_give_one_stream_and_one_
 
     async def post():
         transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
+        async with api_client(transport) as c:
             try:
                 return await c.post("/api/chat", json={**BODY, "conversationId": cid})
             finally:
@@ -470,8 +471,19 @@ async def test_conversation_list_is_newest_first_with_turn_counts():
     fake = FakeHermes(S1)
     _, chunks = await post_chat(fake, message="How much did we pay AGIPI last year?")
     transport = httpx.ASGITransport(app=app_with(fake))
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
-        listed = (await c.get("/api/conversations")).json()
+    async with api_client(transport) as c:
+        feed = (await c.get("/api/conversations")).json()
+        page1 = (await c.get("/api/conversations", params={"limit": 1})).json()
+        page2 = (
+            await c.get("/api/conversations", params={"limit": 1, "cursor": page1["nextCursor"]})
+        ).json()
+        found = (await c.get("/api/conversations", params={"q": "agipi"})).json()
+        reused = await c.get("/api/conversations", params={"q": "x", "cursor": page1["nextCursor"]})
+    listed = feed["items"]
+    assert feed["nextCursor"] is None
+    assert [page1["items"][0]["id"], page2["items"][0]["id"]] == [listed[0]["id"], listed[1]["id"]]
+    assert [i["id"] for i in found["items"]] == [listed[0]["id"]]
+    assert reused.status_code == 400 and reused.json()["error"]["field"] == "cursor"
     assert listed[0] == {
         "id": meta(chunks)["conversationId"],
         "title": "How much did we pay AGIPI last year?",

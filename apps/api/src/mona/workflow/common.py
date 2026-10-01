@@ -9,7 +9,7 @@ from procrastinate import App, SyncPsycopgConnector
 from procrastinate.exceptions import AlreadyEnqueued
 from sqlalchemy import Connection, func, insert, select, text
 
-from mona.chat.router import ApiFailure, ErrorBody
+from mona.api.errors import ApiError, ApiFailure
 from mona.db import get_sync_engine
 from mona.db.models import Base
 from mona.ids import is_id, new_id
@@ -146,4 +146,4 @@ def from_service(err: ServiceError) -> RestError:
 
 
 def errors(*statuses: int) -> dict[int | str, dict[str, Any]]:
-    return {s: {"model": ErrorBody} for s in statuses}
+    return {s: {"model": ApiError} for s in statuses}

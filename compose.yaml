@@ -7,6 +7,7 @@ x-python-env: &python-env
   PROCRASTINATE_LOG_LEVEL: info
   MONA_LLM_MODEL: ${MONA_LLM_MODEL:-qwen/qwen3.7-flash}
   HERMES_URL: http://hermes:8642
+  MONA_PUBLIC_ORIGIN: http://localhost:${WEB_PORT:-5173}
   PYTHONDONTWRITEBYTECODE: "1"
 
 x-python: &python
@@ -25,6 +26,7 @@ x-python: &python
 services:
   postgres:
     image: postgres:17
+    command: postgres -c log_error_verbosity=terse
     environment:
       POSTGRES_USER: mona
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
@@ -49,16 +51,22 @@ services:
 
   api:
     <<: *python
-    command: uvicorn mona.app:app --host 0.0.0.0 --port 8765 --reload --reload-dir /app/src
+    command: uvicorn mona.app:app --host 0.0.0.0 --port 8765 --no-access-log --reload --reload-dir /app/src
     volumes:
       - ./apps/api:/app
       - ./data:/data
       - type: volume
         source: hermes_data
-        target: /opt/data/cache
+        target: /opt/data/cache/documents
         read_only: true
         volume:
-          subpath: cache
+          subpath: cache/documents
+      - type: volume
+        source: hermes_data
+        target: /opt/data/cache/images
+        read_only: true
+        volume:
+          subpath: cache/images
     depends_on:
       migrate:
         condition: service_completed_successfully

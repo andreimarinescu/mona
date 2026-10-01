@@ -14,6 +14,7 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.profiles.openai import OpenAIModelProfile
 from pydantic_ai.providers.openai import OpenAIProvider
 
+from mona import llm
 from mona.pipeline import schema as output_schema
 from mona.settings import Settings
 
@@ -105,10 +106,14 @@ class LlmClient:
 
     @classmethod
     def from_settings(cls, s: Settings) -> "LlmClient":
+        """C9 §1.2: endpoint and transport from `mona.llm`, which fail closed in prod."""
         key = s.openrouter_api_key.get_secret_value() if s.openrouter_api_key else None
+        endpoint = llm.endpoint(s)
         return cls(
-            model=s.mona_llm_model, backend=s.mona_llm_backend, base_url=s.mona_llm_base_url,
+            model=s.mona_llm_model, backend=s.mona_llm_backend,
+            base_url=endpoint.base_url if endpoint.local else None,
             api_key=key if s.mona_llm_backend == "openrouter" else None,
+            http_client=llm.guarded_http_client(s),
         )  # fmt: skip
 
     def complete(self, system: str, user: str, schema: dict[str, Any]) -> ModelResult:

@@ -1,5 +1,8 @@
 import os
 import tempfile
+
+os.environ["MONA_ENV"] = "dev"
+
 from pathlib import Path
 
 import psycopg
@@ -33,8 +36,14 @@ def database() -> None:
 @pytest.fixture(scope="session")
 def seeded_template(database):
     """A migrated database holding the synthetic seed (all rule tiers)."""
+    from procrastinate.schema import SchemaManager
+
+    from tests.pg import conninfo_for
+
     with scratch_db() as db:
         alembic(db, "upgrade", "head")
+        with psycopg.connect(conninfo_for(db)) as conn:
+            conn.execute(SchemaManager.get_schema())
         engine = create_engine(sqlalchemy_url_for(db))
         try:
             with engine.begin() as conn:
@@ -209,3 +218,34 @@ async def l4_db(l4_template, tmp_path):
             get_sync_engine().dispose()
             _clear_caches()
             get_ctx.cache_clear()
+
+
+@pytest.fixture
+def l2_world(clean, tmp_path, monkeypatch):
+    """The app's services context on a fresh data dir, plus a Services world to make documents."""
+    from mona.api.deps import get_ctx
+    from mona.api.session import throttle
+    from tests.services_world import Services
+
+    monkeypatch.setenv("MONA_DATA_DIR", str(tmp_path / "data"))
+    get_settings.cache_clear()
+    get_ctx.cache_clear()
+    throttle.reset()
+    with psycopg.connect(get_settings().libpq_url) as conn:
+        conn.execute("DELETE FROM auth_sessions")
+        conn.execute("DELETE FROM card_action_notes")
+        conn.execute("UPDATE profile SET locked_at = NULL, locale = 'en'")
+        conn.execute(
+            "DELETE FROM rules WHERE key NOT IN ('opco-cabinet', 'talenz-studio',"
+            " 'oxyleo-personal-tax', 'unim-business', 'agipi-per-by-person', 'hello-bank-lmnp')"
+        )
+        conn.execute(
+            "UPDATE rules SET state = CASE key WHEN 'unim-business' THEN 'disabled'"
+            " ELSE 'active' END"
+        )
+    world = Services(get_sync_engine(), tmp_path / "data")
+    try:
+        yield world
+    finally:
+        get_ctx.cache_clear()
+        get_settings.cache_clear()

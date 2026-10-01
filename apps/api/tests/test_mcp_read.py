@@ -175,6 +175,11 @@ async def test_sum_by_filters(archive):
     assert res.data["count"] == 2 and res.data["totals"] == [{"currency": "EUR", "total": 1040.0}]
     assert res.data["document_ids"] == [archive["agipi_2025b"], archive["agipi_2025a"]]
     assert res.data["listed"] == 2 and res.data["excluded"] == []
+    assert res.data["documents"] == [
+        {"id": archive["agipi_2025b"], "title": "AGIPI PER avis d'échéance octobre"},
+        {"id": archive["agipi_2025a"], "title": "AGIPI PER avis d'échéance"},
+    ]
+    assert "truncated" not in res.data
 
 
 async def test_sum_keeps_currencies_apart_and_lists_documents_without_amount(archive):
@@ -218,6 +223,8 @@ async def test_sum_caps_its_lists():
     assert res.data["count"] == 30 and res.data["totals"][0]["total"] == 30.0
     assert (len(res.data["document_ids"]), res.data["listed"]) == (25, 25)
     assert len(res.data["excluded"]) == 10
+    assert len(res.data["documents"]) == 10 and res.data["truncated"] is True
+    assert [d["id"] for d in res.data["documents"]] == res.data["document_ids"][:10]
 
 
 # get_document
@@ -418,7 +425,9 @@ async def test_personal_documents_are_invisible_on_telegram(archive):
     tg = await call("search_documents", {"counterparty": "agipi"}, channel="telegram")
     assert (web.data["total"], tg.data["total"]) == (3, 0)
     everything = await call("search_documents", {"limit": 25}, channel="telegram")
-    assert everything.data["total"] == 6
+    web_all = await call("search_documents", {"limit": 25}, channel="web")
+    # C9 §3.1: documents with no entity yet are invisible on Telegram too.
+    assert (web_all.data["total"], everything.data["total"]) == (9, 4)
 
     web = await call("sum_amounts", {"year": 2025}, channel="web")
     tg = await call("sum_amounts", {"year": 2025}, channel="telegram")

@@ -7,7 +7,7 @@ from pydantic import Field
 from sqlalchemy import and_, any_, false, func, select
 from sqlalchemy.orm import aliased
 
-from mona import clock
+from mona import brief, clock
 from mona.db import get_engine
 from mona.db.models import (
     Category,
@@ -17,9 +17,6 @@ from mona.db.models import (
     Document,
     Entity,
     ExtractionField,
-    FileOp,
-    Interview,
-    InterviewQuestion,
     Reminder,
     Rule,
     Subcategory,
@@ -36,7 +33,6 @@ from mona.mcp.core import (
     encode_cursor,
     fit,
     not_found,
-    rule_visibility,
     scope_for,
     tool,
     write_cards,
@@ -57,11 +53,11 @@ from mona.mcp.filters import (
     resolve_entity,
 )
 from mona.text import norm
-from mona.workflow.deadlines import deadline_query
 
 DocIdParam = Annotated[str, Field(pattern=r"^doc_[0-9a-hjkmnp-tv-z]{26}$")]
 
 SEARCH_CARDS, SUM_CARDS, QUEUE_CARDS, DEADLINE_CARDS = 3, 5, 3, 5
+SUM_TITLES = 10
 BRIEF_DUE_DAYS, BRIEF_DUE_MAX, BRIEF_LEARNED_MAX = 7, 5, 10
 
 
@@ -244,11 +240,7 @@ async def get_document(document_id: DocIdParam) -> dict:
                 )
                 .outerjoin(SubUnit, SubUnit.id == Document.sub_unit_id)
                 .outerjoin(Rule, Rule.id == Document.rule_id)
-                .where(
-                    Document.id == document_id,
-                    Document.deleted_at.is_(None),
-                    scope.visible_entity_clause(Document.entity_id),
-                )
+                .where(Document.id == document_id, *scope.document_clauses())
             )
         ).first()
         if row is None:
@@ -361,14 +353,19 @@ async def sum_amounts(
         excluded: list[dict] = []
         if clauses is None:
             clauses = [false()]
+        clauses += scope.figures_clauses()
         if document_ids is not None:
             wanted = list(dict.fromkeys(document_ids))
             clauses.append(Document.id.in_(wanted))
         rows = (
             await conn.execute(
-                select(Document.id, Document.amount, Document.currency, Document.doc_date).where(
-                    *clauses
-                )
+                select(
+                    Document.id,
+                    Document.amount,
+                    Document.currency,
+                    Document.doc_date,
+                    func.coalesce(Document.title, Document.original_name).label("title"),
+                ).where(*clauses)
             )
         ).all()
         if document_ids is not None:
@@ -393,11 +390,13 @@ async def sum_amounts(
         ).all()
         listed = [r.id for r in summed][:25]
         carded = 1 <= len(summed) <= SUM_CARDS
-        return {
+        titled = [{"id": r.id, "title": clip(r.title)} for r in summed[:SUM_TITLES]]
+        result = {
             "count": len(summed),
             "totals": [{"currency": c, "total": float(t)} for c, t in totals],
             "document_ids": listed,
             "listed": len(listed),
+            "documents": titled,
             "excluded": excluded[:10],
             "card_refs": await write_cards(
                 scope,
@@ -405,6 +404,9 @@ async def sum_amounts(
                 [("doc", {"document_id": r.id}) for r in summed] if carded else [],
             ),
         }
+        if len(summed) > SUM_TITLES:
+            result["truncated"] = True
+        return fit(result, "documents")
 
 
 @tool(
@@ -425,9 +427,8 @@ async def list_review_queue(
         sugg_entity = aliased(Entity)
         sugg_category = aliased(Category)
         clauses = [
-            Document.deleted_at.is_(None),
+            *scope.document_clauses(),
             Document.status.in_(("review", "unreadable")),
-            scope.visible_entity_clause(Document.entity_id),
             scope.visible_entity_clause(Classification.entity_id),
         ]
         if reason is not None:
@@ -502,7 +503,7 @@ async def list_review_queue(
 
 
 def _deadline_query(scope: Scope, *clauses: Any) -> Any:
-    return deadline_query(*clauses, hidden_entities=scope.hidden_entities)
+    return brief.deadline_query(scope, *clauses)
 
 
 @tool(
@@ -597,119 +598,16 @@ async def get_brief(since: datetime | None = None) -> dict:
     today = clock.paris_today(now)
     async with get_engine().connect() as conn:
         scope = await scope_for(conn, channel())
-        filed = (
-            await conn.execute(
-                select(Entity.key, Entity.display_name, func.count(Document.id))
-                .select_from(Document)
-                .join(Entity, Entity.id == Document.entity_id)
-                .where(
-                    Document.status == "filed",
-                    Document.deleted_at.is_(None),
-                    Document.filed_at >= since,
-                    Document.filed_at <= now,
-                    scope.visible_entity_clause(Document.entity_id),
-                )
-                .group_by(Entity.key, Entity.display_name, Entity.sort_order)
-                .order_by(func.count(Document.id).desc(), Entity.sort_order)
-            )
-        ).all()
-        review = (
-            await conn.execute(
-                select(Document.reasons).where(
-                    Document.deleted_at.is_(None),
-                    Document.status.in_(("review", "unreadable")),
-                    scope.visible_entity_clause(Document.entity_id),
-                )
-            )
-        ).scalars()
-        review = list(review)
-        by_reason: dict[str, int] = {}
-        for reasons in review:
-            for reason in reasons:
-                by_reason[reason] = by_reason.get(reason, 0) + 1
-        due = (
-            await conn.execute(
-                _deadline_query(scope, Deadline.due_date <= today + timedelta(days=BRIEF_DUE_DAYS))
-                .order_by(Deadline.due_date, Deadline.id)
-                .limit(BRIEF_DUE_MAX)
-            )
-        ).all()
-        reminders = (
-            await conn.execute(
-                select(
-                    Reminder.id,
-                    Reminder.note,
-                    func.coalesce(Deadline.label, Document.title, Document.original_name).label(
-                        "label"
-                    ),
-                )
-                .outerjoin(Deadline, Deadline.id == Reminder.deadline_id)
-                .outerjoin(
-                    Document,
-                    Document.id == func.coalesce(Reminder.document_id, Deadline.document_id),
-                )
-                .where(
-                    Reminder.status == "scheduled",
-                    Reminder.remind_on == today,
-                    Document.deleted_at.is_(None),
-                    scope.visible_entity_clause(Deadline.entity_id),
-                    scope.visible_entity_clause(Document.entity_id),
-                )
-                .order_by(Reminder.created_at, Reminder.id)
-            )
-        ).all()
-        fired = (
-            select(func.count(func.distinct(FileOp.document_id)))
-            .where(FileOp.rule_id == Rule.id, FileOp.at >= since, FileOp.fs_state == "done")
-            .scalar_subquery()
-        )
-        learned_rows = (
-            await conn.execute(
-                select(Rule.id, Rule.name, Rule.created_at, Rule.conditions, Rule.action, fired)
-                .where(
-                    Rule.source != "seed",
-                    Rule.state == "active",
-                    Rule.created_at >= since,
-                )
-                .order_by(Rule.created_at, Rule.id)
-            )
-        ).all()
-        rules_seen = await rule_visibility(scope)
-        learned = [
-            {
-                "rule_id": r.id,
-                "name": clip(r.name),
-                "created_at": _ts(r.created_at),
-                "fired_since": r[5],
-            }
-            for r in learned_rows
-            if rules_seen is None or rules_seen.visible(r.conditions, r.action)
-        ][:BRIEF_LEARNED_MAX]
-        open_questions = (
-            select(func.count(InterviewQuestion.id))
-            .where(
-                InterviewQuestion.interview_id == Interview.id,
-                InterviewQuestion.status == "open",
-            )
-            .scalar_subquery()
-        )
-        pending = (
-            await conn.execute(
-                select(Interview.id, open_questions.label("n"))
-                .where(Interview.status == "ready", open_questions > 0)
-                .order_by(Interview.created_at.desc(), Interview.id.desc())
-                .limit(1)
-            )
-        ).first()
+        f = await brief.facts(scope, since=since, now=now, today=today)
     return fit(
         {
             "generated_at": _ts(now),
             "since": _ts(since),
             "filed": {
-                "count": sum(n for _, _, n in filed),
-                "by_entity": [{"key": k, "name": name, "count": n} for k, name, n in filed],
+                "count": sum(r[3] for r in f.filed),
+                "by_entity": [{"key": r[1], "name": r[2], "count": r[3]} for r in f.filed],
             },
-            "needs_review": {"count": len(review), "by_reason": by_reason},
+            "needs_review": {"count": len(f.review_reasons), "by_reason": f.by_reason},
             "due_soon": [
                 {
                     "deadline_id": r.id,
@@ -720,15 +618,23 @@ async def get_brief(since: datetime | None = None) -> dict:
                     "amount": _num(r.amount),
                     "currency": r.currency,
                 }
-                for r in due
+                for r in f.due
             ],
             "reminders_today": [
                 {"reminder_id": r.id, "label": clip(r.label), "note": clip(r.note)}
-                for r in reminders
+                for r in f.reminders
             ],
-            "learned": learned,
+            "learned": [
+                {
+                    "rule_id": r.id,
+                    "name": clip(r.name),
+                    "created_at": _ts(r.created_at),
+                    "fired_since": r.fired,
+                }
+                for r in f.learned
+            ],
             "pending_interview": (
-                {"interview_id": pending.id, "open_questions": pending.n} if pending else None
+                {"interview_id": f.pending.id, "open_questions": f.pending.n} if f.pending else None
             ),
         },
         "learned",

@@ -118,6 +118,28 @@ def test_loads_the_synthetic_seed(db, seed):
     assert query(db, "SELECT sort_order FROM subcategories WHERE key = 'approbation'")[0][0] == 1
 
 
+def test_stage_settings_load_from_the_practice_block(db, seed):
+    load(db, seed)
+    assert query(db, "SELECT debrief_early_min FROM settings")[0][0] == 5
+    assert query(db, "SELECT auto_lock_minutes FROM profile")[0][0] == 15
+    edit(seed / "practice.yaml", lambda d: d["practice"].update(
+        debrief_early_min=7, auto_lock_minutes=120
+    ))  # fmt: skip
+    load(db, seed)
+    assert query(db, "SELECT debrief_early_min FROM settings")[0][0] == 7
+    assert query(db, "SELECT auto_lock_minutes FROM profile")[0][0] == 120
+
+
+@pytest.mark.parametrize(
+    "change", [{"debrief_early_min": 51}, {"debrief_early_min": 0}, {"auto_lock_minutes": 1441}]
+)
+def test_stage_settings_out_of_range_are_refused(db, seed, change):
+    edit(seed / "practice.yaml", lambda d: d["practice"].update(change))
+    with pytest.raises(SeedError):
+        load(db, seed)
+    assert query(db, "SELECT count(*) FROM settings")[0][0] == 0
+
+
 def test_preseeded_tier_leaves_learned_rules_out(db, seed):
     load(db, seed)
     keys = {k for (k,) in query(db, "SELECT key FROM rules")}

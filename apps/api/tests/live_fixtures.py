@@ -3,14 +3,46 @@
 Run in the api container: `python -m tests.live_fixtures` (replaces earlier fixture rows).
 """
 
+import hashlib
 import json
 import sys
 from datetime import date, timedelta
 
 from mona import clock
+from mona.ids import new_id
 from mona.settings import get_settings
 from tests import rows
 from tests.rows import CLEANUP
+
+SCI = ("sci", "SCI Les Tilleuls", "SCI Les Tilleuls")
+
+
+def sci_entity() -> str:
+    """A fictional SCI for the move beat; returns its folder name."""
+    key, name, folder = SCI
+    with rows.connect() as conn:
+        conn.execute(
+            "INSERT INTO entities (id, key, display_name, folder_name, legal_form, aliases)"
+            " VALUES (%s, %s, %s, %s, 'SCI', %s) ON CONFLICT (key) DO NOTHING",
+            (new_id("ent"), key, name, folder, ["SCI"]),
+        )
+    return folder
+
+
+def archived(document_id: str) -> None:
+    """Puts real bytes where the row says the document is, so file ops can move it."""
+    data = b"%PDF-1.4\n% fictional live fixture " + document_id.encode() + b"\n%%EOF\n"
+    with rows.connect() as conn:
+        path = conn.execute(
+            "SELECT current_path FROM documents WHERE id = %s", (document_id,)
+        ).fetchone()[0]
+        target = get_settings().mona_data_dir / "archive" / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        conn.execute(
+            "UPDATE documents SET sha256 = %s, size_bytes = %s WHERE id = %s",
+            (hashlib.sha256(data).hexdigest(), len(data), document_id),
+        )
 
 
 def main() -> None:
@@ -76,6 +108,8 @@ def main() -> None:
     ids["ddl_studio"] = rows.deadline(
         "TVA Studio Numérique", today + timedelta(days=20), entity="studio", amount=640.0
     )
+    ids["sci_folder"] = sci_entity()
+    archived(ids["urssaf"])
     print(json.dumps({**ids, "today": today.isoformat(), "agipi_last_year_total": 1000.0}))
 
 
