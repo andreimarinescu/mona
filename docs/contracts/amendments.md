@@ -90,3 +90,17 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
 - **Change:** instead of the whole `/opt/data/cache`, the api mounts only `cache/documents` and `cache/images`, read-only, as two volume subpaths at the same absolute paths. `ATTACH_ROOT` and the guard are unchanged.
 - **Why:** the single mount also exposed Hermes' own cache files to the api (L2-P1).
 - **Lanes:** L2.
+
+## A14 · 2026-10-01 · C5 §1.2/§5: retry an empty model answer once
+
+- **Change:** if a schema-valid model output has every field null and `confidence = 0` for a document with readable text (≥ 50 non-whitespace characters), `classify_document` retries the model call once with the page budget reduced to the first page. If the retry is also empty, the document goes to review with reason `low` as today. The model-output cache stores only the final output.
+- **Why:** L1-M2's quality run. Qwen 3.6 returned all-null answers for two long (21-page) statements, which then queue without a counterparty, so the debrief can't group them.
+- **Lanes:** L1.
+
+## A15 · 2026-10-01 · C5 §6.1/§7: quotes that span layout columns
+
+- **Change:** in the page-delimited `-layout` text, a run of ≥ 2 spaces inside a line is a column break.
+  - Verification (§6.1) still matches the quote against the line with breaks folded.
+  - `findQuery` (§7) never crosses a column break: it uses the longest segment of the quote that lies within one column (≥ 2 words), else the field value.
+- **Why:** L1-M2's pdf.js check. 1 of 90 verified quotes didn't highlight, because the model joined two columns of one line and pdf.js orders that text differently.
+- **Lanes:** L1.

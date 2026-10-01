@@ -2,6 +2,12 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D14 · 2026-10-01 · Ownership of the apply-group rule revert; A14–A15
+
+- **The rule revert on undo** (C6 §7.3 with A4) is owned by **L1-M3**, in L1's undo service: group undo of a `rule_apply` group sets the rule back to `draft` with a `rule.change` entry, and redo re-activates it. L4 does not implement it. If L4 already did, it says so in its report, and the orchestrator keeps one implementation at merge.
+- **A14 and A15** (empty-answer retry, column-aware `findQuery`) go to L1-M3.
+- **Product question for Andrei** (D13: held for his return): on the Qwen 3.6 quality run, the AGIPI and Hello bank demo documents file confidently as `personal` instead of queuing, so the 4:00 debrief has nothing to ask about them. Until he decides, nothing changes the pipeline's behaviour for those documents.
+
 ## D13 · 2026-10-01 · Overnight autonomy (operator ruling)
 
 - While Andrei is away, the orchestrator verifies and merges finished lanes and launches the queued cards (vault resume point) within the lane limits (3 heavy + 1 light). This lifts the kickoff's "operator present for new launches" rule for these unattended stretches.
