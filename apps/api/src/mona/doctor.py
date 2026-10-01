@@ -1,7 +1,6 @@
 """`mona doctor`: one line per check, green, amber or red; any red fails the command."""
 
 import os
-import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,7 +12,9 @@ import psycopg
 import yaml
 
 from mona import privacy
+from mona.firstline import DATE, MONEY
 from mona.settings import Settings
+from mona.text import norm
 
 GREEN, AMBER, RED = "green", "amber", "red"
 ORDER = (
@@ -29,7 +30,6 @@ PURGE_GRACE_H = 1
 SLOT_CONTEXT = 65536
 PROBE_S = 3.0
 OPENROUTER_KEY_URL = "https://openrouter.ai/api/v1/key"
-MONEY = re.compile(r"\d[\d ., ]*\s?(?:€|EUR|RON|lei)\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -343,7 +343,7 @@ def privacy_checks(
 
 
 def memory_scan(folder: Path) -> Check:
-    """C9 §3.4: Hermes memory holds no IBAN or amount."""
+    """C9 §3.4: Hermes memory holds no IBAN, amount or date (§3.5's patterns, not its names)."""
     from mona.iban import iban_candidates
 
     hits = []
@@ -353,11 +353,14 @@ def memory_scan(folder: Path) -> Check:
         text = path.read_text(encoding="utf-8", errors="replace")
         if iban_candidates(text):
             hits.append(f"{path.name}: IBAN")
-        if MONEY.search(text):
+        folded = norm(text)
+        if MONEY.search(folded):
             hits.append(f"{path.name}: amount")
+        if DATE.search(folded):
+            hits.append(f"{path.name}: date")
     if hits:
         return _bad("memory", "; ".join(hits))
-    return _ok("memory", "no IBAN or amount in the Hermes memory files")
+    return _ok("memory", "no IBAN, amount or date in the Hermes memory files")
 
 
 def run_checks(

@@ -367,6 +367,153 @@ def ops_fingerprint(
     typer.echo(json.dumps(fingerprint(_ops_env(), hermes_only=hermes_only, files=files), indent=1))
 
 
+stage_app = typer.Typer(
+    no_args_is_help=True, help="`mona stage-build` steps run by the host wrapper (C9 §6.3)."
+)
+ops_app.add_typer(stage_app, name="stage")
+StageDir = Annotated[Path, typer.Option(help="Mounted by the host wrapper.")]
+
+
+@stage_app.command("clean")
+@_ops_errors
+def stage_clean() -> None:
+    """An empty database at head, empty data trees and debrief cache, no Hermes conversation."""
+    from mona.demo import stage
+
+    for line in stage.clean(_ops_env()):
+        typer.echo(line)
+
+
+def _api(base: str):
+    from mona.demo import stage
+    from mona.settings import get_settings
+
+    password = get_settings().mona_owner_password
+    if not password:
+        raise typer.BadParameter("MONA_OWNER_PASSWORD is not set")
+    return stage.Api(base, password.get_secret_value())
+
+
+def _table(report: list[dict]) -> None:
+    for i, r in enumerate(report, 1):
+        name = r["id"] if r["id"].startswith("syn-") else r["sha12"]
+        reasons = ",".join(r["reasons"] or []) or "-"
+        typer.echo(
+            f"{i:>2} {name:<22} {r['outcome']:<9} {r['status'] or '-':<10} {reasons:<12}"
+            f" {r['band'] or '-':<6} {r['confidence'] if r['confidence'] is not None else '-'}"
+            + (f" ({r['settled']})" if r.get("settled") else "")
+        )
+
+
+@stage_app.command("intake")
+@_ops_errors
+def stage_intake(
+    group: Annotated[str, typer.Option(help="prefiled or live (demo/expectations.yaml).")],
+    settle: Annotated[
+        bool, typer.Option(help="File pre-filed documents left in review, as the person would.")
+    ] = False,
+    debrief: Annotated[bool, typer.Option(help="Wait for the batch debrief to settle.")] = False,
+    timeout: Annotated[float, typer.Option(help="Seconds for the batch (and debrief).")] = 1800,
+    base: Annotated[str, typer.Option(help="The api on the compose network.")] = "http://api:8765",
+    expectations: StageDir = Path("/stage/expectations.yaml"),
+    manifest: StageDir = Path("/stage/manifest.jsonl"),
+    corpus: StageDir = Path("/stage/corpus"),
+    synthetic: StageDir = Path("/stage/synthetic"),
+) -> None:
+    """Drop an expectations group through `POST /api/intake` and wait until it settles."""
+    import time
+
+    from mona.demo import stage
+
+    src = stage.Source(expectations, manifest, corpus, synthetic)
+    files = stage.documents(src, group)
+    api = _api(base)
+    t0 = time.monotonic()
+    batch_id = stage.drop(api, files)
+    detail = stage.wait(api, batch_id, stage.batch_done, timeout)
+    typer.echo(f"batch {batch_id}: {len(files)} documents, done in {time.monotonic() - t0:.0f} s")
+    report = stage.rows(files, detail)
+    if settle:
+        queued = any(r["status"] == "review" for r in report)
+        for line in stage.settle_history(api, src, report):
+            typer.echo(f"settled {line}")
+        if queued and (cancelled := stage.cancel_debrief(api, batch_id)):
+            typer.echo(f"the history batch's debrief {cancelled} is cancelled")
+    state: dict = {"group": group, "batch_id": batch_id, "documents": report}
+    if debrief:
+        detail = stage.wait(api, batch_id, stage.debrief_settled, timeout)
+        d = detail["batch"]["debrief"]
+        state |= {
+            "interview_id": d["interviewId"],
+            "debrief_status": d["status"],
+            "open_questions": d["openQuestions"],
+            "ready_s": round(time.monotonic() - t0),
+        }
+        iv = api.call("GET", f"/api/interviews/{d['interviewId']}")
+        sha12 = {r["document_id"]: r["sha12"] for r in report}
+        state |= {
+            "source": iv["source"],
+            "questions": [
+                {"question": q["question"], "affects": [sha12.get(d, d) for d in q["affects"]]}
+                for q in iv["questions"]
+            ],
+        }
+        cands = stage.candidates(_ops_env(), d["interviewId"])
+        state["candidate_sha256s"] = sorted(cands.values())
+        state["uncovered"] = stage.uncovered(cands, iv["questions"])
+        typer.echo(
+            f"debrief {d['status']} ({iv['source']}) after {state['ready_s']} s:"
+            f" {d['openQuestions']} questions, {len(state['candidate_sha256s'])} candidates"
+        )
+        if d["status"] != "ready":
+            raise typer.Exit(1)
+    _table(report)
+    stage.write_state(_ops_env(), group, state)
+    if state.get("uncovered"):
+        typer.echo(f"no question asks about {', '.join(state['uncovered'])}", err=True)
+        raise typer.Exit(3)
+
+
+@stage_app.command("settings")
+@_ops_errors
+def stage_settings(
+    early: Annotated[int, typer.Option(help="settings.debrief_early_min (C9 §6.7).")] = 7,
+    base: Annotated[str, typer.Option()] = "http://api:8765",
+) -> None:
+    """C9 §6.7's stage settings and A18's 90/75, through `PATCH /api/settings`."""
+    from mona.demo import stage
+
+    s = stage.apply_settings(_api(base), early)
+    keys = ("confidenceHigh", "confidenceLow", "debriefEarlyMin", "debriefQueueThreshold",
+            "autoLockMinutes", "profileName")  # fmt: skip
+    typer.echo(", ".join(f"{k} {s[k]}" for k in keys if k in s))
+
+
+@stage_app.command("evidence")
+@_ops_errors
+def stage_evidence() -> None:
+    """The findQuery cases the `demo` snapshot carries (§6.3 step 7 re-checks them)."""
+    from mona.demo import stage
+    from mona.pipeline import runtime
+    from mona.pipeline.report import evidence_cases
+
+    cases = evidence_cases(runtime.get_context(), None)
+    path = stage.write_state(_ops_env(), "findquery", cases)
+    typer.echo(f"{len(cases)} findQuery cases: {path}")
+
+
+@stage_app.command("cache-check")
+@_ops_errors
+def stage_cache_check() -> None:
+    """After the final reset: the live run's debrief cache file is in `demo` and matches."""
+    from mona.demo import stage
+    from mona.interviews.config import PROMPT_VERSION
+
+    live = stage.read_state(_ops_env(), "live")
+    name, n = stage.cache_check(_ops_env(), live["candidate_sha256s"], PROMPT_VERSION)
+    typer.echo(f"debrief cache {name[:12]}…: {n} questions over the live batch's candidates")
+
+
 from mona.cli_ops import register  # noqa: E402
 
 register(app)

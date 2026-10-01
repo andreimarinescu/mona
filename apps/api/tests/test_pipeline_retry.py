@@ -22,6 +22,7 @@ class Sequenced(FakeModel):
 def run(engine, tmp_path, *answers):
     model = Sequenced(*answers)
     p = Pipeline(engine, tmp_path / "data", model=model)
+    p.filed_history("Dentalis Fournitures")
     doc = p.drop_synthetic([DOC], outputs=False).items[0].document_id
     p.drain()
     return p, model, p.row(doc)

@@ -9,7 +9,7 @@ Components read through hooks; once the generated client lands, only this folder
 - `polling.ts`: the C2 §1.5 rules, pure, so they can be tested.
 - `providers.ts`: the shell's entities, settings, counts and health, all from C2 (`/api/entities`, `/api/settings`, `/api/shell`, `/api/health`).
 - `rules.ts`, `home.ts`, `settings.ts`, `auth.ts`, `template.ts`: the §7 rules and learned list, `GET /api/home`, settings (with the §15.1 limits checked on the client too) and system status, the lock (`/api/auth/*`, the heartbeat, `safeNext`), and the C5 §8 template grammar the category editor uses for its chips.
-- `http.ts` also tells the app when a call answers 401 `unauthenticated` or 423 (`setAuthLostHandler`); `AuthWatcher` sends the person to `/unlock?next=`.
+- `http.ts` also tells the app when a call answers 401 `unauthenticated` or 423 (`setAuthLostHandler`; the chat transport reports its own through `reportAuthLoss`); `AuthWatcher` sends the person to `/unlock?next=`.
 
 ## Mock API
 

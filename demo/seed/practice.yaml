@@ -2,6 +2,8 @@ practice:
   name: Cabinet d'Orthodontie Dr Christine Simina
   owner_name: Claudiu
   filing_language: fr
+  confidence_high: 90
+  confidence_low: 75
 
 people:
   - key: claudiu
@@ -315,7 +317,7 @@ counterparties:
     name: TALENZ
     kind: accountant
     siren: null
-    aliases: [TALENZ]
+    aliases: [TALENZ, TALENZ SOFIDEM, talenz-sofidem]
   - key: oxyleo
     name: OXYLEO
     kind: accountant

@@ -37,6 +37,7 @@ def ids(out) -> list[str]:
 
 def test_each_settle_then_the_batch_end_reach_the_c6_hooks(l1m2_demo_engine, tmp_path, calls):
     p = wired(l1m2_demo_engine, tmp_path)
+    p.filed_history("SIE Mayenne")
     out = p.drop_synthetic(["syn-sie-letter", "syn-unreadable", "syn-agipi-per"])
     filed, unreadable, review = ids(out)
     p.cache_model(p.row(review)["sha256"], {**RECORDED["outputs"]["syn-agipi-per"], "entity": None})

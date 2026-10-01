@@ -7,6 +7,7 @@
       "low_anon": "Je pense que ce document{{docType}} relève de {{entity}}, mais je n'en suis pas assez sûre pour le classer.",
       "entity": "Ce document de {{counterparty}}{{docType}} n'indique pas clairement à quelle entité il se rapporte.",
       "entity_anon": "Ce document{{docType}} n'indique pas clairement à quelle entité il se rapporte.",
+      "first": "Premier document de {{counterparty}} : où dois-je le classer ?",
       "conflict": "Deux de vos règles se contredisent pour ce document de {{counterparty}}{{docType}} ; je l'ai donc gardé pour vous.",
       "conflict_anon": "Deux de vos règles se contredisent pour ce document{{docType}} ; je l'ai donc gardé pour vous.",
       "asked": "Vous avez demandé à voir chaque fois les documents de ce type.",

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { unlock } from '../data/auth';
 import { asFeed } from '../data/conversations';
-import { setCsrfToken } from '../data/http';
+import { setAuthLostHandler, setCsrfToken } from '../data/http';
 import { chatErrorCode } from './errorCode';
 import { monaTransport } from './transport';
 import type { MonaUIMessage } from './types';
@@ -75,5 +75,32 @@ describe('monaTransport headers (C2 §2.4)', () => {
     await unlock('pw');
     await send();
     expect(sent).toEqual(['tok-before', 'tok-after']);
+  });
+});
+
+describe('monaTransport after an auto-lock (C2 §16.3)', () => {
+  afterEach(() => {
+    setAuthLostHandler(null);
+    setCsrfToken(null);
+    vi.unstubAllGlobals();
+  });
+
+  it.each([
+    [423, 'locked', 1],
+    [401, 'unauthenticated', 1],
+    [401, 'invalid_password', 0],
+    [409, 'turn_in_progress', 0],
+  ])('%i %s calls the auth-lost handler %i time(s)', async (status, code, times) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ error: { code, message: 'x' } }, { status })),
+    );
+    setCsrfToken('tok');
+    const lost = vi.fn();
+    setAuthLostHandler(lost);
+    const t = monaTransport({ pageContext: () => ({ route: '/chat', summary: 'Chat page' }), locale: () => 'en' });
+    const messages = [{ id: 'u', role: 'user', parts: [{ type: 'text', text: 'hi' }] }] as MonaUIMessage[];
+    await expect(t.transport.sendMessages({ chatId: 'x', messages, abortSignal: undefined, trigger: 'submit-message', messageId: undefined })).rejects.toThrow();
+    expect(lost).toHaveBeenCalledTimes(times);
   });
 });

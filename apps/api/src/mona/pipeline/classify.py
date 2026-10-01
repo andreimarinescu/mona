@@ -220,6 +220,10 @@ def decide(
         path_t, file_t = tpl if tpl else (None, None)
         naming_cp = snap.counterparty_keys.get(cp_id)
         entity_set = bool(visitor)
+    first_seen = (
+        winner is None and not visitor and cp_id is not None
+        and not _has_filed(conn, cp_id, doc["id"])
+    )  # fmt: skip
     render_doc = {**doc, **values}
     placement = place(
         snap, render_doc, entity=entity, unit=unit, category=category, subcategory=sub,
@@ -237,7 +241,12 @@ def decide(
         fallbacks=placement.rendered.fallbacks if placement else {},
         low=s["confidence_low"],
         high=s["confidence_high"],
-        no_entity=entity is None or unresolved or (category is not None and placement is None),
+        no_entity=(
+            entity is None
+            or unresolved
+            or (category is not None and placement is None)
+            or first_seen
+        ),
         conflict=bool(conflicting),
         review=review,
     )
@@ -265,6 +274,15 @@ def decide(
         find_queries=finds,
     )
     return decision, work
+
+
+def _has_filed(conn: Connection, counterparty_id: str, document_id: str) -> bool:
+    """A17: another document of this counterparty is filed (any entity, any batch)."""
+    d = T["documents"]
+    q = select(d.c.id).where(
+        d.c.counterparty_id == counterparty_id, d.c.status == "filed", d.c.id != document_id
+    )
+    return conn.execute(q.limit(1)).first() is not None
 
 
 def _extracted_values(out: Output) -> dict[str, Any]:

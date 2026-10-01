@@ -55,3 +55,34 @@ rules:
     conditions:
       - {field: text, op: contains_any, value: [déclaration sociale nominative, bulletin de salaire, bulletin de paie]}
     action: {entity: selarl-simina, category: payroll}
+
+  # Disabled copies of rules.learned.yaml: the Apply-failure fallback (Rules › enable → preview).
+  - key: agipi-per-by-person-fallback
+    name: AGIPI PER, filed under the insured person
+    state: disabled
+    source: seed
+    priority: 20
+    conditions:
+      - {field: counterparty, op: equals, value: agipi}
+      - {field: text, op: contains_any, value: [plan d'épargne retraite, adhésion FAR PER]}
+    action: {entity: personal, unit: {from: person}, category: insurance, subcategory: per}
+
+  - key: agipi-assurance-vie-by-person-fallback
+    name: AGIPI life insurance, filed under the insured person
+    state: disabled
+    source: seed
+    priority: 20
+    conditions:
+      - {field: counterparty, op: equals, value: agipi}
+      - {field: text, op: contains_any, value: [assurance vie, assurance-vie, situation annuelle]}
+    action: {entity: personal, unit: {from: person}, category: insurance, subcategory: assurance_vie}
+
+  - key: hello-bank-lmnp-fallback
+    name: Hello bank statements of the LMNP accounts
+    state: disabled
+    source: seed
+    priority: 20
+    conditions:
+      - {field: counterparty, op: equals, value: hello-bank}
+      - {field: iban, op: entity, value: lmnp}
+    action: {entity: lmnp, unit: angers-strasbourg, category: bank}

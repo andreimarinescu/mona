@@ -7,6 +7,7 @@
       "low_anon": "Cred că acest document{{docType}} aparține de {{entity}}, dar nu sunt suficient de sigură ca să-l arhivez.",
       "entity": "Din acest document de la {{counterparty}}{{docType}} nu reiese clar cărei entități îi aparține.",
       "entity_anon": "Din acest document{{docType}} nu reiese clar cărei entități îi aparține.",
+      "first": "Primul document de la {{counterparty}}: unde să-l arhivez?",
       "conflict": "Două dintre regulile dumneavoastră sunt în conflict pentru acest document de la {{counterparty}}{{docType}}, așa că l-am păstrat pentru dumneavoastră.",
       "conflict_anon": "Două dintre regulile dumneavoastră sunt în conflict pentru acest document{{docType}}, așa că l-am păstrat pentru dumneavoastră.",
       "asked": "Ați cerut să vedeți de fiecare dată documentele de acest tip.",

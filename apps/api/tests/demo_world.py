@@ -63,6 +63,8 @@ class Stage:
 
 def build(engine: Engine, url: str, root: Path) -> Stage:
     p = Pipeline(engine, root / "data")
+    p.set_thresholds(85, 60)
+    p.filed_history("urssaf-pays-de-la-loire", "AGIPI")
     intake = p.drop_synthetic(BATCH)
     sha = p.cache_text(content_for("syn-sie-letter"), "syn-sie-letter")
     p.cache_model(sha, {**RECORDED["outputs"]["syn-sie-letter"], "entity": None})

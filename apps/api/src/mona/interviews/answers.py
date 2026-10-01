@@ -16,6 +16,7 @@ from mona.rules.grammar import Condition, RuleBody
 from mona.rules.text import ALIASES, AND, OR, PHRASES, QUOTES, _join, _money, _name
 from mona.services import Applied, Ctx, ServiceError, apply_rule, preview_rule, registry
 from mona.services.placement import subject
+from mona.services.rules import Visible
 from mona.workflow.common import add_note, write_cards
 
 T = Base.metadata.tables
@@ -210,13 +211,15 @@ def _interview(conn: Connection, interview_id: str, *, lock: bool = False) -> Ma
     return conn.execute(stmt.with_for_update() if lock else stmt).mappings().one()
 
 
-def _outcome(ctx: Ctx, question_id: str, preview_lang: str) -> AnswerOutcome:
+def _outcome(
+    ctx: Ctx, question_id: str, preview_lang: str, visible: Visible = None
+) -> AnswerOutcome:
     with ctx.engine.connect() as conn:
         q = question_row(conn, question_id)
         status = _interview(conn, q["interview_id"])["status"]
         rules = _rules_of(conn, question_id)
     previews = [
-        preview_rule(ctx, r["id"], lang=preview_lang)
+        preview_rule(ctx, r["id"], lang=preview_lang, visible=visible)
         for r in rules
         if not r["action"].get("review")
     ]
@@ -235,8 +238,10 @@ def answer(
     channel: str | None = None,
     tool: str | None = None,
     preview_lang: str = "en",
+    visible: Visible = None,
 ) -> AnswerOutcome:
-    """§6.1–§6.4 in one transaction; the same answer again returns the existing result."""
+    """§6.1–§6.4 in one transaction; the same answer again returns the existing result.
+    `visible` drops documents the channel can't see from the previews (C4 §2.6)."""
     if (option_id is None) == (free_text is None):
         raise ServiceError(
             "invalid_argument", "Give option_id or free_text, not both.", field="option_id"
@@ -251,7 +256,7 @@ def answer(
         existing = _existing_answer(conn, question_id)
         if existing is not None:
             if existing["option_id"] == option_id and existing["free_text"] == free_text:
-                return _outcome(ctx, question_id, preview_lang)
+                return _outcome(ctx, question_id, preview_lang, visible)
             raise ServiceError(
                 "conflict", "The question already has a different answer.", hint="already_answered"
             )
@@ -320,7 +325,7 @@ def answer(
     if rule_ids:
         with ctx.engine.connect() as conn:
             store.write_export(conn, ctx.config_dir, now=ctx.clock())
-    out = _outcome(ctx, question_id, preview_lang)
+    out = _outcome(ctx, question_id, preview_lang, visible)
     out.card_refs = refs
     return out
 

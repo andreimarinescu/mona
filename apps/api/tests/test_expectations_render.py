@@ -114,7 +114,7 @@ def test_synthetic_expectations_match_the_renderer(tier):
         if s.get("basis") == "rule":
             assert s["confidence"] == 95 - out.penalty, e["id"]
         checked.append(e["id"])
-    assert len(checked) == {"before": 8, "after": 10}[tier]
+    assert len(checked) == {"before": 10, "after": 12}[tier]
 
 
 @pytest.mark.skipif(

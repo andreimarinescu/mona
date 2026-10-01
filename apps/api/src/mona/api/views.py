@@ -113,8 +113,10 @@ def sentence(
     reasons: list[str],
     asked: bool,
     lang: str,
+    first: bool = False,
 ) -> str:
-    """C8 §5.4: the first of unreadable, conflict, entity, asked, low that applies, else default."""
+    """C8 §5.4: the first of unreadable, conflict, entity, asked, low that applies, else default;
+    `entity` reads as `first` when it came only from the first-seen signal (A17)."""
     applies = set(reasons)
     if entity_id is None:
         applies.add("entity")
@@ -124,6 +126,8 @@ def sentence(
     key = next((k for k in SENTENCE_ORDER if k in applies), "default")
     cp_key = snap.counterparty_keys.get(doc["counterparty_id"])
     counterparty = snap.counterparties[cp_key]["name"] if cp_key else None
+    if key == "entity" and first and counterparty:
+        key = "first"
     ent_key = snap.entity_keys.get(entity_id)
     cat = snap.categories.get(category_id) if category_id else None
     values = {
@@ -152,6 +156,14 @@ def suggestion(
         asked = bool(action and action.get("review"))
     reasons = list(doc["reasons"])
     folders = (cls["proposed_path"] or "").split("/") if cls and cls["proposed_path"] else []
+    # A17: with an entity, no winning rule and a rendered path, `entity` has no other trigger.
+    first = bool(
+        cls
+        and "entity" in reasons
+        and cls["entity_id"] is not None
+        and cls["rule_id"] is None
+        and (cls["category_id"] is None or cls["proposed_path"] is not None)
+    )
     ev = [f.evidence for f in fields(conn, doc)]
     return dto.Suggestion(
         entity_id=src["entity_id"],
@@ -171,6 +183,7 @@ def suggestion(
             reasons=reasons,
             asked=asked,
             lang=lang,
+            first=first,
         ),  # fmt: skip
         evidence=ev,
         rule_id=cls["rule_id"] if cls else None,

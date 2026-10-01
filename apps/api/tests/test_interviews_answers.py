@@ -265,3 +265,36 @@ def test_a_single_entry_undo_never_changes_the_rule(applied):
         ).scalar_one()
     undo(w.ctx, actor="user", via="ui", journal_id=entry)
     assert w.row("rules", rule_id)["state"] == "active"
+
+
+def test_a_disabled_seed_copy_with_the_same_conditions_never_outranks_the_answer(debrief):
+    """R11: the learned rules win (C5 §4.6.1) and nothing is refused."""
+    w, _, qs = debrief
+    q = qs["AGIPI"]
+    branches = next(o for o in q["options"] if o["id"] == "a")["rule_draft"]["branches"]
+    with w.engine.begin() as conn:
+        copies = [
+            store.save_rule(
+                conn, key=f"agipi-copy-{i}", name=f"AGIPI copy {i}", state="disabled",
+                source="seed", body=RuleBody.model_validate(b), priority=None,
+                names=store.names(conn),
+            )[0]["id"]
+            for i, b in enumerate(branches)
+        ]  # fmt: skip
+    out = answers.answer(w.ctx, q["id"], option_id="a", actor="user", via="ui")
+    learned = rules_of(w, q["id"])
+    assert [r["conditions"] for r in learned] == [w.row("rules", c)["conditions"] for c in copies]
+    assert [r["priority"] for r in learned] == [w.row("rules", c)["priority"] for c in copies]
+    results = answers.apply_all(w.ctx, q["id"], actor="user", via="ui")
+    assert [r.moved for r in results] == [1, 2] and not any(r.failed for r in results)
+    moved = [w.tags[t] for t in ("agipi-per-anna", "agipi-vie-anna", "agipi-vie-paul")]
+    assert {w.row("documents", d)["rule_id"] for d in moved} == set(out.rule_ids)
+    with w.engine.connect() as conn:
+        snap, d = registry.load(conn), T["documents"]
+        for doc in conn.execute(select(d).where(d.c.id.in_(moved))).mappings():
+            s = subject(conn, snap, doc, w.ctx.textcache)
+            winner = evaluate(registry.rule_specs(conn), s, snap.world).winner
+            assert winner is not None and winner.id in out.rule_ids
+    assert [(w.row("rules", c)["state"], w.row("rules", c)["version"]) for c in copies] == [
+        ("disabled", 1), ("disabled", 1),
+    ]  # fmt: skip

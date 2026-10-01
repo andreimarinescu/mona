@@ -1,5 +1,7 @@
 """C2 §11 endpoints (test 17, notes, polling) and the C4 §3.6/§3.7 tools (tests 12, 16)."""
 
+import json
+
 import pytest
 from sqlalchemy import select
 
@@ -328,6 +330,21 @@ async def test_answer_question_depends_gives_two_drafts_two_previews_two_cards()
     other = await call("answer_question", {"question_id": qid, "option_id": "b"})
     assert other.data["error"]["code"] == "conflict"
     assert other.data["error"]["hint"] == "Already answered with option 'a'."
+
+
+async def test_answer_question_on_telegram_previews_leave_out_hidden_documents():
+    """C4 §2.6: the personal AGIPI documents are absent from Telegram previews."""
+    w = World()
+    _, qid = agipi_only(w)
+    tg = await call("answer_question", {"question_id": qid, "option_id": "a"}, channel="telegram")
+    assert not tg.is_error, tg.text
+    assert [(p["moves_total"], p["moves"]) for p in tg.data["previews"]] == [(0, []), (0, [])]
+    affected = w.row("interview_questions", qid)["affected_document_ids"]
+    shown = json.dumps(tg.data)
+    leaked = [d for d in affected if d in shown or w.row("documents", d)["title"] in shown]
+    assert affected and not leaked
+    web = await call("answer_question", {"question_id": qid, "option_id": "a"})
+    assert [p["moves_total"] for p in web.data["previews"]] == [1, 2]
 
 
 async def test_answer_question_ask_is_one_active_rule_without_preview_or_card():

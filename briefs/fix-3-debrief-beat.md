@@ -35,7 +35,16 @@ Andrei ruled on the debrief beat (`docs/decisions.md` D15). Read D15 first, then
    - Prove end to end that `MONA_DEBRIEF_CACHE=prefer` with a cache file in the snapshot shows the cached debrief with no live model call.
    - Write the rehearsal procedure into `demo/README.md` and the runbooks (EN/FR): run the live batch, judge the debrief, then `demo-snapshot --refresh-textcache` only when the debrief is good.
    - If C6 lacks a way to keep a good cache file from being overwritten by a later bad rehearsal run, report it (don't amend).
-5. **Stage proof (D9 quality run, Qwen 3.6 allowed):** run the stage snapshot with the new signal at 90/75 on the live batch of `docs/demo-script.md`. Report per document: queued or filed, the reasons, the band.
+5. **A reproducible stage build, then the stage proof (D9 quality run, Qwen 3.6 allowed):**
+   - **Build first.** No `demo` stage snapshot exists yet, and every migration invalidates one ("the snapshot is from another schema version; rebuild it"). Add `deploy/bin/mona stage-build` that runs C9 §6.3's whole build order on the current compose project:
+     - seed load (pre-seeded tier, private overlay);
+     - the `prefiled` documents of `demo/expectations.yaml` through `POST /api/intake` (resolve their paths from the private corpus manifest and the synthetic set), then wait until they settle;
+     - the §6.7 stage settings, 90/75 included;
+     - `demo-snapshot --name demo` with the findQuery cases;
+     - steps 2–5: the live batch through intake with the quality model until its debrief is `ready`, `demo-prefiled`, `--refresh-textcache`, the reset, and §8 test 8.
+
+     Document it in `demo/README.md` and the runbooks.
+   - **Then the proof:** with the new signal at 90/75, report per live-batch document of `docs/demo-script.md`: queued or filed, the reasons, the band.
    - **Target:** the 3 AGIPI and 3 Hello bank documents queue on `entity` (first-seen), 5–8 queued in total, and the debrief asks about AGIPI and Hello bank.
    - If the snapshot pre-files an AGIPI or Hello bank document (which would defeat the signal), change the stage corpus composition (demo data, not product) and report it.
    - Re-run L5c's histogram at 90/75 with the signal, from cached model outputs where possible. Report the counts against L5c's.

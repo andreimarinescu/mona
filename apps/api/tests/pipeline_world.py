@@ -10,8 +10,9 @@ from typing import Any
 
 import psycopg
 from procrastinate.schema import SchemaManager
-from sqlalchemy import Engine, select, text
+from sqlalchemy import Engine, insert, select, text
 
+from mona.ids import new_id
 from mona.pipeline import cache, stages
 from mona.pipeline.intake import Intake, Upload, ingest_files
 from mona.pipeline.model import ModelResult
@@ -183,6 +184,42 @@ class Pipeline:
                 self.cache_model(sha, RECORDED["outputs"][i])
             uploads.append(Upload(content, SYNTHETIC[i]["file"]))
         return ingest_files(self.ctx, uploads, visitor=visitor)
+
+    def set_thresholds(self, high: int, low: int) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(T["settings"].update().values(confidence_high=high, confidence_low=low))
+
+    def filed_history(self, *counterparties: str) -> list[str]:
+        """One filed document per counterparty name, so the A17 first-seen signal stays quiet."""
+        from mona.services.corrections import resolve_counterparty
+
+        now = self.clock()
+        out = []
+        with self.engine.begin() as conn:
+            batch = new_id("bat")
+            conn.execute(
+                insert(T["batches"]).values(
+                    id=batch, source="drop", status="done", started_at=now, finished_at=now
+                )
+            )  # fmt: skip
+            for i, name in enumerate(counterparties):
+                cp = resolve_counterparty(conn, name)
+                doc, data = new_id("doc"), f"history {name}".encode()
+                path = f"History/{i}.pdf"
+                target = self.ctx.ops.roots.archive / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+                conn.execute(
+                    insert(T["documents"]).values(
+                        id=doc, sha256=hashlib.sha256(data).hexdigest(),
+                        original_name=f"{i}.pdf", mime_type="application/pdf",
+                        size_bytes=len(data), source="drop", batch_id=batch, arrived_at=now,
+                        location="archive", current_path=path, status="filed",
+                        pipeline_stage="done", counterparty_id=cp, filed_at=now, filed_by="user",
+                    )
+                )  # fmt: skip
+                out.append(doc)
+        return out
 
     def drain(self, queues: Sequence[str] = ("cpu", "llm"), limit: int = 500) -> list[tuple]:
         """Run queued jobs through Procrastinate's own fetch/finish/retry SQL, in its order."""

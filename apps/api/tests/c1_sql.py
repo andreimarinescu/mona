@@ -104,6 +104,17 @@ def _a9_column() -> str:
     return f"ALTER TABLE settings ADD COLUMN {column}"
 
 
+def _a18_defaults() -> str:
+    """Amendment A18's threshold defaults, altered as migration 0006 does."""
+    section = AMENDMENTS.read_text().split("## A18 ", 1)[1].split("\n## ", 1)[0]
+    high = re.search(r"`confidence_high` defaults to (\d+)", section).group(1)  # type: ignore[union-attr]
+    low = re.search(r"`confidence_low` to (\d+)", section).group(1)  # type: ignore[union-attr]
+    return (
+        f"ALTER TABLE settings ALTER COLUMN confidence_high SET DEFAULT {high},"
+        f" ALTER COLUMN confidence_low SET DEFAULT {low}"
+    )
+
+
 def contract_ddl() -> list[str]:
     creates, fks, others = [], [], []
     auth = [b for b in sql_blocks(C2.read_text()) if b.lstrip().startswith("auth_sessions")]
@@ -117,4 +128,4 @@ def contract_ddl() -> list[str]:
                 others.append(" ".join(re.sub(r"--[^\n]*", "", src).split()))
     search = [s for s in others if "TEXT SEARCH" in s]
     indexes = [s for s in others if s not in search]
-    return search + creates + fks + indexes + [_a9_column()]
+    return search + creates + fks + indexes + [_a9_column(), _a18_defaults()]

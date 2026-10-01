@@ -17,6 +17,9 @@ Open exactly the address `mona doctor` prints on its **origin** line (`MONA_PUBL
 - Stuck? `mona stop`, wait 10 seconds, `mona up`. The documents and the history are kept.
 - `mona demo-reset --prefiled` restores the same day with the batch already filed (fallback for beat 2).
 
+## Rehearsal (Andrei)
+`mona stage-build` rebuilds the stage from scratch. To keep a good debrief: `mona demo-reset`, drop the live batch, judge the questions; if they are good, `mona demo-snapshot --refresh-textcache --name demo`.
+
 ## If Mona is offline or slow, beat by beat
 | Beat | Do |
 |---|---|
@@ -24,7 +27,7 @@ Open exactly the address `mona doctor` prints on its **origin** line (`MONA_PUBL
 | The pile | Pipeline stalled: `mona demo-reset --prefiled`, show the Activity log |
 | Evidence | Highlight misses: read the quotes in the side panel |
 | Back to the pile | Batch unfinished: narrate the rows still moving and go on |
-| Mona asks | Model slow: the cached debrief appears. Apply fails: Rules screen, enable the rule, same preview |
+| Mona asks | The rehearsed debrief, from the cache. Apply fails: Rules › Disabled, enable the rule for that question, check its preview, Apply |
 | Ask Mona | Model stalls: show the same answers in Archive and Activity |
 | Volunteered document | Upload from the phone browser to Intake with "Visitor document" checked |
 | Trust | Undo errors: show the journal entries and their before and after paths |

@@ -452,3 +452,29 @@ def test_host_a3_names_without_values_and_only_in_prod_or_when_asked(tmp_path):
     assert host(tmp_path, compose_stub("prod", "[]", clean_env))["A3"][0] == "green"
     assert "A3" not in host(tmp_path, compose_stub("dev", "[]", env))
     assert host(tmp_path, compose_stub("dev", "[]", env), "--privacy")["A3"][0] == "red"
+
+
+@pytest.mark.parametrize(
+    ("line", "hit"),
+    [
+        ("Pays 1 284,60 €.", "amount"),
+        ("Pays 1 284,60€, monthly", "amount"),
+        ("Pays EUR 90 each quarter", "amount"),
+        ("Due on 30 September 2026", "date"),
+        ("Due 2026-10-23", "date"),
+        ("Address Claudiu formally; the fiscal year ends at the end of September.", None),
+    ],
+)
+def test_the_memory_scan_uses_the_first_line_amount_and_date_patterns(tmp_path, line, hit):
+    (tmp_path / "MEMORY.md").write_text(line, encoding="utf-8")
+    check = d.memory_scan(tmp_path)
+    assert check.level == (d.RED if hit else d.GREEN)
+    assert check.detail == (f"MEMORY.md: {hit}" if hit else check.detail)
+
+
+def test_the_generated_demo_memory_passes_the_scan(l1m2_demo_engine, tmp_path):
+    from mona.demo import memory
+
+    with l1m2_demo_engine.connect() as conn:
+        memory.write(conn, tmp_path)
+    assert d.memory_scan(tmp_path / "memories").level == d.GREEN

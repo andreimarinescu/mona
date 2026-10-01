@@ -39,6 +39,7 @@ PRESEEDED = {
     "payroll-selarl",
 }
 LEARNED = {"agipi-per-by-person", "agipi-assurance-vie-by-person", "hello-bank-lmnp"}
+FALLBACK = {f"{k}-fallback" for k in LEARNED}
 
 
 def contract_definitions() -> dict[str, str]:
@@ -148,11 +149,22 @@ def test_rules_files_validate(practice, name):
 def test_tiers_are_disjoint_and_complete():
     seeded = {r["key"] for r in templates.load_rules()["rules"]}
     learned = {r["key"] for r in templates.load_rules("rules.learned.yaml")["rules"]}
-    assert seeded == PRESEEDED and learned == LEARNED and not seeded & learned
+    assert seeded == PRESEEDED | FALLBACK and learned == LEARNED and not seeded & learned
     for r in templates.load_rules()["rules"]:
-        assert r["source"] == "seed" and "unit" not in r["action"]
+        assert r["source"] == "seed"
+        assert ("unit" in r["action"]) == (r["key"] in FALLBACK)
     for r in templates.load_rules("rules.learned.yaml")["rules"]:
         assert r["source"] == "interview"
+
+
+def test_fallback_copies_are_disabled_and_equal_the_learned_rules():
+    """R11 (D15): Rules › enable on a copy previews what the debrief would have taught."""
+    seeded = {r["key"]: r for r in templates.load_rules()["rules"]}
+    for r in templates.load_rules("rules.learned.yaml")["rules"]:
+        copy_ = seeded[f"{r['key']}-fallback"]
+        assert copy_["state"] == "disabled" and copy_["name"] == r["name"]
+        for k in ("priority", "conditions", "action"):
+            assert copy_[k] == r[k], (r["key"], k)
 
 
 def test_person_splits_exist_only_through_learned_rules(practice):

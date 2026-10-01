@@ -1,6 +1,6 @@
 schema: mona.expectations/v1
 anchor: '2026-10-20'
-thresholds: {high: 85, low: 60}
+thresholds: {high: 90, low: 75}
 tiers: {before: rules.yaml, after: rules.yaml + rules.learned.yaml}
 docs:
 - id: 945a8bd4c054
@@ -163,12 +163,13 @@ docs:
   position: 8
   source: corpus
   values: private
-  note: 'entity may queue: the addressee is the SCI short name'
+  note: 'queues: a first-seen counterparty (A17), and confidence 55 is low at 90/75 (L5c, FIX-3)'
   before:
     basis: model
-    outcome: file
-    reasons: []
-    band: model
+    outcome: queue
+    reasons: [entity, low]
+    first_seen: true
+    band: low
     entity: sci-c-immobilier
     category: insurance
     subcategory: multirisque
@@ -604,11 +605,11 @@ docs:
     file_name: private
   after: same
 - id: 749383ec4112
-  label: Hello bank statement, LMNP account (pre-filed by the user)
-  group: prefiled
+  label: Hello bank statement, LMNP account (held out of the stage history)
+  group: extra
   source: corpus
   values: private
-  note: 'history: filed by the user'
+  note: 'a filed Hello bank document would silence the first-seen signal (A17, D15)'
   before:
     basis: user
     outcome: filed
@@ -624,11 +625,11 @@ docs:
     file_name: private
   after: same
 - id: 85f83829b38d
-  label: Hello bank statement, LMNP account (pre-filed by the user)
-  group: prefiled
+  label: Hello bank statement, LMNP account (held out of the stage history)
+  group: extra
   source: corpus
   values: private
-  note: 'history: filed by the user'
+  note: 'a filed Hello bank document would silence the first-seen signal (A17, D15)'
   before:
     basis: user
     outcome: filed
@@ -644,11 +645,11 @@ docs:
     file_name: private
   after: same
 - id: 70bb174428a1
-  label: Hello bank statement, LMNP account (pre-filed by the user)
-  group: prefiled
+  label: Hello bank statement, LMNP account (held out of the stage history)
+  group: extra
   source: corpus
   values: private
-  note: 'history: filed by the user'
+  note: 'a filed Hello bank document would silence the first-seen signal (A17, D15)'
   before:
     basis: user
     outcome: filed
@@ -664,11 +665,11 @@ docs:
     file_name: private
   after: same
 - id: 0a1de5b3b9d0
-  label: Hello bank statement, LMNP account (pre-filed by the user)
-  group: prefiled
+  label: Hello bank statement, LMNP account (held out of the stage history)
+  group: extra
   source: corpus
   values: private
-  note: 'history: filed by the user'
+  note: 'a filed Hello bank document would silence the first-seen signal (A17, D15)'
   before:
     basis: user
     outcome: filed
@@ -684,11 +685,11 @@ docs:
     file_name: private
   after: same
 - id: e1574a7af51f
-  label: Hello bank statement, LMNP account (pre-filed by the user)
-  group: prefiled
+  label: Hello bank statement, LMNP account (held out of the stage history)
+  group: extra
   source: corpus
   values: private
-  note: 'history: filed by the user'
+  note: 'a filed Hello bank document would silence the first-seen signal (A17, D15)'
   before:
     basis: user
     outcome: filed
@@ -704,11 +705,11 @@ docs:
     file_name: private
   after: same
 - id: a5a2e4a2b529
-  label: Hello bank statement, LMNP account (pre-filed by the user)
-  group: prefiled
+  label: Hello bank statement, LMNP account (held out of the stage history)
+  group: extra
   source: corpus
   values: private
-  note: 'history: filed by the user'
+  note: 'a filed Hello bank document would silence the first-seen signal (A17, D15)'
   before:
     basis: user
     outcome: filed
@@ -741,6 +742,42 @@ docs:
     fiscal_year: 2026
     path: Cabinet Orthodontie/Appels de paiement/2026
     file_name: 2026-10-18_URSSAF_Appel-de-cotisations_URS-DEMO-3391.pdf
+  after: same
+- id: syn-sie-earlier
+  label: SIE certificate of tax compliance, Medical Digital Design (pre-filed)
+  group: prefiled
+  source: synthetic
+  values: synthetic
+  note: 'history: SIE Mayenne has a filed document, so the live SIE letter files (A17)'
+  before:
+    basis: model
+    outcome: filed
+    reasons: []
+    entity: mdd
+    category: tax
+    subcategory: courrier_fisc
+    counterparty: SIE Mayenne
+    fiscal_year: 2026
+    path: Medical Digital Design/Impôts et taxes/2026
+    file_name: 2026-08-31_SIE-Mayenne_Courrier-du-fisc.pdf
+  after: same
+- id: syn-supplier-earlier
+  label: Supplier invoice, paid (pre-filed)
+  group: prefiled
+  source: synthetic
+  values: synthetic
+  note: 'history: the supplier has a filed document, so the live rotated scan files (A17)'
+  before:
+    basis: model
+    outcome: filed
+    reasons: []
+    entity: selarl-simina
+    category: supplier_invoices
+    subcategory: facture
+    counterparty: Dentalis Fournitures
+    fiscal_year: 2026
+    path: Cabinet Orthodontie/Factures reçues/Dentalis Fournitures/2026
+    file_name: 2026-09-10_Dentalis-Fournitures_Facture_FA-DEMO-5498.pdf
   after: same
 - id: syn-hello-fy-crossing
   label: Hello bank statement across the year end (synthetic)

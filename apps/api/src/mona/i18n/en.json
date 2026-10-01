@@ -7,6 +7,7 @@
       "low_anon": "I think this document{{docType}} belongs to {{entity}}, but I'm not sure enough to file it.",
       "entity": "This document from {{counterparty}}{{docType}} doesn't say clearly which entity it belongs to.",
       "entity_anon": "This document{{docType}} doesn't say clearly which entity it belongs to.",
+      "first": "First document from {{counterparty}}: where should it go?",
       "conflict": "Two of your rules disagree about this document from {{counterparty}}{{docType}}, so I've kept it for you.",
       "conflict_anon": "Two of your rules disagree about this document{{docType}}, so I've kept it for you.",
       "asked": "You asked to see documents like this one each time.",

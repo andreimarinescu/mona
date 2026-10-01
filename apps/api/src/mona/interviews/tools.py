@@ -9,6 +9,8 @@ from mona.dto.models import RulePreview
 from mona.interviews import answers, service
 from mona.mcp.core import ToolFailure, channel, clip, fit, tool
 from mona.mcp.filters import matching_counterparties
+from mona.mcp.write import candidate_filter
+from mona.visibility import scope_for
 from mona.workflow.common import get_ctx
 from mona.workflow.mcp import run, via
 
@@ -110,6 +112,8 @@ async def answer_question(
             "invalid_argument", "Give option_id or free_text, not both.", field="option_id"
         )
     ch = channel()
+    async with get_engine().connect() as conn:
+        keep = candidate_filter(await scope_for(conn, ch))
     try:
         out = await run(
             answers.answer,
@@ -121,6 +125,7 @@ async def answer_question(
             via=via(ch),
             channel=ch,
             tool="answer_question",
+            visible=keep,
         )
     except ToolFailure as e:
         if e.extra.get("hint") == "already_answered":

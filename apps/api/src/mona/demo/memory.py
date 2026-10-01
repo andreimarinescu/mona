@@ -21,7 +21,14 @@ def _entity_line(e) -> str:
     if e.legal_form and e.legal_form.casefold() != e.display_name.casefold():
         notes.append(e.legal_form)
     if (e.fy_end_month, e.fy_end_day) != (12, 31):
-        notes.append(f"fiscal year ends {e.fy_end_day} {calendar.month_name[e.fy_end_month]}")
+        month = calendar.month_name[e.fy_end_month]
+        # Worded without a date: `mona doctor --privacy` flags dates in memory (C9 §3.4).
+        last = e.fy_end_day == calendar.monthrange(2001, e.fy_end_month)[1]
+        notes.append(
+            f"fiscal year ends at the end of {month}"
+            if last
+            else f"fiscal year ends on day {e.fy_end_day} of {month}"
+        )
     if e.sub_units:
         notes.append(("sub-units " if len(e.sub_units) > 1 else "sub-unit ") + _join(e.sub_units))
     return e.display_name + (f" ({', '.join(notes)})" if notes else "")

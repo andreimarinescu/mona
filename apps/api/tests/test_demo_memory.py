@@ -26,7 +26,7 @@ def test_the_demo_registry_renders_both_files(l1m2_demo_engine):
         assert memory.ENTRY_DELIMITER.join(entries(raw)) == raw
     m = entries(mem)
     assert m[0].startswith("Entities: Cabinet d'Orthodontie Dr Christine Simina (SELARL); ")
-    assert "Medical Digital Design (SASU, fiscal year ends 30 September)" in m[0]
+    assert "Medical Digital Design (SASU, fiscal year ends at the end of September)" in m[0]
     assert "LMNP (sub-unit Angers-Strasbourg)" in m[0]
     assert "Visitors" not in m[0] and "Personnel" not in m[0]
     assert m[1] == (

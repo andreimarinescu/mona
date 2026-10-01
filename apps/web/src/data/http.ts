@@ -32,6 +32,11 @@ export function setAuthLostHandler(handler: (() => void) | null) {
 export function isAuthLoss(status: number, code: string): boolean {
   return status === 423 || (status === 401 && code === 'unauthenticated');
 }
+
+/** For responses read outside `request` (the chat stream). */
+export function reportAuthLoss(status: number, code: string) {
+  if (isAuthLoss(status, code)) authLostHandler?.();
+}
 let csrfPending: Promise<string | null> | null = null;
 
 export function setCsrfToken(token: string | null) {
@@ -106,7 +111,7 @@ export async function request<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DEL
   if (!res.ok) {
     const e = (parsed as { error?: { code?: string; message?: string; field?: string | null; details?: Record<string, unknown> | null } } | null)?.error;
     const code = e?.code ?? 'internal';
-    if (isAuthLoss(res.status, code)) authLostHandler?.();
+    reportAuthLoss(res.status, code);
     throw new ApiError(res.status, code, e?.message ?? res.statusText, e?.field ?? null, e?.details ?? null);
   }
   return parsed as T;

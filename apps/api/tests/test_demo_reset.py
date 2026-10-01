@@ -229,6 +229,12 @@ def test_refuses_rules_learned_live(stage):
     assert "3 rules not from the seed" in refused(stage)
 
 
+def test_the_disabled_seed_fallback_copies_are_accepted(stage):
+    disabled = "SELECT count(*) FROM rules WHERE state = 'disabled' AND source = 'seed'"
+    assert count(stage, disabled) == 3
+    snap(stage)
+
+
 def test_refuses_an_answered_debrief_question(stage):
     sql(stage, ANSWERED)
     problems = refused(stage)

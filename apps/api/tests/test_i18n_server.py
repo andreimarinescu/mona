@@ -8,7 +8,8 @@ from mona.i18n import LANGS, catalog, detect_language, plural_category, t
 
 SENTENCES = ("default", "low", "entity", "conflict", "asked", "unreadable")
 CONTRACT_KEYS = [f"review.sentence.{k}{v}" for k in SENTENCES for v in ("", "_anon")] + [
-    "interview.option.ask"
+    "review.sentence.first",
+    "interview.option.ask",
 ]
 PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 

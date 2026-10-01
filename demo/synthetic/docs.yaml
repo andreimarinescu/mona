@@ -276,3 +276,50 @@ docs:
     expected:
       outcome: duplicate
       duplicate_of: syn-urssaf-call
+
+  - id: syn-sie-earlier
+    gap: first-seen-history
+    template: letter
+    render: pdf
+    out: sie-attestation-regularite
+    sender: {name: SIE Mayenne, lines: ["Service des impôts des entreprises (document fictif)", "5 rue de l'Exemple", "53000 Laval"]}
+    addressee: {entity: mdd, lines: ["12 rue Fictive", "53000 Laval"]}
+    show_siren: true
+    reference: SIE-DEMO-6120
+    dates: {doc: {offset: -50}}
+    object: "Attestation de régularité fiscale"
+    body:
+      - "Madame, Monsieur,"
+      - "Le service des impôts des entreprises atteste que la société est à jour de ses obligations déclaratives et de paiement à la date du {date}."
+      - "Cette attestation est délivrée pour servir et valoir ce que de droit."
+    expected:
+      entity: mdd
+      category: tax
+      subcategory: courrier_fisc
+      counterparty: SIE Mayenne
+      fiscal_year: 2026
+      path: Medical Digital Design/Impôts et taxes/2026
+      file_name: 2026-08-31_SIE-Mayenne_Courrier-du-fisc.pdf
+
+  - id: syn-supplier-earlier
+    gap: first-seen-history
+    template: letter
+    render: pdf
+    out: facture-fournisseur-acquittee
+    sender: {name: Dentalis Fournitures, lines: ["Matériel dentaire (document fictif)", "21 zone de l'Exemple", "35000 Rennes"]}
+    addressee: {entity: selarl-simina, lines: ["4 rue Fictive", "53000 Laval"]}
+    reference: FA-DEMO-5498
+    dates: {doc: {offset: -40}}
+    amount: {value: 212.8, currency: EUR}
+    object: "Facture FA-DEMO-5498"
+    body:
+      - "Détail de la commande : 2 boîtes de gants, 1 lot de miroirs d'examen."
+      - "Total TTC : {amount}, réglé par carte bancaire le {date}. Facture acquittée."
+    expected:
+      entity: selarl-simina
+      category: supplier_invoices
+      subcategory: facture
+      counterparty: Dentalis Fournitures
+      fiscal_year: 2026
+      path: Cabinet Orthodontie/Factures reçues/Dentalis Fournitures/2026
+      file_name: 2026-09-10_Dentalis-Fournitures_Facture_FA-DEMO-5498.pdf

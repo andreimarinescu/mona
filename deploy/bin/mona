@@ -6,6 +6,8 @@
 #   mona demo-snapshot --name <n> [--reference <ISO>] [--findquery <cases.json>]
 #   mona demo-snapshot --refresh-textcache --name <n>
 #   mona demo-reset [--name demo] [--prefiled] [--anchor today|YYYY-MM-DD] [--yes]
+#   mona stage-build [--early N] [--anchor …] [--timeout S] [--attempts N] [--yes]
+#                                              (C9 §6.3's whole build order: demo and demo-prefiled)
 #   mona backup --name <n> [--to <dir>]        (default ~/DevFiles/mona-hq/demo-data/snapshots)
 #   mona restore --name <n> [--from <dir>] [--anchor …] [--yes]
 #   mona up | stop | status                    (start, stop, list the stack; on the box it is the prod stack)
@@ -16,7 +18,8 @@
 #
 # Environment: MONA_COMPOSE (default "docker compose", or the prod overlay once deploy/bin/deploy has
 # run here; add -p <project> per stack), MONA_ROOT (the directory holding compose.yaml),
-# MONA_SEED_OVERLAY_HOST (identifiers overlay for seed load).
+# MONA_SEED_OVERLAY_HOST (identifiers overlay for seed load); for stage-build MONA_CORPUS_DIR,
+# MONA_CORPUS_MANIFEST and MONA_SYNTHETIC_DIR (default: the laptop's demo-data layout).
 set -euo pipefail
 
 ROOT=${MONA_ROOT:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}
@@ -112,6 +115,81 @@ demo_reset() {
   echo "demo-reset $name: done in $((SECONDS - t0)) s"
 }
 
+# demo-snapshot for the build: the services come back at once, not at the script's exit.
+stage_snapshot() {
+  local rc=0
+  compose stop -t 120 "${WORKERS[@]}" hermes >/dev/null
+  ops ops snapshot --name "$@" || rc=$?
+  start_services
+  return "$rc"
+}
+
+stage_build() {
+  local yes=0 early=7 anchor=today timeout=1800 attempts=3 n=1 rc t0=$SECONDS
+  while (($#)); do
+    case "$1" in
+      --early) early=$2; shift 2 ;;
+      --anchor) anchor=$2; shift 2 ;;
+      --timeout) timeout=$2; shift 2 ;;
+      --attempts) attempts=$2; shift 2 ;;
+      --yes) yes=1; shift ;;
+      *) die "stage-build: unknown option $1" ;;
+    esac
+  done
+  local data="$HOME/DevFiles/mona-hq/demo-data"
+  local corpus=${MONA_CORPUS_DIR:-$HOME/DevFiles/mona-hq/100 PDF neclasificate}
+  local manifest=${MONA_CORPUS_MANIFEST:-$data/corpus/manifest.jsonl}
+  local synthetic=${MONA_SYNTHETIC_DIR:-$data/synthetic}
+  [[ -n "${MONA_SEED_OVERLAY_HOST:-}" ]] || die "stage-build: set MONA_SEED_OVERLAY_HOST"
+  [[ -d "$corpus" && -d "$synthetic" && -f "$manifest" ]] \
+    || die "stage-build: corpus, synthetic folder or corpus manifest not found"
+  if ((!yes)); then
+    read -r -p "Rebuild the stage: the database and the data trees are emptied. Go on? [y/N] " answer
+    [[ "$answer" == [yY]* ]] || die "nothing changed"
+  fi
+  local mounts=(-v "$(readlink -f "$corpus"):/stage/corpus:ro"
+                -v "$(readlink -f "$manifest"):/stage/manifest.jsonl:ro"
+                -v "$(readlink -f "$synthetic"):/stage/synthetic:ro"
+                -v "$ROOT/demo/expectations.yaml:/stage/expectations.yaml:ro")
+  echo "== 1/9 clean slate and the pre-seeded tier"
+  compose stop -t 120 "${WORKERS[@]}" hermes api >/dev/null
+  ops ops stage clean
+  ops seed load /seed --tier preseeded
+  start_services
+  echo "== 2/9 the pre-filed history through intake"
+  OPS_EXTRA=("${mounts[@]}")
+  ops ops stage intake --group prefiled --settle --timeout "$timeout"
+  OPS_EXTRA=()
+  echo "== 3/9 stage settings (C9 §6.7, A18)"
+  ops ops stage settings --early "$early"
+  echo "== 4/9 demo (pre-batch) with its findQuery cases"
+  ops ops stage evidence
+  stage_snapshot demo --findquery /data/stage-build/findquery.json
+  echo "== 5/9 reset to demo"
+  demo_reset --name demo --anchor "$anchor" --yes
+  echo "== 6/9 the live batch until its debrief is ready"
+  while :; do
+    rc=0
+    OPS_EXTRA=("${mounts[@]}")
+    ops ops stage intake --group live --debrief --timeout "$timeout" || rc=$?
+    OPS_EXTRA=()
+    ((rc == 0)) && break
+    # exit 3: the debrief left a candidate out; another live run from demo may not
+    ((rc == 3 && n < attempts)) || die "stage-build: no usable debrief after $n attempt(s)"
+    n=$((n + 1))
+    echo "-- attempt $n: reset to demo and drop the live batch again"
+    demo_reset --name demo --anchor "$anchor" --yes
+  done
+  echo "== 7/9 demo-prefiled"
+  stage_snapshot demo-prefiled
+  echo "== 8/9 the live run's caches into demo"
+  ops ops refresh-textcache --name demo
+  echo "== 9/9 reset to demo and check the cached debrief"
+  demo_reset --name demo --anchor "$anchor" --yes
+  ops ops stage cache-check
+  echo "stage-build: done in $((SECONDS - t0)) s"
+}
+
 doctor() {
   local privacy=()
   [[ " $* " == *" --privacy "* ]] && privacy=(--privacy)
@@ -198,6 +276,7 @@ shift
 case "$cmd" in
   demo-snapshot) demo_snapshot "$@" ;;
   demo-reset) demo_reset "$@" ;;
+  stage-build) stage_build "$@" ;;
   backup) backup "$@" ;;
   restore) restore "$@" ;;
   up) compose up -d --wait ;;

@@ -33,6 +33,7 @@ from tests.pipeline_world import (
 LIVE_ORDER = ["syn-sie-letter", "syn-oxyleo-prep", "syn-supplier-rotated", "syn-agipi-per",
               "syn-unreadable", "syn-urssaf-call", "syn-hello-fy-crossing", "syn-patient-devis",
               "syn-patient-ordonnance", "syn-patient-care-sheet"]  # fmt: skip
+HISTORY = ("SIE Mayenne", "AGIPI", "urssaf-pays-de-la-loire", "Hello bank", "Dentalis Fournitures")
 
 
 def review_invariant(p: Pipeline) -> None:
@@ -151,6 +152,8 @@ def test_adding_to_a_batch_needs_it_running(l1m2_demo_engine, tmp_path):
 @pytest.fixture
 def ran(l1m2_demo_engine, tmp_path):
     p = Pipeline(l1m2_demo_engine, tmp_path / "data")
+    p.set_thresholds(85, 60)
+    p.filed_history(*HISTORY)
     live = p.drop_synthetic([*LIVE_ORDER, "syn-urssaf-call"])
     visitors = p.drop_synthetic(["syn-visitor-photo"], visitor=True)
     p.drain()
@@ -293,6 +296,7 @@ def test_schema_invalid_output_is_retried(l1m2_demo_engine, tmp_path):
             return super().complete(system, user, schema)
 
     p = Pipeline(l1m2_demo_engine, tmp_path / "data", model=Flaky({}))
+    p.filed_history("SIE Mayenne")
     doc = ids(p.drop_synthetic(["syn-sie-letter"], outputs=False))[0]
     p.drain()
     assert p.row(doc)["status"] == "filed" and len(p.model.calls) == 2
@@ -490,6 +494,7 @@ def test_second_classification_of_the_same_bytes_uses_the_cache_and_todays_rules
     name = SYNTHETIC["syn-agipi-per"]["file"]
     model = FakeModel({name: RECORDED["outputs"]["syn-agipi-per"]})
     first = Pipeline(l1m2_demo_engine, tmp_path / "data", model=model)
+    first.filed_history("AGIPI")
     doc1 = ids(first.drop_synthetic(["syn-agipi-per"], outputs=False))[0]
     first.drain()
     assert len(model.calls) == 1
@@ -622,6 +627,8 @@ def test_six_feedback_cases_file_to_their_paths(l1m2_learned_engine, tmp_path):
 def test_conflicting_rules_queue_with_both_ids(l1m2_demo_engine, tmp_path):
     p = Pipeline(l1m2_demo_engine, tmp_path / "data")
     _add_rule(p, "t-oxyleo-cabinet", "oxyleo", {"entity": "selarl-simina", "category": "tax"})
+    p.set_thresholds(85, 60)
+    p.filed_history("oxyleo")
     doc = ids(p.drop_synthetic(["syn-oxyleo-prep"]))[0]
     p.drain()
     r = p.row(doc)

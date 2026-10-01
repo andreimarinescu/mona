@@ -44,7 +44,7 @@ export const patchCategory = (id: string, body: CategoryPatch) => patch<Category
 export const previewTemplate = (body: { pathTemplate: string; fileTemplate: string; entityId?: string }, signal?: AbortSignal) =>
   request<TemplatePreview>('POST', '/api/templates/preview', { json: body, signal });
 
-export const DEFAULT_THRESHOLDS: SettingsThresholds = { confidenceHigh: 85, confidenceLow: 60, badgeHours: 24 };
+export const DEFAULT_THRESHOLDS: SettingsThresholds = { confidenceHigh: 90, confidenceLow: 75, badgeHours: 24 };
 
 export function useThresholds(): SettingsThresholds {
   const s = useSettings().data;

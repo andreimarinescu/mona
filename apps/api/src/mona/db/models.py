@@ -772,8 +772,8 @@ class PracticeSettings(Base):
     singleton: Mapped[bool] = mapped_column(primary_key=True, server_default=text("true"))
     practice_name: Mapped[str]
     filing_language: Mapped[str] = mapped_column(server_default="fr")
-    confidence_high: Mapped[int] = _small(server_default="85")
-    confidence_low: Mapped[int] = _small(server_default="60")
+    confidence_high: Mapped[int] = _small(server_default="90")
+    confidence_low: Mapped[int] = _small(server_default="75")
     badge_hours: Mapped[int] = _small(server_default="24")
     debrief_queue_threshold: Mapped[int] = _small(server_default="5")
     debrief_early_min: Mapped[int] = _small(server_default="5")

@@ -36,8 +36,7 @@ SCRIPT_ORDER = [
 ]
 PREFILED_SCRIPT = [
     *["2a7f59091e07", "3bb97ca05844", "bc1aa08e13ec", "804e66355f40", "18bd5e19bab9", "a0315e754e52"],
-    *["b9c89da3fa92", "56d901f94557", "749383ec4112", "85f83829b38d", "70bb174428a1", "0a1de5b3b9d0"],
-    *["e1574a7af51f", "a5a2e4a2b529", "syn-urssaf-call"],
+    *["b9c89da3fa92", "56d901f94557", "syn-urssaf-call", "syn-sie-earlier", "syn-supplier-earlier"],
 ]
 ID = re.compile(r"^([0-9a-f]{12}|syn-[a-z0-9-]+)$")
 REQUIRED_CASES = {
@@ -127,9 +126,9 @@ def test_acceptance_cases_are_all_covered(expectations):
 def test_live_batch_tallies_match_the_script_before_and_after(expectations):
     live = [e for e in expectations["docs"] if e["group"] == "live"]
     before = Counter(state(e, "before")["outcome"] for e in live)
-    assert before == {"file": 10, "queue": 7, "unreadable": 1, "duplicate": 1}
+    assert before == {"file": 9, "queue": 8, "unreadable": 1, "duplicate": 1}
     after = Counter(final(e)["outcome"] for e in live)
-    assert after == {"file": 16, "queue": 1, "unreadable": 1, "duplicate": 1}
+    assert after == {"file": 15, "queue": 2, "unreadable": 1, "duplicate": 1}
 
 
 def test_learned_rules_change_exactly_the_debrief_documents(expectations):
@@ -223,7 +222,7 @@ def test_reasons_and_outcomes_are_consistent(expectations):
                 assert not s["reasons"] and has_destination(s)
             if s["outcome"] == "queue":
                 assert s["reasons"]
-            if "entity" in s["reasons"]:
+            if "entity" in s["reasons"] and not s.get("first_seen"):
                 assert not has_destination(s)
             if s["outcome"] == "unreadable":
                 assert s["reasons"] == ["unreadable"]
@@ -243,7 +242,7 @@ def test_synthetic_expectations_render(expectations, practice, tier):
         out = templates.render(reg, doc_for(e, tier, synthetic_values(e["id"]), mime))
         assert (out.path, out.file_name, out.fiscal_year) == (s["path"], s["file_name"], s["fiscal_year"]), e["id"]
         count += 1
-    assert count == {"before": 8, "after": 10}[tier]
+    assert count == {"before": 10, "after": 12}[tier]
 
 
 def test_synthetic_docs_yaml_carries_the_final_destination(expectations):
