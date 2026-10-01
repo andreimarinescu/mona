@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mona.chat import notes
-from mona.chat.overlay import reply_language
+from mona.chat.overlay import language_slip, reply_language, reply_text
 from mona.db.models import ChatTurn, Conversation
 from mona.ids import new_id, new_ulid
 
@@ -30,6 +30,7 @@ class Turn:
     reply_language: str
     language_pinned: bool
     needs_session: bool
+    language_slip: str | None = None
     notes: list[str] = field(default_factory=list)
 
 
@@ -65,13 +66,15 @@ async def open_turn(
         )
         previous = (
             await conn.execute(
-                select(ChatTurn.reply_language)
+                select(ChatTurn.reply_language, ChatTurn.parts)
                 .where(ChatTurn.conversation_id == cid)
                 .order_by(ChatTurn.opened_at.desc(), ChatTurn.id.desc())
                 .limit(1)
             )
-        ).scalar()
-        language, pinned = reply_language(message, requested_language, previous, locale)
+        ).first()
+        language, pinned = reply_language(
+            message, requested_language, previous[0] if previous else None, locale
+        )
         needs_session = not (
             await conn.execute(
                 select(exists().where(ChatTurn.conversation_id == cid, ChatTurn.status == "closed"))
@@ -85,6 +88,9 @@ async def open_turn(
             reply_language=language,
             language_pinned=pinned,
             needs_session=needs_session,
+            language_slip=(
+                language_slip(reply_text(previous[1] or []), previous[0]) if previous else None
+            ),
         )
         try:
             await conn.execute(

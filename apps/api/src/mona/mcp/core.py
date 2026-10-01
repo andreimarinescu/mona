@@ -7,6 +7,8 @@ import functools
 import hashlib
 import json
 import logging
+import math
+import time
 from collections.abc import Awaitable, Callable, Iterable
 from typing import Any, Literal
 
@@ -14,6 +16,8 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError, ValidationError
 from fastmcp.server.dependencies import get_http_headers
 from fastmcp.server.middleware import Middleware
+from fastmcp.tools import ToolResult
+from mcp.types import TextContent
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import func, insert, select
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -21,6 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from mona.db import get_engine
 from mona.db.models import CardEvent, ChatTurn, Document
 from mona.ids import new_id
+from mona.settings import get_settings
 from mona.visibility import RuleVisibility, Scope, rule_visibility, scope_for
 
 logger = logging.getLogger(__name__)
@@ -30,6 +35,11 @@ Channel = Literal["web", "telegram"]
 MAX_RESULT_CHARS = 4000
 TOOL_BUDGET_S = 10.0
 DEFAULT_LIMIT, MAX_LIMIT = 10, 25
+TELEGRAM_TURN_GAP_S = 30.0
+BUDGET_EXHAUSTED = {
+    "error": "budget_exhausted",
+    "message": "Answer now with what you already have, and say plainly what you couldn't do.",
+}
 
 
 class ToolFailure(Exception):
@@ -79,7 +89,46 @@ class ArgumentErrors(Middleware):
             ) from None
 
 
-mcp = FastMCP("mona", middleware=[ArgumentErrors()], mask_error_details=True)
+class TurnBudget(Middleware):
+    """A28's turn budget; a Telegram turn is a run of calls under TELEGRAM_TURN_GAP_S apart."""
+
+    def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
+        self._clock = clock
+        self.reset()
+
+    def reset(self) -> None:
+        self._web: tuple[str | None, int] = (None, 0)
+        self._telegram: tuple[float, int] = (-math.inf, 0)
+
+    async def _count(self, ch: Channel) -> int | None:
+        if ch == "web":
+            async with get_engine().connect() as conn:
+                turn = await attributed_turn(conn, ch)
+            if turn is None:
+                return None
+            last, n = self._web
+            self._web = (turn, n + 1 if last == turn else 1)
+            return self._web[1]
+        now = self._clock()
+        last_at, n = self._telegram
+        self._telegram = (now, n + 1 if now - last_at <= TELEGRAM_TURN_GAP_S else 1)
+        return self._telegram[1]
+
+    async def on_call_tool(self, context, call_next):
+        ch = channel()
+        n = await self._count(ch)
+        if n is not None and n > get_settings().mona_turn_tool_budget:
+            logger.warning("turn budget: call %d on %s refused", n, ch)
+            # Not isError: Hermes pauses the whole server after 3 error results in a row.
+            return ToolResult(
+                content=[TextContent(type="text", text=json.dumps(BUDGET_EXHAUSTED))],
+                structured_content=BUDGET_EXHAUSTED,
+            )
+        return await call_next(context)
+
+
+turn_budget = TurnBudget()
+mcp = FastMCP("mona", middleware=[turn_budget, ArgumentErrors()], mask_error_details=True)
 
 
 def channel() -> Channel:

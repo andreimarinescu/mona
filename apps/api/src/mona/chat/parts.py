@@ -10,6 +10,10 @@ class PartsRecorder:
         self._tools: dict[str, dict[str, Any]] = {}
         self.text_emitted = False
 
+    @property
+    def has_text(self) -> bool:
+        return any(p["type"] == "text" and p["text"].strip() for p in self.parts)
+
     def record(self, chunk: dict[str, Any]) -> None:
         kind = chunk["type"]
         if kind in ("reasoning-start", "text-start"):

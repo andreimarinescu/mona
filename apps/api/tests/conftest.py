@@ -78,6 +78,14 @@ async def app_db(seeded_template):
             _clear_caches()
 
 
+@pytest.fixture(autouse=True)
+def fix10_turn_budget():
+    """A test starts a fresh Telegram turn: the budget's state is per process."""
+    from mona.mcp.core import turn_budget
+
+    turn_budget.reset()
+
+
 @pytest.fixture
 def clean(app_db) -> str:
     with psycopg.connect(get_settings().libpq_url) as conn:

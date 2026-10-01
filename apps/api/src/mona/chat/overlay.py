@@ -1,8 +1,8 @@
 """The turn's `system` overlay and reply language (C3 §4.2, C8 §4 language detection)."""
 
 import re
-from collections.abc import Sequence
-from typing import Literal, cast
+from collections.abc import Iterable, Sequence
+from typing import Any, Literal, cast
 
 from mona.i18n import detect_language
 
@@ -15,6 +15,7 @@ _SPACES = re.compile(r"\s+")
 
 ROUTE_MAX, SUMMARY_MAX = 200, 300
 MAX_NOTES = 10
+SLIP_MIN_WORDS = 20
 
 
 def single_line(value: str, limit: int | None = None) -> str:
@@ -32,6 +33,18 @@ def reply_language(
     return detect_language(message) or cast(Lang, previous or locale), False
 
 
+def reply_text(parts: Iterable[dict[str, Any]]) -> str:
+    return " ".join(p.get("text", "") for p in parts if p.get("type") == "text")
+
+
+def language_slip(text: str, expected: str) -> Lang | None:
+    """A29: the language a reply of 20 words or more was written in, when it isn't `expected`."""
+    if len(text.split()) < SLIP_MIN_WORDS:
+        return None
+    found = detect_language(text)
+    return found if found is not None and found != expected else None
+
+
 def build_overlay(
     route: str,
     summary: str,
@@ -39,8 +52,9 @@ def build_overlay(
     notes: Sequence[str] = (),
     *,
     pinned: bool = False,
+    slip: str | None = None,
 ) -> str:
-    """`notes` are the pending note texts, oldest first."""
+    """`notes` are the pending note texts, oldest first; `slip` is A29's previous reply language."""
     route = page_route(route)
     name = LANGUAGE_NAMES[language]
     said = "asked for replies in" if pinned else "wrote in"
@@ -50,6 +64,8 @@ def build_overlay(
         f"- Page: {single_line(route, ROUTE_MAX)} — {single_line(summary, SUMMARY_MAX)}",
         f"- The person {said} {name}. Reply in {name}.",
     ]
+    if slip is not None and slip != language:
+        lines.append(f"- Your previous reply was in {LANGUAGE_NAMES[slip]}; reply in {name}.")
     if notes:
         lines.append(
             "Card actions since your last reply (the user did these in the app; "

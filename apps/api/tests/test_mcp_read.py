@@ -3,6 +3,7 @@ from datetime import UTC, date, datetime, timedelta
 import pytest
 
 from mona import clock
+from mona.mcp.core import turn_budget
 from tests import rows
 from tests.mcp_http import call
 
@@ -454,6 +455,7 @@ async def test_personal_documents_are_invisible_on_telegram(archive):
     # C9 §3.1: documents with no entity yet are invisible on Telegram too.
     assert (web_all.data["total"], everything.data["total"]) == (9, 4)
 
+    turn_budget.reset()  # a new Telegram turn (A28)
     web = await call("sum_amounts", {"year": 2025}, channel="web")
     tg = await call("sum_amounts", {"year": 2025}, channel="telegram")
     assert web.data["totals"][0]["total"] == 3140.0

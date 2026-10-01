@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     hermes_url: str = "http://hermes:8642"
     mona_attach_root: Path = Path("/opt/data/cache")
     mona_llm_model: str = "qwen/qwen3.7-flash"
+    mona_turn_tool_budget: int = 6
     mona_llm_backend: Literal["openrouter", "llama-server"] = "openrouter"
     mona_llm_base_url: str | None = None
     mona_hermes_home: Path | None = None

@@ -5,7 +5,7 @@ model:
   context_length: 65536
 agent:
   reasoning_effort: "medium"
-  max_turns: 12
+  max_turns: 8
   disabled_toolsets:
     - terminal
     - code_execution

@@ -10,6 +10,7 @@ SENTENCES = ("default", "low", "entity", "conflict", "asked", "unreadable")
 CONTRACT_KEYS = [f"review.sentence.{k}{v}" for k in SENTENCES for v in ("", "_anon")] + [
     "review.sentence.first",
     "interview.option.ask",
+    "chat.fallback.too_complex",
 ]
 PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 

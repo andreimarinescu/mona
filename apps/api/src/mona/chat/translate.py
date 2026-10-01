@@ -92,6 +92,10 @@ class Translator:
     def close(self) -> list[Chunk]:
         return self._end_text() + self._end_reasoning()
 
+    def text(self, text: str) -> list[Chunk]:
+        """A whole text part of the adapter's own."""
+        return self._text_delta(text) + self._end_text()
+
     @property
     def ui_finish_reason(self) -> str:
         return self.finish_reason if self.finish_reason in ("stop", "length") else "other"

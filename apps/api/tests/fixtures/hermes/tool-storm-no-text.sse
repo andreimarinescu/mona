@@ -1,0 +1,241 @@
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "I "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "need "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "the "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "payables "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "first. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__search_documents", "emoji": "\u26a1", "label": "mcp__mona__search_documents", "toolCallId": "chatcmpl-tool-0000000000001000", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__search_documents", "toolCallId": "chatcmpl-tool-0000000000001000", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Each "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "document "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "may "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "show "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "the "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "it. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001001", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001001", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "No "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "field "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "in "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "this "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "result; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "try "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "the "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "next "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "one. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001002", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001002", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001003", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001003", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001004", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001004", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001005", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001005", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001006", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001006", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001007", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001007", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001008", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001008", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001009", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-0000000000001009", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "emoji": "\u26a1", "label": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-000000000000100a", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__get_document", "toolCallId": "chatcmpl-tool-000000000000100a", "status": "completed"}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "Still "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "no "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "IBAN; "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "open "}, "finish_reason": null}]}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {"reasoning_content": "another. "}, "finish_reason": null}]}
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__search_documents", "emoji": "\u26a1", "label": "mcp__mona__search_documents", "toolCallId": "chatcmpl-tool-000000000000100b", "status": "running"}
+
+: keepalive
+
+event: hermes.tool.progress
+data: {"tool": "mcp__mona__search_documents", "toolCallId": "chatcmpl-tool-000000000000100b", "status": "completed"}
+
+event: hermes.status
+data: {"type": "warning", "message": "Reached maximum iterations (12). Requesting summary..."}
+
+data: {"id": "chatcmpl-7f3c0e5d2b1a4c9e8d7f6a5b4c3d2e1f", "object": "chat.completion.chunk", "created": 1790866800, "model": "mona", "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}], "usage": {"prompt_tokens": 61234, "completion_tokens": 2210, "total_tokens": 63444}}
+
+data: [DONE]
+

@@ -13,10 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mona.chat import cards
 from mona.chat.hermes import HermesClient, HermesError
-from mona.chat.overlay import build_overlay
+from mona.chat.overlay import build_overlay, language_slip, reply_text
 from mona.chat.parts import PartsRecorder
 from mona.chat.translate import SSEParser, Translator
 from mona.chat.turns import Turn, close_turn, touch
+from mona.i18n import t
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,7 @@ async def run_turn(
     engine: AsyncEngine, hermes: HermesClient, turn: Turn, route: str, summary: str
 ) -> AsyncIterator[str]:
     rec, tr, parser = PartsRecorder(), Translator(), SSEParser()
+    fallback = t("chat.fallback.too_complex", turn.reply_language)
     status, error_code, release = "open", None, False
     loop_time = asyncio.get_running_loop().time
     last_touch = loop_time()
@@ -140,7 +142,12 @@ async def run_turn(
                     yield frame
                 return
         overlay = build_overlay(
-            route, summary, turn.reply_language, turn.notes, pinned=turn.language_pinned
+            route,
+            summary,
+            turn.reply_language,
+            turn.notes,
+            pinned=turn.language_pinned,
+            slip=turn.language_slip,
         )
         upstream = [
             {"role": "system", "content": overlay},
@@ -203,6 +210,9 @@ async def run_turn(
                 yield sse({"type": "finish", "finishReason": "error"})
         else:
             status = "closed"
+            if not rec.has_text:
+                for chunk in tr.text(fallback):
+                    yield out(chunk)
             yield sse({"type": "finish-step"})
             yield sse(
                 {
@@ -221,6 +231,12 @@ async def run_turn(
         yield sse({"type": "finish", "finishReason": "error"})
         yield DONE
     finally:
+        if status == "open" and not rec.has_text and any(p["type"] == "tool" for p in rec.parts):
+            for chunk in tr.text(fallback):
+                rec.record(chunk)
+        slip = language_slip(reply_text(rec.parts), turn.reply_language)
+        if slip is not None:
+            logger.warning("turn %s: replied in %s, not %s", turn.id, slip, turn.reply_language)
         with anyio.CancelScope(shield=True):
             await close_turn(
                 engine,

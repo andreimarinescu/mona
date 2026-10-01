@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from mona.chat import notes
-from mona.chat.overlay import build_overlay, reply_language
+from mona.chat.overlay import build_overlay, language_slip, reply_language
 from mona.chat.turns import title_for
 
 HEAD = (
@@ -135,3 +135,11 @@ def test_reply_language_order():
 )
 def test_conversation_title(message, title):
     assert title_for(message) == title
+
+
+def test_language_slip_needs_20_words_and_another_language():
+    french = "la facture du fournisseur est due le 14 octobre et nous avons un appel de cotisations"
+    nineteen = " ".join((french + " pour le cabinet de la société mère").split()[:19])
+    assert language_slip(nineteen, "en") is None
+    assert language_slip(nineteen + " cabinet", "en") == "fr"
+    assert language_slip(nineteen + " cabinet", "fr") is None

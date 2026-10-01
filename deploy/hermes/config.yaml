@@ -11,7 +11,7 @@ provider_routing:
       require_parameters: true
 agent:
   reasoning_effort: "medium"
-  max_turns: 12
+  max_turns: 8
 platform_toolsets:
   api_server: [memory, mona]
   telegram: [memory, mona_tg]

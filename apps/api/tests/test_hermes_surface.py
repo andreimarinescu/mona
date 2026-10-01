@@ -82,3 +82,20 @@ def test_soul_steers_a_draft_to_one_search_and_draft_reply():
     principles = soul.split("## Principles", 1)[1].split("\n## ", 1)[0]
     line = next(x for x in principles.splitlines() if x.startswith("- Use as few tools"))
     assert "find the letter with one search and call draft_reply with its id straight away" in line
+
+
+def test_hermes_stops_a_turn_after_8_iterations_in_dev_and_prod():
+    prod = yaml.safe_load((ROOT / "deploy" / "hermes" / "config.prod.yaml").read_text())
+    assert CONFIG["agent"]["max_turns"] == prod["agent"]["max_turns"] == 8
+
+
+def test_soul_lists_what_mona_can_and_cannot_do():
+    soul = (ROOT / "deploy" / "hermes" / "SOUL.md").read_text()
+    section = soul.split("## What you can do here, and what you can't", 1)[1].split("\n## ", 1)[0]
+    lines = section.strip().splitlines()
+    can = next(x for x in lines if x.startswith("- You can:"))
+    cannot = next(x for x in lines if x.startswith("- You can't:"))
+    assert "export a table of documents (CSV, Excel, Word)" in can and "IBAN" in can
+    assert all(w in cannot for w in ("run programs", "browse", "send anything"))
+    assert any("say so in one line and offer the nearest thing" in x for x in lines)
+    assert any("budget_exhausted" in x for x in lines)
