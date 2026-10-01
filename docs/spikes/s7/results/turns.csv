@@ -1,0 +1,192 @@
+cfg,ask,recipe,rep,tools,skill_views,all_calls,mona_calls,llm_calls,prompt_tokens,cache_read_tokens,output_tokens,reasoning_tokens,t_first_reasoning,t_first_text,t_close,correct,path_ok,empty,wrong_lang,tool_errors,breaker_hits,unknown_tools,est_cost_usd
+A,hello,none,1,,,0,0,1,8993,0,114,122,0.85,1.99,2.08,False,True,False,,0,0,0,0.00146295
+A,due-1,due-this-month,1,list_deadlines,,1,1,2,18409,17920,290,160,0.79,4.74,5.4,True,True,False,False,0,0,0,0.00125935
+A,due-2,due-this-month,1,list_deadlines,,1,1,2,18457,17920,332,168,0.71,4.4,4.87,True,True,False,False,0,0,0,0.00130855
+A,owe-1,owed-or-paid,1,search_documents,,1,1,2,18636,17920,413,226,0.64,5.37,6.73,True,True,False,False,0,0,0,0.0014164
+A,paid-1,owed-or-paid,1,sum_amounts search_documents,,2,2,2,20214,8960,663,298,0.81,9.38,12.86,True,False,False,False,0,0,0,0.0027990999999999997
+A,draft-1,draft-reply,1,search_documents draft_reply,,2,2,3,28528,27648,468,186,0.78,5.62,7.13,True,True,False,False,0,0,0,0.0019824
+A,draft-2,draft-reply,1,search_documents search_documents draft_reply,,3,3,4,40073,37632,560,114,0.63,4.08,7.93,True,False,False,False,0,0,0,0.00280775
+A,pack-1,accountant-pack,1,export_accountant_pack,,1,1,2,18397,17920,345,181,0.83,3.97,4.47,True,True,False,False,0,0,0,0.00131255
+A,pack-2,accountant-pack,1,export_accountant_pack,,1,1,2,18300,17920,202,89,0.62,2.62,3.69,True,True,False,False,0,0,0,0.0011550000000000002
+A,none-1,none,1,list_review_queue list_deadlines,,2,2,2,18786,17920,477,231,0.73,6.52,8.01,True,False,False,False,0,0,0,0.0015029
+A,none-2,none,1,search_documents,,1,1,2,18620,0,304,75,0.78,2.36,3.95,True,True,False,False,0,0,0,0.003097
+A,due-1,due-this-month,2,list_deadlines,,1,1,2,18348,17920,175,57,0.81,1.93,2.75,True,True,False,False,0,0,0,0.0011352
+A,due-2,due-this-month,2,list_deadlines,,1,1,2,18417,17920,262,96,0.8,3.42,4.01,True,True,False,False,0,0,0,0.00123255
+A,owe-1,owed-or-paid,2,search_documents sum_amounts,,2,2,2,19001,17920,394,151,0.79,5.15,6.07,True,False,False,False,0,0,0,0.00145215
+A,paid-1,owed-or-paid,2,sum_amounts,,1,1,2,18879,17920,337,182,0.69,2.98,4.6,True,True,False,False,0,0,0,0.00137685
+A,draft-1,draft-reply,2,search_documents list_review_queue draft_reply,,3,3,3,29622,28160,509,192,0.64,11.11,11.77,True,False,False,False,0,0,0,0.0021363
+A,draft-2,draft-reply,2,search_documents search_documents draft_reply,,3,3,4,40139,36096,573,151,0.77,6.16,9.62,True,False,False,False,0,0,0,0.00298425
+A,pack-1,accountant-pack,2,export_accountant_pack,,1,1,3,27344,26880,338,141,0.93,4.77,5.24,True,True,False,False,0,0,0,0.0017515999999999999
+A,pack-2,accountant-pack,2,export_accountant_pack,,1,1,2,18336,17920,216,126,0.67,2.34,2.65,True,True,False,False,0,0,0,0.0011744
+A,none-1,none,2,list_review_queue list_deadlines,,2,2,2,18902,17920,477,180,0.8,4.9,6.62,True,False,False,False,0,0,0,0.0015203
+A,none-2,none,2,search_documents,,1,1,2,18651,17920,285,81,0.85,4.62,7.51,True,True,False,False,0,0,0,0.00129065
+A,due-1,due-this-month,3,list_deadlines,,1,1,2,18425,17920,287,152,0.66,3.49,3.91,True,True,False,False,0,0,0,0.0012587499999999999
+A,due-2,due-this-month,3,list_deadlines,,1,1,2,18159,8960,291,128,1.7,7.73,9.37,True,True,False,False,0,0,0,0.00211885
+A,owe-1,owed-or-paid,3,search_documents,,1,1,2,18340,8960,293,96,0.77,4.0,4.83,True,True,False,False,0,0,0,0.0021479999999999997
+A,paid-1,owed-or-paid,3,sum_amounts,,1,1,2,18281,8448,364,215,1.59,8.52,9.39,True,True,False,False,0,0,0,0.00226135
+A,draft-1,draft-reply,3,search_documents list_review_queue draft_reply,,3,3,3,29554,17408,607,221,0.72,9.77,10.68,True,False,False,False,0,0,0,0.0032993
+A,draft-2,draft-reply,3,search_documents search_documents draft_reply,,3,3,4,39785,35392,528,166,0.63,8.78,10.26,True,False,False,False,0,0,0,0.00295655
+A,pack-1,accountant-pack,3,export_accountant_pack,,1,1,3,27653,27136,368,176,0.69,5.13,5.82,True,True,False,False,0,0,0,0.00180235
+A,pack-2,accountant-pack,3,export_accountant_pack,,1,1,2,18076,17408,244,150,0.66,4.31,4.96,True,True,False,False,0,0,0,0.0012146000000000001
+A,none-1,none,3,list_review_queue,,1,1,2,18281,17408,241,75,0.56,4.55,9.71,True,True,False,False,0,0,0,0.0012423500000000001
+A,none-2,none,3,search_documents,,1,1,2,18625,17920,267,70,0.69,3.33,4.55,True,True,False,False,0,0,0,0.00126875
+A,hard-1,hard,1,search_documents search_documents list_deadlines search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document search_documents get_document get_document get_document get_document get_document search_documents search_documents,,38,38,12,258178,207872,4543,2407,0.84,2.17,70.77,True,False,False,False,2,0,0,0.022482500000000002
+A,hard-2,hard,1,search_documents search_documents search_documents search_documents search_documents answer_question answer_question answer_question answer_question,,9,9,10,137886,109248,3418,2127,0.7,11.55,31.02,True,False,False,False,4,1,0,0.013176100000000001
+A,hard-1,hard,2,search_documents search_documents search_documents get_brief list_deadlines list_review_queue,,6,6,7,68625,65472,780,432,0.72,13.17,14.28,True,False,False,False,6,6,0,0.00452655
+A,hard-2,hard,2,search_documents sum_amounts search_documents search_documents search_documents get_brief list_deadlines list_review_queue,,8,8,8,81153,56320,1014,573,0.63,14.46,16.02,True,False,False,False,8,8,0,0.0075549499999999995
+A,hard-1,hard,3,search_documents search_documents search_documents list_deadlines get_brief search_documents terminal get_brief search_documents search_documents search_documents get_document get_document get_document get_document get_document,,16,16,12,130302,121344,1969,1312,0.66,9.3,36.4,True,False,False,False,7,6,1,0.009379899999999998
+A,hard-2,hard,3,search_documents search_documents search_documents search_documents sum_amounts search_documents search_documents search_documents search_documents search_documents search_documents search_documents get_document get_document get_document get_document get_document get_document get_document get_document get_document ingest_attachment mcp__terminal__run,,23,23,10,154340,128832,6536,2401,0.62,54.9,60.23,True,False,False,False,3,0,1,0.0168038
+B,hello,none,1,,,0,0,1,10695,5184,61,51,1.8,2.3,2.49,True,True,False,False,0,0,0,0.00114685
+B,due-1,due-this-month,1,list_deadlines list_deadlines,,2,2,3,32923,20736,265,84,1.05,6.32,6.79,True,False,False,False,1,0,0,0.00312985
+B,due-2,due-this-month,1,list_deadlines,,1,1,2,21898,21376,332,182,0.75,4.64,5.55,True,True,False,False,0,0,0,0.0014791
+B,owe-1,owed-or-paid,1,sum_amounts search_documents list_deadlines,,3,3,2,22732,10624,512,201,0.77,4.74,5.54,True,False,False,False,1,0,0,0.0028594
+B,paid-1,owed-or-paid,1,sum_amounts,,1,1,2,21939,9984,261,142,0.94,3.81,4.83,True,True,False,False,0,0,0,0.00255345
+B,draft-1,draft-reply,1,search_documents draft_reply,,2,2,3,33646,32640,560,221,0.82,6.0,7.7,True,True,False,False,0,0,0,0.0023429
+B,draft-2,draft-reply,1,search_documents search_documents get_document draft_reply,,4,4,5,60745,58240,874,334,0.66,15.85,18.04,True,False,False,False,0,0,0,0.0041617500000000005
+B,pack-1,accountant-pack,1,export_accountant_pack,,1,1,2,21727,21376,224,95,0.68,2.51,2.91,True,True,False,False,0,0,0,0.00134545
+B,pack-2,accountant-pack,1,export_accountant_pack,,1,1,2,21739,21376,240,132,0.78,3.59,4.18,True,True,False,False,0,0,0,0.0013632499999999999
+B,none-1,none,1,list_review_queue,,1,1,2,21981,21376,340,92,0.76,2.26,3.73,True,True,False,False,0,0,0,0.00149955
+B,none-2,none,1,search_documents,,1,1,2,22036,21376,314,76,0.64,2.28,3.78,True,True,False,False,0,0,0,0.0014818
+B,due-1,due-this-month,2,skill_view list_deadlines,due-this-month,2,1,2,22102,21248,225,77,0.78,3.15,3.63,True,True,False,False,0,0,0,0.0014155
+B,due-2,due-this-month,2,list_deadlines,,1,1,2,21822,21376,244,95,0.92,3.43,3.96,True,True,False,False,0,0,0,0.0013797
+B,owe-1,owed-or-paid,2,sum_amounts get_document,,2,2,3,33550,32640,475,257,0.72,6.33,7.21,True,False,False,False,0,0,0,0.0022435
+B,paid-1,owed-or-paid,2,sum_amounts search_documents,,2,2,3,35336,32000,803,318,0.76,5.93,10.72,True,False,False,False,0,0,0,0.0029034
+B,draft-1,draft-reply,2,search_documents list_deadlines draft_reply,,3,3,3,34778,21376,678,192,0.65,1.16,15.02,True,False,False,False,0,0,0,0.0037571
+B,draft-2,draft-reply,2,search_documents search_documents draft_reply,,3,3,4,47089,44800,733,237,0.83,6.45,10.88,True,False,False,False,0,0,0,0.00331635
+B,pack-1,accountant-pack,2,export_accountant_pack,,1,1,2,21736,21376,189,66,0.78,2.44,2.92,True,True,False,True,0,0,0,0.0013118000000000001
+B,pack-2,accountant-pack,2,skill_view export_accountant_pack,accountant-pack,2,1,3,33141,32448,228,98,0.68,3.98,4.35,True,True,False,False,0,0,0,0.00195435
+B,none-1,none,2,list_review_queue,,1,1,2,21994,21376,233,78,0.84,2.53,3.49,True,True,False,False,0,0,0,0.0013945
+B,none-2,none,2,search_documents,,1,1,2,22050,21376,302,99,0.64,2.51,3.42,True,True,False,False,0,0,0,0.0014719
+B,due-1,due-this-month,3,skill_view list_deadlines,due-this-month,2,1,3,33239,32064,340,145,0.69,4.26,4.76,True,True,False,False,0,0,0,0.00211945
+B,due-2,due-this-month,3,list_deadlines,,1,1,2,21836,21248,277,113,0.89,3.74,5.05,True,True,False,False,0,0,0,0.0014275999999999998
+B,owe-1,owed-or-paid,3,sum_amounts get_document,,2,2,3,33148,30880,342,147,0.9,6.51,7.47,True,False,False,False,0,0,0,0.0022262000000000002
+B,paid-1,owed-or-paid,3,sum_amounts search_documents,,2,2,2,23616,21248,857,386,0.85,9.89,13.25,True,False,False,False,0,0,0,0.0022746
+B,draft-1,draft-reply,3,search_documents list_review_queue list_deadlines search_documents search_documents get_document draft_reply,,7,7,5,63416,60032,1072,310,1.23,2.09,14.84,True,False,False,False,0,0,0,0.0045812
+B,draft-2,draft-reply,3,search_documents search_documents get_document draft_reply,,4,4,5,60738,56256,845,277,0.8,13.28,14.49,True,False,False,False,0,0,0,0.0043301
+B,pack-1,accountant-pack,3,export_accountant_pack,,1,1,2,21715,21248,218,95,0.9,2.9,3.28,True,True,False,False,0,0,0,0.00135045
+B,pack-2,accountant-pack,3,skill_view export_accountant_pack,accountant-pack,2,1,3,33128,32000,224,84,4.93,8.09,8.59,True,True,False,False,0,0,0,0.0019932
+B,none-1,none,3,list_review_queue list_deadlines,,2,2,2,21818,10624,480,193,0.78,4.62,5.81,True,False,False,False,0,0,0,0.0026902999999999996
+B,none-2,none,3,search_documents,,1,1,2,22041,21248,291,70,0.69,2.96,4.71,True,True,False,False,0,0,0,0.0014723499999999999
+B,hard-1,hard,1,search_documents search_documents get_document get_document get_document get_document get_document get_document get_document search_documents search_documents get_document get_document get_document get_document get_document search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents get_document search_documents get_document search_documents,,30,30,12,243476,168128,5143,3092,0.79,1.61,77.95,True,False,False,False,2,0,0,0.0248516
+B,hard-2,hard,1,search_documents search_documents skill_manage get_brief search_documents skill_manage search_documents skill_manage search_documents search_documents skill_manage search_documents skill_manage,,13,8,12,194105,125888,3585,1184,0.8,,61.56,False,False,True,False,2,0,0,0.020111950000000003
+B,hard-1,hard,2,search_documents search_documents search_documents search_documents search_documents search_documents get_document get_document get_document get_document get_document search_documents search_documents search_documents search_documents get_document get_document get_document search_documents search_documents search_documents search_documents skill_view search_documents get_document get_document get_document,owed-or-paid,27,26,10,171623,133280,3411,1621,0.84,1.27,39.03,True,False,False,False,2,0,0,0.01582645
+B,hard-2,hard,2,search_documents search_documents search_documents sum_amounts start_interview start_interview get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document ingest_attachment ingest_attachment ingest_attachment start_interview skill_manage,,21,20,12,227116,201856,5741,1758,0.71,2.26,86.21,True,False,False,False,6,1,1,0.0196228
+B,hard-1,hard,3,search_documents search_documents list_deadlines search_documents list_deadlines search_documents get_brief list_review_queue,,8,8,6,72052,58560,966,407,0.84,1.61,14.15,True,False,False,False,8,8,0,0.005917799999999999
+B,hard-2,hard,3,search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents,,14,14,12,179533,150912,2767,1448,0.81,42.24,110.67,True,False,False,False,1,1,0,0.01460575
+B0,hello,none,1,,,0,0,1,11526,0,55,50,2.28,3.18,3.36,True,True,False,False,0,0,0,0.0017839
+C,hello,none,1,,,0,0,1,9493,0,130,126,1.58,2.54,2.64,True,True,False,False,0,0,0,0.00155395
+C,due-1,due-this-month,1,list_deadlines,,1,1,2,19427,18944,317,153,0.63,3.03,3.41,True,True,False,False,0,0,0,0.00133665
+C,due-2,due-this-month,1,list_deadlines,,1,1,2,19457,18944,339,149,0.73,3.37,3.85,True,True,False,False,0,0,0,0.00136315
+C,owe-1,owed-or-paid,1,search_documents,,1,1,2,19614,18944,329,168,0.78,2.94,3.34,True,True,False,False,0,0,0,0.0013767
+C,paid-1,owed-or-paid,1,sum_amounts,,1,1,2,19900,18944,470,327,0.79,3.52,4.13,True,True,False,False,0,0,0,0.0015606
+C,draft-1,draft-reply,1,search_documents draft_reply,,2,2,3,29937,28928,389,135,0.7,4.22,4.82,True,True,False,False,0,0,0,0.0019867500000000002
+C,draft-2,draft-reply,1,search_documents search_documents draft_reply,,3,3,4,40780,39424,438,135,0.8,6.11,6.56,True,False,False,False,0,0,0,0.0026126000000000005
+C,pack-1,accountant-pack,1,export_accountant_pack,,1,1,3,28864,28416,372,170,0.65,4.46,5.05,True,True,False,False,0,0,0,0.0018599999999999997
+C,pack-2,accountant-pack,1,export_accountant_pack,,1,1,2,18747,0,210,110,0.87,4.39,5.92,True,True,False,False,0,0,0,0.00302205
+C,none-1,none,1,list_review_queue,,1,1,2,19278,16864,240,66,0.69,2.41,4.34,True,True,False,False,0,0,0,0.0014453
+C,none-2,none,1,search_documents,,1,1,2,19031,15840,273,79,1.25,4.79,6.21,True,True,False,False,0,0,0,0.00154365
+C,due-1,due-this-month,2,list_deadlines,,1,1,2,18883,16896,374,216,0.95,8.16,10.17,True,True,False,False,0,0,0,0.0015168500000000001
+C,due-2,due-this-month,2,list_deadlines list_deadlines,,2,2,3,29202,17920,446,201,0.68,5.59,6.05,True,False,False,False,1,0,0,0.0030343
+C,owe-1,owed-or-paid,2,search_documents sum_amounts,,2,2,2,19710,14784,388,191,0.66,6.46,7.21,True,False,False,False,0,0,0,0.0018660999999999999
+C,paid-1,owed-or-paid,2,search_documents sum_amounts,,2,2,2,20872,17920,496,136,1.52,7.89,8.75,True,False,False,False,0,0,0,0.0018348000000000001
+C,draft-1,draft-reply,2,search_documents draft_reply,,2,2,3,29394,26368,424,193,1.01,5.62,7.07,True,True,False,False,0,0,0,0.0021963
+C,draft-2,draft-reply,2,search_documents search_documents draft_reply,,3,3,4,40344,27392,539,185,0.63,4.97,10.61,True,False,False,False,0,0,0,0.0038513999999999996
+C,pack-1,accountant-pack,2,export_accountant_pack,,1,1,2,19084,17920,270,134,1.29,7.24,7.7,True,True,False,False,0,0,0,0.0013406
+C,pack-2,accountant-pack,2,export_accountant_pack,,1,1,2,19030,17920,201,105,1.48,4.02,4.26,True,True,False,False,0,0,0,0.0012634999999999999
+C,none-1,none,2,list_review_queue,,1,1,2,19981,17920,434,98,1.82,5.45,7.81,True,True,False,False,0,0,0,0.0016391499999999998
+C,none-2,none,2,search_documents,,1,1,2,19621,18944,278,53,0.62,2.04,2.67,True,True,False,False,0,0,0,0.00132675
+C,due-1,due-this-month,3,list_deadlines,,1,1,2,19416,18944,317,157,0.75,2.68,3.26,True,True,False,False,0,0,0,0.0013349999999999998
+C,due-2,due-this-month,3,list_deadlines,,1,1,2,19472,18944,340,176,0.68,2.54,2.8,True,True,False,False,0,0,0,0.0013663999999999998
+C,owe-1,owed-or-paid,3,search_documents,,1,1,2,19406,9472,449,265,0.62,7.76,10.93,True,True,False,False,0,0,0,0.0024127
+C,paid-1,owed-or-paid,3,sum_amounts,,1,1,2,19917,18944,344,215,0.66,3.22,3.55,True,True,False,False,0,0,0,0.0014371499999999999
+C,draft-1,draft-reply,3,search_documents draft_reply,,2,2,3,29388,26368,419,183,1.03,7.68,8.19,True,True,False,False,0,0,0,0.0021904000000000003
+C,draft-2,draft-reply,3,search_documents draft_reply,,2,2,3,30117,27424,394,143,0.73,5.13,6.09,True,True,False,False,0,0,0,0.00216915
+C,pack-1,accountant-pack,3,export_accountant_pack,,1,1,4,38042,36864,473,209,0.59,6.17,6.48,True,True,False,False,0,0,0,0.0024929
+C,pack-2,accountant-pack,3,export_accountant_pack,,1,1,2,19039,17920,207,100,1.22,4.91,5.3,True,True,False,False,0,0,0,0.00127085
+C,none-1,none,3,list_review_queue,,1,1,2,19311,17920,411,226,0.69,7.45,8.84,True,True,False,False,0,0,0,0.00151565
+C,none-2,none,3,search_documents,,1,1,2,19646,18944,336,105,0.73,2.51,3.6,True,True,False,False,0,0,0,0.0013885
+C,hard-1,hard,1,search_documents search_documents get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document search_documents search_documents get_document get_document get_document get_document get_document get_document search_documents,,21,21,8,133848,106304,3292,2025,0.75,1.31,28.6,True,False,False,False,1,0,0,0.0127388
+C,hard-2,hard,1,search_documents sum_amounts sum_amounts get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document get_document,,21,21,12,208262,166976,2010,865,0.72,3.15,37.15,True,False,False,False,1,0,0,0.016551700000000003
+C,hard-1,hard,2,search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents sum_amounts list_deadlines get_brief search_documents search_documents list_review_queue,,17,17,12,149536,122624,1550,898,0.66,1.08,31.86,True,False,False,False,17,14,0,0.011718000000000001
+C,hard-2,hard,2,search_documents search_documents search_documents search_documents search_documents get_brief list_deadlines search_documents,,8,8,8,86409,78912,1099,703,0.97,13.75,14.34,True,False,False,False,8,8,0,0.00616915
+C,hard-1,hard,3,search_documents search_documents search_documents list_deadlines get_brief search_documents,,6,6,7,71885,65984,630,349,0.73,9.13,9.42,True,False,False,False,6,6,0,0.00481435
+C,hard-2,hard,3,search_documents search_documents search_documents search_documents get_brief list_deadlines search_documents search_documents sum_amounts search_documents read_file,,11,11,12,144970,134656,3159,1701,0.74,15.97,26.96,True,False,False,False,5,5,1,0.0114389
+D,hello,none,1,,,0,0,1,7943,0,65,54,1.61,1.86,1.98,True,True,False,False,0,0,0,0.00125645
+D,due-1,due-this-month,1,list_deadlines,,1,1,2,16020,7040,356,186,0.75,3.02,3.37,True,True,False,False,0,0,0,0.002055
+D,due-2,due-this-month,1,list_deadlines,,1,1,2,16331,14912,298,134,0.67,3.01,3.1,True,True,False,False,0,0,0,0.00125645
+D,owe-1,owed-or-paid,1,search_documents,,1,1,2,16536,7040,432,244,0.76,3.69,4.59,True,True,False,False,0,0,0,0.0022084
+D,paid-1,owed-or-paid,1,sum_amounts,,1,1,2,16779,14912,341,206,0.6,2.71,3.1,True,True,False,False,0,0,0,0.00136665
+D,draft-1,draft-reply,1,search_documents draft_reply,,2,2,3,25046,23200,513,213,0.59,3.75,4.52,True,True,False,False,0,0,0,0.0019499
+D,draft-2,draft-reply,1,search_documents search_documents draft_reply,,3,3,4,35723,31072,682,200,0.63,5.16,7.43,True,False,False,False,0,0,0,0.0029332499999999997
+D,pack-1,accountant-pack,1,export_accountant_pack,,1,1,2,16246,15744,238,99,0.8,2.22,2.68,True,True,False,False,0,0,0,0.0011005
+D,pack-2,accountant-pack,1,export_accountant_pack,,1,1,2,16265,15808,267,149,0.66,2.19,2.35,True,True,False,False,0,0,0,0.0011259500000000001
+D,none-1,none,1,list_review_queue,,1,1,2,16478,15808,306,72,0.68,1.93,2.63,True,True,False,False,0,0,0,0.0011968999999999999
+D,none-2,none,1,search_documents,,1,1,2,16523,15744,297,73,0.75,2.82,3.68,True,True,False,False,0,0,0,0.00120105
+D,due-1,due-this-month,2,list_deadlines,,1,1,2,16016,15264,259,130,1.37,4.48,5.71,True,True,False,False,0,0,0,0.001135
+D,due-2,due-this-month,2,list_deadlines,,1,1,2,16337,15744,323,152,1.06,3.22,3.59,True,True,False,False,0,0,0,0.00119915
+D,owe-1,owed-or-paid,2,search_documents list_deadlines,,2,2,2,16860,15808,458,199,0.79,4.72,6.79,True,False,False,False,0,0,0,0.0014062
+D,paid-1,owed-or-paid,2,sum_amounts search_documents,,2,2,3,25939,24768,560,324,0.76,5.65,6.36,True,False,False,False,0,0,0,0.0019740499999999998
+D,draft-1,draft-reply,2,search_documents draft_reply,,2,2,3,24996,23712,445,168,0.97,4.91,6.5,True,True,False,False,0,0,0,0.0018232
+D,draft-2,draft-reply,2,search_documents search_documents draft_reply,,3,3,4,35509,31392,471,156,0.63,5.74,7.47,True,False,False,False,0,0,0,0.0026581499999999997
+D,pack-1,accountant-pack,2,export_accountant_pack,,1,1,2,16240,15744,225,96,0.62,2.49,2.75,True,True,False,False,0,0,0,0.0010866
+D,pack-2,accountant-pack,2,export_accountant_pack,,1,1,2,16278,15808,255,141,0.58,2.36,2.96,True,True,False,False,0,0,0,0.0011159
+D,none-1,none,2,list_review_queue,,1,1,2,16476,15744,215,64,0.62,1.9,2.86,True,True,False,False,0,0,0,0.001112
+D,none-2,none,2,search_documents search_documents,,2,2,3,24876,24000,409,114,0.74,3.33,4.61,True,False,False,False,0,0,0,0.0017404
+D,due-1,due-this-month,3,list_deadlines,,1,1,2,16295,15744,263,131,0.65,3.02,3.55,True,True,False,False,0,0,0,0.00113285
+D,due-2,due-this-month,3,list_deadlines,,1,1,2,16317,15808,231,89,0.61,1.71,2.07,True,True,False,False,0,0,0,0.00109775
+D,owe-1,owed-or-paid,3,search_documents sum_amounts,,2,2,2,16901,15872,396,174,0.78,3.37,3.89,True,False,False,False,0,0,0,0.00134395
+D,paid-1,owed-or-paid,3,sum_amounts,,1,1,2,16772,15808,295,152,0.66,2.13,2.45,True,True,False,False,0,0,0,0.0012300000000000002
+D,draft-1,draft-reply,3,search_documents draft_reply,,2,2,3,25338,24512,497,175,0.68,4.34,5.87,True,True,False,False,0,0,0,0.0018465
+D,draft-2,draft-reply,3,search_documents search_documents draft_reply,,3,3,4,35880,31936,544,152,0.82,3.32,5.15,True,False,False,False,0,0,0,0.0027324
+D,pack-1,accountant-pack,3,export_accountant_pack,,1,1,2,16221,15808,190,77,0.65,1.94,2.25,True,True,False,False,0,0,0,0.00104235
+D,pack-2,accountant-pack,3,export_accountant_pack,,1,1,2,16278,15808,300,192,0.93,3.27,3.61,True,True,False,False,0,0,0,0.0011609
+D,none-1,none,3,list_review_queue,,1,1,2,16467,15872,237,54,0.64,1.81,2.72,True,True,False,False,0,0,0,0.00111985
+D,none-2,none,3,search_documents search_documents search_documents,,3,3,3,25520,24064,618,246,2.3,7.66,9.97,True,False,False,False,0,0,0,0.0020396
+D,hard-1,hard,1,search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents list_deadlines get_brief search_documents,,12,12,8,85588,75680,2026,1436,0.68,21.31,22.78,True,False,False,False,12,9,0,0.0072962
+D,hard-2,hard,1,search_documents search_documents search_documents list_deadlines get_brief,,5,5,6,51713,49088,656,349,0.69,9.29,10.82,True,False,False,False,5,5,0,0.00350415
+D,hard-1,hard,2,search_documents search_documents search_documents list_deadlines get_brief list_review_queue start_interview,,7,7,8,71047,67360,1123,704,0.75,12.07,13.7,True,False,False,False,7,7,0,0.00504405
+D,hard-2,hard,2,search_documents search_documents search_documents search_documents get_brief list_deadlines,,6,6,7,61090,56768,737,435,0.67,14.29,14.85,True,False,False,False,6,6,0,0.0042237
+D,hard-1,hard,3,search_documents search_documents search_documents list_deadlines search_documents list_review_queue get_brief get_document search_documents draft_reply,,10,10,11,101030,83264,1411,917,0.75,29.45,33.01,True,False,False,False,10,9,0,0.0082391
+D,hard-2,hard,3,search_documents search_documents search_documents search_documents get_brief list_deadlines,,6,6,6,51931,46464,861,405,1.49,18.03,20.11,True,False,False,False,6,6,0,0.00400425
+CD,hello,none,1,get_brief,,1,1,2,17083,0,400,277,1.79,3.96,4.64,True,False,False,False,0,0,0,0.00296245
+CD,due-1,due-this-month,1,list_deadlines,,1,1,2,17028,8384,318,177,0.64,2.79,3.41,True,True,False,False,0,0,0,0.0020338
+CD,due-2,due-this-month,1,list_deadlines,,1,1,2,17336,8384,357,194,1.0,2.96,3.29,True,True,False,False,0,0,0,0.0021190000000000002
+CD,owe-1,owed-or-paid,1,search_documents,,1,1,2,17530,15936,353,190,0.8,2.31,2.54,True,True,False,False,0,0,0,0.0013889
+CD,paid-1,owed-or-paid,1,sum_amounts,,1,1,2,17798,16832,419,305,0.6,2.68,3.02,True,True,False,False,0,0,0,0.0014055
+CD,draft-1,draft-reply,1,search_documents draft_reply,,2,2,3,26550,24160,405,196,0.62,3.73,4.11,True,True,False,False,0,0,0,0.0019715
+CD,draft-2,draft-reply,1,search_documents search_documents draft_reply,,3,3,4,35813,32608,439,143,0.73,4.26,4.69,True,False,False,False,0,0,0,0.00255015
+CD,pack-1,accountant-pack,1,export_accountant_pack,,1,1,2,17233,16768,229,98,0.67,2.0,2.28,True,True,False,True,0,0,0,0.00113715
+CD,pack-2,accountant-pack,1,export_accountant_pack,,1,1,2,16972,15776,238,122,0.69,2.68,3.02,True,True,False,False,0,0,0,0.0012062000000000002
+CD,none-1,none,1,list_review_queue,,1,1,2,17186,15776,483,242,0.7,3.14,3.97,True,True,False,False,0,0,0,0.0014833
+CD,none-2,none,1,search_documents,,1,1,2,17523,16768,274,83,0.7,1.92,2.67,True,True,False,False,0,0,0,0.00122565
+CD,due-1,due-this-month,2,list_deadlines,,1,1,2,17391,16768,369,202,0.71,2.76,3.12,True,True,False,False,0,0,0,0.00130085
+CD,due-2,due-this-month,2,list_deadlines,,1,1,2,17353,16832,362,176,0.73,2.79,3.25,True,True,False,False,0,0,0,0.00128175
+CD,owe-1,owed-or-paid,2,search_documents,,1,1,2,17525,16896,321,177,0.93,3.04,3.29,True,True,False,False,0,0,0,0.0012601499999999998
+CD,paid-1,owed-or-paid,2,sum_amounts,,1,1,2,17789,16832,341,197,0.63,2.46,2.96,True,True,False,False,0,0,0,0.00132615
+CD,draft-1,draft-reply,2,search_documents draft_reply,,2,2,3,26546,24800,400,184,0.89,5.99,6.21,True,True,False,False,0,0,0,0.0019018999999999998
+CD,draft-2,draft-reply,2,search_documents search_documents draft_reply,,3,3,4,36374,33952,503,182,0.61,5.76,6.12,True,False,False,False,0,0,0,0.0025639
+CD,pack-1,accountant-pack,2,export_accountant_pack,,1,1,2,16933,15776,180,64,0.56,2.18,2.49,True,True,False,False,0,0,0,0.0011423499999999999
+CD,pack-2,accountant-pack,2,export_accountant_pack,,1,1,2,16970,15776,242,141,0.68,7.25,7.55,True,True,False,False,0,0,0,0.0012098999999999999
+CD,none-1,none,2,list_review_queue,,1,1,2,17464,16832,365,179,0.61,1.86,2.37,True,True,False,False,0,0,0,0.0013014
+CD,none-2,none,2,search_documents,,1,1,2,17525,16832,245,64,0.67,1.88,2.37,True,True,False,True,0,0,0,0.00119055
+CD,due-1,due-this-month,3,list_deadlines,,1,1,2,17301,16768,283,143,0.81,2.33,2.6,True,True,False,False,0,0,0,0.00120135
+CD,due-2,due-this-month,3,list_deadlines,,1,1,2,17108,15840,424,221,0.59,4.95,5.88,True,True,False,False,0,0,0,0.0014062
+CD,owe-1,owed-or-paid,3,sum_amounts,,1,1,2,17331,16832,229,101,0.94,2.39,2.69,False,True,False,False,0,0,0,0.0011454500000000001
+CD,paid-1,owed-or-paid,3,search_documents sum_amounts,,2,2,3,29397,27136,917,509,0.56,5.74,6.45,True,False,False,False,0,0,0,0.00261295
+CD,draft-1,draft-reply,3,search_documents draft_reply,,2,2,3,26969,25280,527,243,0.72,4.62,4.81,True,True,False,False,0,0,0,0.00204435
+CD,draft-2,draft-reply,3,search_documents search_documents draft_reply,,3,3,4,36485,32736,546,194,0.68,5.11,8.3,True,False,False,False,0,0,0,0.00274515
+CD,pack-1,accountant-pack,3,export_accountant_pack,,1,1,2,17253,16896,232,106,0.65,2.32,2.64,True,True,False,False,0,0,0,0.00113035
+CD,pack-2,accountant-pack,3,export_accountant_pack,,1,1,2,17280,16768,257,168,0.61,2.68,2.96,True,True,False,False,0,0,0,0.0011722
+CD,none-1,none,3,list_review_queue,,1,1,2,17192,15776,393,190,0.62,4.16,6.18,True,True,False,False,0,0,0,0.0013942
+CD,none-2,none,3,search_documents,,1,1,2,17224,15776,271,61,0.7,2.62,4.16,True,True,False,False,0,0,0,0.001277
+CD,hard-1,hard,1,search_documents search_documents search_documents search_documents search_documents list_deadlines get_document get_document get_document search_documents search_documents get_document get_document get_document get_document get_document get_document get_document search_documents search_documents search_documents get_document get_document get_document get_document get_document search_documents get_document get_document get_document get_document get_document get_document get_document get_document,,35,35,12,183415,136640,3286,1474,0.65,,38.87,False,False,True,False,2,0,0,0.01713425
+CD,hard-2,hard,1,search_documents sum_amounts search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents,,12,12,12,156924,128096,1558,599,0.69,4.9,27.98,True,False,False,False,0,0,0,0.012287000000000001
+CD,hard-1,hard,2,search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents search_documents list_deadlines list_review_queue get_brief,,12,12,8,90834,75584,2588,1836,0.66,25.95,27.65,True,False,False,False,12,9,0,0.0086547
+CD,hard-2,hard,2,search_documents search_documents search_documents search_documents get_brief,,5,5,5,46601,43840,822,380,0.78,8.42,10.28,True,False,False,False,5,5,0,0.0034281500000000005
+CD,hard-1,hard,3,search_documents search_documents search_documents list_deadlines search_documents get_brief,,6,6,7,65327,61536,892,557,0.79,9.46,10.47,True,False,False,False,6,6,0,0.004537449999999999
+CD,hard-2,hard,3,search_documents search_documents search_documents search_documents get_brief,,5,5,6,54779,43840,692,390,0.6,13.39,17.85,True,False,False,False,5,5,0,0.00452485
+A,hello,none,1,get_brief,,1,1,2,18386,8960,291,154,1.87,4.14,5.8,True,False,False,False,0,0,0,0.0021529
+B,hello,none,1,,,0,0,1,10695,0,95,104,1.65,2.59,2.65,True,True,False,False,0,0,0,0.00169925
+C,hello,none,1,,,0,0,1,9493,5184,84,70,1.72,2.35,2.49,True,True,False,False,0,0,0,0.00098955
+D,hello,none,1,,,0,0,1,7943,0,70,69,3.56,4.16,4.22,True,True,False,False,0,0,0,0.00126145
+CD,hello,none,1,,,0,0,1,8443,2368,148,168,2.42,3.7,3.77,True,True,False,False,0,0,0,0.00117765
