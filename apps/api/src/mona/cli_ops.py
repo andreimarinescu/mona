@@ -1,4 +1,4 @@
-"""`mona` commands for operations: the settings gate, `check-prod` (C9 §2) and
+"""`mona` commands for operations: the settings gate, `check-prod` (C9 §2), `doctor` and
 `profile set-password` (C2 §2.1)."""
 
 import json
@@ -10,7 +10,7 @@ import typer
 
 from mona.settings import SettingsError
 
-UNGATED = {"check-prod"}
+UNGATED = {"check-prod", "doctor"}
 MIN_PASSWORD = 8
 
 
@@ -96,6 +96,134 @@ def check_prod(
         raise typer.Exit(1)
 
 
+def doctor(
+    privacy: Annotated[
+        bool, typer.Option("--privacy", help="Also run A1-A5 and the memory scan, in any env.")
+    ] = False,
+    host_lines: Annotated[
+        str | None,
+        typer.Option("--host-lines", help="Host-side check lines (file, or - for stdin)."),
+    ] = None,
+    as_json: Annotated[bool, typer.Option("--json", help="One JSON object per line.")] = False,
+) -> None:
+    """One line per check, green/amber/red; exits 1 when any check is red."""
+    import sys
+
+    from mona import doctor as d
+    from mona.migrate import head_revision
+    from mona.settings import Settings
+
+    try:
+        settings = Settings()  # type: ignore[call-arg]
+    except Exception:  # noqa: BLE001
+        checks = [d.Check("settings", d.RED, "invalid or missing settings (see `mona version`)")]
+    else:
+        host: list[d.Check] = []
+        if host_lines:
+            text = sys.stdin.read() if host_lines == "-" else Path(host_lines).read_text()
+            host = d.parse_host_lines(text)
+        checks = d.run_checks(
+            settings, os.environ, head=head_revision(), host=host, privacy_asked=privacy
+        )
+    if as_json:
+        for c in checks:
+            typer.echo(json.dumps({"name": c.name, "level": c.level, "detail": c.detail}))
+    else:
+        for line in d.render(checks, color=sys.stdout.isatty()):
+            typer.echo(line)
+    if d.worst(checks) == d.RED:
+        raise typer.Exit(1)
+
+
+def perf(
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Write the report skeleton only.")
+    ] = False,
+    batch: Annotated[
+        Path | None, typer.Option(help="Folder holding the rehearsed live batch's files.")
+    ] = None,
+    order: Annotated[
+        Path | None, typer.Option(help="File names in drop order, one per line.")
+    ] = None,
+    beats: Annotated[
+        Path | None, typer.Option(help="JSON [{id, prompt}]; default: generic.")
+    ] = None,
+    out: Annotated[Path | None, typer.Option(help="Report folder; default <data>/perf.")] = None,
+    cold: Annotated[bool, typer.Option(help="Unload llama-swap before the cold pass.")] = True,
+    delay: Annotated[float, typer.Option(help="Seconds into the batch before chat starts.")] = 20.0,
+    timeout: Annotated[
+        float, typer.Option(help="Seconds to wait for the batch to finish.")
+    ] = 900.0,
+    vram_csv: Annotated[
+        Path | None, typer.Option(help="nvidia-smi samples taken by the host wrapper.")
+    ] = None,
+) -> None:
+    """Oct 8 budgets: classification per document, chat beats cold, warm and during a batch,
+    llama-swap reloads, VRAM headroom. Writes perf-<time>.md and .json."""
+    import asyncio
+
+    from mona import perf as p
+    from mona.settings import get_settings
+
+    settings = get_settings()
+    if batch is not None and not batch.is_dir():
+        raise typer.BadParameter("not a folder", param_hint="--batch")
+    if not dry_run and batch is None:
+        raise typer.BadParameter("a real run needs the batch folder", param_hint="--batch")
+    files = p.batch_files(batch, order) if batch else []
+    beat_list = p.load_beats(beats)
+    report = p.skeleton(settings, beat_list, files, dry_run=dry_run)
+    if not dry_run:
+        from sqlalchemy import select
+
+        from mona.chat.hermes import get_hermes
+        from mona.pipeline import runtime
+        from mona.pipeline.intake import Upload, ingest_files
+        from mona.pipeline.report import batch_report
+        from mona.services.registry import T
+
+        ctx = runtime.get_context()
+        runtime.startup()
+
+        def start() -> str:
+            return ingest_files(ctx, [Upload(f, f.name) for f in files]).batch_id
+
+        def done(batch_id: str) -> bool:
+            with ctx.engine.connect() as conn:
+                status = conn.execute(
+                    select(T["batches"].c.status).where(T["batches"].c.id == batch_id)
+                ).scalar()
+            return status == "done"
+
+        report = asyncio.run(
+            p.measure(
+                settings,
+                beat_list,
+                start,
+                done,
+                lambda b: batch_report(ctx, b),
+                hermes=get_hermes(),
+                cold=cold,
+                delay_s=delay,
+                batch_timeout_s=timeout,
+                report=report,
+            )
+        )
+        local = report["endpoint"] == "local"
+        report["vram"] = p.vram_stats(vram_csv.read_text()) if vram_csv and local else None
+        report["verdicts"] = p.verdicts(report)
+    from mona.demo.tools import OpsEnv, chown_tree
+
+    folder = out or settings.mona_data_dir / "perf"
+    path = p.write_report(report, folder)
+    chown_tree(folder, OpsEnv.from_settings(settings).data_owner)
+    typer.echo(f"report: {path}")
+    for name, verdict in (report["verdicts"] or {}).items():
+        typer.echo(f"{verdict.upper():<12} {name}")
+    if "fail" in (report["verdicts"] or {}).values():
+        raise typer.Exit(1)
+
+
 profile_app = typer.Typer(no_args_is_help=True, help="The owner profile (C2 §2.1).")
 
 
@@ -134,4 +262,6 @@ def set_password() -> None:
 def register(app: typer.Typer) -> None:
     app.callback()(gate)
     app.command("check-prod")(check_prod)
+    app.command("doctor")(doctor)
+    app.command("perf")(perf)
     app.add_typer(profile_app, name="profile")

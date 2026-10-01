@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Host-side lines for `mona doctor` (C9 §2.2, §4.3): the GPU, published ports, and the names of
+cloud keys in the running containers. Prints `level<TAB>name<TAB>detail`; never a value.
+
+  doctor-host [--privacy]
+
+Environment: MONA_COMPOSE (default "docker compose"; add -p <project> per stack), MONA_ROOT."""
+
+import json
+import os
+import shlex
+import subprocess
+import sys
+from pathlib import Path
+
+CLOUD_KEYS = (
+    "OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY",
+    "GEMINI_API_KEY", "MISTRAL_API_KEY", "DEEPSEEK_API_KEY", "XAI_API_KEY", "GROQ_API_KEY",
+    "TOGETHER_API_KEY", "NOUS_API_KEY", "HF_TOKEN",
+)  # fmt: skip
+LOOPBACK = {"127.0.0.1", "::1", "localhost"}
+PROD_PUBLISHER = "caddy"
+MIN_FREE_MIB = 1024
+COMPOSE = shlex.split(os.environ.get("MONA_COMPOSE", "docker compose"))
+ROOT = Path(os.environ.get("MONA_ROOT") or Path(__file__).resolve().parents[2])
+
+
+def run(cmd: list[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        cmd, cwd=ROOT, capture_output=True, text=True, timeout=60, check=False
+    )
+
+
+def line(level: str, name: str, detail: str) -> None:
+    print(f"{level}\t{name}\t{detail}")
+
+
+def compose_json(*args: str) -> list[dict]:
+    out = run([*COMPOSE, *args, "--format", "json"])
+    if out.returncode != 0 or not out.stdout.strip():
+        return []
+    text = out.stdout.strip()
+    try:
+        data = json.loads(text)
+        return data if isinstance(data, list) else [data]
+    except json.JSONDecodeError:
+        return [json.loads(row) for row in text.splitlines() if row.strip()]
+
+
+def stack_env() -> str:
+    out = run([*COMPOSE, "config", "--format", "json"])
+    try:
+        services = json.loads(out.stdout)["services"]
+    except (json.JSONDecodeError, KeyError):
+        return "dev"
+    for name in ("api", "ops", "migrate"):
+        env = (services.get(name) or {}).get("environment") or {}
+        if isinstance(env, dict) and env.get("MONA_ENV") in ("dev", "prod"):
+            return env["MONA_ENV"]
+    return "dev"
+
+
+def gpu(env: str) -> None:
+    absent = "red" if env == "prod" else "amber"
+    try:
+        out = run(
+            ["nvidia-smi", "--query-gpu=name,memory.used,memory.total", "--format=csv,noheader,nounits"]
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return line(absent, "gpu", "nvidia-smi is not available on this host")
+    rows = [r.split(",") for r in out.stdout.strip().splitlines() if r.strip()]
+    if out.returncode != 0 or not rows:
+        return line(absent, "gpu", "nvidia-smi failed: no GPU answered")
+    for row in rows:
+        try:
+            name, used, total = row[0].strip(), float(row[1]), float(row[2])
+        except (IndexError, ValueError):
+            return line("amber", "gpu", "unreadable nvidia-smi output")
+        free = total - used
+        detail = f"{name}: {used / 1024:.1f} of {total / 1024:.1f} GiB used, {free / 1024:.1f} free"
+        line("green" if free >= MIN_FREE_MIB else "amber", "gpu", detail)
+
+
+def exposure(env: str) -> None:
+    exposed, strangers = [], []
+    for row in compose_json("ps"):
+        service = row.get("Service", "?")
+        for p in row.get("Publishers") or []:
+            if not p.get("PublishedPort"):
+                continue
+            if p.get("URL") not in LOOPBACK:
+                exposed.append(f"{service}:{p['PublishedPort']}")
+            if env == "prod" and service != PROD_PUBLISHER:
+                strangers.append(f"{service}:{p['PublishedPort']}")
+    if exposed:
+        line("red", "exposure", "published beyond loopback: " + ", ".join(sorted(set(exposed))))
+    elif strangers:
+        line("red", "exposure", "published in prod besides caddy: " + ", ".join(sorted(set(strangers))))
+    else:
+        line("green", "exposure", "nothing published beyond loopback")
+
+
+def cloud_key_names(env_list: list[str]) -> list[str]:
+    values = dict(e.split("=", 1) for e in env_list if "=" in e)
+    return [k for k in CLOUD_KEYS if values.get(k, "").strip()]
+
+
+def a3() -> None:
+    ids = run([*COMPOSE, "ps", "-q"]).stdout.split()
+    if not ids:
+        return line("amber", "A3", "no running containers to inspect")
+    found = []
+    for cid in ids:
+        out = run(["docker", "inspect", "-f", "{{.Name}}\t{{json .Config.Env}}", cid])
+        name, _, env = out.stdout.partition("\t")
+        try:
+            names = cloud_key_names(json.loads(env or "[]"))
+        except json.JSONDecodeError:
+            names = []
+        found += [f"{name.strip('/')}: {k}" for k in names]
+    if found:
+        line("red", "A3", "cloud key names set in running containers: " + "; ".join(found))
+    else:
+        line("green", "A3", f"no cloud key name in {len(ids)} running containers")
+
+
+def main() -> int:
+    env = stack_env()
+    gpu(env)
+    exposure(env)
+    if env == "prod" or "--privacy" in sys.argv[1:]:
+        a3()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

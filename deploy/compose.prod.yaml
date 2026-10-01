@@ -1,0 +1,161 @@
+x-prod-env: &prod-env
+  HOME: /tmp
+  DATABASE_URL: postgresql+psycopg://mona:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/mona
+  MONA_ENV: prod
+  MONA_DATA_DIR: /data
+  PROCRASTINATE_APP: mona.jobs.app
+  PROCRASTINATE_LOG_LEVEL: info
+  MONA_LLM_BACKEND: llama-server
+  MONA_LLM_BASE_URL: ${MONA_LLM_BASE_URL:?set MONA_LLM_BASE_URL in .env}
+  MONA_LLM_MODEL: ${MONA_LLM_MODEL:?set MONA_LLM_MODEL in .env}
+  HERMES_URL: http://hermes:8642
+  HERMES_API_KEY: ${HERMES_API_KEY:?set HERMES_API_KEY in .env}
+  MONA_SERVICE_KEY: ${MONA_SERVICE_KEY:?set MONA_SERVICE_KEY in .env}
+  MONA_PUBLIC_ORIGIN: ${MONA_PUBLIC_ORIGIN:?set MONA_PUBLIC_ORIGIN in .env}
+  MONA_TRUSTED_PROXY: ${MONA_CADDY_IP:-172.29.250.10}
+  MONA_BUILD: ${MONA_TAG:?set MONA_TAG (deploy/bin/deploy does)}
+  MONA_INTERVIEW_PASS1_BUDGET_S: ${MONA_INTERVIEW_PASS1_BUDGET_S:-35}
+  MONA_DEBRIEF_CACHE: ${MONA_DEBRIEF_CACHE:-fallback}
+  PYTHONDONTWRITEBYTECODE: "1"
+
+x-prod-python: &prod-python
+  image: mona-api:${MONA_TAG:?set MONA_TAG (deploy/bin/deploy does)}
+  pull_policy: never
+  env_file: !reset []
+  environment: *prod-env
+  volumes: !override
+    - ${MONA_DATA_HOST:-./data}:/data
+
+services:
+  postgres:
+    restart: unless-stopped
+    ports: !reset []
+
+  migrate:
+    <<: *prod-python
+
+  api:
+    <<: *prod-python
+    command: uvicorn mona.app:app --host 0.0.0.0 --port 8765 --no-access-log
+    restart: unless-stopped
+    environment:
+      <<: *prod-env
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    volumes: !override
+      - ${MONA_DATA_HOST:-./data}:/data
+      - type: volume
+        source: hermes_data
+        target: /opt/data/cache/documents
+        read_only: true
+        volume:
+          subpath: cache/documents
+      - type: volume
+        source: hermes_data
+        target: /opt/data/cache/images
+        read_only: true
+        volume:
+          subpath: cache/images
+    ports: !reset []
+
+  worker-llm:
+    <<: *prod-python
+    restart: unless-stopped
+
+  worker-cpu:
+    <<: *prod-python
+    restart: unless-stopped
+
+  ops:
+    <<: *prod-python
+    environment:
+      <<: *prod-env
+      MONA_HERMES_HOME: /hermes
+      MONA_HERMES_SEED: /hermes-seed
+      MONA_HERMES_ENV_KEYS: TELEGRAM_BOT_TOKEN,TELEGRAM_ALLOWED_USERS
+      MONA_UID: ${MONA_UID:-1000}
+      MONA_GID: ${MONA_GID:-1000}
+      HERMES_UID: ${HERMES_UID:-1000}
+      HERMES_GID: ${HERMES_GID:-1000}
+      MONA_OWNER_PASSWORD: ${MONA_OWNER_PASSWORD:-}
+      MONA_IBAN_PEPPER: ${MONA_IBAN_PEPPER:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALLOWED_USERS: ${TELEGRAM_ALLOWED_USERS:-}
+    volumes: !override
+      - ${MONA_DATA_HOST:-./data}:/data
+      - ./demo/seed:/seed:ro
+      - ./deploy/hermes:/hermes-seed:ro
+      - hermes_data:/hermes
+
+  hermes-seed:
+    image: mona-api:${MONA_TAG:?set MONA_TAG (deploy/bin/deploy does)}
+    pull_policy: never
+    user: "0:0"
+    entrypoint: ["sh", "-c"]
+    command: !override
+      - >-
+        set -e;
+        for d in memories cache cache/documents cache/images; do
+        [ -d /opt/data/$$d ] || install -d -m 755 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /opt/data/$$d;
+        done;
+        [ -e /opt/data/SOUL.md ] || install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/SOUL.md /opt/data/SOUL.md;
+        install -m 640 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/config.prod.yaml /opt/data/config.yaml;
+        mona check-prod --hermes-home /opt/data
+    environment: !override
+      HOME: /tmp
+      MONA_ENV: prod
+      MONA_LLM_BASE_URL: ${MONA_LLM_BASE_URL:?set MONA_LLM_BASE_URL in .env}
+      MONA_LLM_MODEL: ${MONA_LLM_MODEL:?set MONA_LLM_MODEL in .env}
+    volumes: !override
+      - ./deploy/hermes:/seed:ro
+      - hermes_data:/opt/data
+
+  hermes:
+    restart: unless-stopped
+    ports: !reset []
+    environment: !override
+      HERMES_UID: ${HERMES_UID:-1000}
+      HERMES_GID: ${HERMES_GID:-1000}
+      API_SERVER_KEY: ${HERMES_API_KEY:?set HERMES_API_KEY in .env}
+      API_SERVER_HOST: 0.0.0.0
+      API_SERVER_PORT: "8642"
+      API_SERVER_MODEL_NAME: mona
+      MONA_SERVICE_KEY: ${MONA_SERVICE_KEY:?set MONA_SERVICE_KEY in .env}
+      MONA_LLM_BASE_URL: ${MONA_LLM_BASE_URL:?set MONA_LLM_BASE_URL in .env}
+      MONA_LLM_MODEL: ${MONA_LLM_MODEL:?set MONA_LLM_MODEL in .env}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALLOWED_USERS: ${TELEGRAM_ALLOWED_USERS:-}
+
+  web:
+    profiles: [dev-only]
+
+  caddy:
+    build:
+      context: .
+      dockerfile: deploy/caddy/Dockerfile
+    image: mona-web:${MONA_TAG:?set MONA_TAG (deploy/bin/deploy does)}
+    pull_policy: never
+    user: "${MONA_UID:-1000}:${MONA_GID:-1000}"
+    read_only: true
+    tmpfs:
+      - /data:uid=${MONA_UID:-1000},gid=${MONA_GID:-1000}
+      - /config:uid=${MONA_UID:-1000},gid=${MONA_GID:-1000}
+    restart: unless-stopped
+    ports:
+      - ${MONA_BIND:-127.0.0.1}:${WEB_PORT:-8080}:8080
+    networks:
+      default:
+        ipv4_address: ${MONA_CADDY_IP:-172.29.250.10}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    depends_on:
+      api:
+        condition: service_healthy
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: ${MONA_SUBNET:-172.29.250.0/24}

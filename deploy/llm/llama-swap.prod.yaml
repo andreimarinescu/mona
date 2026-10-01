@@ -1,0 +1,23 @@
+healthCheckTimeout: 600
+startPort: 5800
+
+macros:
+  "kv": "--cache-type-k q8_0 --cache-type-v q8_0 -fa on"
+  # placeholder: tune on Oct 8 (lower is faster but needs more VRAM; raise by 2-4 if the load fails with cudaMalloc)
+  "ncpumoe": "--n-cpu-moe 20"
+
+models:
+  "qwen3.6-35b-a3b":
+    name: "Qwen3.6-35B-A3B (agent, 2 slots of 64k)"
+    cmd: |
+      llama-server --port ${PORT}
+      -m /models/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+      -ngl 99 ${ncpumoe} -c 131072 --parallel 2 ${kv}
+      --jinja --metrics --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+    ttl: 0
+
+groups:
+  "agent":
+    swap: true
+    exclusive: false
+    members: ["qwen3.6-35b-a3b"]

@@ -1,0 +1,37 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	log {
+		output discard
+	}
+
+	@mcp path /mcp /mcp/*
+	handle @mcp {
+		respond 404
+	}
+
+	handle /api/intake {
+		request_body {
+			max_size 250MB
+		}
+		reverse_proxy api:8765
+	}
+
+	handle /api/* {
+		request_body {
+			max_size 64KB
+		}
+		reverse_proxy api:8765 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

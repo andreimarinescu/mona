@@ -1,0 +1,25 @@
+services:
+  llm:
+    image: llama-sm120:b10092
+    container_name: llm
+    restart: unless-stopped
+    gpus: all
+    entrypoint: ["/usr/local/bin/llama-swap", "--config", "/config/llama-swap.yaml", "--listen", ":8080"]
+    ports:
+      - 127.0.0.1:9292:8080
+    volumes:
+      - ${MONA_MODELS_DIR:-./models}:/models:ro
+      - ${MONA_LLAMA_SWAP_CONFIG:-./llama-swap.prod.yaml}:/config/llama-swap.yaml:ro
+    networks:
+      mona:
+        aliases: [llama-swap]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/v1/models"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+networks:
+  mona:
+    external: true
+    name: ${MONA_NETWORK:?set MONA_NETWORK to the prod compose network, e.g. mona_default}

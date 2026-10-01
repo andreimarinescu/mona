@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""C9 §2.3: judge a header-only capture of the compose bridge. Reads `tcpdump -n -tt` text and
+prints the destination list (addresses, ports, DNS names; no payloads). Exit 0 when every
+destination and every DNS query belongs to api.telegram.org, else 1.
+
+  egress-analyze CAPTURE.txt --internal 172.29.250.0/24 [--internal ...] [--allow-cidr CIDR]...
+                 [--telegram-cidrs FILE] [--allow-name NAME]..."""
+
+import argparse
+import ipaddress
+import re
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+TELEGRAM_NAMES = {"api.telegram.org"}
+TELEGRAM_RANGES = (
+    "91.105.192.0/23 91.108.4.0/22 91.108.8.0/22 91.108.12.0/22 91.108.16.0/22 91.108.20.0/22 "
+    "91.108.56.0/22 109.239.140.0/24 149.154.160.0/20 185.76.151.0/24 "
+    "2001:67c:4e8::/48 2001:b28:f23c::/48 2001:b28:f23d::/48 2001:b28:f23f::/48 2a0a:f280::/32"
+).split()
+PACKET = re.compile(r"^\S+\s+(IP6?)\s+(\S+)\s+>\s+(\S+?):\s*(.*)$")
+QUERY = re.compile(
+    r"(\d+)\S*\s+(?:\[\w+\]\s+)?(?:A|AAAA|HTTPS|SVCB|MX|TXT|PTR|SRV|NS|ANY|CNAME|SOA)\?\s+(\S+)"
+)
+ANSWER = re.compile(r"^(\d+)\S*\s+(?:q:\s+\S+\s+\S+\s+)?\d+/\d+/\d+\s+(.*)")
+RECORD = re.compile(r"\b(?:A|AAAA)\s+([0-9a-fA-F:.]+)")
+DNS_PORTS = {53, 853}
+
+
+def endpoint(token: str) -> tuple[ipaddress._BaseAddress | None, int | None]:
+    host, _, port = token.rpartition(".")
+    try:
+        return ipaddress.ip_address(host), int(port)
+    except ValueError:
+        pass
+    try:
+        return ipaddress.ip_address(token), None
+    except ValueError:
+        return None, None
+
+
+def nets(values: list[str]) -> list[ipaddress._BaseNetwork]:
+    return [ipaddress.ip_network(v, strict=False) for v in values]
+
+
+def inside(addr: ipaddress._BaseAddress, networks: list[ipaddress._BaseNetwork]) -> bool:
+    return any(addr in n for n in networks if n.version == addr.version)
+
+
+def local_scope(addr: ipaddress._BaseAddress) -> bool:
+    return addr.is_multicast or addr.is_link_local or addr == ipaddress.ip_address("255.255.255.255")
+
+
+def analyse(lines, internal, ranges, names) -> dict:
+    queries: dict[str, str] = {}
+    learned: dict[str, set[str]] = defaultdict(set)
+    bad_names: set[str] = set()
+    flows: dict[tuple[str, str], dict] = {}
+    for raw in lines:
+        m = PACKET.match(raw.strip())
+        if not m:
+            continue
+        _, src_t, dst_t, rest = m.groups()
+        src, sport = endpoint(src_t)
+        dst, dport = endpoint(dst_t)
+        if src is None or dst is None:
+            continue
+        q = QUERY.search(rest)
+        if q and (dport in DNS_PORTS):
+            name = q.group(2).rstrip(".").lower()
+            queries[q.group(1)] = name
+            if name not in names:
+                bad_names.add(name)
+        a = ANSWER.match(rest)
+        if a and sport in DNS_PORTS and a.group(1) in queries:
+            learned[queries[a.group(1)]].update(RECORD.findall(a.group(2)))
+        if not inside(src, internal) or inside(dst, internal) or local_scope(dst):
+            continue
+        kind = "dns" if dport in DNS_PORTS else "traffic"
+        flow = flows.setdefault((str(dst), kind), {"ports": set(), "packets": 0})
+        flow["ports"].add(dport)
+        flow["packets"] += 1
+    telegram_ips = {ip for n in names for ip in learned.get(n, ())}
+    rows, violations = [], []
+    for (dst, kind), flow in sorted(flows.items()):
+        addr = ipaddress.ip_address(dst)
+        if kind == "dns":
+            basis = "resolver"
+        elif dst in telegram_ips:
+            basis = "dns answer for " + "/".join(sorted(names))
+        elif inside(addr, ranges):
+            basis = "telegram range"
+        else:
+            basis = "NOT ALLOWED"
+            violations.append(f"destination {dst}")
+        ports = ",".join(str(p) for p in sorted(p for p in flow["ports"] if p))
+        rows.append((dst, ports, flow["packets"], basis))
+    violations += [f"DNS query for {n}" for n in sorted(bad_names)]
+    return {"rows": rows, "queries": sorted(set(queries.values())), "violations": violations}
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("capture", type=Path)
+    ap.add_argument("--internal", action="append", default=[], required=True)
+    ap.add_argument("--allow-cidr", action="append", default=[])
+    ap.add_argument("--telegram-cidrs", type=Path)
+    ap.add_argument("--allow-name", action="append", default=[])
+    args = ap.parse_args()
+    ranges = list(TELEGRAM_RANGES)
+    if args.telegram_cidrs:
+        ranges = [ln.strip() for ln in args.telegram_cidrs.read_text().splitlines() if ln.strip()]
+    result = analyse(
+        args.capture.read_text(errors="replace").splitlines(),
+        nets(args.internal),
+        nets(ranges + args.allow_cidr),
+        TELEGRAM_NAMES | {n.lower() for n in args.allow_name},
+    )
+    print("destination        ports     packets  basis")
+    for dst, ports, packets, basis in result["rows"]:
+        print(f"{dst:<18} {ports:<9} {packets:<8} {basis}")
+    if not result["rows"]:
+        print("(no packet left the compose subnets)")
+    print("DNS queries: " + (", ".join(result["queries"]) or "none"))
+    if result["violations"]:
+        print("FAIL: " + "; ".join(result["violations"]))
+        return 1
+    print("PASS: every destination and DNS query belongs to api.telegram.org")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

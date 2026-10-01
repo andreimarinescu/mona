@@ -8,13 +8,24 @@
 #   mona demo-reset [--name demo] [--prefiled] [--anchor today|YYYY-MM-DD] [--yes]
 #   mona backup --name <n> [--to <dir>]        (default ~/DevFiles/mona-hq/demo-data/snapshots)
 #   mona restore --name <n> [--from <dir>] [--anchor …] [--yes]
+#   mona up | stop | status                    (start, stop, list the stack; on the box it is the prod stack)
+#   mona doctor [--privacy] [--json]           (host checks: GPU, published ports, cloud-key names)
+#   mona perf [--dry-run] [--batch <dir>] [--order <file>] [--beats <file>] [--cold|--no-cold]
+#                                              (report in <data>/perf; VRAM sampled on the host)
 #   mona <anything else>                       (e.g. seed load /seed, hermes-memory)
 #
-# Environment: MONA_COMPOSE (default "docker compose"; add -p <project> per stack), MONA_ROOT (the
-# directory holding compose.yaml), MONA_SEED_OVERLAY_HOST (identifiers overlay for seed load).
+# Environment: MONA_COMPOSE (default "docker compose", or the prod overlay once deploy/bin/deploy has
+# run here; add -p <project> per stack), MONA_ROOT (the directory holding compose.yaml),
+# MONA_SEED_OVERLAY_HOST (identifiers overlay for seed load).
 set -euo pipefail
 
 ROOT=${MONA_ROOT:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}
+STATE=${MONA_DEPLOY_STATE:-$ROOT/.deploy}
+if [[ -s "$STATE/current" ]]; then
+  MONA_COMPOSE=${MONA_COMPOSE:-docker compose -f compose.yaml -f deploy/compose.prod.yaml}
+  MONA_TAG=${MONA_TAG:-$(<"$STATE/current")}
+  export MONA_TAG
+fi
 read -r -a COMPOSE <<<"${MONA_COMPOSE:-docker compose}"
 cd "$ROOT"
 
@@ -24,8 +35,10 @@ HEALTH_TIMEOUT=120
 die() { echo "mona: $*" >&2; exit 1; }
 compose() { "${COMPOSE[@]}" "$@"; }
 
+OPS_EXTRA=()
+
 ops_run() {
-  local extra=()
+  local extra=("${OPS_EXTRA[@]}")
   if [[ -n "${MONA_SEED_OVERLAY_HOST:-}" ]]; then
     extra+=(-v "$MONA_SEED_OVERLAY_HOST:/seed-private/identifiers.yaml:ro"
             -e MONA_SEED_OVERLAY=/seed-private/identifiers.yaml)
@@ -95,7 +108,47 @@ demo_reset() {
   ops ops restore --name "$name" --anchor "$anchor"
   start_services
   ops ops postcheck --name "$name"
+  doctor_settled
   echo "demo-reset $name: done in $((SECONDS - t0)) s"
+}
+
+doctor() {
+  local privacy=()
+  [[ " $* " == *" --privacy "* ]] && privacy=(--privacy)
+  MONA_COMPOSE="${COMPOSE[*]}" MONA_ROOT="$ROOT" "$ROOT/deploy/bin/doctor-host" "${privacy[@]}" \
+    | ops_run mona doctor --host-lines - "$@"
+}
+
+doctor_settled() {
+  local tries=5
+  until doctor >/dev/null 2>&1; do
+    ((--tries)) || { doctor; die "doctor is red after the reset"; }
+    sleep 3
+  done
+  doctor
+}
+
+perf() {
+  local args=() dry=0 vram="" sampler=""
+  OPS_EXTRA+=(--user "${MONA_UID:-1000}:${MONA_GID:-1000}")
+  while (($#)); do
+    case "$1" in
+      --batch) OPS_EXTRA+=(-v "$(readlink -f "$2"):/perf/batch:ro"); args+=(--batch /perf/batch); shift 2 ;;
+      --order) OPS_EXTRA+=(-v "$(readlink -f "$2"):/perf/order:ro"); args+=(--order /perf/order); shift 2 ;;
+      --beats) OPS_EXTRA+=(-v "$(readlink -f "$2"):/perf/beats:ro"); args+=(--beats /perf/beats); shift 2 ;;
+      --dry-run) dry=1; args+=("$1"); shift ;;
+      *) args+=("$1"); shift ;;
+    esac
+  done
+  if ((!dry)) && command -v nvidia-smi >/dev/null; then
+    vram=$(mktemp -d)
+    nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits -lms 1000 >"$vram/vram.csv" &
+    sampler=$!
+    trap "kill $sampler 2>/dev/null; rm -rf '$vram'" EXIT
+    OPS_EXTRA+=(-v "$vram:/perf/vram:ro")
+    args+=(--vram-csv /perf/vram/vram.csv)
+  fi
+  ops_run mona perf "${args[@]}"
 }
 
 backup() {
@@ -147,5 +200,10 @@ case "$cmd" in
   demo-reset) demo_reset "$@" ;;
   backup) backup "$@" ;;
   restore) restore "$@" ;;
+  up) compose up -d --wait ;;
+  stop) compose stop ;;
+  status) compose ps ;;
+  doctor) doctor "$@" ;;
+  perf) perf "$@" ;;
   *) ops "$cmd" "$@" ;;
 esac

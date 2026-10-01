@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# C9 §2.3 / plan §0 criterion 5: capture the prod stack's outbound traffic across a full demo
+# pass and judge it. Runs on mona with the prod stack up; needs tcpdump and root (run with sudo).
+#
+#   egress-test [--idle <seconds>] [--out <dir>] [--no-reset] [--flow "<command>"]
+#               [--allow-cidr <cidr>]... [--telegram-cidrs <file>]
+#   egress-test --analyze <capture.txt> --internal <cidr> [...]   judge an existing capture
+#   egress-test --plan                                            print what would run, capture nothing
+#
+# Steps: start tcpdump on the compose bridge (headers only), `mona demo-reset --yes` so every
+# service cold-starts inside the window, the demo flow (your --flow command, or you drive it by
+# hand and press Enter), then --idle seconds (default 1800) so the purge and housekeeping jobs
+# run, then stop and judge: PASS only if every destination and DNS query is api.telegram.org.
+# The destination list (no payloads) is in <out>/destinations.txt; the pcap stays in <out>.
+#
+# Environment: MONA_COMPOSE (default "docker compose -f compose.yaml -f deploy/compose.prod.yaml";
+# add -p <project>), MONA_ROOT, MONA_BIN (the host wrapper, default deploy/bin/mona).
+set -euo pipefail
+
+ROOT=${MONA_ROOT:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}
+HERE=$ROOT/deploy/bin
+MONA_BIN=${MONA_BIN:-$HERE/mona}
+export MONA_COMPOSE=${MONA_COMPOSE:-docker compose -f compose.yaml -f deploy/compose.prod.yaml}
+read -r -a COMPOSE <<<"$MONA_COMPOSE"
+
+IDLE=1800 OUT="" RESET=1 FLOW="" PLAN=0 ANALYZE="" ALLOW=() INTERNAL=() TG_CIDRS=()
+die() { echo "egress-test: $*" >&2; exit 1; }
+
+while (($#)); do
+  case "$1" in
+    --idle) IDLE=$2; shift 2 ;;
+    --out) OUT=$2; shift 2 ;;
+    --no-reset) RESET=0; shift ;;
+    --flow) FLOW=$2; shift 2 ;;
+    --allow-cidr) ALLOW+=(--allow-cidr "$2"); shift 2 ;;
+    --telegram-cidrs) TG_CIDRS=(--telegram-cidrs "$2"); shift 2 ;;
+    --internal) INTERNAL+=(--internal "$2"); shift 2 ;;
+    --analyze) ANALYZE=$2; shift 2 ;;
+    --plan) PLAN=1; shift ;;
+    *) die "unknown option $1" ;;
+  esac
+done
+
+analyze() { python3 "$HERE/egress-analyze" "$1" "${INTERNAL[@]}" "${ALLOW[@]}" "${TG_CIDRS[@]}"; }
+
+if [[ -n "$ANALYZE" ]]; then
+  ((${#INTERNAL[@]})) || die "--analyze needs --internal <compose subnet>"
+  analyze "$ANALYZE"
+  exit $?
+fi
+
+cd "$ROOT"
+api=$("${COMPOSE[@]}" ps -q api) && [[ -n "$api" ]] || die "the stack is not running (no api container)"
+network=$(docker inspect -f '{{range $k, $_ := .NetworkSettings.Networks}}{{$k}}{{end}}' "$api")
+net_id=$(docker network inspect -f '{{.Id}}' "$network")
+IFACE=br-${net_id:0:12}
+mapfile -t subnets < <(docker network inspect -f '{{range .IPAM.Config}}{{.Subnet}}{{"\n"}}{{end}}' "$network")
+((${#subnets[@]})) || die "no subnet found for $network"
+for s in "${subnets[@]}"; do [[ -n "$s" ]] && INTERNAL+=(--internal "$s"); done
+OUT=${OUT:-$ROOT/egress-$(date -u +%Y%m%d-%H%M%S)}
+
+if ((PLAN)); then
+  cat <<PLAN_EOF
+network:    $network
+interface:  $IFACE
+subnets:    ${subnets[*]}
+capture:    tcpdump -n -s 96 -i $IFACE -w $OUT/capture.pcap
+reset:      $( ((RESET)) && echo "$MONA_BIN demo-reset --yes" || echo "skipped (--no-reset)")
+flow:       ${FLOW:-"manual: you drive the demo, then press Enter"}
+idle:       $IDLE s
+judge:      egress-analyze $OUT/capture.txt (api.telegram.org only)
+PLAN_EOF
+  exit 0
+fi
+
+command -v tcpdump >/dev/null || die "tcpdump is not installed"
+((EUID == 0)) || die "run with sudo: tcpdump needs root"
+[[ -d /sys/class/net/$IFACE ]] || die "bridge $IFACE does not exist on this host"
+mkdir -p "$OUT"
+
+tcpdump -n -s 96 -U -i "$IFACE" -w "$OUT/capture.pcap" 2>"$OUT/tcpdump.log" &
+CAP=$!
+trap 'kill "$CAP" 2>/dev/null || true' EXIT
+sleep 2
+kill -0 "$CAP" 2>/dev/null || die "tcpdump did not start: $(cat "$OUT/tcpdump.log")"
+echo "capturing on $IFACE since $(date -u +%H:%M:%S)"
+
+((RESET)) && "$MONA_BIN" demo-reset --yes
+if [[ -n "$FLOW" ]]; then
+  bash -c "$FLOW"
+else
+  read -r -p "Drive the demo end to end (drop batch, debrief, chat turns, export, photo to the bot, 07:30 brief), then press Enter. "
+fi
+echo "idle for $IDLE s"
+sleep "$IDLE"
+
+kill "$CAP"; wait "$CAP" 2>/dev/null || true
+trap - EXIT
+tcpdump -n -tt -r "$OUT/capture.pcap" >"$OUT/capture.txt" 2>/dev/null
+set +e
+analyze "$OUT/capture.txt" | tee "$OUT/destinations.txt"
+rc=${PIPESTATUS[0]}
+echo "capture and destination list: $OUT"
+exit "$rc"

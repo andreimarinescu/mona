@@ -6,6 +6,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+!.env.prod.example
 /data/
 *.local
 .DS_Store
@@ -14,3 +15,5 @@ __pycache__/
 test-results/
 playwright-report/
 *.tsbuildinfo
+.deploy/
+egress-*/

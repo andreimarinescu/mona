@@ -1,0 +1,50 @@
+healthCheckTimeout: 600
+startPort: 5800
+
+macros:
+  "kv": "--cache-type-k q8_0 --cache-type-v q8_0 -fa on"
+
+models:
+  "qwen3.5-4b":
+    name: "Qwen3.5-4B (utility lane, on-demand)"
+    cmd: |
+      llama-server --port ${PORT}
+      -m /models/Qwen3.5-4B-UD-Q6_K_XL.gguf
+      -ngl 99 -c 16384 ${kv}
+      --jinja --temp 0.7 --top-p 0.8
+      --chat-template-kwargs '{"enable_thinking":false}'
+    ttl: 300
+
+  "qwen3-30b-a3b":
+    name: "Qwen3-30B-A3B-Instruct-2507 (agent lane)"
+    cmd: |
+      llama-server --port ${PORT}
+      -m /models/Qwen3-30B-A3B-Instruct-2507-UD-Q4_K_XL.gguf
+      -ngl 99 --n-cpu-moe 40 -c 131072 ${kv}
+      --jinja --temp 0.7 --top-p 0.8 --presence-penalty 1.5
+    ttl: 0
+
+  "qwen3.6-35b-a3b":
+    name: "Qwen3.6-35B-A3B (agent lane alt, thinking)"
+    cmd: |
+      llama-server --port ${PORT}
+      -m /models/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+      -ngl 99 --n-cpu-moe 28 -c 131072 ${kv}
+      --jinja --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+    ttl: 0
+
+  "qwen3.6-35b-a3b-nothink":
+    name: "Qwen3.6-35B-A3B (no-think, extraction/classification)"
+    cmd: |
+      llama-server --port ${PORT}
+      -m /models/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+      -ngl 99 --n-cpu-moe 28 -c 131072 ${kv}
+      --jinja --temp 0.7 --top-p 0.8
+      --chat-template-kwargs '{"enable_thinking":false}'
+    ttl: 0
+
+groups:
+  "agent":
+    swap: true
+    exclusive: false
+    members: ["qwen3.5-4b", "qwen3-30b-a3b", "qwen3.6-35b-a3b", "qwen3.6-35b-a3b-nothink"]

@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Build, tag and start the prod stack; keep the last 2 releases; roll back to the previous one.
+#
+#   deploy [--tag <tag>] [--no-doctor]   build mona-api and mona-web at <tag>, start them, run doctor
+#   deploy --rollback [--no-doctor]      start the release before the current one (no rebuild)
+#   deploy --status                      the current and the previous release
+#
+# Environment: MONA_COMPOSE (default "docker compose -f compose.yaml -f deploy/compose.prod.yaml";
+# add -p <project> per stack), MONA_DEPLOY_STATE (default <repo>/.deploy), MONA_ROOT.
+# Migrations only move forward: a rollback restores the previous images, not the schema.
+set -euo pipefail
+
+ROOT=${MONA_ROOT:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}
+STATE=${MONA_DEPLOY_STATE:-$ROOT/.deploy}
+read -r -a COMPOSE <<<"${MONA_COMPOSE:-docker compose -f compose.yaml -f deploy/compose.prod.yaml}"
+KEEP=2
+IMAGES=(mona-api mona-web)
+cd "$ROOT"
+mkdir -p "$STATE"
+touch "$STATE/releases"
+
+die() { echo "deploy: $*" >&2; exit 1; }
+compose() { "${COMPOSE[@]}" "$@"; }
+current() { cat "$STATE/current" 2>/dev/null || true; }
+previous() {
+  local cur; cur=$(current)
+  awk -v cur="$cur" '$0 == cur { print prev; exit } { prev = $0 }' "$STATE/releases"
+}
+
+start() {
+  local tag=$1
+  export MONA_TAG=$tag
+  compose up -d --wait
+  echo "$tag" >"$STATE/current"
+  echo "deploy: running release $tag"
+}
+
+check() {
+  ((NO_DOCTOR)) && return 0
+  MONA_COMPOSE="${COMPOSE[*]}" "$ROOT/deploy/bin/mona" doctor || die "doctor is red; \`deploy --rollback\` restores $(previous || true)"
+}
+
+prune() {
+  local keep old
+  keep=$(tail -n "$KEEP" "$STATE/releases")
+  for old in $(grep -vxF -f <(echo "$keep") "$STATE/releases" || true); do
+    for image in "${IMAGES[@]}"; do docker rmi "$image:$old" >/dev/null 2>&1 || true; done
+    echo "deploy: removed release $old"
+  done
+  echo "$keep" >"$STATE/releases"
+}
+
+TAG="" ROLLBACK=0 NO_DOCTOR=0 STATUS=0
+while (($#)); do
+  case "$1" in
+    --tag) TAG=$2; shift 2 ;;
+    --rollback) ROLLBACK=1; shift ;;
+    --no-doctor) NO_DOCTOR=1; shift ;;
+    --status) STATUS=1; shift ;;
+    *) die "unknown option $1" ;;
+  esac
+done
+
+if ((STATUS)); then
+  echo "current:  $(current)"
+  echo "previous: $(previous)"
+  exit 0
+fi
+
+if ((ROLLBACK)); then
+  tag=$(previous)
+  [[ -n "$tag" ]] || die "no earlier release to roll back to"
+  for image in "${IMAGES[@]}"; do
+    docker image inspect "$image:$tag" >/dev/null 2>&1 || die "$image:$tag is gone; cannot roll back"
+  done
+  start "$tag"
+  check
+  exit 0
+fi
+
+if [[ -z "$TAG" ]]; then
+  TAG=$(date -u +%Y%m%d-%H%M)-$(git -C "$ROOT" rev-parse --short HEAD)
+  git -C "$ROOT" diff --quiet HEAD -- || TAG+=-dirty
+fi
+export MONA_TAG=$TAG
+compose build api caddy
+grep -qxF "$TAG" "$STATE/releases" || echo "$TAG" >>"$STATE/releases"
+start "$TAG"
+prune
+check
