@@ -2,6 +2,17 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D15 · 2026-10-01 · Andrei's rulings on the debrief beat, thresholds, sitting 4 and the walkthrough
+
+- **The 4:00 beat:**
+  - A first-seen counterparty queues with reason `entity` (A17), so AGIPI and Hello bank reach the debrief because Mona has never filed one of their documents, not because they were staged.
+  - The stage runs with `MONA_DEBRIEF_CACHE=prefer` (C6 §4.7) and Mona's own debrief from a good rehearsal run, because the AGIPI split comes out in the expected shape in only 2 of 6 live runs.
+  - R11: the stage seed carries disabled `source: seed` copies of the AGIPI and Hello bank rules, so the Apply-failure fallback (Rules › enable → preview) exists.
+- **Thresholds:** 90/75 (A18).
+- **Sitting 4:** a per-card fold (each lane's contiguous run is one commit, and orchestration docs join their neighbours), then `tools/sitting.sh --from 726ad5e`, force-pushing `main` with a lease.
+- **Walkthrough:** Andrei drives demo-script v1 in his browser. The orchestrator runs the stack (Qwen 3.6), times the beats from the logs, and writes up the issues.
+- **Standing direction:** the local model on mona (Qwen 3.6 on a 16 GB card) won't reason as well as the cloud runs suggest. Mona counters this by controlling the agent: deterministic signals before model judgement, verification and checks on every model output, tool guards, and tight instructions and procedures. This adds no scope now, but it is the default way to fix a model-quality gap, in this sprint and after.
+
 ## D14 · 2026-10-01 · Ownership of the apply-group rule revert; A14–A15
 
 - **The rule revert on undo** (C6 §7.3 with A4) is owned by **L1-M3**, in L1's undo service: group undo of a `rule_apply` group sets the rule back to `draft` with a `rule.change` entry, and redo re-activates it. L4 does not implement it. If L4 already did, it says so in its report, and the orchestrator keeps one implementation at merge.

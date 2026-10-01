@@ -110,3 +110,28 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
 - **Change:** the web consumes the UI Message Stream with `ai` / `@ai-sdk/react` (`useChat`) and renders `UIMessage` parts with its own DS components. `@assistant-ui/*` is no longer a dependency. The stream protocol, part types, mapping and card design are unchanged.
 - **Why:** L3-S3 needed per-block reasoning timing, the `LanguageDivider` and stable card ids, which assistant-ui's primitives hide. INT-3 removed the unused packages. Editorial for every lane except L3.
 - **Lanes:** L3.
+
+## A17 · 2026-10-01 · C5 §9.3/§9.4 and C8 §5.4: a first-seen counterparty asks
+
+- **Change:**
+  - §9.3 reason `entity` also fires when no rule won (§4.6) and the document's resolved counterparty (§5.1) has **no other document with `status='filed'`** (any entity, any batch).
+  - Visitor batches are exempt (§4.6.8; test 12 unchanged). A document with no counterparty is unaffected.
+  - Documents of one new counterparty in one batch all queue (none is filed yet), so the debrief groups them into one question.
+  - When `entity` comes only from this trigger, the Suggestion sentence uses the new server key `review.sentence.first` ("First document from {counterparty}: where should it go?"), in EN/FR/RO. The chip stays `entity`.
+- **Why:** Andrei's ruling (D15). On Qwen 3.6, the AGIPI and Hello bank documents file confidently as `personal` at 0.95. The debrief never asks about them, and Hello bank lands in the wrong entity (plan §0 criterion 2). A practice manager asks the first time a supplier appears, and the signal holds for any practice and supplier (D12).
+- **Lanes:** L1 (FIX-3). The web renders the server sentence unchanged.
+
+## A18 · 2026-10-01 · C1 §8 `settings`: confidence defaults 90/75
+
+- **Change:**
+  - `confidence_high` defaults to 90 and `confidence_low` to 75 (migration 0006 alters the column defaults; existing rows are untouched).
+  - The demo seed sets both explicitly.
+  - Tests that depend on bands set their thresholds explicitly.
+- **Why:** Andrei's ruling (D15) on L5c's histogram. At 90/75 the live batch queues about 6 documents, the plan's target of 5–7 per batch.
+- **Lanes:** L1, L5 (FIX-3).
+
+## A19 · 2026-10-01 · C9 §5.3: the purge removes orphaned extracted counterparties
+
+- **Change:** the Visitors purge also deletes counterparties with `origin='extracted'` that no document, classification, account or rule references once the visitor documents are gone. It never deletes a counterparty that anything else still references.
+- **Why:** integrated review 1 (R12). Settings › Privacy and the stage line promise that everything Mona derived from a visitor's document is deleted. FIX-2 built it; this ratifies it.
+- **Lanes:** L1 (done in FIX-2).
