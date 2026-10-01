@@ -7,7 +7,9 @@ from typing import Any
 from mona.rules.grammar import Condition
 
 LANGS = ("en", "fr", "ro")
-QUOTES = {"en": ("“", "”"), "fr": ("« ", " »"), "ro": ("„", "”")}
+NBSP = "\u00a0"
+QUOTES = {"en": ("“", "”"), "fr": (f"«{NBSP}", f"{NBSP}»"), "ro": ("„", "”")}
+GROUPING = {"en": ",", "fr": NBSP, "ro": "."}
 OR = {"en": "or", "fr": "ou", "ro": "sau"}
 AND = {"en": "and", "fr": "et", "ro": "și"}
 WHEN = {"en": "When {}.", "fr": "Quand {}.", "ro": "Când {}."}
@@ -35,22 +37,22 @@ PHRASES: dict[tuple[str, str], dict[str, tuple[str, str]]] = {
     ("doc_type", "equals"): {
         "en": ("it is a {v}", "it isn't a {v}"),
         "fr": ("c'est un(e) {v}", "ce n'est pas un(e) {v}"),
-        "ro": ("este {v}", "nu este {v}"),
+        "ro": ("este de tipul {v}", "nu este de tipul {v}"),
     },
     ("doc_type", "contains"): {
         "en": ("its type contains {q}", "its type doesn't contain {q}"),
         "fr": ("son type contient {q}", "son type ne contient pas {q}"),
-        "ro": ("tipul conține {q}", "tipul nu conține {q}"),
+        "ro": ("tipul documentului conține {q}", "tipul documentului nu conține {q}"),
     },
     ("category", "equals"): {
         "en": ("Mona reads it as {v}", "Mona doesn't read it as {v}"),
         "fr": ("Mona le lit comme {v}", "Mona ne le lit pas comme {v}"),
-        "ro": ("Mona îl citește ca {v}", "Mona nu îl citește ca {v}"),
+        "ro": ("Mona îl încadrează la {v}", "Mona nu îl încadrează la {v}"),
     },
     ("entity", "equals"): {
         "en": ("Mona reads it as {v}", "Mona doesn't read it as {v}"),
         "fr": ("Mona l'attribue à {v}", "Mona ne l'attribue pas à {v}"),
-        "ro": ("Mona îl atribuie lui {v}", "Mona nu îl atribuie lui {v}"),
+        "ro": ("Mona îl atribuie entității {v}", "Mona nu îl atribuie entității {v}"),
     },
     ("addressee", "contains"): {
         "en": ("it is addressed to {q}", "it isn't addressed to {q}"),
@@ -60,12 +62,12 @@ PHRASES: dict[tuple[str, str], dict[str, tuple[str, str]]] = {
     ("addressee", "is_person"): {
         "en": ("it is addressed to {v}", "it isn't addressed to {v}"),
         "fr": ("il est adressé à {v}", "il n'est pas adressé à {v}"),
-        "ro": ("este adresat lui {v}", "nu este adresat lui {v}"),
+        "ro": ("este adresat către {v}", "nu este adresat către {v}"),
     },
     ("person", "mentions"): {
         "en": ("it names {v}", "it doesn't name {v}"),
         "fr": ("il mentionne {v}", "il ne mentionne pas {v}"),
-        "ro": ("îl menționează pe {v}", "nu îl menționează pe {v}"),
+        "ro": ("în text apare {v}", "în text nu apare {v}"),
     },
     ("iban", "account"): {
         "en": ("it shows the {v} account", "it doesn't show the {v} account"),
@@ -75,17 +77,17 @@ PHRASES: dict[tuple[str, str], dict[str, tuple[str, str]]] = {
     ("iban", "entity"): {
         "en": ("it shows one of {v}'s accounts", "it doesn't show any of {v}'s accounts"),
         "fr": ("il porte un compte de {v}", "il ne porte aucun compte de {v}"),
-        "ro": ("apare un cont al {v}", "nu apare niciun cont al {v}"),
+        "ro": ("apare un cont al entității {v}", "nu apare niciun cont al entității {v}"),
     },
     ("siren", "equals"): {
         "en": ("it shows SIREN {v}", "it doesn't show SIREN {v}"),
         "fr": ("il porte le SIREN {v}", "il ne porte pas le SIREN {v}"),
-        "ro": ("apare SIREN {v}", "nu apare SIREN {v}"),
+        "ro": ("apare SIREN-ul {v}", "nu apare SIREN-ul {v}"),
     },
     ("siren", "entity"): {
         "en": ("it shows {v}'s SIREN", "it doesn't show {v}'s SIREN"),
         "fr": ("il porte le SIREN de {v}", "il ne porte pas le SIREN de {v}"),
-        "ro": ("apare SIREN-ul {v}", "nu apare SIREN-ul {v}"),
+        "ro": ("apare SIREN-ul entității {v}", "nu apare SIREN-ul entității {v}"),
     },
     ("amount", "gt"): {
         "en": ("the amount is over {v}", "the amount is not over {v}"),
@@ -137,11 +139,11 @@ class Names:
 
 
 def _money(v: float | int, lang: str) -> str:
+    """A7: the number part of `format_money` (C8 §6.4), two decimals, no currency."""
     s = f"{Decimal(str(v)):,.2f}"
     if lang == "en":
         return s
-    sep = " " if lang == "fr" else "."
-    return s.replace(",", "\x00").replace(".", ",").replace("\x00", sep)
+    return s.replace(",", "\x00").replace(".", ",").replace("\x00", GROUPING[lang])
 
 
 def _join(items: list[str], lang: str, conj: dict[str, str]) -> str:

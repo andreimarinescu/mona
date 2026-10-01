@@ -8,17 +8,13 @@ from typing import Any
 from sqlalchemy import Connection, insert, select, update
 
 from mona.fileops.ops import keep_review
-from mona.pipeline import cache, extract, hooks
+from mona.pipeline import cache, extract
 from mona.pipeline.classify import classify
 from mona.pipeline.model import ModelClient, SchemaInvalid, TransportError
 from mona.pipeline.prompt import PromptBudget
 from mona.pipeline.queue import defer
 from mona.services.context import Ctx
-from mona.services.pipeline import (
-    batch_done_calls,
-    file_document,
-    finish_batch_if_done,
-)
+from mona.services.pipeline import file_document, finish_batch_if_done, settle_hooks
 from mona.services.registry import T
 from mona.services.search_index import rebuild_fts
 from mona.text import norm
@@ -63,7 +59,7 @@ def _settle(
     """Move a document out of its running stage; False if it had already left one."""
     d = T["documents"]
     now = ctx.clock()
-    with ctx.engine.begin() as conn:
+    with settle_hooks(ctx), ctx.engine.begin() as conn:
         doc = conn.execute(select(d).where(d.c.id == document_id).with_for_update()).mappings()
         doc = doc.first()
         if doc is None or (running_only and doc["status"] != "processing"):
@@ -73,10 +69,7 @@ def _settle(
         if journal:
             journal(conn, doc)
         keep_review(conn, doc, "refiled", "mona", now)
-        finished = finish_batch_if_done(conn, doc["batch_id"], now)
-    hooks.document_settled(ctx, doc["batch_id"])
-    if finished:
-        hooks.batch_done(ctx, doc["batch_id"])
+        finish_batch_if_done(conn, doc["batch_id"], now)
     return True
 
 
@@ -209,9 +202,7 @@ def classify_document(ctx: Ctx, document_id: str, model: ModelClient) -> str:
 def file_stage(ctx: Ctx, document_id: str) -> str:
     if skip_deleted(ctx, document_id):
         return "skipped"
-    summary = file_document(ctx, document_id)
-    hooks.document_settled(ctx, summary.batch_id)
-    return summary.status
+    return file_document(ctx, document_id).status
 
 
 def fail_filing_stage(ctx: Ctx, document_id: str, code: str) -> bool:
@@ -262,5 +253,5 @@ def run(
 
 def recover(ctx: Ctx, older_than: timedelta = RECOVER_AFTER) -> dict[int, str]:
     """C7 §4.3 recovery; pipeline filings it fails land in review (M1's hook)."""
-    with batch_done_calls(ctx):
+    with settle_hooks(ctx):
         return ctx.ops.recover_pending(older_than)

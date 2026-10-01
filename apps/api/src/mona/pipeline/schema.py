@@ -130,6 +130,11 @@ class Output:
     reason: str
 
 
+def empty_answer(raw: Mapping[str, Any]) -> bool:
+    """A14: a schema-valid answer with every field null and confidence 0."""
+    return all(raw.get(k) is None for k in FIELD_KEYS) and not raw.get("confidence")
+
+
 def collapse(s: str) -> str:
     return _WS.sub(" ", s).strip()
 

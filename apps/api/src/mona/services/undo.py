@@ -3,10 +3,11 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import Connection, or_, select
 
 from mona.dto import JournalEntry
-from mona.fileops import FileOpError, UndoResult
+from mona.fileops import FileOpError, UndoResult, group_state
+from mona.rules import store
 from mona.services.context import Ctx
 from mona.services.dto import journal_entry
 from mona.services.errors import ServiceError
@@ -15,11 +16,13 @@ from mona.services.registry import T
 
 @dataclass
 class Undone:
-    """C4 §3.16 result: `undone` names the entries reversed and the new entries."""
+    """C4 §3.16 result: `undone` names the entries reversed and the new entries;
+    `rule_states` the rule states C6 §7.3 changed (C2 `UndoResult.ruleStates`)."""
 
     group_id: str | None
     undone: list[dict[str, Any]] = field(default_factory=list)
     skipped: list[dict[str, Any]] = field(default_factory=list)
+    rule_states: list[dict[str, str]] = field(default_factory=list)
 
 
 def _undone(ctx: Ctx, r: UndoResult) -> dict[str, Any]:
@@ -65,11 +68,77 @@ def undo(
             raise ServiceError("not_found", err.message) from None
         raise ServiceError("conflict", err.message, hint=err.hint or err.code) from None
     out = Undone(g.group_id)
+    if g.group_id is not None:
+        out.rule_states = follow_apply(ctx, g.group_id, actor=actor, via=via)
     out.undone = [_undone(ctx, r) for r in g.undone]
     out.skipped = [{"journal_id": r.journal_id, "state": r.state} for r in g.skipped]
     if g.group_id is None:
         out.skipped.append({"journal_id": None, "state": g.state})
     return out
+
+
+def _apply_root(conn: Connection, group_id: str) -> str | None:
+    """The `rule_apply` group that the undo/redo group's `target_group_id` chain leads to."""
+    g = T["op_groups"]
+    row = conn.execute(select(g).where(g.c.id == group_id)).mappings().one()
+    while row["kind"] in ("undo", "redo") and row["target_group_id"] is not None:
+        row = conn.execute(select(g).where(g.c.id == row["target_group_id"])).mappings().one()
+    return row["id"] if row["kind"] == "rule_apply" else None
+
+
+def _chain(conn: Connection, root: str) -> set[str]:
+    """C6 §7.3: the group and every undo or redo group whose target chain leads to it."""
+    g = T["op_groups"]
+    chain, frontier = {root}, {root}
+    while frontier:
+        frontier = set(
+            conn.execute(select(g.c.id).where(g.c.target_group_id.in_(frontier))).scalars()
+        )
+        chain |= frontier
+    return chain
+
+
+def follow_apply(ctx: Ctx, group_id: str, *, actor: str, via: str) -> list[dict[str, str]]:
+    """C6 §7.3: after a group undo in an Apply's chain, the rule follows the application:
+    `a.before`'s state while the Apply is undone, `active` while its moves are in place."""
+    f = T["file_ops"]
+    with ctx.engine.begin() as conn:
+        root = _apply_root(conn, group_id)
+        if root is None:
+            return []
+        a = (
+            conn.execute(
+                select(f)
+                .where(f.c.group_id == root, f.c.action == "rule.change", f.c.fs_state == "done")
+                .order_by(f.c.id)
+            )
+            .mappings()
+            .all()
+        )
+        a = next((e for e in a if (e["after"] or {}).get("state") == "active"), None)
+        if a is None or a["rule_id"] is None:
+            return []
+        chain = _chain(conn, root)
+        changed_since = conn.execute(
+            select(f.c.id).where(
+                f.c.rule_id == a["rule_id"],
+                f.c.action == "rule.change",
+                f.c.id > a["id"],
+                or_(f.c.group_id.is_(None), f.c.group_id.not_in(chain)),
+            )
+        ).first()
+        if changed_since is not None:
+            return []
+        live, _ = group_state(conn, root)
+        state = (a["before"] or {}).get("state", "draft") if live == "undone" else "active"
+        entry = store.set_state(
+            conn, a["rule_id"], state, actor=actor, via=via, at=ctx.clock(), group_id=group_id
+        )
+        if entry is None:
+            return []
+    with ctx.engine.connect() as conn:
+        store.write_export(conn, ctx.config_dir, now=ctx.clock())
+    return [{"rule_id": a["rule_id"], "state": state}]
 
 
 def delete_document(ctx: Ctx, document_id: str, *, actor: str, via: str) -> JournalEntry:

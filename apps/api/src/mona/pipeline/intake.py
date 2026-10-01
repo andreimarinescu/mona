@@ -11,11 +11,10 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from mona.fileops import inbox_name, resolve_inside
 from mona.ids import new_id
-from mona.pipeline import hooks
 from mona.pipeline.queue import defer
 from mona.services.context import Ctx
 from mona.services.errors import ServiceError
-from mona.services.pipeline import finish_batch_if_done
+from mona.services.pipeline import finish_batch_if_done, settle_hooks
 from mona.services.registry import T
 
 MAX_BYTES = 50 * 1024 * 1024
@@ -107,9 +106,8 @@ def ingest_files(
     it = T["intake_items"]
     now = ctx.clock()
     written: list[Path] = []
-    finished = False
     try:
-        with ctx.engine.begin() as conn:
+        with settle_hooks(ctx), ctx.engine.begin() as conn:
             if batch_id is None:
                 batch_id = create_batch(conn, source=source, visitor=visitor, title=title, now=now)
             else:
@@ -142,13 +140,11 @@ def ingest_files(
             for item in out.items:
                 if item.outcome == "accepted" and item.document_id:
                     defer(conn, "extract_text", item.document_id)
-            finished = out.batch_done = finish_batch_if_done(conn, batch_id, now)
+            out.batch_done = finish_batch_if_done(conn, batch_id, now, settled=False)
     except BaseException:
         for p in written:
             p.unlink(missing_ok=True)
         raise
-    if finished:
-        hooks.batch_done(ctx, batch_id)
     return out
 
 

@@ -10,12 +10,15 @@ export DATABASE_URL
 
 .PHONY: up down logs db check web-check py-check api-client e2e
 
-up: node_modules
+up: node_modules data
 	$(COMPOSE) up -d --build
 
 # compose mounts volumes over these paths; created first by docker they would be root-owned on the host
 node_modules:
 	npm ci --no-audit --no-fund
+
+data:
+	mkdir -p data
 
 down:
 	$(COMPOSE) down

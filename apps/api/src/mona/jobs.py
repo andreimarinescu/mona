@@ -78,3 +78,13 @@ def recover_pending(timestamp: int) -> int:
     from mona.pipeline.stages import recover
 
     return len(recover(get_context()))
+
+
+@app.periodic(cron="*/15 * * * *")
+@app.task(name="purge_visitors", queue="cpu", queueing_lock="purge_visitors")
+def purge_visitors(timestamp: int) -> int:
+    """C9 §5.2: the Visitors purge every 15 minutes."""
+    from mona.fileops.purge import purge_visitors as purge
+    from mona.pipeline.runtime import get_context
+
+    return len(purge(get_context().ops).purged)

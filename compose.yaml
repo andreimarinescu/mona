@@ -1,8 +1,10 @@
 x-python: &python
   build: ./apps/api
   image: ${COMPOSE_PROJECT_NAME}-python:dev
+  user: "${MONA_UID:-1000}:${MONA_GID:-1000}"
   env_file: .env
   environment:
+    HOME: /tmp
     DATABASE_URL: postgresql+psycopg://mona:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/mona
     MONA_ENV: dev
     MONA_DATA_DIR: /data

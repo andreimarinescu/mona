@@ -53,10 +53,11 @@ async def _invalid(_: Request, __: Exception) -> JSONResponse:
 
 def pipeline_startup(app: FastAPI) -> None:
     """C7 §1.2 single-filesystem check and §4.3 recovery before serving."""
+    from mona.pipeline.hooks import interview_hooks
     from mona.pipeline.stages import recover
     from mona.services import make_context
 
-    ctx = make_context(get_sync_engine(), get_settings().mona_data_dir)
+    ctx = make_context(get_sync_engine(), get_settings().mona_data_dir, **interview_hooks())
     recover(ctx, timedelta(0))
     app.state.pipeline = ctx
 

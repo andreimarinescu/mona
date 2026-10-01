@@ -267,10 +267,69 @@ def test_condition_text_sentence():
         " and the amount is at least 1,284.00."
     )
     assert text["fr"] == (
-        "Quand l'émetteur est OPCO, le texte mentionne « plan d'épargne retraite » ou « PER »"
-        " et le montant est d'au moins 1 284,00."
+        "Quand l'émetteur est OPCO, le texte mentionne «\u00a0plan d'épargne retraite\u00a0»"
+        " ou «\u00a0PER\u00a0» et le montant est d'au moins 1\u00a0284,00."
     )
     assert text["ro"] == (
         "Când emitentul este OPCO, textul menționează „plan d'épargne retraite” sau „PER”"
         " și suma este de cel puțin 1.284,00."
     )
+
+
+@pytest.mark.parametrize(
+    ("lang", "over", "between"),
+    [
+        ("en", "the amount is over 1,284.60", "the amount is between 1,284.60 and 12,000.00"),
+        ("fr", "le montant dépasse 1\u00a0284,60",
+         "le montant est entre 1\u00a0284,60 et 12\u00a0000,00"),
+        ("ro", "suma depășește 1.284,60", "suma este între 1.284,60 și 12.000,00"),
+    ],
+)  # fmt: skip
+def test_amounts_take_each_languages_marks(lang, over, between):
+    """A7: `format_money`'s number part; French groups with U+00A0, never U+202F."""
+    gt = Condition(field="amount", op="gt", value=1284.6)
+    assert render_condition(gt, lang, NAMES) == over
+    rng = Condition(field="amount", op="between", value=[1284.6, 12000])
+    assert render_condition(rng, lang, NAMES) == between
+    assert "\u202f" not in over + between
+
+
+def test_french_quotes_hold_no_breaking_space():
+    c = Condition(field="addressee", op="contains", value="Paul")
+    assert render_condition(c, "fr", NAMES) == "il est adressé à «\u00a0Paul\u00a0»"
+
+
+RO_A7 = [
+    ("counterparty", "contains", "OPCO", "numele emitentului conține „OPCO”",
+     "numele emitentului nu conține „OPCO”"),
+    ("text", "contains", "PER", "textul menționează „PER”", "textul nu menționează „PER”"),
+    ("doc_type", "equals", "avis", "este de tipul avis", "nu este de tipul avis"),
+    ("doc_type", "contains", "avis", "tipul documentului conține „avis”",
+     "tipul documentului nu conține „avis”"),
+    ("category", "equals", "tax", "Mona îl încadrează la Impozite și taxe",
+     "Mona nu îl încadrează la Impozite și taxe"),
+    ("entity", "equals", "cabinet", "Mona îl atribuie entității Cabinet Marchand",
+     "Mona nu îl atribuie entității Cabinet Marchand"),
+    ("addressee", "contains", "Paul", "este adresat către „Paul”", "nu este adresat către „Paul”"),
+    ("addressee", "is_person", "paul", "este adresat către Paul Marchand",
+     "nu este adresat către Paul Marchand"),
+    ("addressee", "is_entity", "cabinet", "este adresat către Cabinet Marchand",
+     "nu este adresat către Cabinet Marchand"),
+    ("person", "mentions", "paul", "în text apare Paul Marchand", "în text nu apare Paul Marchand"),
+    ("iban", "account", "lmnp-hello", "apare contul Hello bank · LMNP •• 4821",
+     "nu apare contul Hello bank · LMNP •• 4821"),
+    ("iban", "entity", "cabinet", "apare un cont al entității Cabinet Marchand",
+     "nu apare niciun cont al entității Cabinet Marchand"),
+    ("siren", "equals", "552100554", "apare SIREN-ul 552100554", "nu apare SIREN-ul 552100554"),
+    ("siren", "entity", "cabinet", "apare SIREN-ul entității Cabinet Marchand",
+     "nu apare SIREN-ul entității Cabinet Marchand"),
+    ("counterparty", "equals", "OPCO", "emitentul este OPCO", "emitentul nu este OPCO"),
+]  # fmt: skip
+
+
+@pytest.mark.parametrize(("field", "op", "value", "yes", "no"), RO_A7)
+def test_romanian_wording_follows_c8(field, op, value, yes, no):
+    """A7: C5 §4.7's Romanian column takes C8 §8's phrases."""
+    assert render_condition(Condition(field=field, op=op, value=value), "ro", NAMES) == yes
+    negated = Condition(field=field, op=op, value=value, negate=True)
+    assert render_condition(negated, "ro", NAMES) == no

@@ -137,6 +137,34 @@ def worker(
     jobs_app.run_worker(queues=wanted, concurrency=concurrency)
 
 
+@app.command("purge-visitors")
+def purge_visitors(
+    now: Annotated[
+        bool, typer.Option("--now", help="Ignore the age: purge every visitor batch now.")
+    ] = False,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="List what would be purged; change nothing.")
+    ] = False,
+) -> None:
+    """C9 §5: delete visitor-batch documents and everything derived from them."""
+    import logging
+
+    from mona.fileops.purge import purge_visitors as purge
+    from mona.pipeline import runtime
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    out = purge(runtime.get_context().ops, ignore_age=now, dry_run=dry_run)
+    if dry_run:
+        for doc_id, batch_id in out.due:
+            typer.echo(f"would purge visitor document {doc_id} (batch {batch_id})")
+        typer.echo(f"{len(out.due)} documents due")
+        return
+    typer.echo(f"purged {len(out.purged)} documents, {len(out.batches)} batches")
+    if out.failed:
+        typer.echo(f"failed: {', '.join(out.failed)}", err=True)
+        raise typer.Exit(1)
+
+
 pipeline_app = typer.Typer(no_args_is_help=True, help="Run documents through the pipeline.")
 app.add_typer(pipeline_app, name="pipeline")
 

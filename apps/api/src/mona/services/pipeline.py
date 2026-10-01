@@ -1,8 +1,10 @@
 """`file_document` (C5 §1.2, C7 §4) and what runs inside a filing's step C."""
 
-from collections.abc import Iterator, Mapping
+import logging
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -23,11 +25,24 @@ from mona.services.search_index import rebuild_fts
 from mona.templates import paris_date
 
 RUNNING = ("queued", "reading", "ocr", "classifying", "filing")
-_finished: ContextVar[list[str] | None] = ContextVar("finished_batches", default=None)
+logger = logging.getLogger(__name__)
 
 
-def finish_batch_if_done(conn: Connection, batch_id: str, now: datetime) -> bool:
-    """C1 §4.1: lock the batch row; `done` once no accepted document is in a running stage."""
+@dataclass
+class _Pending:
+    settled: list[str] = field(default_factory=list)
+    finished: list[str] = field(default_factory=list)
+
+
+_pending: ContextVar[_Pending | None] = ContextVar("pending_hooks", default=None)
+
+
+def finish_batch_if_done(
+    conn: Connection, batch_id: str, now: datetime, *, settled: bool = True
+) -> bool:
+    """C1 §4.1: lock the batch row; `done` once no accepted document is in a running stage.
+
+    `settled`: the transaction moved one of the batch's documents out of a running stage."""
     b, d = T["batches"], T["documents"]
     row = (
         conn.execute(select(b).where(b.c.id == batch_id).with_for_update(key_share=True))
@@ -36,6 +51,9 @@ def finish_batch_if_done(conn: Connection, batch_id: str, now: datetime) -> bool
     )
     if row["status"] == "done":
         return False
+    pending = _pending.get()
+    if settled and pending is not None:
+        pending.settled.append(batch_id)
     left = conn.execute(
         select(func.count())
         .select_from(d)
@@ -44,24 +62,38 @@ def finish_batch_if_done(conn: Connection, batch_id: str, now: datetime) -> bool
     if left:
         return False
     conn.execute(update(b).where(b.c.id == batch_id).values(status="done", finished_at=now))
-    finished = _finished.get()
-    if finished is not None:
-        finished.append(batch_id)
+    if pending is not None:
+        pending.finished.append(batch_id)
     return True
 
 
+def _call(hook: Callable[[str], None] | None, batch_id: str) -> None:
+    if hook is None:
+        return
+    try:
+        hook(batch_id)
+    except Exception as e:
+        logger.error("hook for %s failed: %s", batch_id, type(e).__name__)
+
+
 @contextmanager
-def batch_done_calls(ctx: Ctx) -> Iterator[None]:
-    """Call the batch-end hook once for each batch the enclosed commits marked `done`."""
-    token = _finished.set([])
+def settle_hooks(ctx: Ctx) -> Iterator[None]:
+    """C6 §3.1: after the enclosed commits, `on_document_settled` for each settle, then
+    `on_batch_done` once per batch they marked `done`. Nested uses defer to the outermost;
+    an exception (a rolled-back transaction) calls nothing."""
+    if _pending.get() is not None:
+        yield
+        return
+    pending = _Pending()
+    token = _pending.set(pending)
     try:
         yield
-        finished = list(_finished.get() or [])
     finally:
-        _finished.reset(token)
-    if ctx.on_batch_done:
-        for batch_id in finished:
-            ctx.on_batch_done(batch_id)
+        _pending.reset(token)
+    for batch_id in pending.settled:
+        _call(ctx.on_document_settled, batch_id)
+    for batch_id in pending.finished:
+        _call(ctx.on_batch_done, batch_id)
 
 
 def due_date_verified(conn: Connection, doc: Mapping[str, Any]) -> bool:
@@ -97,10 +129,14 @@ def due_date_verified(conn: Connection, doc: Mapping[str, Any]) -> bool:
 def add_extracted_deadline(
     conn: Connection, doc: Mapping[str, Any], *, actor: str, via: str, at: datetime
 ) -> str | None:
-    """C1 §6.2: only a verified due date on or after arrival (Europe/Paris) becomes a deadline."""
+    """C1 §6.2: only a verified due date on or after arrival (Europe/Paris) becomes a deadline,
+    and never for a document of a visitor batch (A10)."""
     if doc["entity_id"] is None or not due_date_verified(conn, doc):
         return None
     if doc["due_date"] < paris_date(doc["arrived_at"]):
+        return None
+    b = T["batches"]
+    if conn.execute(select(b.c.visitor).where(b.c.id == doc["batch_id"])).scalar():
         return None
     t = T["deadlines"]
     money = doc["currency"] in ("EUR", "RON")
@@ -186,10 +222,9 @@ def file_document(ctx: Ctx, document_id: str) -> DocumentSummary:
     """File a classified document to its proposed path (actor `mona`, via `pipeline`).
 
     Filesystem failures, `forbidden_path` and `collision_exhausted` send it to review with
-    reason `conflict` and the error in `pipeline_error`; the batch-done hook runs once."""
+    reason `conflict` and the error in `pipeline_error`; the C6 hooks run after the commits."""
     d, g = T["documents"], T["op_groups"]
-    token = _finished.set([])
-    try:
+    with settle_hooks(ctx):
         with ctx.engine.begin() as conn:
             doc = conn.execute(select(d).where(d.c.id == document_id)).mappings().first()
             if doc is None:
@@ -229,12 +264,6 @@ def file_document(ctx: Ctx, document_id: str) -> DocumentSummary:
         except FileOpError as err:
             with ctx.engine.begin() as conn:
                 fail_filing(conn, document_id, error_code(err), ctx.clock())
-        finished = list(_finished.get() or [])
-    finally:
-        _finished.reset(token)
-    if ctx.on_batch_done:
-        for batch_id in finished:
-            ctx.on_batch_done(batch_id)
     return _summary(ctx, document_id)
 
 

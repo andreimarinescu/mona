@@ -9,6 +9,13 @@ MAX_CHARS = 120
 MIN_RUN_CHARS = 6
 _WORD = re.compile(r"\S+")
 _EDGES = " \t\n\r\f\v.,;:"
+_COLUMN_BREAK = re.compile(r" {2,}")
+
+
+def columns(page_text: str) -> list[str]:
+    """A15: each line's column segments, normalised; a run of ≥ 2 spaces is a column break."""
+    return [n for line in page_text.split("\n") for seg in _COLUMN_BREAK.split(line)
+            if (n := norm(seg))]  # fmt: skip
 
 
 def _on_a_line(s: str, lines: list[str]) -> bool:
@@ -36,10 +43,10 @@ def shape(s: str) -> str | None:
 
 
 def find_query(c: Checked, page_text: str) -> str | None:
-    """`page_text` is the §1.4 text of the verified page."""
+    """`page_text` is the §1.4 text of the verified page; no candidate crosses a column (A15)."""
     if not c.verified:
         return None
-    lines = [norm(line) for line in page_text.split("\n")]
+    lines = columns(page_text)
     quote = c.field.quote
     if _on_a_line(quote, lines):
         return shape(quote)

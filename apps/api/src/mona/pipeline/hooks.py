@@ -1,15 +1,20 @@
-"""Calls made after a pipeline transaction commits; C6 (L1-M3) fills them in."""
+"""The context hooks of the api and the workers: C6 §3.1's `mona.interviews.hooks`."""
 
-from mona.services.context import Ctx
-
-
-def batch_done(ctx: Ctx, batch_id: str) -> None:
-    """C1 §4.1: once, after the commit that marked the batch `done`."""
-    if ctx.on_batch_done:
-        ctx.on_batch_done(batch_id)
+from collections.abc import Callable
 
 
-def document_settled(ctx: Ctx, batch_id: str) -> None:
-    """After any commit that moved one of the batch's documents out of a running stage."""
-    if ctx.on_document_settled:
-        ctx.on_document_settled(batch_id)
+def _on_batch_done(batch_id: str) -> None:
+    from mona.interviews import hooks
+
+    hooks.on_batch_done(batch_id)
+
+
+def _on_document_settled(batch_id: str) -> None:
+    from mona.interviews import hooks
+
+    hooks.on_document_settled(batch_id)
+
+
+def interview_hooks() -> dict[str, Callable[[str], None]]:
+    """`make_context` keyword arguments wiring the C6 hooks."""
+    return {"on_batch_done": _on_batch_done, "on_document_settled": _on_document_settled}

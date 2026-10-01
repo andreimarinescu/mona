@@ -8,10 +8,11 @@ from sqlalchemy import Connection, func, insert, select, update
 
 from mona.fileops.ops import keep_review
 from mona.ids import new_id
-from mona.pipeline import cache, hooks
+from mona.pipeline import cache
 from mona.pipeline import prompt as prompts
 from mona.pipeline import schema as output_schema
 from mona.pipeline.evidence import Checked, check, field_confidence
+from mona.pipeline.extract import UNREADABLE_MIN, solid_chars
 from mona.pipeline.findquery import find_query
 from mona.pipeline.model import ModelClient, ModelResult
 from mona.pipeline.queue import defer
@@ -22,7 +23,7 @@ from mona.rules.scoring import percent, score, tokens_used
 from mona.services import registry
 from mona.services.context import Ctx
 from mona.services.corrections import resolve_counterparty
-from mona.services.pipeline import finish_batch_if_done
+from mona.services.pipeline import finish_batch_if_done, settle_hooks
 from mona.services.placement import place
 from mona.services.registry import Snapshot, T
 from mona.services.search_index import rebuild_fts
@@ -86,18 +87,25 @@ def _live(doc: Mapping[str, Any] | None) -> bool:
 
 
 def model_output(
-    ctx: Ctx, doc: Mapping[str, Any], p: prompts.Prompt, schema: dict[str, Any],
-    model: ModelClient, *, bypass_cache: bool = False,
-) -> tuple[dict[str, Any], ModelResult | None]:  # fmt: skip
-    """C5 §1.3 model-output cache: a hit needs `v`, `prompt_version`, `model` and today's schema."""
+    ctx: Ctx, doc: Mapping[str, Any], s: prompts.Sections, p: prompts.Prompt,
+    schema: dict[str, Any], model: ModelClient, *, bypass_cache: bool = False,
+) -> tuple[dict[str, Any], ModelResult | None, prompts.Prompt]:  # fmt: skip
+    """C5 §1.3 model-output cache: a hit needs `v`, `prompt_version`, `model` and today's schema.
+
+    A14: an empty answer for a readable document is asked once more with the first page only;
+    the cache keeps the final answer. Returns the prompt the answer came from."""
     sha = doc["sha256"]
     if not bypass_cache:
         raw = cache.read_model(ctx.textcache, sha, PROMPT_VERSION, model.model)
         if raw is not None and not output_schema.errors(raw, schema):
-            return raw, None
+            return raw, None, p
     result = model.complete(p.system, p.user, schema)
+    readable = sum(solid_chars(page) for page in s.pages) >= UNREADABLE_MIN
+    if readable and output_schema.empty_answer(result.raw):
+        p = prompts.build(s, max_pages=1)
+        result = model.complete(p.system, p.user, schema)
     cache.write_model(ctx.textcache, sha, PROMPT_VERSION, model.model, result.raw)
-    return result.raw, result
+    return result.raw, result, p
 
 
 def classify(
@@ -116,11 +124,11 @@ def classify(
             .values(pipeline_stage="classifying", updated_at=ctx.clock())
         )  # fmt: skip
         snap = registry.load(conn)
-        p = prompts.build(prompts.sections(conn, snap, doc, pages.pages))
+        sections = prompts.sections(conn, snap, doc, pages.pages)
+        p = prompts.build(sections)
         schema = request_schema(snap)
-    raw, result = model_output(ctx, doc, p, schema, model, bypass_cache=bypass_cache)
-    finished = False
-    with ctx.engine.begin() as conn:
+    raw, result, p = model_output(ctx, doc, sections, p, schema, model, bypass_cache=bypass_cache)
+    with settle_hooks(ctx), ctx.engine.begin() as conn:
         doc = _document(conn, document_id, lock=True)
         if not _live(doc):
             return Decision("skipped")
@@ -128,13 +136,9 @@ def classify(
         decision, work = decide(conn, doc, pages.pages, p, raw)
         _persist(ctx, conn, doc, pages, raw, result, model.model, decision, work)
         if decision.outcome == "review":
-            finished = finish_batch_if_done(conn, doc["batch_id"], ctx.clock())
+            finish_batch_if_done(conn, doc["batch_id"], ctx.clock())
         else:
             defer(conn, "file_document", document_id)
-    if decision.outcome == "review":
-        hooks.document_settled(ctx, doc["batch_id"])
-        if finished:
-            hooks.batch_done(ctx, doc["batch_id"])
     return decision
 
 

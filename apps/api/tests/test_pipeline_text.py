@@ -191,6 +191,32 @@ def test_find_query_normalisation_uses_norm():
     assert find_query(c, page) == "L'avis d'échéance du contrat"
 
 
+COLUMNS = (
+    "Banque Exemple                                  Jeanne Fictive\n"
+    "Service clients                                 10 rue Imaginaire\n"
+    "Total du mois  480,00"
+)
+
+
+def test_a_quote_across_columns_verifies_and_finds_within_one_column():
+    """A15: verification folds the column break; findQuery never crosses it."""
+    c = check(f("entity", "Banque Exemple Jeanne Fictive"), [COLUMNS])
+    assert c.verified and find_query(c, COLUMNS) == "Banque Exemple"
+
+
+def test_a_quote_inside_one_column_stays_whole():
+    c = check(f("addressee", "10 rue Imaginaire"), [COLUMNS])
+    assert find_query(c, COLUMNS) == "10 rue Imaginaire"
+
+
+def test_one_word_columns_fall_back_to_the_value():
+    page = "Dupont                    Laval\nTotal du mois  480,00"
+    c = check(f("addressee", "Dupont Laval", value="Dupont"), [page])
+    assert c.verified and find_query(c, page) == "Dupont"
+    c = check(f("amount", "mois 480,00", value="480.00"), [page])
+    assert c.verified and find_query(c, page) == "480,00"
+
+
 # --- §5.2 schema and §5.1 request ---
 
 

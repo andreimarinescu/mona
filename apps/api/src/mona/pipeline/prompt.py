@@ -2,7 +2,7 @@
 
 import math
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from sqlalchemy import Connection, select, text
@@ -135,10 +135,10 @@ def render(s: Sections, cut: Cut) -> Prompt:
     return Prompt("\n".join(system), "\n".join(user), pages, len(s.pages), cut)
 
 
-def build(s: Sections) -> Prompt:
-    """The first cut level of §5.4 that fits under the ceiling."""
+def build(s: Sections, max_pages: int = PAGES_SENT) -> Prompt:
+    """The first cut level of §5.4 that fits under the ceiling, sending ≤ `max_pages` pages."""
     for cut in CUTS:
-        p = render(s, cut)
+        p = render(s, replace(cut, pages=min(cut.pages, max_pages)))
         if p.tokens <= BUDGET:
             return p
     raise PromptBudget("prompt_budget")

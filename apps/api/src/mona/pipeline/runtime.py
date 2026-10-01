@@ -6,6 +6,7 @@ from functools import lru_cache
 
 from mona.db import get_sync_engine
 from mona.pipeline import stages
+from mona.pipeline.hooks import interview_hooks
 from mona.pipeline.model import LlmClient, ModelClient
 from mona.services.context import Ctx, make_context
 from mona.settings import get_settings
@@ -15,8 +16,9 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 def get_context() -> Ctx:
-    """`make_context` once per process: resolves the roots and refuses split filesystems."""
-    return make_context(get_sync_engine(), get_settings().mona_data_dir)
+    """`make_context` once per process: resolves the roots, refuses split filesystems, and
+    wires the C6 hooks."""
+    return make_context(get_sync_engine(), get_settings().mona_data_dir, **interview_hooks())
 
 
 @lru_cache
