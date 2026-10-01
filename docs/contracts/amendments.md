@@ -104,3 +104,9 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - `findQuery` (§7) never crosses a column break: it uses the longest segment of the quote that lies within one column (≥ 2 words), else the field value.
 - **Why:** L1-M2's pdf.js check. 1 of 90 verified quotes didn't highlight, because the model joined two columns of one line and pdf.js orders that text differently.
 - **Lanes:** L1.
+
+## A16 · 2026-10-01 · C3 §1/§3.4: the web renders AI SDK messages with its own components
+
+- **Change:** the web consumes the UI Message Stream with `ai` / `@ai-sdk/react` (`useChat`) and renders `UIMessage` parts with its own DS components. `@assistant-ui/*` is no longer a dependency. The stream protocol, part types, mapping and card design are unchanged.
+- **Why:** L3-S3 needed per-block reasoning timing, the `LanguageDivider` and stable card ids, which assistant-ui's primitives hide. INT-3 removed the unused packages. Editorial for every lane except L3.
+- **Lanes:** L3.
