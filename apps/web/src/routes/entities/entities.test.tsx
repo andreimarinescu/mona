@@ -42,7 +42,7 @@ describe('EntityCard', () => {
   });
 
   it('helpers: monogram, SIREN grouping, fiscal year end, Visitors last', () => {
-    expect([monogram('Cabinet Marchand'), monogram('Personnel'), monogram('SCI Les Tilleuls')]).toEqual(['CM', 'PE', 'SL']);
+    expect([monogram('Cabinet Marchand'), monogram('Famille Marchand'), monogram('SCI Les Tilleuls')]).toEqual(['CM', 'FM', 'SL']);
     expect(formatSiren('912408337')).toBe('912 408 337');
     expect(fiscalYearEndText('06-30', 'fr')).toBe('30 juin');
     expect(sortEntities([ENTITIES[4]!, ENTITIES[0]!], VISITORS_ID).map((e) => e.key)).toEqual(['cabinet-marchand', 'visitors']);

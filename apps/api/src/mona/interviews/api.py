@@ -122,7 +122,7 @@ async def _run(fn: Any, *args: Any, **kwargs: Any) -> Any:
     "/{interview_id}",
     operation_id="getInterview",
     response_model=dto.Interview,
-    responses=errors(404),
+    responses=errors(401, 404, 423),
 )
 async def get_interview(interview_id: str, request: Request) -> Response:
     _check(interview_id)
@@ -130,7 +130,10 @@ async def get_interview(interview_id: str, request: Request) -> Response:
 
 
 @router.get(
-    "", operation_id="listInterviews", response_model=Page[dto.Interview], responses=errors(400)
+    "",
+    operation_id="listInterviews",
+    response_model=Page[dto.Interview],
+    responses=errors(400, 401, 423),
 )
 async def list_interviews(
     status: dto.InterviewStatus | None = None,
@@ -169,7 +172,7 @@ async def list_interviews(
     operation_id="createInterview",
     response_model=InterviewCreated,
     status_code=201,
-    responses=errors(400, 404, 422),
+    responses=errors(400, 401, 403, 404, 415, 422, 423),
 )
 async def create_interview(body: InterviewCreate, response: Response) -> InterviewCreated:
     scope = body.scope.model_dump(by_alias=False)
@@ -207,7 +210,7 @@ async def _answer_result(outcome: answers.AnswerOutcome) -> AnswerResult:
     "/{interview_id}/questions/{question_id}/answer",
     operation_id="answerQuestion",
     response_model=AnswerResult,
-    responses=errors(400, 404, 409, 422),
+    responses=errors(400, 401, 403, 404, 409, 415, 422, 423),
 )
 async def answer_question(interview_id: str, question_id: str, body: AnswerBody) -> AnswerResult:
     _check(interview_id, question_id)
@@ -247,7 +250,7 @@ async def answer_question(interview_id: str, question_id: str, body: AnswerBody)
     "/{interview_id}/questions/{question_id}/skip",
     operation_id="skipQuestion",
     response_model=dto.InterviewQuestion,
-    responses=errors(404, 409),
+    responses=errors(401, 403, 404, 409, 415, 423),
 )
 async def skip_question(
     interview_id: str, question_id: str, body: ActionBody
@@ -262,7 +265,7 @@ async def skip_question(
     "/{interview_id}/questions/{question_id}/apply",
     operation_id="applyQuestionRules",
     response_model=ApplyAllResult,
-    responses=errors(404, 409),
+    responses=errors(401, 403, 404, 409, 415, 423),
 )
 async def apply_question(interview_id: str, question_id: str, body: ActionBody) -> ApplyAllResult:
     _check(interview_id, question_id)
@@ -284,7 +287,7 @@ async def apply_question(interview_id: str, question_id: str, body: ActionBody) 
     "/{interview_id}/cancel",
     operation_id="cancelInterview",
     response_model=dto.Interview,
-    responses=errors(404, 409),
+    responses=errors(401, 403, 404, 409, 415, 423),
 )
 async def cancel_interview(interview_id: str) -> dto.Interview:
     _check(interview_id)

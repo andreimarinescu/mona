@@ -25,11 +25,11 @@ describe('each card renders from its C3 part (C1 DTOs)', () => {
     await renderCards();
     const doc = within(card('doc'));
     expect(card('doc').dataset.id).toBe(DOC.id);
-    expect(doc.getByText('Personnel')).toBeInTheDocument();
+    expect(doc.getByText('Famille Marchand')).toBeInTheDocument();
     expect(await doc.findByText('Insurance')).toBeInTheDocument();
     expect(doc.getByText('6 Jan 2026')).toBeInTheDocument();
     expect(doc.getByText('€955.20')).toBeInTheDocument();
-    expect(doc.getByText(/Personnel \/ 2026 Personnel \/ Assurances \/ 2026-01-06_Previa_Avis\.pdf/)).toBeInTheDocument();
+    expect(doc.getByText(/Famille Marchand \/ 2026 Famille Marchand \/ Assurances \/ 2026-01-06_Previa_Avis\.pdf/)).toBeInTheDocument();
     expect(doc.getByRole('meter', { name: 'Confidence' })).toHaveAttribute('aria-valuenow', '71');
     expect(doc.getByText('Filed')).toBeInTheDocument();
     expect(doc.getByRole('link', { name: `Open: ${DOC.title}` })).toHaveAttribute('href', `/documents/${DOC.id}`);

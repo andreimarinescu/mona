@@ -1,6 +1,5 @@
 """C6 §4.5: checks and compilation of pass-2 output into stored questions."""
 
-import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
@@ -14,6 +13,7 @@ from mona.db.models import Base
 from mona.i18n import ro_comma_below, t
 from mona.interviews.config import MAX_QUESTIONS
 from mona.interviews.prompt import Input, pages
+from mona.pipeline.findquery import quote_query
 from mona.rules import store
 from mona.rules.engine import Subject, holds
 from mona.rules.grammar import RuleBody, RuleDraft, unresolved
@@ -25,34 +25,6 @@ from mona.text import norm
 T = Base.metadata.tables
 OPTION_IDS = ("a", "b", "c")
 TRIGRAM_MIN = 0.6
-FIND_MAX = 120
-_TRIM = " \t\n.,;:"
-
-
-def find_query(quote: str, page_text: str) -> str | None:
-    """C5 §7 for a clue with no field value: the whole quote, else its longest in-line run."""
-    lines = [norm(line) for line in page_text.split("\n")]
-    candidate: str | None = None
-    if any(norm(quote) in line for line in lines):
-        candidate = quote
-    else:
-        words = quote.split()
-        best: tuple[int, int] | None = None
-        for i in range(len(words)):
-            for j in range(len(words), i + 1, -1):
-                span = norm(" ".join(words[i:j]))
-                if len(span) >= 6 and any(span in line for line in lines):
-                    if best is None or j - i > best[1] - best[0]:
-                        best = (i, j)
-                    break
-        candidate = " ".join(words[best[0] : best[1]]) if best else None
-    if candidate is None:
-        return None
-    out = re.sub(r"\s+", " ", candidate.strip(_TRIM))
-    if len(out) > FIND_MAX:
-        cut = out[:FIND_MAX]
-        out = cut.rsplit(" ", 1)[0] if " " in cut else cut
-    return out.strip(_TRIM) or None
 
 
 @dataclass
@@ -135,7 +107,7 @@ class Compiler:
                             "page": n,
                             "quote": item["quote"],
                             "verified": True,
-                            "find_query": find_query(item["quote"], page),
+                            "find_query": quote_query(item["quote"], page),
                         }
                     )
                     break

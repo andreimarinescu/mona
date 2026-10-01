@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from pydantic import Field
 from sqlalchemy import func, select
 
-from mona import clock
+from mona import brief, clock
 from mona.db import get_engine
 from mona.db.models import Deadline, Export, Profile
 from mona.dto import load
@@ -18,6 +18,7 @@ from mona.dto import models as dto
 from mona.dto.base import Dto
 from mona.ids import is_id
 from mona.services import ServiceError
+from mona.visibility import scope_for
 from mona.workflow import deadlines, drafts, exports
 from mona.workflow.common import RestError, errors, from_service, get_ctx, not_found
 from mona.workflow.http import Page, etagged
@@ -66,7 +67,7 @@ class ReminderResult(Dto):
     "/deadlines",
     operation_id="listDeadlines",
     response_model=Page[dto.Deadline],
-    responses=errors(400),
+    responses=errors(400, 401, 423),
 )
 async def list_deadlines(
     within_days: Annotated[int, Query(alias="withinDays", ge=0, le=366)] = 30,
@@ -84,8 +85,8 @@ async def list_deadlines(
         clauses.append(Deadline.due_date >= today)
     if entity_id is not None:
         clauses.append(Deadline.entity_id == entity_id)
-    q = deadlines.deadline_query(*clauses, statuses=(status,))
     async with get_engine().connect() as conn:
+        q = brief.deadline_query(await scope_for(conn, "web"), *clauses, statuses=(status,))
         total = (await conn.execute(select(func.count()).select_from(q.subquery()))).scalar_one()
         ids = (
             (
@@ -117,7 +118,7 @@ async def _deadline(deadline_id: str) -> dto.Deadline:
     "/deadlines/{deadline_id}",
     operation_id="updateDeadline",
     response_model=dto.Deadline,
-    responses=errors(400, 404),
+    responses=errors(400, 401, 403, 404, 415, 423),
 )
 async def update_deadline(deadline_id: str, body: DeadlinePatch) -> dto.Deadline:
     _id(deadline_id, "ddl", "deadline")
@@ -130,7 +131,7 @@ async def update_deadline(deadline_id: str, body: DeadlinePatch) -> dto.Deadline
     operation_id="createReminder",
     response_model=ReminderResult,
     status_code=201,
-    responses=errors(400, 404, 422),
+    responses=errors(400, 401, 403, 404, 415, 422, 423),
 )
 async def create_reminder(body: ReminderCreate, response: Response) -> ReminderResult:
     if (body.deadline_id is None) == (body.document_id is None):
@@ -167,7 +168,7 @@ async def create_reminder(body: ReminderCreate, response: Response) -> ReminderR
     "/reminders/{reminder_id}",
     operation_id="cancelReminder",
     status_code=204,
-    responses=errors(404),
+    responses=errors(401, 403, 404, 415, 423),
 )
 async def cancel_reminder(reminder_id: str) -> Response:
     _id(reminder_id, "rem", "reminder")
@@ -179,7 +180,10 @@ async def cancel_reminder(reminder_id: str) -> Response:
 
 
 @router.get(
-    "/drafts/{draft_id}", operation_id="getDraft", response_model=dto.Draft, responses=errors(404)
+    "/drafts/{draft_id}",
+    operation_id="getDraft",
+    response_model=dto.Draft,
+    responses=errors(401, 404, 423),
 )
 async def get_draft(draft_id: str, request: Request) -> Response:
     _id(draft_id, "drf", "draft")
@@ -197,7 +201,7 @@ DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     "/drafts/{draft_id}/docx",
     operation_id="downloadDraft",
     response_class=Response,
-    responses={200: {"content": {DOCX: {}}}, **errors(404)},
+    responses={200: {"content": {DOCX: {}}}, **errors(401, 404, 423)},
 )
 async def download_draft(
     draft_id: str, conversation_id: Annotated[str | None, Query(alias="conversationId")] = None
@@ -244,7 +248,7 @@ async def _export(export_id: str) -> dto.ExportPack:
     "/exports",
     operation_id="listExports",
     response_model=Page[dto.ExportPack],
-    responses=errors(400),
+    responses=errors(400, 401, 423),
 )
 async def list_exports(
     entity_id: Annotated[str | None, Query(alias="entityId")] = None,
@@ -277,7 +281,7 @@ async def list_exports(
     "/exports/preview",
     operation_id="previewExport",
     response_model=ExportPreview,
-    responses=errors(400, 403, 404),
+    responses=errors(400, 401, 403, 404, 423),
 )
 async def preview_export(
     entity_id: Annotated[str, Query(alias="entityId")],
@@ -300,7 +304,7 @@ async def preview_export(
     operation_id="createExport",
     response_model=dto.ExportPack,
     status_code=201,
-    responses=errors(400, 403, 404),
+    responses=errors(400, 401, 403, 404, 415, 423),
 )
 async def create_export(body: ExportCreate, response: Response) -> dto.ExportPack:
     started = await _run(exports.start_export, get_ctx(), body.entity_id, body.fiscal_year)
@@ -313,7 +317,7 @@ async def create_export(body: ExportCreate, response: Response) -> dto.ExportPac
     "/exports/{export_id}",
     operation_id="getExport",
     response_model=dto.ExportPack,
-    responses=errors(404),
+    responses=errors(401, 404, 423),
 )
 async def get_export(export_id: str, request: Request) -> Response:
     _id(export_id, "exp", "export")
@@ -330,7 +334,7 @@ async def _file(export_id: str, kind: str, media: str) -> FileResponse:
     "/exports/{export_id}/zip",
     operation_id="downloadExportZip",
     response_class=FileResponse,
-    responses=errors(404),
+    responses=errors(401, 404, 423),
 )
 async def export_zip(export_id: str) -> FileResponse:
     return await _file(export_id, "zip", "application/zip")
@@ -340,7 +344,7 @@ async def export_zip(export_id: str) -> FileResponse:
     "/exports/{export_id}/csv",
     operation_id="downloadExportCsv",
     response_class=FileResponse,
-    responses=errors(404),
+    responses=errors(401, 404, 423),
 )
 async def export_csv(export_id: str) -> FileResponse:
     return await _file(export_id, "csv", "text/csv; charset=utf-8")

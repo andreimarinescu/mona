@@ -1,53 +1,20 @@
-"""C2 §10, C4 §3.10–§3.11: the one deadline query, deadline status, and reminders."""
+"""C2 §10, C4 §3.10–§3.11: deadline status and reminders (the list query is `mona.brief`)."""
 
-from collections.abc import Collection
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
 
-from sqlalchemy import Connection, Select, false, insert, or_, select, update
+from sqlalchemy import Connection, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from mona import clock
 from mona.chat.notes import reminder_add
-from mona.db.models import Base, Batch, Deadline, Document, Entity
+from mona.db.models import Base
 from mona.ids import new_id
 from mona.services import Ctx, ServiceError
 from mona.workflow.common import add_note, write_cards
 
 T = Base.metadata.tables
 DEADLINE_STATUSES = ("open", "done", "dismissed")
-
-
-def deadline_query(
-    *clauses: Any, hidden_entities: Collection[str] = (), statuses: Collection[str] = ("open",)
-) -> Select:
-    """Deadlines for lists and the brief: never a deleted or Visitors document's (C9 §5.5)."""
-    visible = Deadline.entity_id.not_in(hidden_entities) if hidden_entities else ~false()
-    return (
-        select(
-            Deadline.id,
-            Deadline.document_id,
-            Deadline.label,
-            Deadline.due_date,
-            Deadline.amount,
-            Deadline.currency,
-            Deadline.status,
-            Entity.key.label("entity_key"),
-            Entity.display_name.label("entity_name"),
-        )
-        .join(Entity, Entity.id == Deadline.entity_id)
-        .outerjoin(Document, Document.id == Deadline.document_id)
-        .outerjoin(Batch, Batch.id == Document.batch_id)
-        .where(
-            Deadline.status.in_(list(statuses)),
-            Document.deleted_at.is_(None),
-            Entity.purge_after_hours.is_(None),
-            or_(Batch.visitor.is_(None), Batch.visitor.is_(False)),
-            visible,
-            *clauses,
-        )
-    )
 
 
 def set_status(ctx: Ctx, deadline_id: str, status: str) -> None:

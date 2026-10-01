@@ -16,6 +16,9 @@ MIN_PASSWORD = 8
 
 def gate(ctx: typer.Context) -> None:
     """Every command needs valid settings (`MONA_ENV` has no default; prod runs A1–A2)."""
+    from mona.logs import configure_logging
+
+    configure_logging()
     if ctx.invoked_subcommand in UNGATED:
         return
     from mona.settings import get_settings

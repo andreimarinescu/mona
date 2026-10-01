@@ -369,7 +369,7 @@ test.describe('accountant export', () => {
     await page.goto('/archive');
     await page.getByRole('button', { name: 'Export for accountant…' }).click();
     const dialog = page.getByRole('dialog', { name: 'Export for your accountant' });
-    await expect(dialog.getByLabel('Entity').locator('option', { hasText: /Personnel|Visitors/ })).toHaveCount(0);
+    await expect(dialog.getByLabel('Entity').locator('option', { hasText: /Famille Marchand|Visitors/ })).toHaveCount(0);
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
   });

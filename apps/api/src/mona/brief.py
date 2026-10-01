@@ -1,5 +1,6 @@
 """The brief's facts (C4 §3.15, C2 §3.2 `BriefFacts`), shared by `get_brief` and Home."""
 
+from collections.abc import Collection
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -43,8 +44,8 @@ class Facts:
         return out
 
 
-def deadline_query(scope: Scope, *clauses: Any) -> Any:
-    """Open deadlines visible on the channel and outside the Visitors figures."""
+def deadline_query(scope: Scope, *clauses: Any, statuses: Collection[str] = ("open",)) -> Any:
+    """Deadlines in `statuses`, visible on the channel and outside the Visitors figures."""
     return (
         select(
             Deadline.id,
@@ -60,7 +61,7 @@ def deadline_query(scope: Scope, *clauses: Any) -> Any:
         )
         .join(Entity, Entity.id == Deadline.entity_id)
         .outerjoin(Document, Document.id == Deadline.document_id)
-        .where(Deadline.status == "open", *scope.deadline_clauses(), *clauses)
+        .where(Deadline.status.in_(list(statuses)), *scope.deadline_clauses(), *clauses)
     )
 
 

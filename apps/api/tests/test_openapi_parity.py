@@ -48,3 +48,20 @@ def test_dtos_are_components_under_their_contract_names():
 
 def test_mcp_is_not_in_the_schema():
     assert not [p for p in schema()["paths"] if p.startswith("/mcp")]
+
+
+def test_l4_routes_declare_the_guards_statuses():
+    from mona.interviews.api import router as interviews
+    from mona.workflow.api import router as workflow
+
+    ids = {r.operation_id for r in [*interviews.routes, *workflow.routes]}
+    ops = {
+        op["operationId"]: (method, op)
+        for item in schema()["paths"].values()
+        for method, op in item.items()
+    }
+    assert ids and ids <= set(ops)
+    for op_id in ids:
+        method, op = ops[op_id]
+        need = {"401", "423"} if method == "get" else {"401", "403", "415", "423"}
+        assert need <= set(op["responses"]), (op_id, sorted(need - set(op["responses"])))

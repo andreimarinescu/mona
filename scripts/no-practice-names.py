@@ -1,8 +1,9 @@
 """D12 guard: no entity, person or counterparty name or alias from the seed in product code.
 
 Reads demo/seed/practice.yaml and fails if any name appears (case-insensitive, word-bounded) in
-apps/*/src, packages/ or deploy/hermes/ (outside the generated memories/). Tests, fixtures and
-docs may use them as examples.
+apps/*/src (the web mocks included), packages/, deploy/hermes/ (outside the generated memories/)
+or the API test fixtures (outside those that carry the seed or the contracts' worked examples).
+Tests and docs may use them as examples.
 """
 
 import argparse
@@ -26,6 +27,15 @@ SKIP_DIRS = {
     "memories",
 }
 SKIP_FILE = re.compile(r"(\.(test|spec)\.[cm]?[jt]sx?$)|(^fixtures\.)")
+API_FIXTURES = ("apps", "api", "tests", "fixtures")
+# The demo seed's overlay and model outputs, the C5 §8.5 registry and the C6 §10 test 12 cluster.
+SEED_FIXTURES = (
+    "pipeline/demo-overlay.yaml",
+    "pipeline/synthetic.json",
+    "pipeline/model_outputs.json",
+    "seed/",
+    "interviews/cluster.json",
+)
 
 
 def names(seed: Path) -> list[str]:
@@ -58,6 +68,10 @@ def scanned(root: Path) -> list[Path]:
             rel = p.relative_to(base).parts
             if p.is_file() and not SKIP_DIRS.intersection(rel) and not SKIP_FILE.search(p.name):
                 out.append(p)
+    fixtures = root.joinpath(*API_FIXTURES)
+    for p in sorted(fixtures.rglob("*")):
+        if p.is_file() and not p.relative_to(fixtures).as_posix().startswith(SEED_FIXTURES):
+            out.append(p)
     return out
 
 

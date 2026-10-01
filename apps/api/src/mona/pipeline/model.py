@@ -4,10 +4,12 @@ import asyncio
 import os
 import threading
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 import httpx
+from openai import APIError
 from pydantic_ai import Agent, NativeOutput, StructuredDict
 from pydantic_ai.exceptions import ModelAPIError, UnexpectedModelBehavior
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -50,6 +52,9 @@ class ModelResult:
     completion_tokens: int | None = None
 
 
+Delta = tuple[Literal["reasoning", "content"], str]
+
+
 class ModelClient(Protocol):
     model: str
 
@@ -64,6 +69,22 @@ def extra_body(backend: str, model: str) -> dict[str, Any]:
     if model == QWEN36:
         body["provider"] = D4_PIN
     return body
+
+
+def thinking_body(backend: str, model: str) -> dict[str, Any]:
+    """The same knobs with thinking on (C6 §4.1)."""
+    if backend == "llama-server":
+        return {"chat_template_kwargs": {"enable_thinking": True}}
+    return {**extra_body(backend, model), "reasoning": {"enabled": True}}
+
+
+def _delta_text(delta: Any, *names: str) -> str:
+    extra = getattr(delta, "model_extra", None) or {}
+    for name in names:
+        value = getattr(delta, name, None) or extra.get(name)
+        if value:
+            return value
+    return ""
 
 
 def model_settings(backend: str, model: str) -> dict[str, Any]:
@@ -140,3 +161,83 @@ class LlmClient:
         usage = result.usage
         return ModelResult(raw, int((time.monotonic() - start) * 1000), usage.input_tokens,
                            usage.output_tokens)  # fmt: skip
+
+    def stream(
+        self, system: str, user: str, *, temperature: float, max_tokens: int, timeout_s: float
+    ) -> Iterator[Delta]:
+        """Thinking on, streamed; ends quietly at `timeout_s`, even mid-silence."""
+        deadline = time.monotonic() + timeout_s
+        with self._lock:
+            try:
+                chunks = self._loop.run_until_complete(
+                    self._chat.client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": system},
+                            {"role": "user", "content": user},
+                        ],
+                        stream=True,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        timeout=timeout_s,
+                        extra_body=thinking_body(self.backend, self.model),
+                    )
+                )
+            except (APIError, httpx.HTTPError, TimeoutError) as e:
+                raise TransportError(type(e).__name__) from e
+            it = chunks.__aiter__()
+            try:
+                while (left := deadline - time.monotonic()) > 0:
+                    try:
+                        chunk = self._loop.run_until_complete(
+                            asyncio.wait_for(it.__anext__(), left)
+                        )
+                    except (StopAsyncIteration, TimeoutError):
+                        return
+                    except (APIError, httpx.HTTPError) as e:
+                        raise TransportError(type(e).__name__) from e
+                    for choice in chunk.choices or []:
+                        reasoning = _delta_text(choice.delta, "reasoning", "reasoning_content")
+                        if reasoning:
+                            yield "reasoning", reasoning
+                        if choice.delta.content:
+                            yield "content", choice.delta.content
+            finally:
+                self._loop.run_until_complete(chunks.close())
+
+    def complete_json(
+        self,
+        system: str,
+        user: str,
+        schema: dict[str, Any],
+        *,
+        name: str,
+        temperature: float,
+        max_tokens: int,
+        timeout_s: float,
+    ) -> dict[str, Any]:
+        """Thinking off, a named strict json_schema; raises TransportError or SchemaInvalid."""
+        settings = {
+            **model_settings(self.backend, self.model),
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "timeout": timeout_s,
+        }
+        agent = Agent(
+            self._chat,
+            output_type=NativeOutput(StructuredDict(schema, name=name), strict=True),
+            instructions=system,
+            retries=0,
+        )
+        with self._lock:
+            try:
+                result = self._loop.run_until_complete(
+                    agent.run(user, model_settings=settings)  # type: ignore[arg-type]
+                )
+            except UnexpectedModelBehavior as e:
+                raise SchemaInvalid("schema") from e
+            except (ModelAPIError, httpx.HTTPError, TimeoutError) as e:
+                raise TransportError(type(e).__name__) from e
+        if not isinstance(result.output, dict):
+            raise SchemaInvalid("schema")
+        return result.output

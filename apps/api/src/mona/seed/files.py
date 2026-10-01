@@ -41,7 +41,7 @@ class _File(BaseModel):
 
 class PracticeInfo(_File):
     name: str
-    filing_language: Literal["fr", "en", "ro"] = "fr"
+    filing_language: Literal["en", "fr", "ro"] = "fr"
     owner_name: str | None = None
     locale: Literal["en", "fr", "ro"] = "en"
     confidence_high: int | None = None
@@ -79,7 +79,7 @@ class EntityIn(_File):
     visibility: Literal["practice", "personal"] = "practice"
     fy_end_month: int = 12
     fy_end_day: int = 31
-    filing_language: Literal["fr", "en", "ro"] | None = None
+    filing_language: Literal["en", "fr", "ro"] | None = None
     aliases: list[str] = []
     addresses: list[str] = []
     purge_after_hours: int | None = Field(default=None, gt=0)

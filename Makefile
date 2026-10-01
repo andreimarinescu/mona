@@ -10,12 +10,15 @@ export DATABASE_URL
 
 .PHONY: up down logs db check web-check py-check api-client e2e
 
-up: node_modules data
+up: node_modules apps/web/node_modules data
 	$(COMPOSE) up -d --build
 
 # compose mounts volumes over these paths; created first by docker they would be root-owned on the host
 node_modules:
 	npm ci --no-audit --no-fund
+
+apps/web/node_modules:
+	mkdir -p apps/web/node_modules
 
 data:
 	mkdir -p data
@@ -55,4 +58,4 @@ py-check:
 	cd apps/api && uv run --frozen pytest
 
 e2e:
-	$(WEB) e2e
+	$(WEB) e2e -- --workers=2

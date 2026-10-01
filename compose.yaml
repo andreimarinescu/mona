@@ -108,11 +108,29 @@ services:
       - ./deploy/hermes:/hermes-seed:ro
       - hermes_data:/hermes
 
+  # Root one-shot: fresh named volumes are root-owned, and the web service runs as the host user.
+  web-volumes:
+    image: node:24
+    user: "0:0"
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        for d in /volumes/root /volumes/app;
+        do [ "$$(stat -c %u:%g $$d)" = "${MONA_UID:-1000}:${MONA_GID:-1000}" ]
+        || chown -R ${MONA_UID:-1000}:${MONA_GID:-1000} $$d;
+        done
+    restart: "no"
+    volumes:
+      - web_node_modules:/volumes/root
+      - web_app_node_modules:/volumes/app
+
   web:
     image: node:24
+    user: "${MONA_UID:-1000}:${MONA_GID:-1000}"
     working_dir: /repo
     command: sh -c "npm install --no-audit --no-fund && npm run dev -w apps/web -- --host 0.0.0.0 --port 5173"
     environment:
+      HOME: /tmp
       MONA_API_URL: http://api:8765
     ports:
       - 127.0.0.1:${WEB_PORT:-5173}:5173
@@ -121,7 +139,10 @@ services:
       - web_node_modules:/repo/node_modules
       - web_app_node_modules:/repo/apps/web/node_modules
     depends_on:
-      - api
+      web-volumes:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
 
   hermes-seed:
     image: &hermes-image nousresearch/hermes-agent:v2026.9.24@sha256:fca358f12efd65bfaaca05884166f15c0e2788375ca30d77061ac1ebc96452b7

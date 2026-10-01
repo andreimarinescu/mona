@@ -27,14 +27,14 @@ class SafeExceptions(logging.Filter):
         return True
 
 
-def configure_logging() -> None:
-    """Idempotent: a stderr handler for `mona` at INFO, and the filter on every handler we own."""
+def configure_logging(level: int = logging.INFO) -> None:
+    """Idempotent: a stderr handler, `mona` at `level`, and the filter on every handler we own."""
     root = logging.getLogger()
     if not root.handlers:
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter(_FORMAT))
         root.addHandler(handler)
-    logging.getLogger("mona").setLevel(logging.INFO)
+    logging.getLogger("mona").setLevel(level)
     for name in _SAFE_LOGGERS:
         for handler in logging.getLogger(name).handlers:
             if not any(isinstance(f, SafeExceptions) for f in handler.filters):

@@ -2,15 +2,17 @@
 
 import asyncio
 import json
+import re
 import time
+from pathlib import Path
 
 import httpx
 import pytest
 
-pytest.importorskip("mona.pipeline.model")
-
-from mona.interviews.llm import InterviewClient  # noqa: E402
-from mona.interviews.model import ModelError  # noqa: E402
+from mona.interviews import llm as llm_module
+from mona.interviews.llm import InterviewModel
+from mona.interviews.model import ModelError
+from mona.pipeline.model import LlmClient, SchemaInvalid, TransportError
 
 FLASH, QWEN36 = "qwen/qwen3.7-flash", "qwen/qwen3.6-35b-a3b"
 
@@ -28,7 +30,7 @@ def sse(*deltas: dict, pause_after: int | None = None, pause_s: float = 0.0):
     return body()
 
 
-def make(model: str, respond, backend: str = "openrouter") -> tuple[InterviewClient, list]:
+def make(model: str, respond, backend: str = "openrouter") -> tuple[InterviewModel, list]:
     seen: list[dict] = []
 
     async def handler(request: httpx.Request) -> httpx.Response:
@@ -37,7 +39,8 @@ def make(model: str, respond, backend: str = "openrouter") -> tuple[InterviewCli
 
     base = "http://llama:8080/v1" if backend == "llama-server" else None
     http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-    return InterviewClient(model=model, backend=backend, base_url=base, http_client=http), seen
+    client = LlmClient(model=model, backend=backend, base_url=base, http_client=http)
+    return InterviewModel(client), seen
 
 
 def streamed(*deltas: dict, **kw):
@@ -104,3 +107,25 @@ def test_transport_failures_are_model_errors():
     with pytest.raises(ModelError):
         llm.complete_json("s", "u", {"type": "object"}, name="x", temperature=0, max_tokens=10,
                           timeout_s=5)  # fmt: skip
+
+
+def test_the_client_raises_its_own_errors_and_the_binding_maps_them():
+    llm, _ = make(FLASH, lambda _: httpx.Response(503, json={"error": {"message": "down"}}))
+    with pytest.raises(TransportError):
+        list(llm.client.stream("s", "u", temperature=0.6, max_tokens=10, timeout_s=5))
+    message = {"role": "assistant", "content": "not json"}
+    reply = {"id": "c", "object": "chat.completion", "created": 0, "model": FLASH,
+             "choices": [{"index": 0, "message": message, "finish_reason": "stop"}]}  # fmt: skip
+    llm, _ = make(FLASH, lambda _: httpx.Response(200, json=reply))
+    with pytest.raises(SchemaInvalid):
+        llm.client.complete_json("s", "u", {"type": "object"}, name="x", temperature=0,
+                                 max_tokens=10, timeout_s=5)  # fmt: skip
+    with pytest.raises(ModelError, match="schema"):
+        llm.complete_json("s", "u", {"type": "object"}, name="x", temperature=0, max_tokens=10,
+                          timeout_s=5)  # fmt: skip
+
+
+def test_the_binding_uses_only_the_clients_public_api():
+    src = Path(llm_module.__file__).read_text()
+    assert not issubclass(InterviewModel, LlmClient)
+    assert not re.search(r"\._(chat|loop|lock)\b", src)

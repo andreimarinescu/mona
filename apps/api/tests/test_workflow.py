@@ -80,6 +80,50 @@ async def test_list_deadlines_tool_shares_the_query(due):
     assert [i["deadline_id"] for i in tg.data["items"]] == [due["overdue"], due["soon"]]
 
 
+async def rest_ids(api) -> list[str]:
+    return [d["id"] for d in (await api.get("/api/deadlines")).json()["items"]]
+
+
+async def tool_ids(channel: str = "web") -> list[str]:
+    return [
+        i["deadline_id"] for i in (await call("list_deadlines", {}, channel=channel)).data["items"]
+    ]
+
+
+async def test_rest_and_the_tool_on_both_channels_list_through_one_visibility_filter(api, due):
+    w = World()
+    unsorted = rows.document("Unsorted letter", entity=None, category=None, status="review")
+    deleted = rows.document("Deleted call", deleted=True)
+    in_visitor_batch = rows.document("Visitor call", batch_id=w.batch(visitor=True))
+    more = {
+        "unsorted": rows.deadline("Unsorted", TODAY + timedelta(days=4), document_id=unsorted),
+        "deleted": rows.deadline("Deleted", TODAY + timedelta(days=4), document_id=deleted),
+        "visitor": rows.deadline("Visitor", TODAY + timedelta(days=4),
+                                 document_id=in_visitor_batch),
+    }  # fmt: skip
+    web = [due["overdue"], due["soon"], more["unsorted"], due["personal"]]
+    assert await rest_ids(api) == web
+    assert await tool_ids("web") == web
+    assert await tool_ids("telegram") == [due["overdue"], due["soon"]]
+
+
+async def test_rest_and_the_tool_call_the_same_query(api, due, monkeypatch):
+    from mona import brief
+
+    seen: list[str] = []
+    shared = brief.deadline_query
+
+    def spy(scope, *clauses, **kw):
+        seen.append(scope.channel)
+        return shared(scope, *clauses, **kw)
+
+    monkeypatch.setattr(brief, "deadline_query", spy)
+    await rest_ids(api)
+    await tool_ids("web")
+    await tool_ids("telegram")
+    assert seen == ["web", "web", "telegram"]
+
+
 async def test_deadline_done_and_reopen(api, due):
     res = await api.patch(f"/api/deadlines/{due['soon']}", json={"status": "done"})
     assert res.status_code == 200 and res.json()["status"] == "done"

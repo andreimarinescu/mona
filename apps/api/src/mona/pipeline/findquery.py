@@ -42,17 +42,25 @@ def shape(s: str) -> str | None:
     return s or None
 
 
+def _in_column(quote: str, lines: list[str]) -> str | None:
+    return quote if _on_a_line(quote, lines) else _longest_run(quote, lines)
+
+
+def quote_query(quote: str, page_text: str) -> str | None:
+    """Steps 1–2 for any verified quote: the whole quote, else its longest in-column run."""
+    found = _in_column(quote, columns(page_text))
+    return shape(found) if found is not None else None
+
+
 def find_query(c: Checked, page_text: str) -> str | None:
     """`page_text` is the §1.4 text of the verified page; no candidate crosses a column (A15)."""
     if not c.verified:
         return None
     lines = columns(page_text)
     quote = c.field.quote
-    if _on_a_line(quote, lines):
-        return shape(quote)
-    run = _longest_run(quote, lines)
-    if run is not None:
-        return shape(run)
+    found = _in_column(quote, lines)
+    if found is not None:
+        return shape(found)
     if c.token is not None:
         return shape(quote[c.token[0] : c.token[1]])
     if c.field.key not in VALUE_CHECKED and _on_a_line(c.field.value, lines):

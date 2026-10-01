@@ -54,8 +54,6 @@ def seed_load(
     ] = None,
 ) -> None:
     """Load the seed in one transaction; loading the same files again changes nothing."""
-    import logging
-
     from mona.db import get_sync_engine
     from mona.seed.files import SeedError
     from mona.seed.loader import RULE_FILES, load_seed
@@ -63,7 +61,6 @@ def seed_load(
 
     if tier not in RULE_FILES:
         raise typer.BadParameter(f"choose one of {', '.join(RULE_FILES)}", param_hint="--tier")
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     settings = get_settings()
     try:
         with get_sync_engine().begin() as conn:
@@ -174,12 +171,9 @@ def purge_visitors(
     ] = False,
 ) -> None:
     """C9 §5: delete visitor-batch documents and everything derived from them."""
-    import logging
-
     from mona.fileops.purge import purge_visitors as purge
     from mona.pipeline import runtime
 
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     out = purge(runtime.get_context().ops, ignore_age=now, dry_run=dry_run)
     if dry_run:
         for doc_id, batch_id in out.due:
@@ -209,11 +203,12 @@ def pipeline_run(
     """Ingest the files as one batch, wait until it is done, print each document's outcome."""
     import logging
 
+    from mona.logs import configure_logging
     from mona.pipeline import runtime
     from mona.pipeline.intake import Upload, ingest_files
     from mona.pipeline.report import batch_report, format_report, wait_for_batch
 
-    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
+    configure_logging(logging.WARNING)
     ctx = runtime.get_context()
     runtime.startup()
     intake = ingest_files(ctx, [Upload(f, f.name) for f in files], visitor=visitor)

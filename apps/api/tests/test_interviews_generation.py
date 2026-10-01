@@ -295,6 +295,36 @@ def test_evidence_is_verified_on_its_page_and_kept_only_for_affected_documents(c
     assert ev[0]["find_query"] == "Assuré : M. Paul Marchand"
 
 
+def test_evidence_find_query_is_the_pipelines_and_never_crosses_a_column():
+    w = World()
+    page = (
+        "AGIPI Retraite                              M. Paul Marchand\n"
+        "Plan d'épargne retraite                     12 rue des Lilas"
+    )
+    doc = w.doc("AGIPI PER", batch=w.batch(), counterparty="agipi", pages=[page])
+    with w.engine.connect() as conn:
+        inp = build_input(conn, [doc], "en", w.ctx.textcache, w.clock())
+        quotes = ["AGIPI Retraite M. Paul Marchand", "Plan d'épargne retraite"]
+        output = {
+            "questions": [
+                {
+                    "text": "Q?",
+                    "affected": [inp.alias_of[doc]],
+                    "evidence": [{"doc": inp.alias_of[doc], "quote": q} for q in quotes],
+                    "options": [opt("a", "always", [BRANCH])],
+                    "suggested": "a",
+                    "confidence": 0.8,
+                }
+            ]
+        }
+        [compiled] = Compiler(conn, inp, "en", w.ctx.textcache).run(output)
+    assert [e["verified"] for e in compiled.evidence] == [True, True]
+    assert [e["find_query"] for e in compiled.evidence] == [
+        "M. Paul Marchand",
+        "Plan d'épargne retraite",
+    ]
+
+
 def test_invalid_options_are_dropped_and_ask_is_appended(compiled):
     by_text, _ = compiled
     q1 = by_text["Q?"]

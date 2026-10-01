@@ -227,6 +227,30 @@ def test_the_model_client_sends_only_to_the_local_endpoint_in_prod(monkeypatch):
     assert seen == []
 
 
+def test_the_interview_calls_send_only_to_the_local_endpoint_in_prod(monkeypatch):
+    from mona.interviews.llm import from_settings
+    from mona.interviews.model import ModelError
+
+    seen: list[str] = []
+    transport = httpx.MockTransport(lambda r: seen.append(str(r.url)) or httpx.Response(400))
+    guarded = llm.guarded_http_client
+    monkeypatch.setattr(llm, "guarded_http_client", lambda s: guarded(s, transport=transport))
+    model = from_settings(prod())
+    kw = {"temperature": 0, "max_tokens": 10, "timeout_s": 5}
+    with pytest.raises(ModelError):
+        list(model.stream("s", "u", **kw))
+    with pytest.raises(ModelError):
+        model.complete_json("s", "u", {"type": "object"}, name="x", **kw)
+    assert len(seen) == 2 and all(u.startswith(f"{LOCAL}/") for u in seen)
+    seen.clear()
+    model.client._chat.client.base_url = "https://openrouter.ai/api/v1"
+    with pytest.raises((ModelError, ProdCheckFailed)):
+        list(model.stream("s", "u", **kw))
+    with pytest.raises((ModelError, ProdCheckFailed)):
+        model.complete_json("s", "u", {"type": "object"}, name="x", **kw)
+    assert seen == []
+
+
 # --- compose (C9 §7, A13) ---
 
 
