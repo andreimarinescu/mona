@@ -85,6 +85,7 @@ class Match:
     path: Path
     questions: list[Compiled]
     created_at: str
+    labelled: int = 0
 
 
 def _as_output(cached: dict[str, Any], alias_of_sha: dict[str, str]) -> dict[str, Any]:
@@ -158,12 +159,13 @@ def match(
         if cached.get("lang") != lang:
             continue
         output = _as_output(cached, alias_of_sha)
-        compiled = _compile(Compiler(conn, inp, lang, textcache), output["questions"])
+        compiler = Compiler(conn, inp, lang, textcache)
+        compiled = _compile(compiler, output["questions"])
         if not compiled:
             continue
         created = str(cached.get("created_at", ""))
         if best is None or (len(compiled), created) > (len(best.questions), best.created_at):
-            best = Match(path, compiled, created)
+            best = Match(path, compiled, created, compiler.labels_rejected)
     if best is not None:
         compiler = Compiler(conn, inp, lang, textcache)
         cover(

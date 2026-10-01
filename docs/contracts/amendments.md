@@ -204,3 +204,15 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - Otherwise the targeted question is dropped and step 2's deterministic question is used.
 - **Why:** the stage build on Qwen 3.6 produced a targeted question about the Hello bank statements ("…LMNP Hello bank (…6187) or a personal joint account?") whose only affected document was the La Médicale insurance notice. Pass 1's analysis of the whole batch leaked into the one-cluster call. An answer would have filed the notice under the wrong entity. D15: a check, not trust.
 - **Lanes:** L4 (FIX-8).
+
+## A27 · 2026-10-01 · C6 §4.4–§4.5: no internal labels in what the owner reads
+
+- **Change:**
+  1. **Check** (a new §4.5 step 0, also applied to targeted questions and on cache replay). A question is dropped when its `text` or any option `label`, after `norm()` (C5 §2), contains as a whole word:
+     - a document alias of the input (`d1`, `d2`, …);
+     - a registry key that contains `_`, `-` or a digit and whose `norm()` differs from the `norm()` of every display name or label in the registry: an entity key, sub-unit key, category id, subcategory key or person key (e.g. `assurance_vie`, `child-1`, `selarl-simina`).
+
+     Plain-word keys (`personal`, `tax`, `frais`) never count, since they read as ordinary words in questions. A key that reads the same as a display name (e.g. `lmnp` / "LMNP", `angers-strasbourg` / "Angers-Strasbourg") is allowed. A dropped question's cluster then goes through A25's coverage (targeted, then deterministic), and the generation log records `labels-rejected`.
+  2. **Instruction.** Pass 2's system message (§4.4) gains one line before "At most 7 questions": "- Write text and labels for the owner: name documents by their title or counterparty and use the registry's display names; never write aliases (d1, d2) or keys." `PROMPT_VERSION` becomes `c6-v2`, so earlier cached debriefs no longer match.
+- **Why:** the rebuilt stage's AGIPI question read "For d1 and d2, should they be filed as assurance_vie or per, and do the addressees match child-1 and child-2?". D15: an instruction to prevent it, and a check to guarantee it.
+- **Lanes:** L4 (FIX-9).

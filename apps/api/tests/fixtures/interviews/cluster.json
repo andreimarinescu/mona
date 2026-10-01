@@ -68,7 +68,7 @@
         "rule_draft": {"kind": "always", "discriminator": null, "branches": [
           {"conditions": [{"field": "counterparty", "op": "equals", "value": "Hello bank"}],
            "action": {"entity": "lmnp", "unit": "lmnp/angers-strasbourg", "category": "bank", "subcategory": "bank.releve"}}]}},
-       {"id": "b", "label": "Personal",
+       {"id": "b", "label": "Personnel",
         "rule_draft": {"kind": "always", "discriminator": null, "branches": [
           {"conditions": [{"field": "counterparty", "op": "equals", "value": "Hello bank"}],
            "action": {"entity": "personal", "unit": null, "category": "bank", "subcategory": null}}]}},
@@ -83,7 +83,7 @@
         "rule_draft": {"kind": "always", "discriminator": null, "branches": [
           {"conditions": [{"field": "counterparty", "op": "equals", "value": "UNIM"}],
            "action": {"entity": "cabinet", "unit": null, "category": "insurance", "subcategory": "insurance.prevoyance"}}]}},
-       {"id": "b", "label": "No, personal",
+       {"id": "b", "label": "No, Personnel",
         "rule_draft": {"kind": "always", "discriminator": null, "branches": [
           {"conditions": [{"field": "counterparty", "op": "equals", "value": "UNIM"}],
            "action": {"entity": "personal", "unit": null, "category": "insurance", "subcategory": null}}]}}],
@@ -105,7 +105,7 @@
           {"conditions": [{"field": "counterparty", "op": "equals", "value": "Atelier Bois & Co"}],
            "action": {"entity": "lmnp", "unit": null, "category": null, "subcategory": null}}]}}],
      "suggested": "a", "confidence": 0.6},
-    {"text": "Is the Orélia fibre line for the flat or personal?",
+    {"text": "Is the Orélia fibre line for the flat or private use?",
      "affected": ["@orelia"],
      "evidence": [{"doc": "@orelia", "quote": "ligne installée au 8 rue d'Angers, 49000 Angers"}],
      "options": [
@@ -113,7 +113,7 @@
         "rule_draft": {"kind": "always", "discriminator": null, "branches": [
           {"conditions": [{"field": "counterparty", "op": "equals", "value": "Orélia Télécom"}],
            "action": {"entity": "lmnp", "unit": null, "category": null, "subcategory": null}}]}},
-       {"id": "b", "label": "Personal",
+       {"id": "b", "label": "Personnel",
         "rule_draft": {"kind": "always", "discriminator": null, "branches": [
           {"conditions": [{"field": "counterparty", "op": "equals", "value": "Orélia Télécom"}],
            "action": {"entity": "personal", "unit": null, "category": null, "subcategory": null}}]}}],

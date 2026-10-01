@@ -35,7 +35,7 @@ entities:
     people:
       - {person: paul, role: président}
   - key: lmnp
-    display_name: LMNP Marchand
+    display_name: LMNP
     folder_name: LMNP
     legal_form: LMNP
     sub_units:

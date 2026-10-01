@@ -470,7 +470,7 @@ def cached(monkeypatch):
         contents[tag] = (w.ctx.ops.roots.inbox / row["current_path"]).read_bytes()
     interview_id = start_batch(w, b)
     assert run(w, interview_id, RecordedModel(w)) == "ready"
-    files = list((w.ctx.textcache / "debrief").glob("*.c6-v1.en.json"))
+    files = list((w.ctx.textcache / "debrief").glob("*.c6-v2.en.json"))
     assert len(files) == 1
     return w, spec, contents, files[0]
 
@@ -479,7 +479,7 @@ def test_the_cache_file_holds_raw_forms_and_sha256s_only(cached):
     w, _, _, path = cached
     raw = path.read_text(encoding="utf-8")
     body = json.loads(raw)
-    assert body["prompt_version"] == "c6-v1" and body["lang"] == "en"
+    assert body["prompt_version"] == "c6-v2" and body["lang"] == "en"
     assert '"from_person"' in raw and '"insurance.per"' in raw and '"lmnp/angers-strasbourg"' in raw
     assert "doc_" not in raw
     shas = {q for question in body["questions"] for q in question["affected_sha256s"]}
@@ -514,7 +514,7 @@ def test_a_registry_change_drops_only_the_option_it_invalidates(cached, monkeypa
     interview_id = start_batch(w, b)
     assert run(w, interview_id, RecordedModel(w)) == "cache"
     hello = next(q for q in w.questions(interview_id) if q["text"].startswith("Are the Hello"))
-    assert [o["label"] for o in hello["options"]] == ["Personal", "Ask me each time"]
+    assert [o["label"] for o in hello["options"]] == ["Personnel", "Ask me each time"]
 
 
 def test_fallback_uses_the_cache_when_pass2_stalls_past_60s(cached, monkeypatch):
@@ -696,7 +696,7 @@ def test_seed_interview_affects_input_documents_and_the_ask_rule_is_scoped():
         return {
             "questions": [
                 {
-                    "text": "Is AGIPI personal?",
+                    "text": "Is AGIPI private?",
                     "affected": [alias["AGIPI"]],
                     "evidence": [],
                     "options": [opt("a", "always", [always]), opt("b", "always", [cabinet])],
@@ -716,7 +716,7 @@ def test_seed_interview_affects_input_documents_and_the_ask_rule_is_scoped():
 
     assert run(w, started.interview_id, RecordedModel(w, pass2=pass2)) == "ready"
     qs = {q["text"]: q for q in w.questions(started.interview_id)}
-    ag, hb = qs["Is AGIPI personal?"], qs["Is Hello bank the LMNP bank?"]
+    ag, hb = qs["Is AGIPI private?"], qs["Is Hello bank the LMNP bank?"]
     assert set(ag["affected_document_ids"]) == agipi and ag["impact"] == 2
     assert hb["affected_document_ids"] == [] and hb["impact"] == 0
     cond = ag["options"][0]["rule_draft"]["branches"][0]["conditions"]

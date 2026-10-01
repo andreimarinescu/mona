@@ -1,4 +1,5 @@
-"""Amendments A25 and A26: every candidate cluster gets a question about its own counterparty."""
+"""Amendments A25 to A27: every candidate cluster gets a question about its own counterparty,
+written without internal labels."""
 
 import json
 from collections.abc import Callable
@@ -9,9 +10,12 @@ import pytest
 
 from mona.i18n import t
 from mona.interviews import service
+from mona.interviews.compile import internal_words
+from mona.interviews.config import PROMPT_VERSION
 from mona.interviews.generate import generate_interview
 from mona.interviews.model import ModelError
 from mona.interviews.prompt import pass2_system
+from mona.services import registry
 from tests.l4_world import RecordedModel, World, fixture, input_of
 
 pytestmark = pytest.mark.usefixtures("l4_db")
@@ -311,7 +315,7 @@ def test_the_cache_replays_targeted_questions_and_rebuilds_deterministic_ones(mo
     assert sorted(q["text"] for q in w.questions(replay)) == live
 
 
-HELLO_TEXT = "Do these statements belong to the LMNP Hello bank or a personal joint account?"
+HELLO_TEXT = "Do these statements belong to the LMNP Hello bank or a private joint account?"
 
 
 def test_a_targeted_question_about_another_counterparty_gives_the_deterministic_one(
@@ -344,7 +348,7 @@ def test_a_targeted_question_about_another_counterparty_gives_the_deterministic_
     ("cluster", "text"),
     [
         (AGIPI, "How should A.G.I.P.I. documents be filed?"),
-        (ORELIA, "Is the ORELIA TELECOM fibre line for the flat or personal?"),
+        (ORELIA, "Is the ORELIA TELECOM fibre line for the flat or private use?"),
     ],
     ids=["registry-alias", "extracted-string"],
 )
@@ -381,3 +385,134 @@ def test_the_cache_drops_a_targeted_question_about_another_counterparty(monkeypa
     assert run(w, replay, RecordedModel(w)) == "cache"
     texts = [q["text"] for q in w.questions(replay)]
     assert HELLO_TEXT not in texts and "Where should the documents from AGIPI go?" in texts
+
+
+INCIDENT = (
+    "For d1 and d2, should they be filed as assurance_vie or per,"
+    " and do the addressees match child-1 and child-2?"
+)
+OWNER_LINE = (
+    "- Write text and labels for the owner: name documents by their title or counterparty and"
+    " use the registry's display names; never write aliases (d1, d2) or keys."
+)
+
+
+def incident(spec: dict[str, Any], *, text: str = INCIDENT) -> dict[str, Any]:
+    q = {**questions(spec, AGIPI)[0], "text": text}
+    q["options"][0]["label"] = "d1 assurance_vie, d2 PER"
+    return q
+
+
+def log_line(caplog: pytest.LogCaptureFixture, interview_id: str) -> str:
+    (line,) = [r.getMessage() for r in caplog.records if interview_id in r.getMessage()]
+    return line
+
+
+@pytest.mark.parametrize(
+    ("text", "targeted", "made_", "rejected"),
+    [
+        (INCIDENT, "clean", "targeted", 1),
+        ("How should AGIPI documents be filed?", "clean", "targeted", 1),
+        (INCIDENT, "labelled", "deterministic", 2),
+    ],
+    ids=["incident", "label-only", "targeted-labelled-too"],
+)
+def test_a_question_naming_aliases_or_keys_is_dropped_and_its_cluster_covered(
+    text, targeted, made_, rejected, caplog, monkeypatch
+):
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "off")
+    w = World()
+    spec = spec_with(entity="personal")
+    _, interview_id = start(w, spec)
+    clean = questions(spec, AGIPI)[0]
+    answer = clean if targeted == "clean" else incident(spec)
+    main = [incident(spec, text=text), *questions(spec, HELLO, UNIM, BOIS, ORELIA)]
+    model = RecordedModel(w, pass2=by_input(main, {AGIPI: answer}))
+    with caplog.at_level("INFO", logger="mona.interviews.generate"):
+        assert run(w, interview_id, model) == "ready"
+    assert len(targeted_calls(model)) == 1
+    qs = w.questions(interview_id)
+    said = [q["text"] for q in qs] + [o["label"] for q in qs for o in q["options"]]
+    assert not [s for s in said if "d1" in s or "assurance_vie" in s]
+    agipi = next(q for q in qs if set(q["affected_document_ids"]) == tagged(w, "agipi"))
+    assert (
+        agipi["text"]
+        == {
+            "targeted": "How should AGIPI documents be filed?",
+            "deterministic": "Where should the documents from AGIPI go?",
+        }[made_]
+    )
+    assert sorted(made(caplog, interview_id)) == sorted(["pass2"] * 4 + [made_])
+    assert f"({rejected} labels-rejected)" in log_line(caplog, interview_id)
+
+
+def test_a_key_that_reads_as_its_display_name_is_kept(caplog, monkeypatch):
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "off")
+    w = World()
+    with w.engine.connect() as conn:
+        words = internal_words(conn, registry.load(conn))
+    assert "assurance_vie" in words
+    assert not {"lmnp", "per", "angers-strasbourg", "personal"} & words
+    spec = spec_with()
+    _, interview_id = start(w, spec)
+    hello = questions(spec, HELLO)[0]
+    assert hello["text"] == "Are the Hello bank statements the LMNP account?"
+    assert hello["options"][0]["label"] == "LMNP, Angers-Strasbourg"
+    pass2 = by_input([hello, *questions(spec, AGIPI, UNIM, BOIS, ORELIA)], {})
+    model = RecordedModel(w, pass2=pass2)
+    with caplog.at_level("INFO", logger="mona.interviews.generate"):
+        assert run(w, interview_id, model) == "ready"
+    assert targeted_calls(model) == []
+    labels = {q["text"]: [o["label"] for o in q["options"]] for q in w.questions(interview_id)}
+    assert labels[hello["text"]][0] == "LMNP, Angers-Strasbourg"
+    assert "labels-rejected" not in caplog.text
+
+
+def test_a_key_inside_a_longer_word_of_a_counterparty_name_is_kept(caplog, monkeypatch):
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "off")
+    w = World()
+    spec = fixture("cluster.json")
+    for d in spec["docs"]:
+        if d["tag"].startswith("bois"):
+            d["title"] = d["title"].replace("Bois & Co", "Cabinetworks")
+            d["extracted_counterparty"] = "Atelier Cabinetworks"
+    _, interview_id = start(w, spec)
+    bois = questions(spec, BOIS)[0]
+    bois["text"] = "Which site are the Atelier Cabinetworks works for?"
+    bois["options"][0]["label"] = "Atelier Cabinetworks, by site"
+    pass2 = by_input([bois, *questions(spec, AGIPI, HELLO, UNIM, ORELIA)], {})
+    model = RecordedModel(w, pass2=pass2)
+    with caplog.at_level("INFO", logger="mona.interviews.generate"):
+        assert run(w, interview_id, model) == "ready"
+    assert targeted_calls(model) == []
+    assert bois["text"] in [q["text"] for q in w.questions(interview_id)]
+    assert "labels-rejected" not in caplog.text
+
+
+def test_the_cache_drops_a_question_naming_aliases_or_keys(caplog, monkeypatch):
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "fallback")
+    w = World()
+    spec = spec_with(entity="personal")
+    b, interview_id = start(w, spec)
+    pass2 = by_input(questions(spec, AGIPI, HELLO, UNIM, BOIS, ORELIA), {})
+    assert run(w, interview_id, RecordedModel(w, pass2=pass2)) == "ready"
+    (path,) = (w.ctx.textcache / "debrief").glob(f"*.{PROMPT_VERSION}.en.json")
+    cached = json.loads(path.read_text(encoding="utf-8"))
+    assert cached["questions"][0]["text"] == "How should AGIPI documents be filed?"
+    cached["questions"][0]["text"] = INCIDENT
+    path.write_text(json.dumps(cached), encoding="utf-8")
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "prefer")
+    service.cancel(w.ctx, interview_id)
+    replay = service.start(w.ctx, {"type": "batch", "batch_id": b}, lang="en").interview_id
+    with caplog.at_level("INFO", logger="mona.interviews.generate"):
+        assert run(w, replay, RecordedModel(w)) == "cache"
+    texts = [q["text"] for q in w.questions(replay)]
+    assert INCIDENT not in texts and "Where should the documents from AGIPI go?" in texts
+    assert "(1 labels-rejected)" in log_line(caplog, replay)
+
+
+def test_pass2_tells_the_model_to_write_for_the_owner_under_c6_v2():
+    assert PROMPT_VERSION == "c6-v2"
+    for lang in ("en", "fr", "ro"):
+        lines = pass2_system(lang).splitlines()
+        assert lines[lines.index(OWNER_LINE) + 1] == "- At most 7 questions, highest impact first."

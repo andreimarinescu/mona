@@ -1,5 +1,6 @@
 """C6 §4.5: checks and compilation of pass-2 output into stored questions."""
 
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
@@ -20,10 +21,11 @@ from mona.rules.grammar import RuleBody, RuleDraft, unresolved
 from mona.services import registry
 from mona.services.placement import subject
 from mona.services.registry import Snapshot
-from mona.text import norm
+from mona.text import contains_word, norm
 
 T = Base.metadata.tables
 OPTION_IDS = ("a", "b", "c")
+INTERNAL_KEY = re.compile(r"[_\-0-9]")
 TRIGRAM_MIN = 0.6
 
 
@@ -40,6 +42,20 @@ class Compiled:
     made: str = "pass2"
 
 
+def internal_words(conn: Connection, snap: Snapshot) -> set[str]:
+    """A27: keys with `_`, `-` or a digit that read differently from every display name."""
+    names = {e["display_name"] for e in snap.entities.values()}
+    names |= {s["label"] for s in snap.sub_units.values()}
+    names |= set(snap.names.people.values())
+    names |= set(conn.execute(select(T["accounts"].c.label)).scalars())
+    for row in (*snap.categories.values(), *snap.subcategories.values()):
+        names |= set(row["labels"].values())
+    keys = {*snap.entities, *snap.categories, *snap.names.people}
+    keys |= {k for _, k in snap.sub_units} | {k for _, k in snap.subcategories}
+    allowed = {norm(n) for n in names}
+    return {norm(k) for k in keys if INTERNAL_KEY.search(k)} - allowed
+
+
 @dataclass
 class Compiler:
     """One pass over a pass-2 output against the current registry and documents."""
@@ -50,12 +66,14 @@ class Compiler:
     textcache: Path
     seed: bool = False
     snap: Snapshot = field(init=False)
+    labels_rejected: int = 0
     _subjects: dict[str, Subject] = field(default_factory=dict)
     _pages: dict[str, list[str]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.snap = registry.load(self.conn)
         self.reg = store.registry(self.conn)
+        self.internal = internal_words(self.conn, self.snap) | {norm(a) for a in self.inp.aliases}
 
     # --- helpers ---
 
@@ -89,6 +107,11 @@ class Compiler:
         return hit
 
     # --- §4.5 steps ---
+
+    def labelled(self, q: Mapping[str, Any]) -> bool:
+        """A27 step 0: the text or an option label names an alias or an internal key."""
+        said = [q.get("text", ""), *(o.get("label", "") for o in q.get("options", []))]
+        return any(contains_word(norm(s), w) for s in said for w in self.internal)
 
     def evidence(self, items: list[dict], affected: list[str]) -> list[dict[str, Any]]:
         out = []
@@ -252,6 +275,9 @@ class Compiler:
     def run(self, output: Mapping[str, Any]) -> list[Compiled]:
         out = []
         for n, q in enumerate(output.get("questions", [])[:MAX_QUESTIONS]):
+            if self.labelled(q):
+                self.labels_rejected += 1
+                continue
             compiled = self.question(q, n)
             if compiled is not None:
                 out.append(compiled)

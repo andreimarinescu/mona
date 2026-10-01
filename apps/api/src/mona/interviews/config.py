@@ -4,7 +4,7 @@ import os
 from datetime import timedelta
 from typing import Literal
 
-PROMPT_VERSION = "c6-v1"
+PROMPT_VERSION = "c6-v2"
 MAX_CANDIDATES = 40
 MAX_SEED_COUNTERPARTIES = 7
 MAX_QUESTIONS = 7

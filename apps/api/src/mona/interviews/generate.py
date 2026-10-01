@@ -129,6 +129,7 @@ class Live:
     inp: Input | None = None
     targeted: list[dict[str, Any]] = field(default_factory=list)
     rejected: int = 0
+    labelled: int = 0
     timings: dict[str, float] = field(default_factory=dict)
     error: BaseException | None = None
     done: threading.Event = field(default_factory=threading.Event)
@@ -288,9 +289,9 @@ class Generation:
             if self.abandon.is_set():
                 raise Abandoned
             with self.ctx.engine.connect() as conn:
-                live.questions = Compiler(
-                    conn, inp, row["lang"], self.ctx.textcache, seed=seed
-                ).run(output)
+                compiler = Compiler(conn, inp, row["lang"], self.ctx.textcache, seed=seed)
+                live.questions = compiler.run(output)
+                live.labelled += compiler.labels_rejected
             if not seed:
                 self._cover(live, model, inp, row["lang"], enums)
             live.output, live.analysis, live.inp = output, analysis, inp
@@ -326,6 +327,7 @@ class Generation:
             with self.ctx.engine.connect() as conn:
                 compiler = Compiler(conn, inp, lang, self.ctx.textcache)
                 kept = compiler.run(out)
+                live.labelled += compiler.labels_rejected
                 if kept and not about(compiler, cluster, kept[0].text):
                     live.rejected += 1
                     return None
@@ -361,7 +363,13 @@ class Generation:
             return False
         self.abandon.set()
         persist(self.ctx, self.id, m.questions, analysis=None, seed=False)
-        logger.info("interview %s: cached debrief %s, %s", self.id, m.path.name, made(m.questions))
+        logger.info(
+            "interview %s: cached debrief %s%s, %s",
+            self.id,
+            m.path.name,
+            f" ({m.labelled} labels-rejected)" if m.labelled else "",
+            made(m.questions),
+        )
         return True
 
     def run(self) -> str:
@@ -402,7 +410,7 @@ class Generation:
         seed = row["kind"] == "seed"
         state = persist(self.ctx, self.id, live.questions or [], analysis=live.analysis, seed=seed)
         logger.info(
-            "interview %s: %s, pass 1 %.1f s%s, pass 2 %.1f s, targeted %.1f s%s, %s",
+            "interview %s: %s, pass 1 %.1f s%s, pass 2 %.1f s, targeted %.1f s%s%s, %s",
             self.id,
             state,
             live.timings.get("pass1", 0),
@@ -410,6 +418,7 @@ class Generation:
             live.timings.get("pass2", 0),
             live.timings.get("targeted", 0),
             f" ({live.rejected} targeted-rejected)" if live.rejected else "",
+            f" ({live.labelled} labels-rejected)" if live.labelled else "",
             made(live.questions or []),
         )
         if state == "ready" and batch and live.inp is not None and live.output is not None:
