@@ -2,6 +2,18 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D18 · 2026-10-01 · Requests too complex for Qwen; linking Hermes and Mona (Andrei's evening session)
+
+- **Guardrails:**
+  - a server-enforced turn budget with an honest fallback text, and a capability list in SOUL (A28);
+  - a reply-language check (A29).
+- **Typed tools close the gaps:**
+  - `payment_iban` as a deterministic, verified field (A30);
+  - `export_table` for CSV, XLSX and DOCX (A31). Qwen picks documents and columns; the server builds the file.
+- **Hermes skills:** a spike (S7) first. It measures curated recipes on Qwen 3.6 (selection accuracy, prompt cost, latency) against the same recipes as SOUL lines; Andrei decides with the numbers. Mona's self-authoring stays off.
+- **Hermes' terminal, file and code tools stay off on the practice box:** they would bypass the journal, the visibility rules and the privacy promise (C9).
+- **Tonight:** the lanes run under D13 (verify and merge while Andrei is away; no signing, no verdicts).
+
 ## D17 · 2026-10-01 · A re-upload after a delete is a new document; FIX-4 follow-ups
 
 - **Re-upload:** a deleted document no longer blocks intake. Re-uploading its bytes makes a fresh document with that upload's settings (A24). Andrei's ruling: it's what a person expects after deleting a mis-tagged upload.

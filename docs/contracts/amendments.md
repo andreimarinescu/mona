@@ -216,3 +216,60 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   2. **Instruction.** Pass 2's system message (§4.4) gains one line before "At most 7 questions": "- Write text and labels for the owner: name documents by their title or counterparty and use the registry's display names; never write aliases (d1, d2) or keys." `PROMPT_VERSION` becomes `c6-v2`, so earlier cached debriefs no longer match.
 - **Why:** the rebuilt stage's AGIPI question read "For d1 and d2, should they be filed as assurance_vie or per, and do the addressees match child-1 and child-2?". D15: an instruction to prevent it, and a check to guarantee it.
 - **Lanes:** L4 (FIX-9).
+
+## A28 · 2026-10-01 · C4 §2.9, C3 §5: an enforced turn budget and an honest fallback
+
+- **Change:**
+  1. **Budget.** The MCP server counts the tool calls attributed to one chat turn (C3 §5.2 attribution; a Telegram turn likewise).
+     - From the 7th call of a turn (`MONA_TURN_TOOL_BUDGET`, default 6), every tool returns `{"error": "budget_exhausted", "message": "Answer now with what you already have, and say plainly what you couldn't do."}` without running.
+     - Hermes `agent.max_turns` becomes 8.
+  2. **Fallback text.** A web turn that ends with no text part (an empty reply, Hermes' iteration cap, or an abort after tool calls) gets a text part from the C8 key `chat.fallback.too_complex` (EN/FR/RO) in the reply language. It says that the request needs more steps than Mona can take at once, and lists what she can do.
+  3. **Capabilities in SOUL.** A short "What I can do here / what I can't" section:
+     - **can:** search and open documents; total amounts; list what's due; draft a letter; export a table of documents; prepare the accountant pack; answer debrief questions;
+     - **can't:** run programs, open arbitrary files, browse, send anything.
+
+     When asked for something outside it, Mona says so in one line and offers the nearest thing she can do.
+- **Why:** Andrei's evening session (2026-10-01). Asks for an IBAN table and spreadsheet files drove Qwen 3.6 into 12–23-call loops and empty replies, and it claimed a terminal it doesn't have. D15: enforce with a check, don't trust the model.
+- **Lanes:** L2 (FIX-10).
+
+## A29 · 2026-10-01 · C3 §5, C8 §4: the reply language is checked
+
+- **Change:**
+  - After a web turn, `detect_language` (C8 §4) runs on the reply text. When it detects a language other than the turn's `reply_language` on a reply of ≥ 20 words, the adapter logs it (no text), and the next turn's overlay adds: "Your previous reply was in {detected}; reply in {Language}."
+  - No schema change.
+- **Why:** an English banner turn (`reply_language` `en`) was answered in French. D15.
+- **Lanes:** L2 (FIX-10).
+
+## A30 · 2026-10-01 · C5 §4.3/§5, C2 `DocumentSummary`, C4 results: `payment_iban`, a deterministic field
+
+- **Change:**
+  - At classification, `payment_iban` is filled deterministically: no model field and no model call.
+    - **Candidates:** the §4.3 IBAN candidates in the page text with a valid mod-97 checksum, excluding every IBAN of the registry's own `accounts` (the practice's accounts, never a payee's).
+    - **Value:** the first remaining candidate in page order, normalised (upper case, no spaces).
+    - **Evidence:** the matched text as the quote, its page, `verified: true`, and `findQuery` as C5 §7.
+  - **Exposed:** `DocumentSummary.paymentIban`; `get_document`, `search_documents` and `list_deadlines` items; the DocumentViewer's fields panel; and an accountant-export CSV column `payment_iban`.
+  - On the telegram channel it is masked to the country code and the last 4 characters.
+  - Re-running classification fills it for existing documents (a `mona pipeline backfill-iban` CLI step, idempotent).
+- **Why:** Andrei asked for "all payables with the destination IBAN". The IBAN is printed on the documents, but no tool could return it, so Qwen looped over `get_document`. A checksum makes it exact without the model.
+- **Lanes:** L1, L2, L3 (FIX-11).
+
+## A31 · 2026-10-01 · C4 §3.17 `export_table` [V], C2 exports, C3 `export` card
+
+- **Change:** a new tool.
+  - **Description:** "Make a table file of documents (CSV, Excel or Word) from a search or a list of documents, with the columns the person asks for. It appears as a card with a download; nothing is sent."
+  - **Params:**
+    - `document_ids` (1–500) or the §3 common filters (as `search_documents`);
+    - `columns`: a list, 1–10, of `title, counterparty, entity, category, doc_date, due_date, amount, currency, payment_iban, reference, status, path`;
+    - `format`: `csv` | `xlsx` | `docx`;
+    - `title`: ≤ 80, optional;
+    - `lang`: optional, as C4 §3.6.
+  - **Result:** `{"export_id", "file_name", "rows", "truncated", "card_refs"}`. The `export` card offers Download through C2's export download route.
+  - **The file:**
+    - built synchronously (≤ 500 rows, within §2.8's 10 s) under `/data/exports`;
+    - CSV is machine-friendly (ISO dates, dot decimals, §3.13's formula guard);
+    - XLSX has typed cells;
+    - DOCX has a titled table formatted for the request locale (C8).
+  - **Visibility (C9 §3):** a channel's hidden documents are left out. On Telegram, `payment_iban` is masked as A30 says.
+  - **Activity:** an activity entry, as for the accountant pack. It is never sent anywhere.
+- **Why:** Andrei asked for a payables table as CSV, then XLSX, then DOCX. With this tool, Qwen only chooses the documents and the columns.
+- **Lanes:** L2, L4 (FIX-11).
