@@ -11,6 +11,8 @@ MAX_QUESTIONS = 7
 JOB_CAP_S = 150.0
 STALE_AFTER = timedelta(minutes=10)
 PASS2_TIMEOUT_S = 60.0
+MAX_TARGETED = 3
+TARGETED_TIMEOUT_S = 30.0
 
 CacheMode = Literal["off", "fallback", "prefer"]
 

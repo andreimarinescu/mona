@@ -19,6 +19,9 @@
   "interview": {
     "option": {
       "ask": "Întrebați-mă de fiecare dată"
+    },
+    "question": {
+      "where": "Unde trebuie arhivate documentele de la {{counterparty}}?"
     }
   },
   "export": {

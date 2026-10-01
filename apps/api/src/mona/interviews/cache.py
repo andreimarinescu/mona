@@ -10,8 +10,10 @@ from typing import Any
 
 from sqlalchemy import Connection
 
-from mona.interviews.candidates import load_docs
+from mona.interviews.candidates import clusters, load_docs
 from mona.interviews.compile import Compiled, Compiler
+from mona.interviews.config import MAX_QUESTIONS
+from mona.interviews.coverage import cover, deterministic
 from mona.interviews.prompt import Input
 
 V = 1
@@ -34,11 +36,31 @@ def write(
     output: dict[str, Any],
     sha_of: dict[str, str],
     now: datetime,
+    targeted: list[dict[str, Any]] | None = None,
 ) -> Path:
-    """Pass 2's raw output with every alias replaced by its document's sha256."""
+    """Pass 2's raw output, then the kept targeted questions (A25), with every alias replaced
+    by its document's sha256."""
 
     def shas(aliases: list[str]) -> list[str]:
         return [sha_of[a] for a in aliases if a in sha_of]
+
+    def question(q: dict[str, Any], made: str) -> dict[str, Any]:
+        return {
+            "text": q["text"],
+            "affected_sha256s": shas(q["affected"]),
+            "evidence": [
+                {"sha256": sha_of[e["doc"]], "quote": e["quote"]}
+                for e in q.get("evidence", [])
+                if e.get("doc") in sha_of
+            ],
+            "options": [
+                {"id": o["id"], "label": o["label"], "rule_draft": o["rule_draft"]}
+                for o in q["options"]
+            ],
+            "suggested": q["suggested"],
+            "confidence": q["confidence"],
+            "made": made,
+        }
 
     doc = {
         "v": V,
@@ -46,24 +68,8 @@ def write(
         "lang": lang,
         "created_at": now.isoformat(),
         "candidate_sha256s": sorted(candidate_shas),
-        "questions": [
-            {
-                "text": q["text"],
-                "affected_sha256s": shas(q["affected"]),
-                "evidence": [
-                    {"sha256": sha_of[e["doc"]], "quote": e["quote"]}
-                    for e in q.get("evidence", [])
-                    if e.get("doc") in sha_of
-                ],
-                "options": [
-                    {"id": o["id"], "label": o["label"], "rule_draft": o["rule_draft"]}
-                    for o in q["options"]
-                ],
-                "suggested": q["suggested"],
-                "confidence": q["confidence"],
-            }
-            for q in output.get("questions", [])
-        ],
+        "questions": [question(q, "pass2") for q in output.get("questions", [])]
+        + [question(q, "targeted") for q in targeted or []],
     }
     d = cache_dir(textcache)
     d.mkdir(parents=True, exist_ok=True)
@@ -100,9 +106,23 @@ def _as_output(cached: dict[str, Any], alias_of_sha: dict[str, str]) -> dict[str
                 "options": q["options"],
                 "suggested": q.get("suggested"),
                 "confidence": q.get("confidence", 0),
+                "made": q.get("made", "pass2"),
             }
         )
     return {"questions": questions}
+
+
+def _compile(compiler: Compiler, questions: list[dict[str, Any]]) -> list[Compiled]:
+    """§4.5 on pass 2's questions, then each targeted one while there is room (A25)."""
+    out = compiler.run({"questions": [q for q in questions if q["made"] != "targeted"]})
+    for q in questions:
+        if q["made"] != "targeted" or len(out) >= MAX_QUESTIONS:
+            continue
+        for c in compiler.run({"questions": [q]}):
+            c.made = "targeted"
+            c.model_order = max((x.model_order for x in out), default=-1) + 1
+            out.append(c)
+    return out
 
 
 def match(
@@ -136,10 +156,18 @@ def match(
         if cached.get("lang") != lang:
             continue
         output = _as_output(cached, alias_of_sha)
-        compiled = Compiler(conn, inp, lang, textcache).run(output)
+        compiled = _compile(Compiler(conn, inp, lang, textcache), output["questions"])
         if not compiled:
             continue
         created = str(cached.get("created_at", ""))
         if best is None or (len(compiled), created) > (len(best.questions), best.created_at):
             best = Match(path, compiled, created)
+    if best is not None:
+        compiler = Compiler(conn, inp, lang, textcache)
+        cover(
+            best.questions,
+            [[d.id for d in c.docs] for c in clusters(docs)],
+            targeted=None,
+            fixed=lambda cluster: deterministic(compiler, cluster),
+        )
     return best

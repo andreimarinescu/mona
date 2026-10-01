@@ -146,7 +146,8 @@ def test_the_log_line_carries_the_pass_timings_and_no_document_text(caplog):
     with caplog.at_level("INFO", logger="mona.interviews.generate"):
         run(w, interview_id, RecordedModel(w))
     (line,) = [r.getMessage() for r in caplog.records if interview_id in r.getMessage()]
-    assert "ready, pass 1 " in line and ", pass 2 " in line and line.endswith(" questions")
+    assert "ready, pass 1 " in line and ", pass 2 " in line and ", targeted " in line
+    assert line.endswith(" 5 questions: pass2, pass2, pass2, pass2, pass2")
     assert "AGIPI" not in line
 
 
@@ -564,13 +565,18 @@ def test_pass2_is_retried_once_then_the_interview_fails():
 
 def test_no_surviving_question_fails_with_no_questions():
     w = World()
-    w.cluster(w.batch())
+    spec = fixture("cluster.json")
+    for d in spec["docs"]:
+        d.pop("entity", None)
+    w.cluster(w.batch(), spec)
     interview_id = service.start(w.ctx, {"type": "queue"}, lang="en").interview_id
-    bad = deepcopy(fixture("cluster.json")["pass2"])
+    bad = deepcopy(spec["pass2"])
     for q in bad["questions"]:
         for o in q["options"]:
             o["rule_draft"] = {"kind": "ask", "discriminator": None, "branches": []}
-    assert run(w, interview_id, RecordedModel(w, pass2=bad)) == "failed"
+    model = RecordedModel(w, pass2=bad)
+    assert run(w, interview_id, model) == "failed"
+    assert len([c for c in model.calls if c["pass"] == 2]) == 1 + 3
     row = w.row("interviews", interview_id)
     assert (row["status"], row["error"]) == ("failed", "no_questions")
 

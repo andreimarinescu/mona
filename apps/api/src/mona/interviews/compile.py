@@ -37,6 +37,7 @@ class Compiled:
     counterparty_id: str | None = None
     model_order: int = 0
     impact: int = 0
+    made: str = "pass2"
 
 
 @dataclass

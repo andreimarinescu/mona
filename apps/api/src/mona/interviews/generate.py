@@ -18,10 +18,12 @@ from mona.interviews.config import (
     JOB_CAP_S,
     PASS2_TIMEOUT_S,
     PROMPT_VERSION,
+    TARGETED_TIMEOUT_S,
     cache_after_s,
     cache_mode,
     pass1_budget_s,
 )
+from mona.interviews.coverage import cover, deterministic, input_clusters, reduced
 from mona.interviews.model import LanguageModel, ModelError, get_model
 from mona.interviews.prompt import (
     PASS1_SYSTEM,
@@ -98,6 +100,27 @@ def pass2(model: LanguageModel, inp: Input, analysis: str, lang: str, schema: di
     raise ModelError(type(last).__name__ if last else "pass2")
 
 
+def targeted_pass2(
+    model: LanguageModel, inp: Input, analysis: str, lang: str, schema: dict
+) -> dict | None:
+    """A25 step 1: one question over a reduced input; 30 s, no retry."""
+    one = {**schema, "properties": {**schema["properties"]}}
+    one["properties"]["questions"] = {**schema["properties"]["questions"], "maxItems": 1}
+    try:
+        out = model.complete_json(
+            pass2_system(lang),
+            pass2_user(inp.text(), analysis),
+            one,
+            name="mona_interview",
+            temperature=0,
+            max_tokens=6000,
+            timeout_s=TARGETED_TIMEOUT_S,
+        )
+    except ModelError:
+        return None
+    return None if errors(out, one) else out
+
+
 @dataclass
 class Live:
     """The live run, on its own thread; the supervisor may abandon it."""
@@ -106,6 +129,7 @@ class Live:
     output: dict[str, Any] | None = None
     analysis: str | None = None
     inp: Input | None = None
+    targeted: list[dict[str, Any]] = field(default_factory=list)
     timings: dict[str, float] = field(default_factory=dict)
     error: BaseException | None = None
     done: threading.Event = field(default_factory=threading.Event)
@@ -193,6 +217,13 @@ def persist(
     return "ready"
 
 
+def made(questions: list[Compiled]) -> str:
+    """How each question was made, in stored order (§4.6 after `persist` set `impact`)."""
+    ordered = sorted(questions, key=lambda c: (-c.impact, c.model_order))
+    how = ", ".join(c.made for c in ordered)
+    return f"{len(ordered)} questions" + (f": {how}" if how else "")
+
+
 def fail(ctx: Ctx, interview_id: str, error: str) -> None:
     i = T["interviews"]
     with ctx.engine.begin() as conn:
@@ -244,7 +275,8 @@ class Generation:
                         self.ctx.textcache,
                         self.ctx.clock(),
                     )
-                schema = build(list(inp.aliases), registry_enums(conn), seed=seed)
+                enums = registry_enums(conn)
+                schema = build(list(inp.aliases), enums, seed=seed)
             model = self.model_factory()
             t0 = time.monotonic()
             analysis = pass1(model, inp.text(), self.clock, pass1_budget_s())
@@ -260,11 +292,54 @@ class Generation:
                 live.questions = Compiler(
                     conn, inp, row["lang"], self.ctx.textcache, seed=seed
                 ).run(output)
+            if not seed:
+                self._cover(live, model, inp, analysis, row["lang"], enums)
             live.output, live.analysis, live.inp = output, analysis, inp
         except BaseException as e:  # noqa: BLE001
             live.error = e
         finally:
             live.done.set()
+
+    def _cover(
+        self,
+        live: Live,
+        model: LanguageModel,
+        inp: Input,
+        analysis: str,
+        lang: str,
+        enums: dict[str, list[str]],
+    ) -> None:
+        """A25: targeted pass 2 for an uncovered cluster, else a deterministic question."""
+        live.timings["targeted"] = 0.0
+
+        def targeted(cluster: list[str]) -> Compiled | None:
+            if self.abandon.is_set():
+                raise Abandoned
+            if self.elapsed() + TARGETED_TIMEOUT_S > JOB_CAP_S:
+                return None
+            small = reduced(inp, cluster)
+            t0 = time.monotonic()
+            out = targeted_pass2(model, small, analysis, lang, build(list(small.aliases), enums))
+            live.timings["targeted"] += time.monotonic() - t0
+            if self.abandon.is_set():
+                raise Abandoned
+            if out is None:
+                return None
+            with self.ctx.engine.connect() as conn:
+                kept = Compiler(conn, inp, lang, self.ctx.textcache).run(out)
+            if not kept:
+                return None
+            live.targeted.append(out["questions"][0])
+            kept[0].made = "targeted"
+            return kept[0]
+
+        def fixed(cluster: list[str]) -> Compiled | None:
+            with self.ctx.engine.connect() as conn:
+                return deterministic(Compiler(conn, inp, lang, self.ctx.textcache), cluster)
+
+        live.questions = cover(
+            live.questions or [], input_clusters(inp), targeted=targeted, fixed=fixed
+        )
 
     def _cached(self, row: Any) -> cache.Match | None:
         if row["kind"] != "debrief" or row["scope"].get("type") != "batch":
@@ -284,7 +359,7 @@ class Generation:
             return False
         self.abandon.set()
         persist(self.ctx, self.id, m.questions, analysis=None, seed=False)
-        logger.info("interview %s: cached debrief %s", self.id, m.path.name)
+        logger.info("interview %s: cached debrief %s, %s", self.id, m.path.name, made(m.questions))
         return True
 
     def run(self) -> str:
@@ -325,13 +400,14 @@ class Generation:
         seed = row["kind"] == "seed"
         state = persist(self.ctx, self.id, live.questions or [], analysis=live.analysis, seed=seed)
         logger.info(
-            "interview %s: %s, pass 1 %.1f s%s, pass 2 %.1f s, %d questions",
+            "interview %s: %s, pass 1 %.1f s%s, pass 2 %.1f s, targeted %.1f s, %s",
             self.id,
             state,
             live.timings.get("pass1", 0),
             " (cut)" if (live.analysis or "").startswith(CUT_PREFIX) else "",
             live.timings.get("pass2", 0),
-            len(live.questions or []),
+            live.timings.get("targeted", 0),
+            made(live.questions or []),
         )
         if state == "ready" and batch and live.inp is not None and live.output is not None:
             self._write_cache(row, live)
@@ -350,6 +426,7 @@ class Generation:
             lang=row["lang"],
             candidate_shas=list(shas.values()),
             output=live.output,
+            targeted=live.targeted,
             sha_of=sha_of,
             now=self.ctx.clock(),
         )

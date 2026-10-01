@@ -19,6 +19,9 @@
   "interview": {
     "option": {
       "ask": "Ask me each time"
+    },
+    "question": {
+      "where": "Where should the documents from {{counterparty}} go?"
     }
   },
   "export": {

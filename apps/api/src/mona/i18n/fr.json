@@ -19,6 +19,9 @@
   "interview": {
     "option": {
       "ask": "Me demander à chaque fois"
+    },
+    "question": {
+      "where": "Où dois-je classer les documents envoyés par {{counterparty}} ?"
     }
   },
   "export": {
