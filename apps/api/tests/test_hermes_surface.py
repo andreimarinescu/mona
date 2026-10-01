@@ -67,3 +67,18 @@ def test_prod_lockdown_capture_resolves_no_disabled_toolset():
     for platform, tools in resolved.items():
         assert not set(tools) & set(DISABLED_TOOLSETS), platform
     assert {p: resolved[p] for p in PLATFORM_TOOLSETS} == PLATFORM_TOOLSETS
+
+
+def test_soul_says_a_card_carries_its_own_content():
+    soul = (ROOT / "deploy" / "hermes" / "SOUL.md").read_text()
+    principles = soul.split("## Principles", 1)[1].split("\n## ", 1)[0]
+    line = next(x for x in principles.splitlines() if x.startswith("- A card carries its own"))
+    assert "Introduce it in one line and don't repeat what it shows" in line
+    assert "Never invent titles, questions or amounts" in line
+
+
+def test_soul_steers_a_draft_to_one_search_and_draft_reply():
+    soul = (ROOT / "deploy" / "hermes" / "SOUL.md").read_text()
+    principles = soul.split("## Principles", 1)[1].split("\n## ", 1)[0]
+    line = next(x for x in principles.splitlines() if x.startswith("- Use as few tools"))
+    assert "find the letter with one search and call draft_reply with its id straight away" in line

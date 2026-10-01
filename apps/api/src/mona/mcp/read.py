@@ -372,12 +372,18 @@ async def sum_amounts(
         if document_ids is not None:
             found = {r.id: r for r in rows}
             rows = [found[i] for i in wanted if i in found]
-            excluded += [{"id": i, "reason": "not_found"} for i in wanted if i not in found]
+            excluded += [
+                {"id": i, "title": None, "reason": "not_found"} for i in wanted if i not in found
+            ]
         else:
             rows.sort(key=lambda r: (r.doc_date is None, -(r.doc_date or date.min).toordinal()))
         summed = [r for r in rows if r.amount is not None and r.currency in ("EUR", "RON")]
         excluded += [
-            {"id": r.id, "reason": "no_amount" if r.amount is None else "other_currency"}
+            {
+                "id": r.id,
+                "title": clip(r.title),
+                "reason": "no_amount" if r.amount is None else "other_currency",
+            }
             for r in rows
             if r not in summed
         ]

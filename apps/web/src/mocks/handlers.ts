@@ -166,6 +166,10 @@ export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDe
       const body = (await request.json()) as Parameters<World['correct']>[1];
       return guard(() => world.correct(String(params.id), body))();
     }),
+    http.post('/api/documents/:id/delete', async ({ params, request }) => {
+      const body = (await request.json()) as Parameters<World['deleteDocument']>[1];
+      return guard(() => world.deleteDocument(String(params.id), body))();
+    }),
     http.post('/api/documents/:id/like-this', ({ params }) => guard(() => world.likeThis(String(params.id)))()),
     http.get('/api/rules/:id/preview', ({ params }) => guard(() => world.previewRule(String(params.id)))()),
     http.post('/api/rules/:id/apply', async ({ params, request }) => {

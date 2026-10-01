@@ -48,3 +48,8 @@ def test_make_e2e_and_the_ci_job_run_playwright_at_two_workers():
     assert make_rule("e2e")[1] == ["$(WEB) e2e -- --workers=2"]
     ci = yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text())
     assert {"run": "make e2e"} in ci["jobs"]["e2e"]["steps"]
+
+
+def test_workers_run_under_an_init_so_a_stop_right_after_start_is_not_ignored():
+    s = services()
+    assert s["worker-llm"]["init"] is True and s["worker-cpu"]["init"] is True

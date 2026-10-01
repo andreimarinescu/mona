@@ -52,7 +52,8 @@ def preview_result(p: RulePreview, moves_max: int) -> dict[str, Any]:
     "unsure of: after a batch, for the review queue, or for one counterparty. If questions for "
     "that scope are ready or being prepared, this shows them instead of starting again. It "
     "appears as an interview card that fills in by itself; tell the person the questions are "
-    "here or coming, and don't wait for them."
+    "here or coming, and don't wait for them. The card shows the questions; introduce them in "
+    "one line and never restate or invent them."
 )
 async def start_interview(
     batch_id: BatchIdParam = None,
@@ -88,13 +89,18 @@ async def start_interview(
     started = await run(
         service.start, get_ctx(), scope, lang=lang, channel=ch, tool="start_interview"
     )
-    return {
+    result = {
         "interview_id": started.interview_id,
         "status": started.status,
         "open_questions": started.open_questions,
+        "questions": [
+            {**q, "text": clip(q["text"], 300), "options": [clip(o, 120) for o in q["options"]]}
+            for q in started.questions
+        ],
         "reused": started.reused,
         "card_refs": started.card_refs,
     }
+    return fit(result, "questions")
 
 
 @tool(

@@ -18,7 +18,8 @@ from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import func, insert, select
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from mona.db.models import CardEvent, ChatTurn
+from mona.db import get_engine
+from mona.db.models import CardEvent, ChatTurn, Document
 from mona.ids import new_id
 from mona.visibility import RuleVisibility, Scope, rule_visibility, scope_for
 
@@ -207,6 +208,21 @@ async def write_cards(
 
 
 PLACEHOLDER_REF = "crd_" + "0" * 26
+
+
+async def document_title(document_id: str | None) -> str | None:
+    """A21: the title a card shows, so the model can name it without another call."""
+    if document_id is None:
+        return None
+    async with get_engine().connect() as conn:
+        title = (
+            await conn.execute(
+                select(func.coalesce(Document.title, Document.original_name)).where(
+                    Document.id == document_id
+                )
+            )
+        ).scalar()
+    return clip(title)
 
 
 __all__ = ["RuleVisibility", "Scope", "rule_visibility", "scope_for"]

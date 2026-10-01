@@ -324,6 +324,25 @@ async def test_correcting_into_visitors_is_403_and_bad_input_is_400(l2_world, ap
     assert unknown.status_code == 400 and unknown.json()["error"]["field"] == "colour"
 
 
+async def test_a_visitor_document_corrects_its_category_but_never_its_entity(l2_world, app):
+    w = l2_world
+    doc = w.doc(counterparty="opco", category="payment_calls", entity="visitors",
+                doc_date=date(2026, 2, 27), batch=w.new_batch(visitor=True))  # fmt: skip
+    ents = w.ids("entities")
+    async with api_client(app) as cl:
+        moved = await cl.post(f"/api/documents/{doc}/correct", json={"entityId": ents["cabinet"]})
+        kept = await cl.post(f"/api/documents/{doc}/correct", json={"entityId": ents["visitors"]})
+        category = await cl.post(
+            f"/api/documents/{doc}/correct", json={"categoryId": "tax", "subcategoryKey": None}
+        )
+    assert moved.status_code == kept.status_code == 403
+    assert moved.json()["error"]["code"] == "not_allowed"
+    assert category.status_code == 200, category.text
+    r = w.row(doc)
+    assert (r["entity_id"], r["category_id"], r["status"]) == (ents["visitors"], "tax", "filed")
+    assert r["current_path"].startswith("Visitors/")
+
+
 async def test_the_review_page_body_with_a_null_subcategory_files_the_document(l2_world, app):
     w = l2_world
     doc = w.doc(counterparty="agipi", category="insurance", subcategory="per", entity="personal",

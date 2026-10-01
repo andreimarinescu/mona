@@ -14,7 +14,17 @@ from mona.db import get_engine
 from mona.db.models import Document, FileOp, OpGroup, Rule
 from mona.dto import RulePreview
 from mona.fileops import FileOpError
-from mona.mcp.core import Scope, ToolFailure, channel, clip, not_found, scope_for, tool, write_cards
+from mona.mcp.core import (
+    Scope,
+    ToolFailure,
+    channel,
+    clip,
+    document_title,
+    not_found,
+    scope_for,
+    tool,
+    write_cards,
+)
 from mona.mcp.filters import CategoryParam, EntityParam, resolve_entity
 from mona.mcp.read import DocIdParam
 from mona.services import apply_rule as apply_service
@@ -163,6 +173,7 @@ async def correct_document(
         preview = await call_service(preview_service, get_ctx(), result.rule.id, visible=keep)
     out: dict[str, Any] = {
         "document_id": document_id,
+        "title": await document_title(document_id),
         "outcome": result.outcome,
         "path": clip(path_of(doc.path, doc.file_name), 400),
         "journal_ids": result.journal_ids,
@@ -216,6 +227,7 @@ async def apply_rule(rule_id: RuleIdParam) -> dict:
         refs = await write_cards(s, "apply_rule", [("rulePreview", {"rule_id": rule_id})])
     return {
         "rule_id": rule_id,
+        "name": clip(applied.preview.rule.name) if applied.preview else None,
         "group_id": applied.group_id,
         "moved": applied.moved,
         "unchanged": applied.unchanged,

@@ -66,6 +66,24 @@ describe('ReviewDetail', () => {
     expect(onCorrect).toHaveBeenCalledWith(expect.anything(), { categoryId: 'bank', subcategoryKey: null });
   });
 
+  it('a visitor document shows Visitors read-only with its purge note, and a correction keeps it there', async () => {
+    const world = api.world();
+    const base = world.reviewList({}).items.find((d) => d.title === 'Nordtel invoice, September 2026')!;
+    const detail = world.document(base.id);
+    const visitors = world.entityList().visitorsEntityId!;
+    api.server.use(http.get(`/api/documents/${base.id}`, () => HttpResponse.json({ ...detail, entityId: visitors, suggestion: { ...detail.suggestion!, entityId: visitors } })));
+    const { onCorrect } = setup('Nordtel invoice, September 2026');
+    const field = await screen.findByTestId('visitors-entity');
+    await waitFor(() => expect(field).toHaveValue('Visitors'));
+    expect(field).toHaveAttribute('readonly');
+    expect(await screen.findByText("A visitor's document: deleted after 24 hours, with everything Mona derived from it.")).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Entity' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('option', { name: 'Bank' })).toBeInTheDocument());
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Bank');
+    await userEvent.click(screen.getByRole('button', { name: 'Correct and file' }));
+    expect(onCorrect).toHaveBeenCalledWith(expect.anything(), { categoryId: 'bank', subcategoryKey: null });
+  });
+
   it('a document with no entity cannot be confirmed until one is chosen', async () => {
     setup('Delivery note, Laboratoire du Val');
     expect(await screen.findByRole('button', { name: 'Confirm' })).toBeDisabled();

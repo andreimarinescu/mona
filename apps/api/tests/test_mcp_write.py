@@ -47,6 +47,7 @@ class RuleState(Strict):
 
 class CorrectResult(Strict):
     document_id: str = DOC
+    title: str
     outcome: Literal["moved", "unchanged"]
     path: str
     journal_ids: list[int]
@@ -63,6 +64,7 @@ class Failed(Strict):
 
 class ApplyResult(Strict):
     rule_id: str
+    name: str
     group_id: str | None
     moved: int
     unchanged: int
@@ -122,6 +124,7 @@ async def test_correct_one_refiles_as_mona_with_a_doc_card(l2_world):
     )  # fmt: skip
     body = ok(res, CorrectResult)
     assert body["outcome"] == "moved" and body["rule"] is None and body["preview"] is None
+    assert body["title"] == (w.row(doc)["title"] or w.row(doc)["original_name"])
     assert body["path"] == w.row(doc)["current_path"] and body["path"].startswith("Cabinet")
     [(kind, actor, via)] = sql(
         "SELECT kind, actor, via FROM op_groups WHERE id = %s", (body["group_id"],)
@@ -226,6 +229,7 @@ async def test_preview_then_apply_keep_the_counts_on_the_card(l2_world):
     second = ok(await call("apply_rule", {"rule_id": rule_id}), ApplyResult)
     assert (preview["moves_total"], preview["stays_total"], preview["state"]) == (1, 1, "draft")
     assert (applied["moved"], applied["unchanged"], applied["failed"]) == (1, 1, [])
+    assert [(applied["name"],)] == sql("SELECT name FROM rules WHERE id = %s", (rule_id,))
     assert (second["moved"], second["group_id"]) == (0, None)
     assert (before["movesTotal"], before["staysTotal"]) == (
         after["movesTotal"],

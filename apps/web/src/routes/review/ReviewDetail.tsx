@@ -1,4 +1,4 @@
-import { Banner, Button, Icon, Select, Skeleton, format } from '@mona/ui';
+import { Banner, Button, Icon, Input, Select, Skeleton, format } from '@mona/ui';
 import { DocStatusPill } from '../../components/DocStatusPill';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,7 @@ import { InternalLink } from '../../components/InternalLink';
 import type { CorrectionRequest, DocumentDetail } from '../../data/dto';
 import { errorKey, errorValues } from '../../data/errors';
 import { useDocument } from '../../data/review';
-import { useCategories, useEntityList } from '../../data/registry';
+import { useCategories, useEntityDetail, useEntityList } from '../../data/registry';
 import { JournalTimeline } from '../../journal/JournalTimeline';
 import { useLang } from '../../shell/useLang';
 import { CorrectionScopePrompt } from './CorrectionScopePrompt';
@@ -48,6 +48,9 @@ function DetailBody({ doc, ...props }: ReviewDetailProps & { doc: DocumentDetail
   const entityList = useEntityList().data;
   const categories = useCategories().data ?? [];
   const suggestion = doc.suggestion;
+  const visitorsId = entityList?.visitorsEntityId ?? null;
+  const visitor = !!visitorsId && (doc.entityId === visitorsId || suggestion?.entityId === visitorsId);
+  const purgeHours = useEntityDetail(visitor ? visitorsId : null).data?.purgeAfterHours ?? null;
   const initial = {
     entityId: suggestion?.entityId ?? doc.entityId ?? '',
     categoryId: suggestion?.categoryId ?? doc.categoryId ?? '',
@@ -149,14 +152,24 @@ function DetailBody({ doc, ...props }: ReviewDetailProps & { doc: DocumentDetail
             </Banner>
           ) : null}
           <div className="grid gap-3">
-            <Select
-              label={t('review.picker.entity')}
-              value={entityId}
-              disabled={locked}
-              placeholder={t('review.picker.chooseEntity')}
-              onChange={(e) => setEntityId(e.target.value)}
-              options={(entityList?.items ?? []).filter((e) => e.id !== entityList?.visitorsEntityId).map((e) => ({ value: e.id, label: e.displayName }))}
-            />
+            {visitor ? (
+              <Input
+                label={t('review.picker.entity')}
+                value={entityList?.items.find((e) => e.id === visitorsId)?.displayName ?? ''}
+                readOnly
+                hint={purgeHours ? t('review.picker.visitorsNote', { count: purgeHours }) : t('review.picker.visitorsNoteNoHours')}
+                data-testid="visitors-entity"
+              />
+            ) : (
+              <Select
+                label={t('review.picker.entity')}
+                value={entityId}
+                disabled={locked}
+                placeholder={t('review.picker.chooseEntity')}
+                onChange={(e) => setEntityId(e.target.value)}
+                options={(entityList?.items ?? []).filter((e) => e.id !== visitorsId).map((e) => ({ value: e.id, label: e.displayName }))}
+              />
+            )}
             <Select
               label={t('review.picker.category')}
               value={categoryId}

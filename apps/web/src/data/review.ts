@@ -30,6 +30,7 @@ export function useDocument(id: string | undefined) {
 
 export const confirmDocument = (id: string) => post<FileOpResult>(`/api/documents/${id}/confirm`);
 export const correctDocument = (id: string, body: CorrectionRequest) => post<FileOpResult>(`/api/documents/${id}/correct`, body);
+export const deleteDocument = (id: string, fileName: string) => post<FileOpResult>(`/api/documents/${id}/delete`, { confirm: true, fileName });
 export const likeThis = (id: string) => post<LikeThisResult>(`/api/documents/${id}/like-this`);
 export const applyRule = (ruleId: string, conversationId?: string) => post<ApplyResult>(`/api/rules/${ruleId}/apply`, conversationId ? { conversationId } : {});
 

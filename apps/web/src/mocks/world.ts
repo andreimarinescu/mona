@@ -667,7 +667,7 @@ export function createWorld(options: WorldOptions = {}) {
 
   function correct(docId: string, body: CorrectionRequest): FileOpResult {
     const doc = getDoc(docId);
-    if (doc.summary.entityId === VISITORS_ID || body.entityId === VISITORS_ID) throw new MockError(403, 'not_allowed', 'Visitors is not a target.');
+    if (body.entityId === VISITORS_ID || (doc.summary.entityId === VISITORS_ID && body.entityId !== undefined)) throw new MockError(403, 'not_allowed', 'Visitors is not a target.');
     const s = doc.summary;
     const entityId = body.entityId ?? s.entityId ?? doc.suggestion?.entityId ?? null;
     const categoryId = body.categoryId ?? s.categoryId ?? doc.suggestion?.categoryId ?? null;
@@ -692,6 +692,16 @@ export function createWorld(options: WorldOptions = {}) {
     }
     doc.correction = { counterparty: s.counterparty };
     return result(doc, 'moved', [entry.id], group.id, { groupId: group.id });
+  }
+
+  function deleteDocument(docId: string, body: { confirm?: boolean; fileName?: string }): FileOpResult {
+    const doc = getDoc(docId);
+    if (body.confirm !== true) throw new MockError(400, 'invalid_request', 'Deleting needs confirm: true.', 'confirm');
+    if (body.fileName !== doc.summary.fileName) throw new MockError(409, 'stale', 'The document changed meanwhile; re-read and retry.');
+    const before = stateOf(doc);
+    doc.deleted = true;
+    const entry = record({ actor: 'user', via: 'ui', action: 'delete', doc, before, after: stateOf(doc) });
+    return { document: null, outcome: 'moved', journalIds: [entry.id], groupId: null, undo: { journalId: entry.id } };
   }
 
   const correctionRules = new Set<string>();
@@ -1059,6 +1069,7 @@ export function createWorld(options: WorldOptions = {}) {
     document,
     confirm,
     correct,
+    deleteDocument,
     likeThis,
     applyRule,
     registerRule,

@@ -164,12 +164,13 @@ async def test_schedule_reminder_tool(due):
     res = await call("schedule_reminder", args)
     assert not res.is_error, res.text
     assert res.data["created"] is True and res.data["deadline_id"] == due["soon"]
+    assert res.data["label"] == "URSSAF"
     again = await call("schedule_reminder", {"deadline_id": due["soon"], "remind_on": str(TODAY)})
     assert again.data["created"] is False and again.data["reminder_id"] == res.data["reminder_id"]
     on_doc = await call("schedule_reminder", {"document_id": doc, "remind_on": str(TODAY)})
     kinds = [(c.tool, c.kind) for c in rows.card_rows()]
     assert kinds == [("schedule_reminder", "deadline")] * 2 + [("schedule_reminder", "doc")]
-    assert on_doc.data["document_id"] == doc
+    assert (on_doc.data["document_id"], on_doc.data["label"]) == (doc, "SIE letter")
     [a, b] = journal("reminder.add")
     assert (a["actor"], a["via"]) == ("mona", "chat")
     yesterday = str(TODAY - timedelta(days=1))
@@ -203,7 +204,8 @@ async def test_draft_reply_in_the_filing_language_then_docx(api):
                         text="Montant dû 1 250,00 €")  # fmt: skip
     res = await call("draft_reply", {"document_id": doc, "instructions": "ask for a schedule"})
     assert not res.is_error, res.text
-    assert set(res.data) == {"draft_id", "status", "card_refs"}
+    assert set(res.data) == {"draft_id", "status", "document_title", "card_refs"}
+    assert res.data["document_title"] == "SIE avis de mise en recouvrement"
     draft_id = res.data["draft_id"]
     [card] = rows.card_rows()
     assert (card.kind, card.subject) == ("draft", {"draft_id": draft_id})
@@ -309,6 +311,7 @@ async def test_build_zip_and_formula_safe_csv(api, pack):
     res = await call("export_accountant_pack", {"entity": "cabinet", "fiscal_year": 2025})
     assert not res.is_error, res.text
     assert (res.data["status"], res.data["document_count"]) == ("building", len(INJECTIONS))
+    assert res.data["entity"]["key"] == "cabinet" and res.data["fiscal_year"] == 2025
     export_id = res.data["export_id"]
     again = await call("export_accountant_pack", {"entity": "Cabinet Marchand",
                                                   "fiscal_year": 2025})  # fmt: skip

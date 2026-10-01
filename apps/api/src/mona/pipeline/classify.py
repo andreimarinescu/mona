@@ -93,18 +93,24 @@ def model_output(
     """C5 §1.3 model-output cache: a hit needs `v`, `prompt_version`, `model` and today's schema.
 
     A14: an empty answer for a readable document is asked once more with the first page only;
-    the cache keeps the final answer. Returns the prompt the answer came from."""
+    the cache keeps the final answer unless it is still empty. Returns the prompt the answer
+    came from."""
     sha = doc["sha256"]
+    readable = sum(solid_chars(page) for page in s.pages) >= UNREADABLE_MIN
     if not bypass_cache:
         raw = cache.read_model(ctx.textcache, sha, PROMPT_VERSION, model.model)
-        if raw is not None and not output_schema.errors(raw, schema):
+        if (
+            raw is not None
+            and not output_schema.errors(raw, schema)
+            and not (readable and output_schema.empty_answer(raw))
+        ):
             return raw, None, p
     result = model.complete(p.system, p.user, schema)
-    readable = sum(solid_chars(page) for page in s.pages) >= UNREADABLE_MIN
     if readable and output_schema.empty_answer(result.raw):
         p = prompts.build(s, max_pages=1)
         result = model.complete(p.system, p.user, schema)
-    cache.write_model(ctx.textcache, sha, PROMPT_VERSION, model.model, result.raw)
+    if not (readable and output_schema.empty_answer(result.raw)):
+        cache.write_model(ctx.textcache, sha, PROMPT_VERSION, model.model, result.raw)
     return result.raw, result, p
 
 
@@ -250,6 +256,9 @@ def decide(
         conflict=bool(conflicting),
         review=review,
     )
+    reasons = sc.reasons
+    if visitor and placement is not None:
+        reasons = tuple(r for r in reasons if r != "low")
     finds = {
         k: find_query(c, all_pages[c.page - 1] if c.page <= len(all_pages) else "")
         for k, c in checks.items()
@@ -260,8 +269,8 @@ def decide(
                              doc["arrived_at"]),
     )  # fmt: skip
     decision = Decision(
-        outcome="review" if sc.reasons else "file",
-        reasons=sc.reasons,
+        outcome="review" if reasons else "file",
+        reasons=reasons,
         confidence=sc.confidence,
         band=sc.band,
         entity=entity,

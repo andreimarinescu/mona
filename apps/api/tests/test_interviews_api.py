@@ -8,11 +8,12 @@ from sqlalchemy import select
 from mona.app import create_app
 from mona.interviews import answers, service
 from mona.interviews.generate import generate_interview
+from mona.services import delete_document
 from mona.services.registry import T
 from tests import rows
 from tests.api_client import api_client
 from tests.l4_world import RecordedModel, World, fixture
-from tests.mcp_http import call
+from tests.mcp_http import call, list_tools
 
 pytestmark = pytest.mark.usefixtures("l4_db")
 
@@ -269,6 +270,39 @@ async def test_start_interview_reuses_with_a_fresh_card_and_no_second_job():
     assert kinds[0] == ("start_interview", "interview",
                         {"interview_id": first.data["interview_id"]})  # fmt: skip
     assert len(kinds) == 4
+
+
+async def test_start_interview_returns_the_open_questions_the_card_shows():
+    w = World()
+    b = w.batch()
+    w.cluster(b)
+    generating = await call("start_interview", {"batch_id": b})
+    assert generating.data["questions"] == []
+    interview_id = generating.data["interview_id"]
+    generate_interview(w.ctx, interview_id, model_factory=lambda: RecordedModel(w))
+    qs = w.questions(interview_id)
+    answers.skip(w.ctx, qs[0]["id"])
+    gone = qs[1]["affected_document_ids"][0]
+    delete_document(w.ctx, gone, actor="user", via="ui")
+    ready = await call("start_interview", {"batch_id": b})
+    assert not ready.is_error, ready.text
+    assert ready.data["open_questions"] == 4
+    assert ready.data["questions"] == [
+        {
+            "n": q["ordinal"],
+            "text": q["text"],
+            "affected": len(q["affected_document_ids"]) - (q["id"] == qs[1]["id"]),
+            "options": [o["label"] for o in q["options"]],
+        }
+        for q in qs[1:]
+    ]
+
+
+async def test_start_interview_tells_the_model_not_to_restate_the_questions():
+    [tool] = [t for t in await list_tools() if t["name"] == "start_interview"]
+    assert tool["description"].endswith(
+        "The card shows the questions; introduce them in one line and never restate or invent them."
+    )
 
 
 async def test_start_interview_scope_arguments():

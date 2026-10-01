@@ -43,7 +43,20 @@ def test_two_empty_answers_queue_with_low(l1m2_demo_engine, tmp_path):
     p, model, r = run(l1m2_demo_engine, tmp_path, EMPTY, EMPTY)
     assert len(model.calls) == 2
     assert (r["status"], "low" in r["reasons"]) == ("review", True)
-    assert cache.read_model(p.ctx.textcache, r["sha256"], PROMPT_VERSION, model.model) == EMPTY
+    assert cache.read_model(p.ctx.textcache, r["sha256"], PROMPT_VERSION, model.model) is None
+
+
+def test_a_cached_empty_answer_is_asked_again(l1m2_demo_engine, tmp_path):
+    good = RECORDED["outputs"][DOC]
+    model = Sequenced(good)
+    p = Pipeline(l1m2_demo_engine, tmp_path / "data", model=model)
+    p.filed_history("Dentalis Fournitures")
+    doc = p.drop_synthetic([DOC], outputs=False).items[0].document_id
+    p.cache_model(p.row(doc)["sha256"], EMPTY)
+    p.drain()
+    r = p.row(doc)
+    assert len(model.calls) == 1 and r["status"] == "filed"
+    assert cache.read_model(p.ctx.textcache, r["sha256"], PROMPT_VERSION, model.model) == good
 
 
 def test_an_answer_with_a_field_is_not_retried(l1m2_demo_engine, tmp_path):

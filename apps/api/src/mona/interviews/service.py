@@ -31,6 +31,7 @@ class Started:
     open_questions: int | None
     reused: bool
     card_refs: list[str] = field(default_factory=list)
+    questions: list[dict[str, Any]] = field(default_factory=list)
 
 
 def open_questions(conn: Connection, interview_id: str) -> int:
@@ -38,6 +39,29 @@ def open_questions(conn: Connection, interview_id: str) -> int:
     return conn.execute(
         select(func.count()).where(q.c.interview_id == interview_id, q.c.status == "open")
     ).scalar_one()
+
+
+def open_question_list(conn: Connection, interview_id: str) -> list[dict[str, Any]]:
+    """A21: the open questions as the card shows them, in card order."""
+    q, d = T["interview_questions"], T["documents"]
+    rows = conn.execute(
+        select(q.c.ordinal, q.c.text, q.c.affected_document_ids, q.c.options)
+        .where(q.c.interview_id == interview_id, q.c.status == "open")
+        .order_by(q.c.ordinal)
+    ).all()
+    wanted = {doc for r in rows for doc in r.affected_document_ids}
+    live = set(
+        conn.execute(select(d.c.id).where(d.c.id.in_(wanted), d.c.deleted_at.is_(None))).scalars()
+    )
+    return [
+        {
+            "n": r.ordinal,
+            "text": r.text,
+            "affected": sum(1 for doc in r.affected_document_ids if doc in live),
+            "options": [o["label"] for o in r.options],
+        }
+        for r in rows
+    ]
 
 
 def _reusable(conn: Connection, interview_id: str | None) -> Mapping[str, Any] | None:
@@ -127,7 +151,8 @@ def start(
         if tool is not None and channel is not None:
             refs = write_cards(conn, channel, tool, [("interview", {"interview_id": interview_id})])
         n = open_questions(conn, interview_id) if status == "ready" else None
-    return Started(interview_id, status, n, reused, refs)
+        questions = open_question_list(conn, interview_id) if status == "ready" else []
+    return Started(interview_id, status, n, reused, refs, questions)
 
 
 def cancel(ctx: Ctx, interview_id: str) -> str:

@@ -614,7 +614,10 @@
       "chooseCategory": "Choose a category",
       "subcategory": "Subcategory",
       "noSubcategory": "None",
-      "changed": "Changed by you to {{entity}}."
+      "changed": "Changed by you to {{entity}}.",
+      "visitorsNote_one": "A visitor's document: deleted after {{count}} hour, with everything Mona derived from it.",
+      "visitorsNote_other": "A visitor's document: deleted after {{count}} hours, with everything Mona derived from it.",
+      "visitorsNoteNoHours": "A visitor's document: deleted automatically, with everything Mona derived from it."
     },
     "scopePrompt": {
       "voice": "Noted. Should I treat other documents like this one the same way?",
@@ -801,6 +804,15 @@
     }
   },
   "viewer": {
+    "delete": {
+      "action": "Delete",
+      "title": "Delete this document?",
+      "body": "“{{title}}” moves to the trash. You can undo it from the notice that follows or from the Activity log.",
+      "typeName": "To confirm, type its file name:",
+      "fileName": "File name",
+      "confirm": "Delete document",
+      "done": "Deleted “{{title}}”"
+    },
     "evidence": {
       "page": "page {{n}}",
       "verified": "Found on the page",

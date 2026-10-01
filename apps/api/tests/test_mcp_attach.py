@@ -27,6 +27,7 @@ class IngestResult(Strict):
     batch_id: str = Field(pattern=r"^bat_[0-9a-hjkmnp-tv-z]{26}$")
     outcome: Literal["accepted", "duplicate", "rejected"]
     document_id: str | None = Field(pattern=r"^doc_[0-9a-hjkmnp-tv-z]{26}$")
+    title: str | None
     deleted: bool
     reject_reason: Literal["unsupported_type", "too_large", "empty", "unreadable_file"] | None
     card_refs: list[CardRef]
@@ -115,7 +116,10 @@ async def test_the_same_bytes_again_are_a_duplicate_carded_only_where_visible(l2
     assert (web["outcome"], web["document_id"], len(web["card_refs"])) == (
         "duplicate", first["document_id"], 1,
     )  # fmt: skip
-    assert (tg["outcome"], tg["document_id"], tg["card_refs"]) == ("duplicate", None, [])
+    assert (first["title"], web["title"]) == (None, "facture eau.pdf")
+    assert (tg["outcome"], tg["document_id"], tg["title"], tg["card_refs"]) == (
+        "duplicate", None, None, [],
+    )  # fmt: skip
     assert sql("SELECT count(*) FROM documents WHERE sha256 = %s", (SHA,)) == [(1,)]
 
 

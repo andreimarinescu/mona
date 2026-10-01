@@ -635,7 +635,11 @@
       "chooseCategory": "Choisir une catégorie",
       "subcategory": "Sous-catégorie",
       "noSubcategory": "Aucune",
-      "changed": "Modifié par vous pour {{entity}}."
+      "changed": "Modifié par vous pour {{entity}}.",
+      "visitorsNote_one": "Document d’un visiteur : supprimé après {{count}} heure, avec tout ce que Mona en a tiré.",
+      "visitorsNote_many": "Document d’un visiteur : supprimé après {{count}} d’heures, avec tout ce que Mona en a tiré.",
+      "visitorsNote_other": "Document d’un visiteur : supprimé après {{count}} heures, avec tout ce que Mona en a tiré.",
+      "visitorsNoteNoHours": "Document d’un visiteur : supprimé automatiquement, avec tout ce que Mona en a tiré."
     },
     "scopePrompt": {
       "voice": "C’est noté. Dois-je traiter de la même façon les autres documents de ce type ?",
@@ -829,6 +833,15 @@
     }
   },
   "viewer": {
+    "delete": {
+      "action": "Supprimer",
+      "title": "Supprimer ce document ?",
+      "body": "« {{title}} » part dans la corbeille. Vous pourrez annuler depuis la notification qui suit ou depuis le journal d’activité.",
+      "typeName": "Pour confirmer, saisissez son nom de fichier :",
+      "fileName": "Nom du fichier",
+      "confirm": "Supprimer le document",
+      "done": "« {{title}} » supprimé"
+    },
     "evidence": {
       "page": "page {{n}}",
       "verified": "Retrouvé dans la page",

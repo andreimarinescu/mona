@@ -91,6 +91,7 @@ class Total(Strict):
 
 class Excluded(Strict):
     id: str
+    title: str | None = Field(max_length=160)
     reason: Literal["no_amount", "not_found", "other_currency"]
 
 

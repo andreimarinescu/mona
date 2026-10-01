@@ -4,10 +4,12 @@ from datetime import date
 from typing import Annotated, Literal
 
 from pydantic import Field
+from sqlalchemy import select
 
 from mona.db import get_engine
-from mona.mcp.core import Scope, ToolFailure, channel, scope_for, tool
-from mona.mcp.filters import resolve_entity
+from mona.db.models import Deadline
+from mona.mcp.core import Scope, ToolFailure, channel, clip, document_title, scope_for, tool
+from mona.mcp.filters import ref, resolve_entity
 from mona.workflow import deadlines, drafts, exports
 from mona.workflow.common import get_ctx
 from mona.workflow.mcp import run, via
@@ -39,11 +41,22 @@ async def schedule_reminder(
     return {
         "reminder_id": out.reminder_id,
         "remind_on": out.remind_on.isoformat(),
+        "label": await _reminder_label(out.deadline_id, out.document_id),
         "deadline_id": out.deadline_id,
         "document_id": out.document_id,
         "created": out.created,
         "card_refs": out.card_refs,
     }
+
+
+async def _reminder_label(deadline_id: str | None, document_id: str | None) -> str | None:
+    if deadline_id is None:
+        return await document_title(document_id)
+    async with get_engine().connect() as conn:
+        label = (
+            await conn.execute(select(Deadline.label).where(Deadline.id == deadline_id))
+        ).scalar()
+    return clip(label)
 
 
 @tool(
@@ -66,7 +79,12 @@ async def draft_reply(
         channel=ch,
         tool="draft_reply",
     )
-    return {"draft_id": draft_id, "status": "generating", "card_refs": refs}
+    return {
+        "draft_id": draft_id,
+        "status": "generating",
+        "document_title": await document_title(document_id),
+        "card_refs": refs,
+    }
 
 
 @tool(
@@ -102,6 +120,8 @@ async def export_accountant_pack(
     return {
         "export_id": started.export_id,
         "status": "building",
+        "entity": ref(found.key, found.display_name),
+        "fiscal_year": fiscal_year,
         "document_count": started.document_count,
         "card_refs": started.card_refs,
     }

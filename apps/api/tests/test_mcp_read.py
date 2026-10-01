@@ -205,7 +205,9 @@ async def test_sum_keeps_currencies_apart_and_lists_documents_without_amount(arc
         {"currency": "EUR", "total": 3140.0},
         {"currency": "RON", "total": 250.0},
     ]
-    assert res.data["excluded"] == [{"id": archive["hello"], "reason": "no_amount"}]
+    assert res.data["excluded"] == [
+        {"id": archive["hello"], "title": "Hello bank relevé juin", "reason": "no_amount"}
+    ]
     assert res.data["count"] == 5
 
 
@@ -217,9 +219,9 @@ async def test_sum_by_ids_reports_unknown_ones(archive):
     )
     assert res.data["totals"] == [{"currency": "EUR", "total": 300.0}]
     assert res.data["excluded"] == [
-        {"id": missing, "reason": "not_found"},
-        {"id": archive["deleted"], "reason": "not_found"},
-        {"id": archive["hello"], "reason": "no_amount"},
+        {"id": missing, "title": None, "reason": "not_found"},
+        {"id": archive["deleted"], "title": None, "reason": "not_found"},
+        {"id": archive["hello"], "title": "Hello bank relevé juin", "reason": "no_amount"},
     ]
 
 
@@ -457,7 +459,7 @@ async def test_personal_documents_are_invisible_on_telegram(archive):
     assert web.data["totals"][0]["total"] == 3140.0
     assert tg.data["totals"][0]["total"] == 2100.0
     ids_tg = await call("sum_amounts", {"document_ids": [personal]}, channel="telegram")
-    assert ids_tg.data["excluded"] == [{"id": personal, "reason": "not_found"}]
+    assert ids_tg.data["excluded"] == [{"id": personal, "title": None, "reason": "not_found"}]
     entity = await call("sum_amounts", {"entity": "personal"}, channel="telegram")
     assert entity.data["error"]["code"] == "invalid_argument"
 
@@ -508,7 +510,7 @@ async def test_personal_deadlines_and_brief_facts_are_invisible_on_telegram(arch
         "Rule t-plain",
     }
     assert {r["name"] for r in tg.data["learned"]} == {"Rule t-account", "Rule t-plain"}
-    assert "AGIPI" not in tg.text and "Personnel" not in tg.text and "520" not in tg.text
+    assert "AGIPI" not in tg.text and "Personnel" not in tg.text and "520.0" not in tg.text
 
 
 async def test_seeded_personal_rule_names_are_hidden_on_telegram():

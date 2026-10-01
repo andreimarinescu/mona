@@ -12,7 +12,7 @@ from mona.api.intake import MAX_FILE_BYTES, get_intake_ctx
 from mona.attachments import HERMES_PREFIX, Refused, open_attachment, read_all
 from mona.db import get_engine
 from mona.db.models import Document
-from mona.mcp.core import ToolFailure, channel, scope_for, tool, write_cards
+from mona.mcp.core import ToolFailure, channel, document_title, scope_for, tool, write_cards
 from mona.mcp.write import call_service
 from mona.pipeline.intake import Upload, ingest_files
 from mona.settings import get_settings
@@ -81,6 +81,7 @@ async def ingest_attachment(
         "batch_id": intake.batch_id,
         "outcome": item.outcome,
         "document_id": document_id,
+        "title": await document_title(document_id) if item.outcome == "duplicate" else None,
         "deleted": item.deleted,
         "reject_reason": item.reject_reason,
         "card_refs": refs,

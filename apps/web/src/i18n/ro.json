@@ -635,7 +635,11 @@
       "chooseCategory": "Alegeți o categorie",
       "subcategory": "Subcategorie",
       "noSubcategory": "Niciuna",
-      "changed": "Schimbat de dumneavoastră la {{entity}}."
+      "changed": "Schimbat de dumneavoastră la {{entity}}.",
+      "visitorsNote_one": "Documentul unui vizitator: se șterge după o oră, cu tot ce a dedus Mona din el.",
+      "visitorsNote_few": "Documentul unui vizitator: se șterge după {{count}} ore, cu tot ce a dedus Mona din el.",
+      "visitorsNote_other": "Documentul unui vizitator: se șterge după {{count}} de ore, cu tot ce a dedus Mona din el.",
+      "visitorsNoteNoHours": "Documentul unui vizitator: se șterge automat, cu tot ce a dedus Mona din el."
     },
     "scopePrompt": {
       "voice": "Am notat. Să tratez la fel și celelalte documente de acest tip?",
@@ -829,6 +833,15 @@
     }
   },
   "viewer": {
+    "delete": {
+      "action": "Ștergeți",
+      "title": "Ștergeți acest document?",
+      "body": "„{{title}}” ajunge în coșul de gunoi. Puteți anula din notificarea care urmează sau din jurnalul de activitate.",
+      "typeName": "Pentru confirmare, introduceți numele fișierului:",
+      "fileName": "Numele fișierului",
+      "confirm": "Ștergeți documentul",
+      "done": "„{{title}}” a fost șters"
+    },
     "evidence": {
       "page": "pagina {{n}}",
       "verified": "Găsit în pagină",

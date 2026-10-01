@@ -575,6 +575,47 @@ def test_the_same_document_outside_a_visitor_batch_queues_for_its_entity(
     assert (r["status"], list(r["reasons"]), r["entity_id"]) == ("review", ["entity"], None)
 
 
+def a20_world(engine, tmp_path, *, visitor: bool) -> tuple[Pipeline, str]:
+    p = Pipeline(engine, tmp_path / "data")
+    p.set_thresholds(high=90, low=75)
+    p.filed_history("AGIPI")
+    doc = ids(p.drop_synthetic(["syn-agipi-per"], visitor=visitor))[0]
+    p.cache_model(p.row(doc)["sha256"], raw_for("syn-agipi-per", confidence=0.70))
+    p.drain()
+    return p, doc
+
+
+def test_a20_a_low_confidence_visitor_document_files_to_visitors_with_its_band(
+    l1m2_demo_engine, tmp_path
+):
+    p, doc = a20_world(l1m2_demo_engine, tmp_path, visitor=True)
+    r = p.row(doc)
+    assert (r["status"], list(r["reasons"]), r["band"], r["confidence"]) == (
+        "filed", [], "low", 70,
+    )  # fmt: skip
+    assert r["current_path"].startswith("Visitors/Assurances/AGIPI/2026/")
+    entry = next(e for e in p.rows("file_ops", document_id=doc) if e["action"] == "file")
+    assert (entry["band"], entry["confidence"]) == ("low", 70)
+    assert p.rows("review_items", document_id=doc) == []
+
+
+def test_a20_a_practice_document_at_the_same_confidence_still_queues(l1m2_demo_engine, tmp_path):
+    p, doc = a20_world(l1m2_demo_engine, tmp_path, visitor=False)
+    r = p.row(doc)
+    assert (r["status"], list(r["reasons"]), r["band"], r["confidence"]) == (
+        "review", ["low"], "low", 70,
+    )  # fmt: skip
+
+
+def test_a20_an_unreadable_visitor_document_still_queues(l1m2_demo_engine, tmp_path):
+    p = Pipeline(l1m2_demo_engine, tmp_path / "data")
+    doc = ids(p.drop_synthetic(["syn-unreadable"], visitor=True))[0]
+    p.drain()
+    r = p.row(doc)
+    assert (r["status"], list(r["reasons"])) == ("unreadable", ["unreadable"])
+    assert [i["status"] for i in p.rows("review_items", document_id=doc)] == ["open"]
+
+
 def test_rules_never_run_on_a_visitor_batch(l1m2_learned_engine, tmp_path):
     p = Pipeline(l1m2_learned_engine, tmp_path / "data")
     doc = ids(p.drop_synthetic(["syn-oxyleo-prep"], visitor=True))[0]

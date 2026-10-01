@@ -15,6 +15,7 @@ import { PdfFrame, type PdfFrameHandle } from '../../pdfjs/PdfFrame';
 import { useLang } from '../../shell/useLang';
 import { useAppState } from '../../state/context';
 import { PipelineStepper } from '../intake/PipelineStepper';
+import { DeleteDocumentDialog } from './DeleteDocumentDialog';
 import { DocumentSidePanel } from './DocumentSidePanel';
 import { clampPage, parseDocumentSearch, showOnPage } from './search';
 
@@ -70,6 +71,7 @@ export function Viewer({ doc, search }: { doc: DocumentDetail; search: ReturnTyp
   const { openChat } = useAppState();
   const entityList = useEntityList().data;
   const frame = useRef<PdfFrameHandle>(null);
+  const [deleting, setDeleting] = useState(false);
   const [active, setActive] = useState<FieldKey | null>(search.field && doc.fields.some((f) => f.key === search.field) ? search.field : null);
   const quoteLang = entityList?.items.find((e) => e.id === doc.entityId)?.filingLanguage ?? 'fr';
   const page = clampPage(search.page, doc.pageCount);
@@ -102,9 +104,13 @@ export function Viewer({ doc, search }: { doc: DocumentDetail; search: ReturnTyp
           <Icon name="download" size={16} />
           {t('viewer.download')}
         </a>
+        <Button variant="quiet" size="sm" icon="trash" onClick={() => setDeleting(true)}>
+          {t('viewer.delete.action')}
+        </Button>
         <Button variant="primary" size="sm" icon="send" onClick={() => openChat()}>
           {t('viewer.askMona')}
         </Button>
+        {deleting ? <DeleteDocumentDialog doc={doc} onClose={() => setDeleting(false)} /> : null}
       </header>
       <div className={`grid min-h-0 flex-1 ${doc.status === 'processing' ? '' : 'lg:grid-cols-[minmax(0,1fr)_440px]'}`}>
         <section aria-label={t('viewer.document')} className="flex h-[70vh] min-h-0 items-stretch justify-center bg-inverse lg:h-auto">

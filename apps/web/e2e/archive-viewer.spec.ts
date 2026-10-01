@@ -261,6 +261,42 @@ test.describe('document viewer', () => {
     await expect(page.getByTestId('toast-region').getByText('Redid 1 change')).toBeVisible();
   });
 
+  test('Delete asks for the current file name, then Undo on the toast and in the Activity log restores it', async ({ page }) => {
+    const problems = watchConsole(page);
+    const toast = page.getByTestId('toast-region');
+    async function remove() {
+      await page.getByRole('button', { name: 'Delete', exact: true }).click();
+      const dialog = page.getByRole('alertdialog', { name: 'Delete this document?' });
+      const confirm = dialog.getByRole('button', { name: 'Delete document' });
+      const name = (await dialog.getByTestId('delete-file-name').textContent())!;
+      await dialog.getByLabel('File name').fill(SHOWCASE);
+      await expect(confirm).toBeDisabled();
+      await dialog.getByLabel('File name').fill(name);
+      await confirm.click();
+      await expect(page).toHaveURL(/\/archive$/);
+      await expect(toast.getByText(`Deleted “${SHOWCASE}”`)).toBeVisible();
+      await expect(results(page)).not.toContainText(SHOWCASE);
+    }
+
+    await page.goto('/archive?q=URSSAF');
+    await results(page).getByRole('link', { name: SHOWCASE }).click();
+    await remove();
+    await toast.getByText(`Deleted “${SHOWCASE}”`).locator('xpath=ancestor::*[@role="status" or @role="alert"][1]').getByRole('button', { name: 'Undo' }).click();
+    await expect(toast.getByText('Undid 1 change')).toBeVisible();
+    await expect(results(page).getByRole('link', { name: SHOWCASE })).toBeVisible();
+
+    await results(page).getByRole('link', { name: SHOWCASE }).click();
+    await remove();
+    await page.getByRole('navigation').getByRole('link', { name: 'Activity log' }).click();
+    const entry = page.locator('li[data-journal-id]').filter({ hasText: `You deleted ${SHOWCASE}` }).first();
+    await expect(entry).toHaveAttribute('data-undo-state', 'undoable');
+    await entry.getByRole('button', { name: 'Undo' }).click();
+    await expect(entry).toHaveAttribute('data-undo-state', 'undone');
+    await page.getByRole('navigation').getByRole('link', { name: 'Archive' }).click();
+    await expect(results(page).getByRole('link', { name: SHOWCASE })).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
   test('sets a reminder, shows it, and cancels it', async ({ page }) => {
     await page.goto('/archive');
     const id = await documentId(page, SHOWCASE);

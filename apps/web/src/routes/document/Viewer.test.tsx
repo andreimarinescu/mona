@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PdfFrameHandle, PdfFrameProps } from '../../pdfjs/PdfFrame';
 import { queryWrapper, useMockApi } from '../../test/mockApi';
+import { renderRoute } from '../../test/renderRoute';
 import { Viewer } from './DocumentPage';
 
 const frame = vi.hoisted(() => ({ find: vi.fn(async () => undefined), props: [] as unknown[] }));
@@ -92,5 +93,24 @@ describe('the viewer', () => {
     expect(within(filed).getByRole('link', { name: 'URSSAF calls' })).toHaveAttribute('href', expect.stringMatching(/^\/rules\/rul_/));
     const history = screen.getByRole('list', { name: 'History of this document' });
     expect(within(history).getAllByRole('button', { name: 'Undo' }).length).toBeGreaterThan(0);
+  });
+
+  it('Delete asks for the exact current file name, then moves the document to the trash', async () => {
+    const world = api.world();
+    const summary = [...world.docs.values()].find((d) => d.summary.title === 'Call for contributions, Q3 2026')!.summary;
+    const doc = world.document(summary.id);
+    const { router } = await renderRoute(<Viewer doc={doc} search={{}} />, `/documents/${doc.id}`);
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Delete this document?' });
+    expect(within(dialog).getByTestId('delete-file-name')).toHaveTextContent(doc.fileName);
+    const confirm = within(dialog).getByRole('button', { name: 'Delete document' });
+    await userEvent.type(within(dialog).getByLabelText('File name'), summary.title);
+    expect(confirm).toBeDisabled();
+    await userEvent.clear(within(dialog).getByLabelText('File name'));
+    await userEvent.type(within(dialog).getByLabelText('File name'), doc.fileName);
+    await userEvent.click(confirm);
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/archive'));
+    expect(() => world.document(doc.id)).toThrow();
+    expect(world.entries.find((e) => e.action === 'delete')?.documentIds).toEqual([doc.id]);
   });
 });

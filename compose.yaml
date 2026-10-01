@@ -83,10 +83,12 @@ services:
   worker-llm:
     <<: *python
     command: mona worker --queues llm --concurrency 1
+    init: true
 
   worker-cpu:
     <<: *python
     command: mona worker --queues cpu --concurrency 3
+    init: true
 
   # One-shot ops container of the host wrapper (deploy/bin/mona, C9 §6.3); never started by `up`.
   ops:
