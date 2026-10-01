@@ -8,7 +8,7 @@ import { renderRoute } from '../../test/renderRoute';
 import { useAppState } from '../../state/context';
 import { BatchQuestionsBanner } from './BatchQuestionsBanner';
 import { PipelineRow } from './PipelineRow';
-import { PipelineStepper } from './PipelineStepper';
+import { PipelineStepHeader, PipelineStepper } from './PipelineStepper';
 import { intakeSummary, showsQuestionsBanner, stepOf, timeLeftMs } from './summary';
 
 const counts = (over: Partial<BatchCounts> = {}): BatchCounts => ({ items: 12, accepted: 12, duplicate: 0, rejected: 0, processing: 0, filed: 0, review: 0, unreadable: 0, failed: 0, ...over });
@@ -73,6 +73,28 @@ describe('PipelineStepper', () => {
     await i18n.changeLanguage('fr');
     render(<PipelineStepper doc={docAt('reading', 'processing')} />);
     expect(screen.getByRole('list', { name: 'Étape 2 sur 5 : Lecture' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['en', ['Queued', 'Reading', 'OCR', 'Classifying', 'Result']],
+    ['fr', ['En attente', 'Lecture', 'OCR', 'Classement', 'Résultat']],
+    ['ro', ['În așteptare', 'Citire', 'OCR', 'Clasificare', 'Rezultat']],
+  ] as const)('the header names the five steps in order, one per dot column (%s)', async (lng, labels) => {
+    await i18n.changeLanguage(lng);
+    render(<PipelineStepHeader />);
+    const header = screen.getByTestId('step-header');
+    expect(within(header).getAllByRole('listitem', { hidden: true }).map((li) => li.textContent)).toEqual(labels);
+  });
+
+  it('every dot has a hover label naming its step', async () => {
+    render(<PipelineStepper doc={docAt('ocr', 'processing')} />);
+    const dots = [...document.querySelectorAll('[data-step-dot]')];
+    expect(dots.map((d) => d.getAttribute('data-step-dot'))).toEqual(['queued', 'reading', 'ocr', 'classifying', 'result']);
+    await userEvent.hover(dots[3]!);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Classifying');
+    await userEvent.unhover(dots[3]!);
+    await userEvent.hover(dots[4]!);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Result');
   });
 });
 

@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Mona",
-    "tagline": "Actele, rezolvate — aici, în cabinet."
+    "tagline": "Actele, rezolvate\n— aici, în cabinet."
   },
   "nav": {
     "home": "Acasă",
@@ -81,12 +81,6 @@
       "unknown": "Pagină necunoscută",
       "filtered": "{{what}}, filtrat pe {{entity}}"
     }
-  },
-  "placeholder": {
-    "title": "Acest ecran vine în curând",
-    "body": "Mona îl va afișa aici într-un pas următor.",
-    "reference": "Referință: {{id}}",
-    "scope": "Afișare: {{scope}}"
   },
   "errors": {
     "notFound": {
@@ -952,7 +946,12 @@
   "language": {
     "en": "engleză",
     "fr": "franceză",
-    "ro": "română"
+    "ro": "română",
+    "native": {
+      "en": "English",
+      "fr": "Français",
+      "ro": "Română"
+    }
   },
   "interview": {
     "eyebrow": "O întrebare de la Mona",
@@ -1006,11 +1005,13 @@
   "auth": {
     "unlock": {
       "title": "Bine ați revenit",
+      "welcome": "Bine ați revenit, {{name}}",
       "subtitle": "Mona continuă să lucreze cât timp ecranul este blocat.",
       "password": "Parola",
       "submit": "Deblocați",
       "hint": "Ați uitat parola? Poate fi resetată pe calculatorul pe care rulează Mona, cu mona profile set-password.",
-      "privacy": "Totul rămâne pe calculatorul cabinetului."
+      "privacy": "Totul rămâne pe calculatorul cabinetului.",
+      "footer": "Mona rulează pe acest calculator. Deblocarea nu folosește internetul."
     }
   },
   "time": {

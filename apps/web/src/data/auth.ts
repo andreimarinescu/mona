@@ -14,6 +14,12 @@ export function unlockHref(here: string): { to: '/unlock'; search: { next?: stri
   return { to: '/unlock', search: next === '/' ? {} : { next } };
 }
 
+const TITLES = /^(dr\.?|docteur|doctor|doamna|domnul|mme|m\.)\s+/i;
+
+export function firstName(profileName: string | null | undefined): string {
+  return (profileName ?? '').replace(TITLES, '').trim().split(/\s+/)[0] ?? '';
+}
+
 export const fetchAuthState = () => get<AuthState>('/api/auth/state');
 
 export async function unlock(password: string): Promise<AuthState> {

@@ -50,7 +50,7 @@ describe('each card renders from its C3 part (C1 DTOs)', () => {
   it('InterviewCard: the question in the voice font, affects N, evidence that opens the viewer, three answers with the suggested one primary', async () => {
     await renderCards();
     const iv = within(card('interview'));
-    expect(iv.getByText(INTERVIEW.questions[0]!.question)).toHaveClass('m-0');
+    expect(iv.getByText(INTERVIEW.questions[0]!.question)).toHaveClass('[font:var(--type-voice)]');
     expect(iv.getByText('Affects 4 documents')).toBeInTheDocument();
     const links = iv.getAllByTestId('evidence-snippet');
     expect(links).toHaveLength(2);

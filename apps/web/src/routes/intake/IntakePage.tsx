@@ -12,6 +12,7 @@ import { BatchProgress } from './BatchProgress';
 import { BatchQuestionsBanner } from './BatchQuestionsBanner';
 import { DropZone } from './DropZone';
 import { PipelineRow } from './PipelineRow';
+import { PipelineStepHeader } from './PipelineStepper';
 import { intakeSummary } from './summary';
 
 export function IntakePage() {
@@ -98,7 +99,7 @@ export function IntakePage() {
                     {t('intake.table.file')}
                   </th>
                   <th scope="col" className="px-2 py-2 font-medium">
-                    {t('intake.table.steps')}
+                    <PipelineStepHeader />
                   </th>
                   <th scope="col" className="px-2 py-2 font-medium">
                     {t('intake.table.status')}

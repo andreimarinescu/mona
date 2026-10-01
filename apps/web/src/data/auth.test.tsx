@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HEARTBEAT_MS, safeNext, unlockHref, useHeartbeat } from './auth';
+import { HEARTBEAT_MS, firstName, safeNext, unlockHref, useHeartbeat } from './auth';
 import { ApiError, isAuthLoss, request, setAuthLostHandler } from './http';
 
 describe('safeNext (C2 §16.3)', () => {
@@ -21,6 +21,12 @@ describe('safeNext (C2 §16.3)', () => {
   it('leaves next out of the unlock link when the person was on Home', () => {
     expect(unlockHref('/')).toEqual({ to: '/unlock', search: {} });
     expect(unlockHref('/chat/cnv_a')).toEqual({ to: '/unlock', search: { next: '/chat/cnv_a' } });
+  });
+});
+
+describe('firstName', () => {
+  it('takes the first name after a title, and is empty without a profile', () => {
+    expect(['Léa Marchand', 'Dr Léa Marchand', 'docteur  Léa', 'Mme Ionescu Ana', '  Ana ', null, undefined, ''].map(firstName)).toEqual(['Léa', 'Léa', 'Léa', 'Ionescu', 'Ana', '', '', '']);
   });
 });
 

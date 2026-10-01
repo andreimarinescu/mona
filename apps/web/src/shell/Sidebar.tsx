@@ -1,7 +1,7 @@
-import logoUrl from '@design/mona-handoff/assets/mona-logo.svg';
 import { Icon } from '@mona/ui';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { MonaLogo } from '../components/MonaLogo';
 import { AskMonaButton } from './AskMonaButton';
 import { EntityScopeSwitcher } from './EntityScopeSwitcher';
 import { NAV_GROUPS } from './nav';
@@ -16,8 +16,8 @@ export function Sidebar() {
       aria-label={t('shell.sidebar')}
       className="sticky top-0 hidden box-border h-screen w-[248px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-border bg-surface px-4 py-5 lg:flex"
     >
-      <Link to="/" className="inline-flex w-fit rounded-sm px-1 no-underline" aria-label="Mona">
-        <img src={logoUrl} alt="" width={96} height={30} />
+      <Link to="/" className="inline-flex h-[30px] w-fit items-center rounded-sm px-1 no-underline" aria-label="Mona">
+        <MonaLogo stroke={3} />
       </Link>
       <EntityScopeSwitcher />
       <nav aria-label={t('shell.mainNav')} className="flex flex-col gap-2">

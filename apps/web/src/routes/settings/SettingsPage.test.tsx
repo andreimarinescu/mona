@@ -60,6 +60,13 @@ describe('SettingsPage', () => {
     await waitFor(() => expect(api.world().account.settings().locale).toBe('fr'));
   });
 
+  it.each(['en', 'fr', 'ro'] as const)('the filing language picker names each language in itself (%s)', async (lng) => {
+    await i18n.changeLanguage(lng);
+    await renderRoute(<SettingsPage />);
+    const select = await screen.findByRole('combobox', { name: i18n.getFixedT(lng)('settings.language.filing') });
+    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Français', 'English', 'Română']);
+  });
+
   it('changes the password: mismatch and short values stay in the dialog, a wrong current password is reported', async () => {
     await renderRoute(<SettingsPage />);
     await userEvent.click(await screen.findByRole('button', { name: 'Change password' }));

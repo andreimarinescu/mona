@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Mona",
-    "tagline": "Paperwork, handled — right here in the practice."
+    "tagline": "Paperwork, handled\n— right here\nin the practice."
   },
   "nav": {
     "home": "Home",
@@ -77,12 +77,6 @@
       "unknown": "Unknown page",
       "filtered": "{{what}}, filtered to {{entity}}"
     }
-  },
-  "placeholder": {
-    "title": "This screen is on its way",
-    "body": "Mona will show it here in a later step of the build.",
-    "reference": "Reference: {{id}}",
-    "scope": "Showing: {{scope}}"
   },
   "errors": {
     "notFound": {
@@ -917,7 +911,12 @@
   "language": {
     "en": "English",
     "fr": "French",
-    "ro": "Romanian"
+    "ro": "Romanian",
+    "native": {
+      "en": "English",
+      "fr": "Français",
+      "ro": "Română"
+    }
   },
   "interview": {
     "eyebrow": "A question from Mona",
@@ -967,11 +966,13 @@
   "auth": {
     "unlock": {
       "title": "Welcome back",
+      "welcome": "Welcome back, {{name}}",
       "subtitle": "Mona keeps working while the screen is locked.",
       "password": "Password",
       "submit": "Unlock",
       "hint": "Forgotten the password? It can be reset on the computer Mona runs on, with mona profile set-password.",
-      "privacy": "Everything stays on the practice’s computer."
+      "privacy": "Everything stays on the practice’s computer.",
+      "footer": "Mona runs on this computer. Unlocking doesn’t use the internet."
     }
   },
   "time": {

@@ -1,6 +1,7 @@
 import { RouterProvider, createMemoryHistory, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { afterEach, describe, expect, it } from 'vitest';
 import i18n from '../i18n';
 import { MOCK_PASSWORD } from '../mocks/account';
@@ -30,6 +31,28 @@ describe('Unlock', () => {
     expect(screen.getByText(/mona profile set-password/)).toBeInTheDocument();
     expect(screen.queryByText(/recovery|récupération/i)).toBeNull();
     expect(document.documentElement.lang).toBe('fr');
+  });
+
+  it('lays out p1: the headline in lines, five arches with the accent dot, the footer line, no recovery key', async () => {
+    await open('/unlock');
+    await screen.findByRole('heading', { level: 1, name: 'Bon retour' });
+    expect(within(screen.getByTestId('unlock-headline')).getAllByText(/./).map((n) => n.textContent)).toEqual(['Vos papiers, réglés', '— ici, au cabinet.']);
+    expect(screen.getByTestId('unlock-arches').children).toHaveLength(5);
+    expect(screen.getAllByTestId('unlock-dot')).toHaveLength(1);
+    expect(screen.getByTestId('unlock-footer')).toHaveTextContent('Mona tourne sur cet ordinateur. Le déverrouillage n’utilise pas internet.');
+    expect(document.querySelectorAll('svg[role="img"][aria-label="Mona"][data-logo-stroke]').length).toBeGreaterThan(0);
+    expect(document.querySelector('img[src$=".svg"]')).toBeNull();
+  });
+
+  it('greets the profile by first name with its avatar when the state carries one', async () => {
+    api.server.use(
+      http.get('/api/auth/state', () =>
+        HttpResponse.json({ authenticated: true, locked: true, locale: 'fr', csrfToken: 'x', autoLockMinutes: 15, profileName: 'Dr Léa Marchand' }),
+      ),
+    );
+    await open('/unlock');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Bon retour, Léa' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Dr Léa Marchand' })).toBeInTheDocument();
   });
 
   it('a wrong password is an inline error, and the field is cleared', async () => {

@@ -298,9 +298,9 @@ function SettingsBody({ view, lang, langBusy, onLanguage, openPassword }: { view
             value={view.filingLanguage}
             onChange={(e) => void onLanguage({ filingLanguage: e.target.value as 'en' | 'fr' | 'ro' })}
             options={[
-              { value: 'fr', label: t('language.fr') },
-              { value: 'en', label: t('language.en') },
-              { value: 'ro', label: t('language.ro') },
+              { value: 'fr', label: t('language.native.fr') },
+              { value: 'en', label: t('language.native.en') },
+              { value: 'ro', label: t('language.native.ro') },
             ]}
           />
         </SettingsSection>

@@ -120,3 +120,30 @@
     line-height: 46px;
   }
 }
+
+.unlock {
+  --u: clamp(0.7px, calc(100vw / 1500), 1.6px);
+}
+
+.unlock-headline {
+  margin: 0;
+  max-width: calc(560 * var(--u));
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: calc(64 * var(--u));
+  font-weight: 400;
+  line-height: calc(68 * var(--u));
+  letter-spacing: var(--type-display-xl-tracking);
+  font-variation-settings: var(--font-variation-display), 'opsz' 144;
+}
+
+.unlock-title {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: max(26px, calc(32 * var(--u)));
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: var(--type-title-tracking);
+  font-variation-settings: var(--font-variation-display), 'opsz' 48;
+}

@@ -55,7 +55,7 @@ export function PipelineRow({ item, onRestore, busy }: { item: Item; onRestore(j
 
   return (
     <tr className="border-t border-border align-middle" data-outcome={item.outcome} data-document-id={item.documentId ?? undefined}>
-      <th scope="row" className="max-w-[280px] px-4 py-3 text-left align-middle font-normal text-text [font:var(--type-filename)]">
+      <th scope="row" className="max-w-[140px] px-4 py-3 text-left md:max-w-[280px] align-middle font-normal text-text [font:var(--type-filename)]">
         {viewable ? (
           <Link to="/documents/$documentId" params={{ documentId: item.documentId! }} className="block truncate text-text no-underline hover:underline" title={item.originalName}>
             {item.originalName}

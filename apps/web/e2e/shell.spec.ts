@@ -112,7 +112,7 @@ test.describe('routes', () => {
 
   test('/unlock renders outside the shell', async ({ page }) => {
     await page.goto('/unlock');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^Welcome back/);
     await expect(page.getByRole('navigation')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Ask Mona' })).toHaveCount(0);
   });

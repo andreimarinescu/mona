@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Mona",
-    "tagline": "Vos papiers, réglés — ici, au cabinet."
+    "tagline": "Vos papiers, réglés\n— ici, au cabinet."
   },
   "nav": {
     "home": "Accueil",
@@ -81,12 +81,6 @@
       "unknown": "Page inconnue",
       "filtered": "{{what}}, filtré sur {{entity}}"
     }
-  },
-  "placeholder": {
-    "title": "Cet écran arrive bientôt",
-    "body": "Mona l’affichera ici dans une prochaine étape.",
-    "reference": "Référence : {{id}}",
-    "scope": "Affichage : {{scope}}"
   },
   "errors": {
     "notFound": {
@@ -952,7 +946,12 @@
   "language": {
     "en": "anglais",
     "fr": "français",
-    "ro": "roumain"
+    "ro": "roumain",
+    "native": {
+      "en": "English",
+      "fr": "Français",
+      "ro": "Română"
+    }
   },
   "interview": {
     "eyebrow": "Une question de Mona",
@@ -1006,11 +1005,13 @@
   "auth": {
     "unlock": {
       "title": "Bon retour",
+      "welcome": "Bon retour, {{name}}",
       "subtitle": "Mona continue de travailler pendant que l’écran est verrouillé.",
       "password": "Mot de passe",
       "submit": "Déverrouiller",
       "hint": "Mot de passe oublié ? Il peut être réinitialisé sur l’ordinateur où tourne Mona, avec mona profile set-password.",
-      "privacy": "Tout reste sur l’ordinateur du cabinet."
+      "privacy": "Tout reste sur l’ordinateur du cabinet.",
+      "footer": "Mona tourne sur cet ordinateur. Le déverrouillage n’utilise pas internet."
     }
   },
   "time": {
