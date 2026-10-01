@@ -10,7 +10,7 @@
   - Practice documents (`~/DevFiles/mona-hq/100 PDF neclasificate/`) and their text cache (`~/DevFiles/mona-hq/bench/corpus/textcache/`) are read-only.
   - Anything derived from them (manifests with file names, OCR text, model outputs with quotes, IBANs, SIRENs, addresses) goes to `~/DevFiles/mona-hq/demo-data/` only. Never into the repo, the vault, commit messages or reports. In the repo and in reports, refer to a practice document by `sha256[:12]` plus a generic label ("AGIPI PER notice").
   - Repo fixtures are synthetic (fictional names, amounts, identifiers).
-  - Dev may send practice documents to OpenRouter (R30). Keys come from `~/DevFiles/mona-hq/mona/.env`; never print, log or commit them.
+  - Dev may send practice documents to OpenRouter (R30). Keys come from `~/DevFiles/mona-hq/mona/.env`; never print, log or commit them. Never write to `.env` either: it is shared by every lane. Export ports and project names in your shell instead.
 - **Commits.**
   - Commit unsigned in your worktree at each coherent step (the repo sets `commit.gpgsign=false`). Corrections go in as `git commit --fixup=<sha>`, never `amend!`/`squash!`.
   - Never rebase, amend, push, fetch or merge. The orchestrator integrates.

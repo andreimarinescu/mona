@@ -34,6 +34,7 @@ Newest first. Lanes re-read this file at every commit boundary; an entry binds e
 - **Migrations:** only L2 adds Alembic migrations (next: `0005`, auth sessions + A9). Every other lane (L1-M2, L4, L1-M3) adds none. A needed index or column goes in the lane's report, and the orchestrator routes it.
 - **Routers:** each lane keeps its routes in its own module (`mona/api/<area>.py`, `mona/interviews/api.py`, …) and adds one `include_router` line in the app factory, so merges stay one-line conflicts.
 - **Model client:** L1-M2's model client module is the one client (C9 §1.2 "one LLM client"). L2-P2 adds the prod fail-closed guard to it; L4 calls it, never a second client.
+- **`.env` is orchestrator-owned.** Lanes never write to it (it is a symlink to the main checkout's file, shared by every lane). Ports and project names are exported in the lane's shell for its commands only. Added 2026-10-01 after a lane appended its ports to the shared file.
 - **Shared test fixtures** (`apps/api/tests/conftest.py`): add fixtures with lane-specific names (`<lane>_…`) to avoid clashes like the L1/L2 `seeded_template` collision.
 
 ## D10 · 2026-10-01 · Contract set B frozen at v1.0 (Andrei's verdict)
