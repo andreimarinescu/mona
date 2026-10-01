@@ -1,7 +1,5 @@
-import type { Lang } from '@mona/ui';
 import { api } from '../api/client';
-import { entitiesFixture, settingsFixture } from './fixtures';
-import type { ShellState } from './dto';
+import type { EntityList, SettingsView, ShellState } from './dto';
 import { get } from './http';
 import type { Entity, HealthState, Settings, ShellCounts } from './types';
 
@@ -12,17 +10,8 @@ export interface DataProviders {
   health(): Promise<HealthState>;
 }
 
-export const LANGUAGE_OVERRIDE_KEY = 'mona.stub.language';
-
-function overrideLanguage(): Lang | null {
-  const v = globalThis.localStorage?.getItem(LANGUAGE_OVERRIDE_KEY);
-  return v === 'en' || v === 'fr' || v === 'ro' ? v : null;
-}
-
-export const stubProviders = {
-  entities: async () => entitiesFixture,
-  settings: async () => ({ ...settingsFixture, locale: overrideLanguage() ?? settingsFixture.locale }),
-} satisfies Partial<DataProviders>;
+export const fetchEntities = () => get<EntityList>('/api/entities').then((r) => r.items);
+export const fetchSettings = () => get<SettingsView>('/api/settings');
 
 const OFFLINE: HealthState = { status: 'offline', version: null };
 
@@ -39,7 +28,7 @@ export async function fetchHealth(): Promise<HealthState> {
 
 export async function fetchShellCounts(): Promise<ShellCounts> {
   const s = await get<ShellState>('/api/shell');
-  return { reviewCount: s.reviewCount, queueCount: s.queue.llm + s.queue.cpu };
+  return { reviewCount: s.reviewCount, queueCount: s.queue.llm + s.queue.cpu, mona: s.mona };
 }
 
-export const defaultProviders: DataProviders = { ...stubProviders, shellCounts: fetchShellCounts, health: fetchHealth };
+export const defaultProviders: DataProviders = { entities: fetchEntities, settings: fetchSettings, shellCounts: fetchShellCounts, health: fetchHealth };

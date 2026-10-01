@@ -114,7 +114,7 @@ test.describe('archive search', () => {
   });
 
   test('the page context line follows the interface language, the model summary stays English', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('mona.stub.language', 'fr'));
+    await page.addInitScript(() => localStorage.setItem('mona.msw.locale', 'fr'));
     await page.goto('/archive?q=URSSAF');
     await expect(count(page)).toContainText('9 documents');
     await page.getByRole('button', { name: 'Demander à Mona', exact: true }).click();
@@ -408,7 +408,7 @@ test.describe('accessibility and languages', () => {
     ['ro', 'Exportați pentru contabil…', 'Arhivă'],
   ] as const) {
     test(`the archive, the viewer and the dialog render in ${lng}`, async ({ page }) => {
-      await page.addInitScript((l) => localStorage.setItem('mona.stub.language', l), lng);
+      await page.addInitScript((l) => localStorage.setItem('mona.msw.locale', l), lng);
       await page.goto('/archive');
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading);
       await expect(page.getByRole('button', { name: ask })).toBeVisible();

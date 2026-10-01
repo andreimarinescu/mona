@@ -5,16 +5,48 @@ const health = { status: 'ok', db: 'ok', version: '0.1.0' };
 
 const shell = { reviewCount: 6, processingCount: 0, queue: { llm: 0, cpu: 0 }, mona: 'online' };
 
+const settingsView = (locale: string) => ({ profileName: 'Léa Marchand', locale, autoLockMinutes: 15, practiceName: 'Cabinet Marchand', filingLanguage: 'fr', confidenceHigh: 85, confidenceLow: 60, badgeHours: 24, debriefQueueThreshold: 5, debriefEarlyMin: 5 });
+const entity = { id: 'ent_01j9zq3k8e6y4v2m7c5r1t0b9a', key: 'cabinet', displayName: 'Cabinet Marchand', folderName: 'Cabinet Marchand', legalForm: 'SELARL', siren: null, visibility: 'practice', fiscalYearEnd: '12-31', filingLanguage: 'fr', subUnits: [], people: [], accounts: [] };
+const sci = { ...entity, id: 'ent_01j9zq3k8f7z5w3n8d6s2v1c0b', key: 'sci', displayName: 'SCI Les Tilleuls', legalForm: 'SCI' };
+const home = {
+  facts: { generatedAt: '2026-10-01T07:02:00.000Z', since: '2026-10-01T00:00:00.000Z', filed: { count: 0, byEntity: [] }, needsReview: { count: 0, byReason: {} }, dueSoon: [], remindersToday: [], learned: [], pendingInterview: null },
+  journalEntryCount: 0,
+  review: { total: 0, items: [] },
+  due: { total: 0, items: [] },
+  activity: { items: [], documents: {}, rules: {} },
+  ingestion: { days: Array.from({ length: 14 }, (_, i) => ({ date: `2026-09-${String(18 + i).padStart(2, '0')}`, count: 0 })), lastBatch: null },
+};
+const status = {
+  version: '0.1.0',
+  build: null,
+  env: 'prod',
+  mona: { status: 'online', hermesVersion: '0.21.5' },
+  llm: { endpoint: 'local', model: 'qwen', quantization: null, contextPerSlot: null, slots: null, vramBytes: null },
+  queues: { llm: { todo: 0, doing: 0 }, cpu: { todo: 0, doing: 0 } },
+  database: 'ok',
+  disk: { dataFreeBytes: 200, dataTotalBytes: 400 },
+  privacy: { cloudAi: false, telegram: true },
+};
+
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/health', (route) => route.fulfill({ json: health }));
+  await page.route('**/api/auth/state', (route) => route.fulfill({ json: { authenticated: true, locked: false, locale: 'en', csrfToken: 'x', autoLockMinutes: 15, profileName: 'Léa Marchand' } }));
+  await page.route('**/api/home**', (route) => route.fulfill({ json: home }));
+  await page.route('**/api/system/status', (route) => route.fulfill({ json: status }));
+  await page.route('**/api/people', (route) => route.fulfill({ json: { items: [] } }));
+  await page.route('**/api/rules?**', (route) => route.fulfill({ json: { items: [], total: 0, offset: 0, limit: 200 } }));
+  await page.route('**/api/rules/learned?**', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/rules/rul_*', (route) =>
+    route.fulfill({ json: { valid: true, problems: [], rule: { id: 'rul_01j9zq3k8e6y4v2m7c5r1t0b9a', name: 'Example rule', condition: 'When the counterparty is Example.', destination: ['Cabinet'], enabled: true, state: 'active', source: 'seed', version: 1, priority: 10, firedCount: 0, correctionsSince: 0 } } }),
+  );
   await page.route('**/api/shell', (route) => route.fulfill({ json: shell }));
   const empty = { items: [], total: 0, offset: 0, limit: 50 };
   await page.route('**/api/review?**', (route) => route.fulfill({ json: empty }));
   await page.route('**/api/batches?**', (route) => route.fulfill({ json: empty }));
   await page.route('**/api/activity?**', (route) => route.fulfill({ json: { items: [], nextCursor: null, documents: {}, rules: {} } }));
-  await page.route('**/api/entities', (route) => route.fulfill({ json: { items: [], documentCounts: {}, visitorsEntityId: null } }));
+  await page.route('**/api/entities', (route) => route.fulfill({ json: { items: [entity, sci], documentCounts: { [entity.id]: 3 }, visitorsEntityId: null } }));
   await page.route('**/api/categories', (route) => route.fulfill({ json: { items: [] } }));
-  await page.route('**/api/settings', (route) => route.fulfill({ json: { confidenceHigh: 85, confidenceLow: 60, badgeHours: 24 } }));
+  await page.route('**/api/settings', (route) => route.fulfill({ json: settingsView('en') }));
   const facets = { entities: [], years: [], categories: [], counterparties: [], statuses: [], amount: { min: null, max: null } };
   await page.route('**/api/documents?**', (route) => route.fulfill({ json: { ...empty, limit: 25, facets } }));
   await page.route('**/api/folders**', (route) => route.fulfill({ json: { path: [], folders: [], documents: [] } }));
@@ -35,8 +67,10 @@ function watchConsole(page: Page): string[] {
 
 const nav = (page: Page) => page.getByRole('navigation');
 
-const NAV: [string, string, string][] = [
-  ['Home', '/', 'Home'],
+const HOME_HEADING = /^Good (morning|afternoon|evening), Léa Marchand\./;
+
+const NAV: [string, string, string | RegExp][] = [
+  ['Home', '/', HOME_HEADING],
   ['Chat', '/chat', 'Chat'],
   ['Intake', '/intake', 'Intake'],
   ['Review queue', '/review', 'Review queue'],
@@ -51,8 +85,8 @@ const PARAM_ROUTES: [string, string, string?][] = [
   ['/chat/cnv_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Chat'],
   ['/archive/folders/Cabinet%20Marchand/2026', 'Archive'],
   ['/documents/doc_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Document'],
-  ['/rules/rul_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Rules', 'rul_01j9zq3k8e6y4v2m7c5r1t0b9a'],
-  ['/entities/categories/tax', 'Entities & taxonomy', 'tax'],
+  ['/rules/rul_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Example rule'],
+  ['/entities/categories/tax', 'Entities & taxonomy'],
 ];
 
 test.describe('routes', () => {
@@ -78,7 +112,7 @@ test.describe('routes', () => {
 
   test('/unlock renders outside the shell', async ({ page }) => {
     await page.goto('/unlock');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Unlock Mona');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back');
     await expect(page.getByRole('navigation')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Ask Mona' })).toHaveCount(0);
   });
@@ -91,11 +125,16 @@ test.describe('routes', () => {
 
   test('the entity scope switcher feeds app state', async ({ page }) => {
     await page.goto('/rules');
-    await expect(page.getByTestId('scope-line')).toHaveText('Showing: All entities');
+    const picked = page.getByLabel('Showing').locator('option:checked');
+    await expect(picked).toHaveText('All entities');
     await page.getByLabel('Showing').selectOption({ label: 'SCI Les Tilleuls' });
-    await expect(page.getByTestId('scope-line')).toHaveText('Showing: SCI Les Tilleuls');
+    await expect(picked).toHaveText('SCI Les Tilleuls');
     await nav(page).getByRole('link', { name: 'Entities & taxonomy' }).click();
-    await expect(page.getByTestId('scope-line')).toHaveText('Showing: SCI Les Tilleuls');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Entities & taxonomy');
+    await expect(picked).toHaveText('SCI Les Tilleuls');
+    await nav(page).getByRole('link', { name: 'Rules' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Rules');
+    await expect(picked).toHaveText('SCI Les Tilleuls');
   });
 });
 
@@ -113,7 +152,7 @@ test.describe('language and theme', () => {
     ['ro', 'Acasă', 'Setări'],
   ]) {
     test(`the settings language (${lng}) sets <html lang> and the nav`, async ({ page }) => {
-      await page.addInitScript((l) => localStorage.setItem('mona.stub.language', l), lng);
+      await page.route('**/api/settings', (route) => route.fulfill({ json: settingsView(lng!) }));
       await page.goto('/');
       await expect(page.locator('html')).toHaveAttribute('lang', lng!);
       await expect(nav(page).getByRole('link', { name: home })).toBeVisible();
@@ -178,11 +217,13 @@ test.describe('chat panel', () => {
     await expect(page.locator('[role="complementary"][aria-label="Mona"]')).toBeVisible();
   });
 
-  test('"/" opens the panel on Home when no Home entry exists', async ({ page }) => {
+  test('"/" on Home focuses the Home chat entry and leaves the panel closed', async ({ page }) => {
     await page.goto('/');
+    await expect(page.getByTestId('chat-entry')).toBeVisible();
     await page.locator('body').click({ position: { x: 700, y: 400 } });
     await page.keyboard.press('/');
-    await expect(page.locator('[role="complementary"][aria-label="Mona"]')).toBeVisible();
+    await expect(page.getByTestId('chat-entry').getByRole('textbox')).toBeFocused();
+    await expect(page.locator('[role="complementary"][aria-label="Mona"]')).toHaveCount(0);
   });
 
   test('stays open, with its thread and conversation id, across navigation', async ({ page }) => {
@@ -347,7 +388,7 @@ test.describe('console and accessibility', () => {
   }
 
   test('axe: panel open, user menu open, French, and mobile with More open', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('mona.stub.language', 'fr'));
+    await page.route('**/api/settings', (route) => route.fulfill({ json: settingsView('fr') }));
     await page.goto('/');
     await page.getByRole('button', { name: 'Demander à Mona' }).click();
     await expect(page.locator('[role="complementary"][aria-label="Mona"]')).toBeVisible();

@@ -8,8 +8,9 @@ export function SystemStatusLine() {
   const { t } = useTranslation();
   const lang = useLang();
   const health = useHealth().data;
-  const queue = useShellCounts().data?.queueCount ?? 0;
-  const offline = health !== undefined && health.status !== 'ok';
+  const counts = useShellCounts().data;
+  const queue = counts?.queueCount ?? 0;
+  const offline = (health !== undefined && health.status !== 'ok') || counts?.mona === 'offline';
   const text = offline
     ? t('shell.status.offline')
     : health

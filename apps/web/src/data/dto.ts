@@ -342,10 +342,32 @@ export interface Entity {
   key: string;
   displayName: string;
   folderName: string;
+  legalForm: string | null;
+  siren: string | null;
   visibility: 'practice' | 'personal';
   fiscalYearEnd: string;
   filingLanguage: Lang | null;
   subUnits: { id: string; key: string; label: string; personId: string | null }[];
+  people: { personId: string; role: string | null }[];
+  accounts: { id: string; key: string; label: string; ibanLast4: string; subUnitId: string | null }[];
+}
+
+export interface EntityDetail extends Entity {
+  aliases: string[];
+  addresses: string[];
+  purgeAfterHours: number | null;
+  sortOrder: number;
+}
+
+export interface Person {
+  id: string;
+  key: string;
+  displayName: string;
+  shortName: string | null;
+}
+
+export interface PersonDetail extends Person {
+  aliases: string[];
 }
 
 export interface EntityList {
@@ -354,11 +376,36 @@ export interface EntityList {
   visitorsEntityId: string | null;
 }
 
+export type CategoryIconName = 'bank' | 'invoice' | 'tax' | 'insurance' | 'payroll' | 'training' | 'travel' | 'personal';
+
+export interface Template {
+  pathTemplate: string;
+  fileTemplate: string;
+}
+
 export interface CategoryDto {
   id: string;
   labels: Record<Lang, string>;
-  icon: string;
+  icon: CategoryIconName;
   subcategories: { key: string; labels: Record<Lang, string> }[];
+  template: Template;
+  entityTemplates: ({ entityId: string } & Template)[];
+}
+
+export interface CategoryList {
+  items: CategoryDto[];
+  documentCounts: Record<string, number>;
+}
+
+export interface CategoryPatch {
+  labels?: Record<Lang, string>;
+  template?: Template;
+}
+
+export interface TemplatePreview {
+  path: string[];
+  fileName: string | null;
+  error: { template: 'path' | 'file'; offset: number; message: string } | null;
 }
 
 export interface Counterparty {
@@ -510,4 +557,82 @@ export interface ConversationSummary {
   title: string;
   lastMessageAt: string;
   turnCount: number;
+}
+
+export interface RuleListItem {
+  rule: Rule;
+  valid: boolean;
+  problems: string[];
+}
+
+export interface RulePatch {
+  name?: string;
+  enabled?: boolean;
+  priority?: number;
+}
+
+export interface LearnedItem {
+  rule: Rule;
+  createdAt: string;
+  moved: number;
+}
+
+export interface BriefFacts {
+  generatedAt: string;
+  since: string;
+  filed: { count: number; byEntity: { entityId: string; name: string; count: number }[] };
+  needsReview: { count: number; byReason: Partial<Record<Reason, number>> };
+  dueSoon: Deadline[];
+  remindersToday: { reminderId: string; label: string; note: string | null }[];
+  learned: { ruleId: string; name: string; createdAt: string; firedSince: number }[];
+  pendingInterview: { interviewId: string; openQuestions: number } | null;
+}
+
+export interface HomeView {
+  facts: BriefFacts;
+  journalEntryCount: number;
+  review: { total: number; items: DocumentSummary[] };
+  due: { total: number; items: Deadline[] };
+  activity: { items: ActivityItem[]; documents: DocRefs; rules: Record<string, { name: string }> };
+  ingestion: { days: { date: string; count: number }[]; lastBatch: BatchSummary | null };
+}
+
+export interface SettingsView extends SettingsThresholds {
+  profileName: string;
+  locale: Lang;
+  autoLockMinutes: number;
+  practiceName: string;
+  filingLanguage: Lang;
+  debriefQueueThreshold: number;
+  debriefEarlyMin: number;
+}
+
+export type SettingsPatch = Partial<SettingsView>;
+
+export interface SystemStatus {
+  version: string;
+  build: string | null;
+  env: 'dev' | 'prod';
+  mona: { status: 'online' | 'offline'; hermesVersion: string | null };
+  llm: {
+    endpoint: 'local' | 'openrouter';
+    model: string | null;
+    quantization: string | null;
+    contextPerSlot: number | null;
+    slots: number | null;
+    vramBytes: null;
+  };
+  queues: { llm: { todo: number; doing: number }; cpu: { todo: number; doing: number } };
+  database: 'ok' | 'error';
+  disk: { dataFreeBytes: number; dataTotalBytes: number };
+  privacy: { cloudAi: boolean; telegram: boolean };
+}
+
+export interface AuthState {
+  authenticated: boolean;
+  locked: boolean;
+  locale: Lang;
+  csrfToken: string | null;
+  autoLockMinutes: number | null;
+  profileName: string | null;
 }

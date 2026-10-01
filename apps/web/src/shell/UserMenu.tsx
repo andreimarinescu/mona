@@ -1,12 +1,25 @@
 import { Avatar, Icon, Menu } from '@mona/ui';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouter } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
+import { lock, unlockHref } from '../data/auth';
 import { useSettings } from '../data/hooks';
+import { toastFailure } from '../data/journal';
 
 export function UserMenu() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const router = useRouter();
   const name = useSettings().data?.profileName ?? '';
+  async function lockScreen() {
+    try {
+      await lock();
+    } catch (err) {
+      toastFailure(err);
+      return;
+    }
+    const { pathname, searchStr, hash } = router.state.location;
+    void navigate(unlockHref(`${pathname}${searchStr}${hash ? `#${hash}` : ''}`));
+  }
   return (
     <Menu
       label={t('shell.user.menu')}
@@ -26,7 +39,7 @@ export function UserMenu() {
       }
       items={[
         { id: 'profile', label: t('shell.user.profile'), icon: 'pencil', onSelect: () => void navigate({ to: '/settings', hash: 'profile' }) },
-        { id: 'lock', label: t('shell.user.lock'), icon: 'lock', onSelect: () => void navigate({ to: '/unlock' }) },
+        { id: 'lock', label: t('shell.user.lock'), icon: 'lock', onSelect: () => void lockScreen() },
       ]}
     />
   );

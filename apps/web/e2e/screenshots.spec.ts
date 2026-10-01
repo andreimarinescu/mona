@@ -104,6 +104,47 @@ test.describe('screenshots at 1440', () => {
     await page.waitForTimeout(500);
     await shot(page, 'export-dialog');
   });
+  test('unlock, Home, rules, entities, category editor, settings and Home at 390', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('mona.msw.locked', '1'));
+    await page.goto('/unlock');
+    await page.getByLabel('Password').waitFor();
+    await page.waitForTimeout(400);
+    await shot(page, 'unlock');
+    await page.getByLabel('Password').fill('correct horse');
+    await page.getByRole('button', { name: 'Unlock' }).click();
+    await page.getByTestId('mona-brief').waitFor();
+    await page.getByTestId('home-ingestion').waitFor();
+    await page.waitForTimeout(500);
+    await shot(page, 'home');
+    await page.getByRole('navigation').getByRole('link', { name: 'Rules' }).click();
+    await page.getByTestId('rules-table').waitFor();
+    await page.getByTestId('learned-panel').getByRole('link').first().waitFor();
+    await page.waitForTimeout(400);
+    await shot(page, 'rules');
+    await page.getByRole('navigation').getByRole('link', { name: 'Entities & taxonomy' }).click();
+    await page.getByTestId('entity-grid').waitFor();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${dir}/entities.png`, fullPage: true });
+    await page.getByRole('tab', { name: /Categories/ }).click();
+    await page.getByRole('treeitem', { name: /Tax/ }).click();
+    await page.getByTestId('category-editor').waitFor();
+    await page.getByTestId('template-preview').getByText(/Cabinet Marchand/).waitFor();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${dir}/category-editor.png`, fullPage: true });
+    await page.getByRole('navigation').getByRole('link', { name: 'Settings' }).click();
+    await page.getByTestId('status-tile').first().waitFor();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${dir}/settings.png`, fullPage: true });
+  });
+
+  test('Home at 390', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.getByTestId('mona-brief').waitFor();
+    await page.getByTestId('home-ingestion').waitFor();
+    await page.waitForTimeout(500);
+    await shot(page, 'home-mobile');
+  });
 });
 
 test.describe('chat screenshots at 1440 (p3, p4, p5) and 390', () => {

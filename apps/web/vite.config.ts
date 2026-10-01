@@ -1,14 +1,17 @@
 /// <reference types="vitest/config" />
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, searchForWorkspaceRoot } from 'vite';
 
 const designDir = fileURLToPath(new URL('../../design', import.meta.url));
+const version = (JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf8')) as { version: string }).version;
 const apiUrl = process.env.MONA_API_URL ?? 'http://localhost:8765';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: { __MONA_VERSION__: JSON.stringify(version) },
   // compose mounts a volume at apps/web/node_modules, so Docker leaves a root-owned dir on the host
   cacheDir: '../../node_modules/.vite-web',
   resolve: {

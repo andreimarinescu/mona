@@ -106,3 +106,17 @@
     animation: none;
   }
 }
+
+.brief-heading {
+  margin: 0;
+  font: var(--type-title);
+  letter-spacing: var(--type-title-tracking);
+  font-variation-settings: var(--font-variation-display), 'opsz' 48;
+}
+
+@media (min-width: 1024px) {
+  .brief-heading {
+    font-size: 38px;
+    line-height: 46px;
+  }
+}

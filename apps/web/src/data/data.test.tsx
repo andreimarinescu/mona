@@ -1,13 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../i18n';
 import { LanguageSync } from '../shell/LanguageSync';
 import { DataProvidersContext } from './context';
-import { entitiesFixture } from './fixtures';
 import { useEntities, useHealth, useSettings } from './hooks';
-import { LANGUAGE_OVERRIDE_KEY, defaultProviders, fetchHealth, type DataProviders } from './providers';
+import { createWorld } from '../mocks';
+import { useMockApi } from '../test/mockApi';
+import { renderRoute } from '../test/renderRoute';
+import { ENTITIES } from '../mocks/seed';
+import { defaultProviders, fetchHealth, type DataProviders } from './providers';
 
 function wrapper(providers: DataProviders = defaultProviders) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -44,17 +47,17 @@ describe('health', () => {
   });
 });
 
-describe('stub providers', () => {
-  afterEach(() => localStorage.clear());
+describe('the C2 providers', () => {
+  const api = useMockApi();
 
-  it('serve C1 entity fixtures and the settings stub', async () => {
+  it('serve the entity list and the settings view', async () => {
     const { result } = renderHook(() => ({ e: useEntities(), s: useSettings() }), { wrapper: wrapper() });
-    await waitFor(() => expect(result.current.e.data).toEqual(entitiesFixture));
-    await waitFor(() => expect(result.current.s.data?.locale).toBe('en'));
+    await waitFor(() => expect(result.current.e.data).toEqual(ENTITIES));
+    await waitFor(() => expect(result.current.s.data).toMatchObject({ locale: 'en', profileName: 'Léa Marchand', confidenceHigh: 85 }));
   });
 
-  it('lets the dev override pick the stub language', async () => {
-    localStorage.setItem(LANGUAGE_OVERRIDE_KEY, 'ro');
+  it('follow the profile language of the API', async () => {
+    api.world().account.patch({ locale: 'ro' });
     await expect(defaultProviders.settings()).resolves.toMatchObject({ locale: 'ro' });
   });
 });
@@ -65,8 +68,8 @@ describe('LanguageSync', () => {
   });
 
   it('applies the settings language to i18n and <html lang>', async () => {
-    const settings = async () => ({ locale: 'fr' as const, profileName: 'Test', practiceName: 'Test' });
-    render(<LanguageSync />, { wrapper: wrapper({ ...defaultProviders, settings }) });
+    const settings = async () => ({ ...createWorld({ seed: false }).account.settings(), locale: 'fr' as const });
+    await renderRoute(<LanguageSync />, '/', (children) => <DataProvidersContext.Provider value={{ ...defaultProviders, settings }}>{children}</DataProvidersContext.Provider>);
     await waitFor(() => expect(document.documentElement.lang).toBe('fr'));
     expect(i18n.t('nav.home')).toBe('Accueil');
   });

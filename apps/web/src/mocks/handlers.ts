@@ -2,10 +2,12 @@ import { HttpResponse, bypass, http, type HttpHandler } from 'msw';
 import { ChatError, createChat, type ChatRequestBody, type MockChat } from './chat';
 import { ExportError } from './exports';
 import { InterviewError } from './interviews';
-import { MockError, type World, type WorldOptions } from './world';
+import { MockError } from './errors';
+import type { World, WorldOptions } from './world';
 
 function fail(err: unknown) {
-  if (err instanceof MockError || err instanceof ExportError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field } }, { status: err.status });
+  if (err instanceof MockError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field, details: err.details } }, { status: err.status, headers: err.headers });
+  if (err instanceof ExportError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field } }, { status: err.status });
   if (err instanceof InterviewError) return HttpResponse.json({ error: { code: err.code, message: err.message, details: err.details } }, { status: err.status });
   if (err instanceof ChatError) return HttpResponse.json({ error: { code: err.code, message: err.message } }, { status: err.status });
   throw err;
@@ -37,16 +39,65 @@ export const chatBodies: Record<string, unknown>[] = [];
 
 export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDelayMs' | 'draftMs'> = {}, chat: MockChat = createChat(world, { chunkDelayMs: options.chatDelayMs, draftMs: options.draftMs })): HttpHandler[] {
   return [
+    http.all('/api/*', ({ request }) => {
+      const err = world.account.gate(request.method, new URL(request.url).pathname);
+      return err ? fail(err) : undefined;
+    }),
     http.get('/api/health', () => HttpResponse.json({ status: 'ok', db: 'ok', version: '0.1.0' })),
-    http.get('/api/auth/state', () =>
-      HttpResponse.json({ authenticated: true, locked: false, locale: 'en', csrfToken: 'mock-csrf', autoLockMinutes: 15, profileName: 'Léa Marchand' }),
-    ),
+    http.get('/api/auth/state', () => HttpResponse.json(world.account.view())),
+    http.post('/api/auth/unlock', async ({ request }) => {
+      const body = (await request.json()) as { password?: string };
+      return guard(() => world.account.unlock(String(body.password ?? '')))();
+    }),
+    http.post('/api/auth/lock', () => {
+      world.account.lock();
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.post('/api/auth/heartbeat', () => {
+      try {
+        world.account.heartbeat();
+        return new HttpResponse(null, { status: 204 });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
+    http.post('/api/auth/logout', () => new HttpResponse(null, { status: 204 })),
+    http.put('/api/auth/password', async ({ request }) => {
+      const body = (await request.json()) as { currentPassword: string; newPassword: string };
+      try {
+        world.account.changePassword(body.currentPassword, body.newPassword);
+        return new HttpResponse(null, { status: 204 });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
     http.get('/api/shell', guard(() => world.shell())),
-    http.get('/api/settings', () =>
-      HttpResponse.json({ profileName: 'Léa Marchand', locale: 'en', autoLockMinutes: 15, practiceName: 'Cabinet Marchand', filingLanguage: 'fr', confidenceHigh: 85, confidenceLow: 60, badgeHours: 24, debriefQueueThreshold: 5, debriefEarlyMin: 5 }),
-    ),
+    http.get('/api/settings', () => HttpResponse.json(world.account.settings())),
+    http.patch('/api/settings', async ({ request }) => {
+      const body = (await request.json()) as Parameters<World['account']['patch']>[0];
+      return guard(() => world.account.patch(body))();
+    }),
+    http.get('/api/system/status', () => HttpResponse.json(world.account.systemStatus())),
+    http.get('/api/home', ({ request }) => guard(() => world.registry.home(new URL(request.url).searchParams))()),
     http.get('/api/entities', guard(() => world.entityList())),
-    http.get('/api/categories', guard(() => world.categories())),
+    http.get('/api/entities/:id', ({ params }) => guard(() => world.registry.entityDetail(String(params.id)))()),
+    http.get('/api/people', guard(() => world.registry.people())),
+    http.get('/api/categories', guard(() => world.registry.categoryList())),
+    http.patch('/api/categories/:id', async ({ params, request }) => {
+      const body = (await request.json()) as Parameters<World['registry']['patchCategory']>[1];
+      return guard(() => world.registry.patchCategory(String(params.id), body))();
+    }),
+    http.post('/api/templates/preview', async ({ request }) => {
+      const body = (await request.json()) as Parameters<World['registry']['previewTemplate']>[0];
+      return guard(() => world.registry.previewTemplate(body))();
+    }),
+    http.get('/api/rules', ({ request }) => guard(() => world.registry.listRules(new URL(request.url).searchParams))()),
+    http.get('/api/rules/learned', ({ request }) => guard(() => world.registry.learned(new URL(request.url).searchParams.get('since')))()),
+    http.get('/api/rules/:id', ({ params }) => guard(() => world.registry.rule(String(params.id)))()),
+    http.patch('/api/rules/:id', async ({ params, request }) => {
+      const body = (await request.json()) as Parameters<World['registry']['patchRule']>[1];
+      return guard(() => world.registry.patchRule(String(params.id), body))();
+    }),
 
     http.post('/api/intake', async ({ request }) => {
       try {

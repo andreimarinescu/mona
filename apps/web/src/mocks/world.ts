@@ -26,6 +26,9 @@ import type {
   UndoResult,
   UndoState,
 } from '../data/dto';
+import { createAccount } from './account';
+import { MockError } from './errors';
+import { createRegistry } from './registry';
 import { listFolder, norm, parseSearchParams, searchDocuments } from './archive';
 import { createExports } from './exports';
 import { createInterviews } from './interviews';
@@ -33,18 +36,7 @@ import { makeId } from './ids';
 import { ARCHIVE_SEED, ATELIER, CABINET, CATEGORIES, ENTITIES, FISCAL_YEAR_END, NORDTEL_AMOUNT, NORDTEL_DATES, NORDTEL_FILED_TITLES, REVIEW_SEED, SHOWCASE_FIELDS, VISITORS_ID } from './seed';
 import { calendarDate, toIsoDate } from '../data/calendar';
 
-export { norm };
-
-export class MockError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-    message: string,
-    readonly field: string | null = null,
-  ) {
-    super(message);
-  }
-}
+export { norm, MockError };
 
 type State = PathState & { entityId: string | null; categoryId: string | null; subcategoryKey: string | null };
 
@@ -92,6 +84,9 @@ export interface WorldOptions {
   /** Read by the chat handlers, not the world. */
   chatDelayMs?: number;
   draftMs?: number;
+  locked?: boolean;
+  autoLockMinutes?: number;
+  locale?: 'en' | 'fr' | 'ro';
 }
 
 const UNDOABLE: JournalAction[] = ['file', 'move', 'rename', 'unfile', 'delete', 'undo', 'redo'];
@@ -108,6 +103,7 @@ export function createWorld(options: WorldOptions = {}) {
   const batches = new Map<string, Batch>();
   const groups = new Map<string, Group>();
   const rules = new Map<string, Rule>();
+  const ruleCreated = new Map<string, number>();
   const entries: Entry[] = [];
   let entrySeq = 4100;
 
@@ -698,8 +694,10 @@ export function createWorld(options: WorldOptions = {}) {
     return result(doc, 'moved', [entry.id], group.id, { groupId: group.id });
   }
 
+  const correctionRules = new Set<string>();
+
   function ruleFor(doc: Doc): Rule {
-    const existing = [...rules.values()].find((r) => r.name.startsWith(doc.summary.counterparty ?? ''));
+    const existing = [...rules.values()].find((r) => correctionRules.has(r.id) && r.name.startsWith(doc.summary.counterparty ?? ''));
     if (existing) return existing;
     const rule: Rule = {
       id: id('rul'),
@@ -715,6 +713,8 @@ export function createWorld(options: WorldOptions = {}) {
       correctionsSince: 0,
     };
     rules.set(rule.id, rule);
+    correctionRules.add(rule.id);
+    ruleCreated.set(rule.id, now());
     return rule;
   }
 
@@ -959,7 +959,7 @@ export function createWorld(options: WorldOptions = {}) {
       reviewCount: all.filter((d) => d.summary.status === 'review' || d.summary.status === 'unreadable').length,
       processingCount: all.filter((d) => d.summary.status === 'processing').length,
       queue: { llm: 0, cpu: 0 },
-      mona: 'online' as const,
+      mona: account.mona(),
     };
   }
 
@@ -1027,11 +1027,68 @@ export function createWorld(options: WorldOptions = {}) {
 
   function previewRule(ruleId: string): RulePreview {
     const rule = rules.get(ruleId);
-    if (!rule) throw new MockError(404, 'not_found', 'Unknown rule.');
-    return preview(rule);
+    if (rule) return preview(rule);
+    if (registry.ownsRule(ruleId)) return registry.emptyPreview(ruleId);
+    throw new MockError(404, 'not_found', 'Unknown rule.');
   }
 
-  return { now, tick, id, intake, batchDetail, latestBatch, reviewList, document, confirm, correct, likeThis, applyRule, previewRule, registerRule, fileTo, note, consumeNotes, notes, allDeadlines, markDeadline, summaryOf: (d: Doc) => summaryOf(d), interviews, entryUndo, groupUndo, activity, groupView, shell, entityList, categories: () => ({ items: CATEGORIES }), search, folders, exports: exportJobs, createReminder, cancelReminder, docs, entries, batches, thumbnail: (docId: string) => getDoc(docId).summary.title };
+  const account = createAccount({ now, locked: options.locked, autoLockMinutes: options.autoLockMinutes, locale: options.locale });
+  const registry = createRegistry({
+    now,
+    worldRules: rules,
+    worldRuleCreated: ruleCreated,
+    moveEntries: () => entries.map((e) => ({ ruleId: e.ruleId, action: e.action, at: e.at, actor: e.actor })),
+    fileEntries: () => entries.filter((e) => e.action === 'file').map((e) => ({ actor: e.actor, at: e.at, entityId: e.after?.entityId ?? null })),
+    entryCount: (since) => entries.filter((e) => Date.parse(e.at) >= since).length,
+    documents: liveSummaries,
+    review: (entityId) => reviewList({ entityId: entityId ?? null, limit: 200 }),
+    activity: (entityId) => activity({ entityId, limit: 3 }),
+    lastBatch: () => latestBatch().items[0] ?? null,
+    deadlines: () => [...docs.values()].filter((d) => !d.deleted && d.summary.entityId !== VISITORS_ID).flatMap(deadlinesOf),
+    showcaseDocumentId: () => [...docs.values()].find((d) => d.summary.title === 'Call for contributions, Q3 2026')?.summary.id ?? null,
+  });
+
+  return {
+    now,
+    tick,
+    id,
+    intake,
+    batchDetail,
+    latestBatch,
+    reviewList,
+    document,
+    confirm,
+    correct,
+    likeThis,
+    applyRule,
+    registerRule,
+    fileTo,
+    note,
+    consumeNotes,
+    notes,
+    allDeadlines,
+    markDeadline,
+    summaryOf: (d: Doc) => summaryOf(d),
+    interviews,
+    previewRule,
+    entryUndo,
+    groupUndo,
+    activity,
+    groupView,
+    shell,
+    entityList,
+    search,
+    folders,
+    exports: exportJobs,
+    createReminder,
+    cancelReminder,
+    docs,
+    entries,
+    batches,
+    registry,
+    account,
+    thumbnail: (docId: string) => getDoc(docId).summary.title,
+  };
 }
 
 export type World = ReturnType<typeof createWorld>;

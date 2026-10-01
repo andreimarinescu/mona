@@ -1,20 +1,99 @@
-import type { CategoryDto, Entity, FieldKey } from '../data/dto';
-import { entitiesFixture } from '../data/fixtures';
+import type { CategoryDto, Entity, FieldKey, PersonDetail } from '../data/dto';
+import { makeId } from './ids';
 
 export const VISITORS_ID = 'ent_01j9zq3k8j0c8z6r1g9w5y4f3e';
 
+export const PEOPLE: PersonDetail[] = [
+  { id: makeId('prs', 1), key: 'lea', displayName: 'Léa Marchand', shortName: 'Léa', aliases: [] },
+  { id: makeId('prs', 2), key: 'camille', displayName: 'Camille Roux', shortName: 'Camille', aliases: [] },
+  { id: makeId('prs', 3), key: 'thomas', displayName: 'Thomas Marchand', shortName: 'Thomas', aliases: [] },
+];
+
+const [LEA, CAMILLE, THOMAS] = PEOPLE as [PersonDetail, PersonDetail, PersonDetail];
+
 export const ENTITIES: Entity[] = [
-  ...entitiesFixture.map((e) => ({
-    id: e.id,
-    key: e.key,
-    displayName: e.displayName,
-    folderName: e.folderName,
-    visibility: e.visibility,
-    fiscalYearEnd: e.fiscalYearEnd,
-    filingLanguage: e.filingLanguage,
-    subUnits: e.subUnits,
-  })),
-  { id: VISITORS_ID, key: 'visitors', displayName: 'Visitors', folderName: 'Visitors', visibility: 'practice', fiscalYearEnd: '12-31', filingLanguage: 'fr', subUnits: [] },
+  {
+    id: 'ent_01j9zq3k8e6y4v2m7c5r1t0b9a',
+    key: 'cabinet-marchand',
+    displayName: 'Cabinet Marchand',
+    folderName: 'Cabinet Marchand',
+    legalForm: 'SELARL',
+    siren: '000000001',
+    visibility: 'practice',
+    fiscalYearEnd: '12-31',
+    filingLanguage: 'fr',
+    subUnits: [{ id: makeId('sub', 1), key: 'laval', label: 'Laval (main)', personId: null }],
+    people: [
+      { personId: LEA.id, role: 'manager' },
+      { personId: CAMILLE.id, role: 'assistant' },
+    ],
+    accounts: [{ id: makeId('acc', 1), key: 'cabinet-main', label: 'Crédit Mutuel', ibanLast4: '4471', subUnitId: null }],
+  },
+  {
+    id: 'ent_01j9zq3k8f7z5w3n8d6s2v1c0b',
+    key: 'sci-les-tilleuls',
+    displayName: 'SCI Les Tilleuls',
+    folderName: 'SCI Les Tilleuls',
+    legalForm: 'SCI',
+    siren: '000000002',
+    visibility: 'practice',
+    fiscalYearEnd: '12-31',
+    filingLanguage: 'fr',
+    subUnits: [],
+    people: [{ personId: LEA.id, role: 'manager' }],
+    accounts: [{ id: makeId('acc', 2), key: 'sci-main', label: 'Crédit Mutuel', ibanLast4: '2208', subUnitId: null }],
+  },
+  {
+    id: 'ent_01j9zq3k8g8a6x4p9e7t3w2d1c',
+    key: 'atelier-numerique',
+    displayName: 'Atelier Numérique',
+    folderName: 'Atelier Numérique',
+    legalForm: 'SAS',
+    siren: '000000003',
+    visibility: 'practice',
+    fiscalYearEnd: '06-30',
+    filingLanguage: 'fr',
+    subUnits: [],
+    people: [{ personId: LEA.id, role: 'president' }],
+    accounts: [{ id: makeId('acc', 3), key: 'atelier-main', label: 'Crédit Mutuel', ibanLast4: '0381', subUnitId: null }],
+  },
+  {
+    id: 'ent_01j9zq3k8h9b7y5q0f8v4x3e2d',
+    key: 'personnel',
+    displayName: 'Personnel',
+    folderName: 'Personnel',
+    legalForm: null,
+    siren: null,
+    visibility: 'personal',
+    fiscalYearEnd: '12-31',
+    filingLanguage: 'fr',
+    subUnits: [
+      { id: makeId('sub', 2), key: 'lea', label: 'Léa', personId: LEA.id },
+      { id: makeId('sub', 3), key: 'thomas', label: 'Thomas', personId: THOMAS.id },
+    ],
+    people: [
+      { personId: LEA.id, role: null },
+      { personId: THOMAS.id, role: null },
+    ],
+    accounts: [
+      { id: makeId('acc', 4), key: 'perso-bank', label: 'Banque Lumière', ibanLast4: '3350', subUnitId: null },
+      { id: makeId('acc', 5), key: 'perso-credit', label: 'Crédit Mutuel', ibanLast4: '7712', subUnitId: null },
+    ],
+  },
+  {
+    id: VISITORS_ID,
+    key: 'visitors',
+    displayName: 'Visitors',
+    folderName: 'Visitors',
+    legalForm: null,
+    siren: null,
+    visibility: 'practice',
+    fiscalYearEnd: '12-31',
+    filingLanguage: 'fr',
+    subUnits: [],
+    people: [],
+    accounts: [],
+  },
 ];
 
 export const CABINET = ENTITIES[0]!;
@@ -22,6 +101,13 @@ export const ATELIER = ENTITIES[2]!;
 export const PERSONAL = ENTITIES[3]!;
 /** A fictional insurer for the mock debrief. */
 export const PRIVATE_INSURER = 'Prévia Retraite';
+
+const TEMPLATE = {
+  invoices: { pathTemplate: '{entity}/{year} {entity}/{category}/{sub}', fileTemplate: '{date:YYYY-MM-DD}_{counterparty}_{reference}' },
+  bank: { pathTemplate: '{entity}/{category}/{fy}', fileTemplate: '{date:YYYY-MM-DD}_{counterparty}_{sub}' },
+  tax: { pathTemplate: '{entity}/{category}/{year}', fileTemplate: '{date:YYYY-MM-DD}_{issuer}_{sub}' },
+  insurance: { pathTemplate: '{entity}/{category}/{counterparty}/{year}', fileTemplate: '{date:YYYY-MM-DD}_{counterparty}_{sub}_{reference}' },
+};
 
 export const CATEGORIES: CategoryDto[] = [
   {
@@ -32,15 +118,19 @@ export const CATEGORIES: CategoryDto[] = [
       { key: 'telecom', labels: { en: 'Telecom', fr: 'Télécom', ro: 'Telecom' } },
       { key: 'supplies', labels: { en: 'Supplies', fr: 'Fournitures', ro: 'Consumabile' } },
     ],
+    template: TEMPLATE.invoices,
+    entityTemplates: [],
   },
-  { id: 'bank', icon: 'bank', labels: { en: 'Bank', fr: 'Banque', ro: 'Bancă' }, subcategories: [{ key: 'statements', labels: { en: 'Statements', fr: 'Relevés', ro: 'Extrase' } }] },
+  { id: 'bank', icon: 'bank', labels: { en: 'Bank', fr: 'Banque', ro: 'Bancă' }, subcategories: [{ key: 'statements', labels: { en: 'Statements', fr: 'Relevés', ro: 'Extrase' } }], template: TEMPLATE.bank, entityTemplates: [] },
   {
     id: 'tax',
     icon: 'tax',
     labels: { en: 'Tax', fr: 'Impôts', ro: 'Taxe' },
     subcategories: [{ key: 'contributions', labels: { en: 'Contribution calls', fr: 'Appels de paiement', ro: 'Apeluri de plată' } }],
+    template: TEMPLATE.tax,
+    entityTemplates: [],
   },
-  { id: 'insurance', icon: 'insurance', labels: { en: 'Insurance', fr: 'Assurances', ro: 'Asigurări' }, subcategories: [] },
+  { id: 'insurance', icon: 'insurance', labels: { en: 'Insurance', fr: 'Assurances', ro: 'Asigurări' }, subcategories: [], template: TEMPLATE.insurance, entityTemplates: [] },
 ];
 
 export interface SeedDoc {
@@ -231,3 +321,58 @@ export const SHOWCASE_FIELDS: SeedField[] = [
   { key: 'due_date', value: '2026-10-15', page: 1, quote: 'Date limite de paiement : 15 octobre 2026', verified: true, findQuery: 'Date limite de paiement : 15 octobre 2026', confidence: 96 },
   { key: 'addressee', value: 'Cabinet dentaire Exemple', page: 1, quote: 'Cabinet dentaire Exemple SELARL', verified: false, findQuery: null, confidence: 58 },
 ];
+
+export interface SeedRule {
+  n: number;
+  name: string;
+  condition: string;
+  destination: string[];
+  state: 'draft' | 'active' | 'disabled';
+  source: 'interview' | 'correction' | 'seed';
+  firedCount: number;
+  lastFiredHoursAgo: number | null;
+  correctionsSince: number;
+  createdHoursAgo: number;
+}
+
+const Y = '{year} Cabinet Marchand';
+
+export const RULES_SEED: SeedRule[] = [
+  { n: 900, name: 'URSSAF calls', condition: 'When the counterparty is URSSAF.', destination: ['Cabinet Marchand', Y, 'Impôts', 'Appels de paiement'], state: 'active', source: 'seed', firedCount: 14, lastFiredHoursAgo: 216, correctionsSince: 0, createdHoursAgo: 2_400 },
+  {
+    n: 910,
+    name: 'Horizon letters are for the practice, except the retirement contract',
+    condition: 'When the counterparty is Mutuelle Horizon, and the text doesn’t mention “retirement”.',
+    destination: ['Cabinet Marchand', 'Assurances', 'Mutuelle Horizon'],
+    state: 'active',
+    source: 'interview',
+    firedCount: 4,
+    lastFiredHoursAgo: 2,
+    correctionsSince: 0,
+    createdHoursAgo: 3,
+  },
+  {
+    n: 911,
+    name: 'The Nordtel line ending in 18 is the Atelier’s, not the practice’s',
+    condition: 'When the counterparty is Nordtel, and the text mentions “18”.',
+    destination: ['Atelier Numérique', Y, 'Factures reçues', 'Télécom'],
+    state: 'active',
+    source: 'correction',
+    firedCount: 4,
+    lastFiredHoursAgo: 1,
+    correctionsSince: 0,
+    createdHoursAgo: 4,
+  },
+  { n: 912, name: 'Martin Supplies invoices', condition: 'When the counterparty is Martin Supplies.', destination: ['Atelier Numérique', Y, 'Factures reçues', 'Fournitures'], state: 'active', source: 'seed', firedCount: 148, lastFiredHoursAgo: 4, correctionsSince: 1, createdHoursAgo: 2_400 },
+  { n: 913, name: 'Laboratoire du Val', condition: 'When the counterparty is Laboratoire du Val.', destination: ['Cabinet Marchand', Y, 'Factures reçues', 'Fournitures'], state: 'active', source: 'correction', firedCount: 121, lastFiredHoursAgo: 52, correctionsSince: 0, createdHoursAgo: 190 },
+  { n: 914, name: 'Banque Lumière, account ••4471', condition: 'When it shows the Crédit Mutuel account ••4471.', destination: ['Cabinet Marchand', 'Banque', '{fy}'], state: 'active', source: 'seed', firedCount: 96, lastFiredHoursAgo: 5, correctionsSince: 0, createdHoursAgo: 2_400 },
+  { n: 915, name: 'Banque Lumière statements, personal', condition: 'When the counterparty is Banque Lumière, and it shows one of Personnel’s accounts.', destination: ['Personnel', 'Banque', '{fy}'], state: 'active', source: 'seed', firedCount: 22, lastFiredHoursAgo: 52, correctionsSince: 3, createdHoursAgo: 2_400 },
+  { n: 916, name: 'Energie Verte, Les Tilleuls meter', condition: 'When the counterparty is Energie Verte, and the text mentions “Tilleuls”.', destination: ['SCI Les Tilleuls', Y, 'Énergie'], state: 'active', source: 'interview', firedCount: 12, lastFiredHoursAgo: 6, correctionsSince: 0, createdHoursAgo: 700 },
+  { n: 917, name: 'Mutuelle Horizon premium', condition: 'When the counterparty is Mutuelle Horizon, and it is a premium notice.', destination: ['Cabinet Marchand', 'Assurances', 'Mutuelle Horizon'], state: 'active', source: 'interview', firedCount: 7, lastFiredHoursAgo: 23, correctionsSince: 0, createdHoursAgo: 500 },
+  { n: 901, name: 'SIE Laval tax notices', condition: 'When the counterparty is SIE Laval.', destination: ['Cabinet Marchand', Y, 'Impôts'], state: 'disabled', source: 'seed', firedCount: 24, lastFiredHoursAgo: 480, correctionsSince: 0, createdHoursAgo: 2_400 },
+  { n: 918, name: 'Banque Lumière: Atelier statements', condition: 'When the counterparty is Banque Lumière, and the amount is over 2000.00.', destination: ['Atelier Numérique', 'Banque', '{fy}'], state: 'draft', source: 'correction', firedCount: 0, lastFiredHoursAgo: null, correctionsSince: 0, createdHoursAgo: 30 },
+];
+
+/** Mock-only history: what the pipeline did before the in-memory documents exist. */
+export const OVERNIGHT = { cabinet: 14, atelier: 9, entries: 23 };
+export const INGESTION_HISTORY = [9, 14, 22, 7, 0, 0, 18, 24, 12, 9, 31, 15, 11];

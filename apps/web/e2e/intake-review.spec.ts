@@ -301,7 +301,7 @@ test.describe('French and Romanian', () => {
   ] as const) {
     test(`${lng}: the three screens render translated, with no raw keys or console errors`, async ({ page }) => {
       const problems = watchConsole(page);
-      await page.addInitScript((l) => localStorage.setItem('mona.stub.language', l), lng);
+      await page.addInitScript((l) => localStorage.setItem('mona.msw.locale', l), lng);
       const rawKey = /\b(intake|review|activity|common|toast|rules|errors)\.[a-zA-Z_]+/;
       await page.goto('/intake');
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(words.h1);

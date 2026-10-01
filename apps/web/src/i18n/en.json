@@ -140,7 +140,34 @@
       "findEvent": "Find via event bus"
     },
     "chat": {
-      "title": "Chat (dev harness)"
+      "title": "Chat (dev harness)",
+      "composer": {
+        "placeholder": "Ask Mona…",
+        "send": "Send"
+      },
+      "thinking": {
+        "live": "Mona is thinking…",
+        "done": "Thought for {{seconds}} seconds",
+        "doneShort": "Mona's thinking"
+      },
+      "doc": {
+        "open": "Open",
+        "due": "Due {{date}}"
+      },
+      "interview": {
+        "affects": "Documents affected: {{count}}",
+        "suggested": "Suggested"
+      },
+      "error": {
+        "mona_offline": "Mona is offline right now. Try again in a moment.",
+        "stream_interrupted": "The answer was cut off. Try again.",
+        "internal": "Something went wrong. Try again."
+      },
+      "loading": "Loading the conversation…",
+      "deadline": {
+        "today": "Due today",
+        "overdue": "Overdue"
+      }
     }
   },
   "chat": {
@@ -630,6 +657,66 @@
       "interview": "From an interview",
       "correction": "From a correction",
       "seed": "Built in"
+    },
+    "subtitle_one": "{{total}} rule, {{on}} on. Mona writes them from your answers and corrections; you can change any of them.",
+    "subtitle_other": "{{total}} rules, {{on}} on. Mona writes them from your answers and corrections; you can change any of them.",
+    "search": "Find a rule",
+    "table": {
+      "caption": "Rules, with where each one files, how often it fired and whether it is on",
+      "rule": "Rule",
+      "source": "Source",
+      "fired": "Fired",
+      "lastFired": "Last fired",
+      "corrections": "Corrections since",
+      "on": "On"
+    },
+    "row": {
+      "never": "Never",
+      "yesterday": "Yesterday",
+      "check": "{{n}} · check",
+      "switch": "Use the rule “{{name}}”"
+    },
+    "state": {
+      "draft": "Draft",
+      "active": "On",
+      "disabled": "Off",
+      "invalid": "Needs a look"
+    },
+    "chip": {
+      "seed": "Built in",
+      "interview": "Interview",
+      "correction": "Correction"
+    },
+    "learned": {
+      "title": "What Mona learned today",
+      "empty": "Nothing new today. Mona learns from your answers and corrections.",
+      "today": "today",
+      "yesterday": "yesterday",
+      "from": {
+        "interview": "From your answer",
+        "correction": "From your correction"
+      },
+      "moved_one": "{{count}} document moved",
+      "moved_other": "{{count}} documents moved"
+    },
+    "empty": {
+      "title": "No rules yet",
+      "body": "Mona writes rules from your answers and corrections. They will show up here."
+    },
+    "noMatch": {
+      "title": "No rule matches",
+      "body": "Try another word, or show all entities."
+    },
+    "detail": {
+      "back": "All rules",
+      "notFound": "I can’t find that rule.",
+      "name": "Name",
+      "nameForm": "Rule name",
+      "nameInvalid": "The name is 1 to 120 characters.",
+      "save": "Save name",
+      "condition": "When",
+      "destination": "Files to",
+      "problems": "Problems with this rule"
     }
   },
   "archive": {
@@ -876,5 +963,322 @@
     "reminderSet": "Reminder set for {{date}}",
     "done": "Mark as done",
     "markedDone": "Marked as done"
+  },
+  "auth": {
+    "unlock": {
+      "title": "Welcome back",
+      "subtitle": "Mona keeps working while the screen is locked.",
+      "password": "Password",
+      "submit": "Unlock",
+      "hint": "Forgotten the password? It can be reset on the computer Mona runs on, with mona profile set-password.",
+      "privacy": "Everything stays on the practice’s computer."
+    }
+  },
+  "time": {
+    "dueToday": "today",
+    "dueTomorrow": "tomorrow",
+    "dueIn_one": "in 1 day",
+    "dueIn_other": "in {{count}} days"
+  },
+  "home": {
+    "brief": {
+      "label": "Mona’s brief",
+      "greeting": {
+        "morning": "Good morning, {{name}}.",
+        "afternoon": "Good afternoon, {{name}}.",
+        "evening": "Good evening, {{name}}.",
+        "morning_anon": "Good morning.",
+        "afternoon_anon": "Good afternoon.",
+        "evening_anon": "Good evening."
+      },
+      "filedOvernight_one": "I filed one document overnight.",
+      "filedOvernight_other": "I filed {{count}} documents overnight.",
+      "filedToday_one": "I filed one document today.",
+      "filedToday_other": "I filed {{count}} documents today.",
+      "filedNone": "Nothing new came in since yesterday.",
+      "review_one": "One needs your eye.",
+      "review_other": "{{count}} need your eye.",
+      "due": "{{label}} is due {{when}}.",
+      "dueAmount": "{{label}}, {{amount}}, is due {{when}}.",
+      "overdue": "{{label}} is overdue.",
+      "questions_one": "I have one question for you.",
+      "questions_other": "I have {{count}} questions for you.",
+      "caption_one": "Written at {{time}} from 1 journal entry",
+      "caption_other": "Written at {{time}} from {{count}} journal entries",
+      "reviewAction_one": "Review one document",
+      "reviewAction_other": "Review {{count}} documents",
+      "openDue": "Open {{label}}"
+    },
+    "review": {
+      "all": "Open queue",
+      "empty": "Nothing is waiting for you.",
+      "more_one": "{{count}} more is waiting.",
+      "more_other": "{{count}} more are waiting."
+    },
+    "due": {
+      "title": "What’s due",
+      "empty": "Nothing is due soon.",
+      "overdue_one": "{{count}} day overdue",
+      "overdue_other": "{{count}} days overdue"
+    },
+    "activity": {
+      "title": "Recent activity",
+      "all": "Full journal",
+      "empty": "Nothing has happened yet."
+    },
+    "ingestion": {
+      "title": "Ingestion",
+      "link": "Activity log",
+      "week_one": "document, last 7 days",
+      "week_other": "documents, last 7 days",
+      "chart": "Documents per day, last 14 days. Peak: {{peak}} on {{day}}. Today: {{today}}."
+    },
+    "chat": {
+      "label": "Ask Mona",
+      "placeholder": "Ask Mona anything, or drop a document here…",
+      "attach": "Add documents",
+      "send": "Send"
+    },
+    "search": "Search the archive",
+    "add": "Add documents"
+  },
+  "entities": {
+    "subtitle": "Who the paperwork belongs to, and how it’s sorted on disk.",
+    "tabs": {
+      "label": "Entities and categories",
+      "entities": "Entities",
+      "categories": "Categories"
+    },
+    "empty": {
+      "title": "No entities yet",
+      "body": "Entities are set up by the installer. They will show up here."
+    },
+    "card": {
+      "siren": "SIREN",
+      "notApplicable": "Not applicable",
+      "accounts": "Bank accounts",
+      "none": "None",
+      "fiscalYear": "Fiscal year ends",
+      "subUnits": "Sub-units",
+      "documents_one": "{{n}} document",
+      "documents_other": "{{n}} documents",
+      "visibility": {
+        "practice": "Practice",
+        "personal": "Personal",
+        "visitors": "Visitors"
+      },
+      "visitorsRole": "Documents from visitors",
+      "visitorsNote_one": "Documents handed in by visitors, and everything Mona derived from them, are deleted after {{count}} hour.",
+      "visitorsNote_other": "Documents handed in by visitors, and everything Mona derived from them, are deleted after {{count}} hours.",
+      "visitorsNoteNoHours": "Documents handed in by visitors, and everything Mona derived from them, are deleted automatically.",
+      "personalNote": "Personal documents stay out of Telegram and accountant exports."
+    },
+    "categories": {
+      "tree": "Categories",
+      "item_one": "{{name}}, {{count}} document",
+      "item_other": "{{name}}, {{count}} documents",
+      "documents_one": "{{count}} document",
+      "documents_other": "{{count}} documents",
+      "labels": "Label in each language",
+      "labelsHint": "Folders on disk use the practice language. The interface shows the label in each person’s language.",
+      "path": "Path template",
+      "pathHint": "Annual documents use the fiscal year they cover: {entity}/{fy} {entity}/Documents annuels",
+      "file": "File name template",
+      "fileHint": "Accents are dropped in file names so accounting tools can read them.",
+      "tokens": "Tokens",
+      "insert": "Insert {{token}}",
+      "preview": "Preview, with a sample document",
+      "previewNone": "No preview while the template has a mistake.",
+      "overrides": "Entities with their own template",
+      "save": "Save changes",
+      "discard": "Discard",
+      "saved": "Category saved",
+      "applies": "A new template applies to documents filed from now on. Files already in the archive stay where they are.",
+      "unchanged": "Nothing changed yet.",
+      "empty": {
+        "title": "No categories yet",
+        "body": "Categories are set up by the installer. They will show up here."
+      },
+      "notFound": "I can’t find that category.",
+      "pick": "Pick a category",
+      "pickBody": "Its labels and templates open here."
+    }
+  },
+  "settings": {
+    "nav": {
+      "label": "Settings sections",
+      "profile": "Profile & lock",
+      "language": "Language",
+      "thresholds": "Thresholds",
+      "status": "System status",
+      "privacy": "Privacy",
+      "about": "About"
+    },
+    "save": "Save",
+    "saved": "Settings saved",
+    "error": {
+      "name": "Enter 1 to 120 characters.",
+      "whole": "Enter a whole number.",
+      "range": "Enter a number from {{min}} to {{max}}.",
+      "order": "The low threshold must be under the high one."
+    },
+    "profile": {
+      "title": "Profile & lock",
+      "body": "The one profile on this computer. Mona and Telegram both act as you.",
+      "name": "Your name",
+      "practice": "Practice name",
+      "autoLock": "Lock after (minutes)",
+      "autoLockHint": "Mona keeps working while locked; only the screen is locked."
+    },
+    "password": {
+      "title": "Change password",
+      "change": "Change password",
+      "current": "Current password",
+      "new": "New password",
+      "again": "New password again",
+      "hint": "At least 8 characters.",
+      "tooShort": "The new password needs at least 8 characters.",
+      "mismatch": "The two passwords differ.",
+      "save": "Change password",
+      "changed": "Password changed"
+    },
+    "language": {
+      "interface": "Interface language, dates and amounts",
+      "interfaceHint": "Changes at once, everywhere in the app.",
+      "filing": "Filing language",
+      "filingHint": "Folder names on disk use this language. Mona replies in the language you write in."
+    },
+    "thresholds": {
+      "title": "Confidence thresholds",
+      "body": "Mona files on her own above the high threshold, files and marks it between the two, and asks you below the low one. New values apply to documents read from now on.",
+      "high": "Files on her own from (%)",
+      "highHint": "At or above this confidence.",
+      "low": "Asks you below (%)",
+      "lowHint": "Below this confidence a document goes to review.",
+      "badge": "Show “Filed by Mona” for (hours)",
+      "badgeHint": "How long a document Mona filed carries the badge.",
+      "debrief": "Questions once this many documents wait",
+      "debriefHint": "After a batch ends, Mona asks her questions when at least this many documents are waiting.",
+      "early": "Early questions from (documents)",
+      "earlyHint": "While a batch is still running, Mona starts her questions once this many documents need an answer."
+    },
+    "status": {
+      "refresh": "Refresh",
+      "failed": "Mona couldn’t read the system status.",
+      "healthy": "Healthy",
+      "attention": "Needs attention",
+      "notReported": "Not reported",
+      "mona": {
+        "label": "Mona",
+        "online": "Running",
+        "offline": "Not answering",
+        "version": "Hermes {{version}}"
+      },
+      "model": {
+        "label": "Model",
+        "local": "Runs on this computer",
+        "cloud": "Cloud model (development setup)",
+        "context": "{{context}} tokens · {{slots}} slots"
+      },
+      "queue": {
+        "label": "Queue",
+        "waiting_one": "{{count}} waiting",
+        "waiting_other": "{{count}} waiting",
+        "idle": "Idle",
+        "working": "Working",
+        "detail": "Reading: {{llm}} · Filing: {{cpu}}"
+      },
+      "disk": {
+        "label": "Archive disk",
+        "free": "{{size}} free",
+        "of": "of {{size}}",
+        "low": "Running low"
+      },
+      "database": {
+        "label": "Database",
+        "ok": "Reachable",
+        "error": "Not reachable"
+      }
+    },
+    "privacy": {
+      "title": "Privacy · where your data goes",
+      "limit": "Deleting a visitor’s document removes its files, extracted text, suggestions, journal rows and deadlines. A conversation about it in chat stays in that conversation.",
+      "stays": {
+        "title": "Stays on this computer",
+        "documents": "Your documents and their folders",
+        "thinking": "Mona’s reading and thinking: the AI runs here",
+        "index": "The search index and the journal",
+        "visitors_one": "Documents from visitors: deleted after {{count}} hour, with everything Mona derived from them",
+        "visitors_other": "Documents from visitors: deleted after {{count}} hours, with everything Mona derived from them"
+      },
+      "cloud": {
+        "title": "Goes to a cloud AI service",
+        "body": "This is a development setup: the text of documents Mona reads is sent to a cloud AI service. The practice’s own installation keeps the AI on its computer."
+      },
+      "telegram": {
+        "title": "Passes through Telegram",
+        "body": "Messages you exchange with Mona on Telegram travel through Telegram’s servers. She keeps names, amounts, dates and anything medical out of the first line.",
+        "personal": "Documents of personal entities, and of visitors, never appear there."
+      },
+      "export": {
+        "title": "Leaves only when you export",
+        "body": "Accountant exports go where you save them. Personal and visitor documents are never included. Mona never sends anything by herself."
+      }
+    },
+    "about": {
+      "app": "App",
+      "server": "Server",
+      "mode": "Mode",
+      "env": {
+        "dev": "Development",
+        "prod": "Production"
+      }
+    }
+  },
+  "firstRun": {
+    "title": "Let’s get Mona started",
+    "intro": "A few things, in any order. Nothing here is permanent.",
+    "done": "done",
+    "todo": "to do",
+    "language": {
+      "title": "Your language",
+      "body": "Mona shows the app, dates and amounts in this language. You can change it later in Settings."
+    },
+    "entities": {
+      "title": "Your entities",
+      "body": "Companies, rentals and households whose paperwork Mona files. The installer sets them up; check them here.",
+      "action": "Open entities",
+      "done_one": "{{count}} entity is set up.",
+      "done_other": "{{count}} entities are set up."
+    },
+    "archive": {
+      "title": "Archive folder",
+      "body": "Mona files into one folder on this computer and mirrors it exactly. The installer picks the folder."
+    },
+    "documents": {
+      "title": "Your first documents",
+      "body": "Drop a few documents in Intake and watch Mona read and file them.",
+      "action": "Add documents"
+    },
+    "telegram": {
+      "title": "Telegram",
+      "body": "Mona’s Telegram bot is set up by the installer. Nothing to do here.",
+      "linked": "Mona’s Telegram bot is linked."
+    }
+  },
+  "states": {
+    "offline": {
+      "title": "Mona’s brain is offline",
+      "body": "Chat and questions wait until it is back. You can still look at documents, search and file them yourself."
+    },
+    "loadFailed": "That didn’t load.",
+    "loading": {
+      "home": "Mona is reading the journal…",
+      "rules": "Mona is gathering her rules…",
+      "entities": "Mona is opening the registry…",
+      "categories": "Mona is opening the categories…",
+      "status": "Mona is checking the system…",
+      "settings": "Mona is opening the settings…"
+    }
   }
 }

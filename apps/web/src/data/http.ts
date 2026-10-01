@@ -22,6 +22,16 @@ export function retryTransient(failures: number, error: unknown): boolean {
 export type Query = Record<string, string | number | boolean | null | undefined | (string | number)[]>;
 
 let csrfToken: string | null = null;
+let authLostHandler: (() => void) | null = null;
+
+/** C2 §16.3: a 401 `unauthenticated` or a 423 on any call sends the person to /unlock. */
+export function setAuthLostHandler(handler: (() => void) | null) {
+  authLostHandler = handler;
+}
+
+export function isAuthLoss(status: number, code: string): boolean {
+  return status === 423 || (status === 401 && code === 'unauthenticated');
+}
 let csrfPending: Promise<string | null> | null = null;
 
 export function setCsrfToken(token: string | null) {
@@ -92,10 +102,14 @@ export async function request<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DEL
   const parsed = parseJson(text);
   if (!res.ok) {
     const e = (parsed as { error?: { code?: string; message?: string; field?: string | null; details?: Record<string, unknown> | null } } | null)?.error;
-    throw new ApiError(res.status, e?.code ?? 'internal', e?.message ?? res.statusText, e?.field ?? null, e?.details ?? null);
+    const code = e?.code ?? 'internal';
+    if (isAuthLoss(res.status, code)) authLostHandler?.();
+    throw new ApiError(res.status, code, e?.message ?? res.statusText, e?.field ?? null, e?.details ?? null);
   }
   return parsed as T;
 }
 
 export const get = <T>(path: string, query?: Query, signal?: AbortSignal) => request<T>('GET', path, { query, signal });
 export const post = <T>(path: string, json?: unknown) => request<T>('POST', path, { json: json ?? {} });
+export const patch = <T>(path: string, json: unknown) => request<T>('PATCH', path, { json });
+export const put = <T>(path: string, json: unknown) => request<T>('PUT', path, { json });

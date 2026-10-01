@@ -1,4 +1,5 @@
 import { Outlet, useRouterState } from '@tanstack/react-router';
+import { useHeartbeat } from '../data/auth';
 import { ChatPanel } from './ChatPanel';
 import { MobileTabBar } from './MobileTabBar';
 import { Sidebar } from './Sidebar';
@@ -8,6 +9,7 @@ import { useShellShortcuts } from './shortcuts';
 export function AppShell() {
   const home = useRouterState({ select: (s) => s.location.pathname === '/' });
   useShellShortcuts(home);
+  useHeartbeat();
   return (
     <div className="min-h-screen bg-bg font-ui text-text lg:flex">
       <Sidebar />

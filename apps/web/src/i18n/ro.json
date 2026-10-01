@@ -148,7 +148,34 @@
       "findEvent": "Caută prin magistrala de evenimente"
     },
     "chat": {
-      "title": "Chat (banc de dev)"
+      "title": "Chat (banc de dev)",
+      "composer": {
+        "placeholder": "Întrebați-o pe Mona…",
+        "send": "Trimiteți"
+      },
+      "thinking": {
+        "live": "Mona se gândește…",
+        "done": "S-a gândit {{seconds}} secunde",
+        "doneShort": "Raționamentul Monei"
+      },
+      "doc": {
+        "open": "Deschideți",
+        "due": "Scadent {{date}}"
+      },
+      "interview": {
+        "affects": "Documente vizate: {{count}}",
+        "suggested": "Sugerat"
+      },
+      "error": {
+        "mona_offline": "Mona este offline acum. Încercați din nou în câteva clipe.",
+        "stream_interrupted": "Răspunsul a fost întrerupt. Încercați din nou.",
+        "internal": "Ceva nu a mers. Încercați din nou."
+      },
+      "loading": "Se încarcă conversația…",
+      "deadline": {
+        "today": "Scadent azi",
+        "overdue": "Întârziat"
+      }
     }
   },
   "chat": {
@@ -654,6 +681,68 @@
       "interview": "Din întrebări",
       "correction": "Din corecții",
       "seed": "Predefinită"
+    },
+    "subtitle_one": "{{total}} regulă, {{on}} în uz. Mona le scrie pe baza răspunsurilor și corecțiilor dumneavoastră; puteți modifica oricare dintre ele.",
+    "subtitle_few": "{{total}} reguli, {{on}} în uz. Mona le scrie pe baza răspunsurilor și corecțiilor dumneavoastră; puteți modifica oricare dintre ele.",
+    "subtitle_other": "{{total}} de reguli, {{on}} în uz. Mona le scrie pe baza răspunsurilor și corecțiilor dumneavoastră; puteți modifica oricare dintre ele.",
+    "search": "Căutați o regulă",
+    "table": {
+      "caption": "Reguli, cu destinația, de câte ori au fost aplicate și dacă sunt active",
+      "rule": "Regulă",
+      "source": "Sursă",
+      "fired": "Aplicări",
+      "lastFired": "Ultima aplicare",
+      "corrections": "Corecții de atunci",
+      "on": "Activă"
+    },
+    "row": {
+      "never": "Niciodată",
+      "yesterday": "Ieri",
+      "check": "{{n}} · de verificat",
+      "switch": "Folosiți regula „{{name}}”"
+    },
+    "state": {
+      "draft": "Ciornă",
+      "active": "Activă",
+      "disabled": "Dezactivată",
+      "invalid": "De verificat"
+    },
+    "chip": {
+      "seed": "Predefinită",
+      "interview": "Întrebare",
+      "correction": "Corecție"
+    },
+    "learned": {
+      "title": "Ce a învățat Mona astăzi",
+      "empty": "Nimic nou astăzi. Mona învață din răspunsurile și corecțiile dumneavoastră.",
+      "today": "astăzi",
+      "yesterday": "ieri",
+      "from": {
+        "interview": "Din răspunsul dumneavoastră",
+        "correction": "Din corecția dumneavoastră"
+      },
+      "moved_one": "un document mutat",
+      "moved_few": "{{count}} documente mutate",
+      "moved_other": "{{count}} de documente mutate"
+    },
+    "empty": {
+      "title": "Nicio regulă încă",
+      "body": "Mona scrie reguli pe baza răspunsurilor și corecțiilor dumneavoastră. Vor apărea aici."
+    },
+    "noMatch": {
+      "title": "Nicio regulă nu se potrivește",
+      "body": "Încercați alt cuvânt sau afișați toate entitățile."
+    },
+    "detail": {
+      "back": "Toate regulile",
+      "notFound": "Nu găsesc această regulă.",
+      "name": "Nume",
+      "nameForm": "Numele regulii",
+      "nameInvalid": "Numele are între 1 și 120 de caractere.",
+      "save": "Salvați numele",
+      "condition": "Când",
+      "destination": "Arhivează în",
+      "problems": "Probleme cu această regulă"
     }
   },
   "archive": {
@@ -913,5 +1002,339 @@
     "reminderSet": "Memento setat pentru {{date}}",
     "done": "Marcați ca achitat",
     "markedDone": "Marcat ca achitat"
+  },
+  "auth": {
+    "unlock": {
+      "title": "Bine ați revenit",
+      "subtitle": "Mona continuă să lucreze cât timp ecranul este blocat.",
+      "password": "Parola",
+      "submit": "Deblocați",
+      "hint": "Ați uitat parola? Poate fi resetată pe calculatorul pe care rulează Mona, cu mona profile set-password.",
+      "privacy": "Totul rămâne pe calculatorul cabinetului."
+    }
+  },
+  "time": {
+    "dueToday": "azi",
+    "dueTomorrow": "mâine",
+    "dueIn_one": "peste o zi",
+    "dueIn_few": "peste {{count}} zile",
+    "dueIn_other": "peste {{count}} de zile"
+  },
+  "home": {
+    "brief": {
+      "label": "Sinteza Monei",
+      "greeting": {
+        "morning": "Bună dimineața, {{name}}.",
+        "afternoon": "Bună ziua, {{name}}.",
+        "evening": "Bună seara, {{name}}.",
+        "morning_anon": "Bună dimineața.",
+        "afternoon_anon": "Bună ziua.",
+        "evening_anon": "Bună seara."
+      },
+      "filedOvernight_one": "Am arhivat un document peste noapte.",
+      "filedOvernight_few": "Am arhivat {{count}} documente peste noapte.",
+      "filedOvernight_other": "Am arhivat {{count}} de documente peste noapte.",
+      "filedToday_one": "Am arhivat azi un document.",
+      "filedToday_few": "Am arhivat azi {{count}} documente.",
+      "filedToday_other": "Am arhivat azi {{count}} de documente.",
+      "filedNone": "Nimic nou de ieri.",
+      "review_one": "Un document așteaptă confirmarea dumneavoastră.",
+      "review_few": "{{count}} documente așteaptă confirmarea dumneavoastră.",
+      "review_other": "{{count}} de documente așteaptă confirmarea dumneavoastră.",
+      "due": "Scadența pentru {{label}} este {{when}}.",
+      "dueAmount": "Scadența pentru {{label}}, {{amount}}, este {{when}}.",
+      "overdue": "Termenul pentru {{label}} a trecut.",
+      "questions_one": "Am o întrebare pentru dumneavoastră.",
+      "questions_few": "Am {{count}} întrebări pentru dumneavoastră.",
+      "questions_other": "Am {{count}} de întrebări pentru dumneavoastră.",
+      "caption_one": "Scris la {{time}} pe baza unei înregistrări din jurnal",
+      "caption_few": "Scris la {{time}} pe baza a {{count}} înregistrări din jurnal",
+      "caption_other": "Scris la {{time}} pe baza a {{count}} de înregistrări din jurnal",
+      "reviewAction_one": "Verificați un document",
+      "reviewAction_few": "Verificați {{count}} documente",
+      "reviewAction_other": "Verificați {{count}} de documente",
+      "openDue": "Deschideți {{label}}"
+    },
+    "review": {
+      "all": "Deschideți coada",
+      "empty": "Nu așteaptă nimic confirmarea dumneavoastră.",
+      "more_one": "Încă un document așteaptă.",
+      "more_few": "Încă {{count}} documente așteaptă.",
+      "more_other": "Încă {{count}} de documente așteaptă."
+    },
+    "due": {
+      "title": "Scadențe",
+      "empty": "Nicio scadență în curând.",
+      "overdue_one": "întârziat cu o zi",
+      "overdue_few": "întârziat cu {{count}} zile",
+      "overdue_other": "întârziat cu {{count}} de zile"
+    },
+    "activity": {
+      "title": "Activitate recentă",
+      "all": "Jurnal complet",
+      "empty": "Nu s-a întâmplat nimic încă."
+    },
+    "ingestion": {
+      "title": "Documente primite",
+      "link": "Jurnal de activitate",
+      "week_one": "document, ultimele 7 zile",
+      "week_few": "documente, ultimele 7 zile",
+      "week_other": "de documente, ultimele 7 zile",
+      "chart": "Documente pe zi, ultimele 14 zile. Maximum: {{peak}} în {{day}}. Astăzi: {{today}}."
+    },
+    "chat": {
+      "label": "Întrebați-o pe Mona",
+      "placeholder": "Întrebați-o orice pe Mona sau trageți aici un document…",
+      "attach": "Adăugați documente",
+      "send": "Trimiteți"
+    },
+    "search": "Căutați în arhivă",
+    "add": "Adăugați documente"
+  },
+  "entities": {
+    "subtitle": "Cui aparțin documentele și cum sunt sortate pe disc.",
+    "tabs": {
+      "label": "Entități și categorii",
+      "entities": "Entități",
+      "categories": "Categorii"
+    },
+    "empty": {
+      "title": "Nicio entitate încă",
+      "body": "Entitățile sunt create de instalator. Vor apărea aici."
+    },
+    "card": {
+      "siren": "SIREN",
+      "notApplicable": "Nu se aplică",
+      "accounts": "Conturi bancare",
+      "none": "Niciunul",
+      "fiscalYear": "Sfârșitul exercițiului financiar",
+      "subUnits": "Subunități",
+      "documents_one": "{{n}} document",
+      "documents_few": "{{n}} documente",
+      "documents_other": "{{n}} de documente",
+      "visibility": {
+        "practice": "Cabinet",
+        "personal": "Personal",
+        "visitors": "Vizitatori"
+      },
+      "visitorsRole": "Documentele vizitatorilor",
+      "visitorsNote_one": "Documentele predate de vizitatori și tot ce a dedus Mona din ele sunt șterse după o oră.",
+      "visitorsNote_few": "Documentele predate de vizitatori și tot ce a dedus Mona din ele sunt șterse după {{count}} ore.",
+      "visitorsNote_other": "Documentele predate de vizitatori și tot ce a dedus Mona din ele sunt șterse după {{count}} de ore.",
+      "visitorsNoteNoHours": "Documentele predate de vizitatori și tot ce a dedus Mona din ele sunt șterse automat.",
+      "personalNote": "Documentele personale rămân în afara Telegram și a exporturilor pentru contabil."
+    },
+    "categories": {
+      "tree": "Categorii",
+      "item_one": "{{name}}, {{count}} document",
+      "item_few": "{{name}}, {{count}} documente",
+      "item_other": "{{name}}, {{count}} de documente",
+      "documents_one": "{{count}} document",
+      "documents_few": "{{count}} documente",
+      "documents_other": "{{count}} de documente",
+      "labels": "Denumire în fiecare limbă",
+      "labelsHint": "Folderele de pe disc folosesc limba cabinetului. Interfața afișează denumirea în limba fiecărei persoane.",
+      "path": "Șablon de cale",
+      "pathHint": "Documentele anuale folosesc exercițiul financiar pe care îl acoperă: {entity}/{fy} {entity}/Documents annuels",
+      "file": "Șablon de nume de fișier",
+      "fileHint": "Diacriticele sunt eliminate din numele fișierelor, ca să le poată citi programele de contabilitate.",
+      "tokens": "Elemente",
+      "insert": "Inserați {{token}}",
+      "preview": "Previzualizare, cu un document exemplu",
+      "previewNone": "Nu există previzualizare cât timp șablonul are o greșeală.",
+      "overrides": "Entități cu șablon propriu",
+      "save": "Salvați modificările",
+      "discard": "Renunțați",
+      "saved": "Categorie salvată",
+      "applies": "Un șablon nou se aplică documentelor arhivate de acum înainte. Fișierele deja arhivate rămân unde sunt.",
+      "unchanged": "Nimic nu s-a schimbat încă.",
+      "empty": {
+        "title": "Nicio categorie încă",
+        "body": "Categoriile sunt create de instalator. Vor apărea aici."
+      },
+      "notFound": "Nu găsesc această categorie.",
+      "pick": "Alegeți o categorie",
+      "pickBody": "Denumirile și șabloanele ei se deschid aici."
+    }
+  },
+  "settings": {
+    "nav": {
+      "label": "Secțiunile setărilor",
+      "profile": "Profil și blocare",
+      "language": "Limbă",
+      "thresholds": "Praguri",
+      "status": "Starea sistemului",
+      "privacy": "Confidențialitate",
+      "about": "Despre"
+    },
+    "save": "Salvați",
+    "saved": "Setări salvate",
+    "error": {
+      "name": "Introduceți între 1 și 120 de caractere.",
+      "whole": "Introduceți un număr întreg.",
+      "range": "Introduceți un număr între {{min}} și {{max}}.",
+      "order": "Pragul inferior trebuie să fie sub cel superior."
+    },
+    "profile": {
+      "title": "Profil și blocare",
+      "body": "Singurul profil de pe acest calculator. Mona și Telegram acționează amândouă în numele dumneavoastră.",
+      "name": "Numele dumneavoastră",
+      "practice": "Numele cabinetului",
+      "autoLock": "Blocare după (minute)",
+      "autoLockHint": "Mona continuă să lucreze cât timp este blocat; doar ecranul este blocat."
+    },
+    "password": {
+      "title": "Schimbați parola",
+      "change": "Schimbați parola",
+      "current": "Parola actuală",
+      "new": "Parola nouă",
+      "again": "Parola nouă, încă o dată",
+      "hint": "Cel puțin 8 caractere.",
+      "tooShort": "Parola nouă trebuie să aibă cel puțin 8 caractere.",
+      "mismatch": "Cele două parole diferă.",
+      "save": "Schimbați parola",
+      "changed": "Parola a fost schimbată"
+    },
+    "language": {
+      "interface": "Limba interfeței, a datelor și a sumelor",
+      "interfaceHint": "Se schimbă imediat, peste tot în aplicație.",
+      "filing": "Limba de arhivare",
+      "filingHint": "Numele folderelor de pe disc folosesc această limbă. Mona răspunde în limba în care scrieți."
+    },
+    "thresholds": {
+      "title": "Praguri de încredere",
+      "body": "Mona arhivează singură peste pragul superior, arhivează și marchează între cele două și vă întreabă sub cel inferior. Valorile noi se aplică documentelor citite de acum înainte.",
+      "high": "Arhivează singură de la (%)",
+      "highHint": "La această încredere sau peste.",
+      "low": "Vă întreabă sub (%)",
+      "lowHint": "Sub această încredere, documentul ajunge la verificare.",
+      "badge": "Afișează „Arhivat de Mona” timp de (ore)",
+      "badgeHint": "Cât timp un document arhivat de Mona poartă insigna.",
+      "debrief": "Întrebări când atâtea documente așteaptă",
+      "debriefHint": "După terminarea unui lot, Mona pune întrebări când așteaptă cel puțin atâtea documente.",
+      "early": "Întrebări anticipate de la (documente)",
+      "earlyHint": "Cât timp un lot încă rulează, Mona începe întrebările de îndată ce atâtea documente au nevoie de un răspuns."
+    },
+    "status": {
+      "refresh": "Reîmprospătați",
+      "failed": "Mona nu a putut citi starea sistemului.",
+      "healthy": "În regulă",
+      "attention": "Necesită atenție",
+      "notReported": "Neraportat",
+      "mona": {
+        "label": "Mona",
+        "online": "Pornită",
+        "offline": "Nu răspunde",
+        "version": "Hermes {{version}}"
+      },
+      "model": {
+        "label": "Model",
+        "local": "Rulează pe acest calculator",
+        "cloud": "Model în cloud (configurație de dezvoltare)",
+        "context": "{{context}} tokeni · {{slots}} sloturi"
+      },
+      "queue": {
+        "label": "Coadă",
+        "waiting_one": "{{count}} în așteptare",
+        "waiting_few": "{{count}} în așteptare",
+        "waiting_other": "{{count}} în așteptare",
+        "idle": "Liberă",
+        "working": "În lucru",
+        "detail": "Citire: {{llm}} · Arhivare: {{cpu}}"
+      },
+      "disk": {
+        "label": "Disc de arhivă",
+        "free": "{{size}} liberi",
+        "of": "din {{size}}",
+        "low": "Aproape plin"
+      },
+      "database": {
+        "label": "Bază de date",
+        "ok": "Accesibilă",
+        "error": "Inaccesibilă"
+      }
+    },
+    "privacy": {
+      "title": "Confidențialitate · unde ajung datele dumneavoastră",
+      "limit": "Ștergerea documentului unui vizitator elimină fișierele, textul extras, sugestiile, rândurile din jurnal și scadențele lui. O conversație despre el rămâne în acea conversație.",
+      "stays": {
+        "title": "Rămâne pe acest calculator",
+        "documents": "Documentele dumneavoastră și folderele lor",
+        "thinking": "Citirea și gândirea Monei: inteligența artificială rulează aici",
+        "index": "Indexul de căutare și jurnalul",
+        "visitors_one": "Documentele vizitatorilor: șterse după o oră, împreună cu tot ce a dedus Mona din ele",
+        "visitors_few": "Documentele vizitatorilor: șterse după {{count}} ore, împreună cu tot ce a dedus Mona din ele",
+        "visitors_other": "Documentele vizitatorilor: șterse după {{count}} de ore, împreună cu tot ce a dedus Mona din ele"
+      },
+      "cloud": {
+        "title": "Ajunge la un serviciu de IA din cloud",
+        "body": "Aceasta este o configurație de dezvoltare: textul documentelor pe care le citește Mona este trimis unui serviciu de IA din cloud. Instalarea cabinetului păstrează IA pe propriul calculator."
+      },
+      "telegram": {
+        "title": "Trece prin Telegram",
+        "body": "Mesajele pe care le schimbați cu Mona pe Telegram trec prin serverele Telegram. Ea nu pune nume, sume, date sau informații medicale în prima linie.",
+        "personal": "Documentele entităților personale și ale vizitatorilor nu apar niciodată acolo."
+      },
+      "export": {
+        "title": "Pleacă doar când exportați",
+        "body": "Exporturile pentru contabil ajung unde le salvați. Documentele personale și cele ale vizitatorilor nu sunt incluse niciodată. Mona nu trimite nimic de la sine."
+      }
+    },
+    "about": {
+      "app": "Aplicație",
+      "server": "Server",
+      "mode": "Mod",
+      "env": {
+        "dev": "Dezvoltare",
+        "prod": "Producție"
+      }
+    }
+  },
+  "firstRun": {
+    "title": "Să punem Mona în funcțiune",
+    "intro": "Câteva lucruri, în orice ordine. Nimic de aici nu este definitiv.",
+    "done": "terminat",
+    "todo": "de făcut",
+    "language": {
+      "title": "Limba dumneavoastră",
+      "body": "Mona afișează aplicația, datele și sumele în această limbă. O puteți schimba mai târziu în setări."
+    },
+    "entities": {
+      "title": "Entitățile dumneavoastră",
+      "body": "Societățile, locațiile și gospodăriile ale căror documente le arhivează Mona. Le creează instalatorul; verificați-le aici.",
+      "action": "Deschideți entitățile",
+      "done_one": "O entitate este configurată.",
+      "done_few": "{{count}} entități sunt configurate.",
+      "done_other": "{{count}} de entități sunt configurate."
+    },
+    "archive": {
+      "title": "Folderul de arhivă",
+      "body": "Mona arhivează într-un singur folder de pe acest calculator și îl reflectă exact. Folderul este ales de instalator."
+    },
+    "documents": {
+      "title": "Primele dumneavoastră documente",
+      "body": "Trageți câteva documente în Primire și urmăriți cum le citește și le arhivează Mona.",
+      "action": "Adăugați documente"
+    },
+    "telegram": {
+      "title": "Telegram",
+      "body": "Botul Telegram al Monei este configurat de instalator. Nu aveți nimic de făcut aici.",
+      "linked": "Botul Telegram al Monei este conectat."
+    }
+  },
+  "states": {
+    "offline": {
+      "title": "Creierul Monei este offline",
+      "body": "Conversația și întrebările așteaptă revenirea. Puteți în continuare să vedeți documentele, să căutați și să le arhivați singur."
+    },
+    "loadFailed": "Nu s-a încărcat.",
+    "loading": {
+      "home": "Mona citește jurnalul…",
+      "rules": "Mona își adună regulile…",
+      "entities": "Mona deschide registrul…",
+      "categories": "Mona deschide categoriile…",
+      "status": "Mona verifică sistemul…",
+      "settings": "Mona deschide setările…"
+    }
   }
 }
