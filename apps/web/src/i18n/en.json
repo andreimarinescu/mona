@@ -234,7 +234,11 @@
         "running": "Working…",
         "done": "Done"
       },
-      "interrupted": "interrupted"
+      "interrupted": "interrupted",
+      "export_table": {
+        "running": "Making the table file…",
+        "done": "Made the table file"
+      }
     },
     "banner": {
       "debrief": "Let's go through your questions about this batch."
@@ -439,7 +443,8 @@
       },
       "mark": {
         "unreadable": "Marked unreadable"
-      }
+      },
+      "export": "Table files"
     },
     "action": {
       "file_mona": "Mona filed {{doc}}",
@@ -477,7 +482,9 @@
       "mark": {
         "unreadable_mona": "Mona marked {{doc}} as unreadable",
         "unreadable_user": "You marked {{doc}} as unreadable"
-      }
+      },
+      "export_mona": "Mona made a table file",
+      "export_user": "You made a table file"
     },
     "group": {
       "intake_batch_mona": "Mona processed an intake batch",
@@ -605,6 +612,7 @@
       "period_end": "Period end",
       "amount": "Amount",
       "due_date": "Due date",
+      "payment_iban": "Payment IBAN",
       "addressee": "Addressed to"
     },
     "picker": {
@@ -919,6 +927,18 @@
     "card": {
       "title": "Accountant pack",
       "meta": "{{entity}} · fiscal year {{year}}"
+    },
+    "table": {
+      "title": "Table file",
+      "meta_one": "{{format}} · {{n}} document",
+      "meta_other": "{{format}} · {{n}} documents",
+      "download": "Download the {{format}} file",
+      "truncated": "Only the first 500 documents are in the file.",
+      "format": {
+        "csv": "CSV",
+        "xlsx": "Excel",
+        "docx": "Word"
+      }
     }
   },
   "language": {

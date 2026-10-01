@@ -114,6 +114,27 @@ test.describe('the /chat page (demo 7:00)', () => {
     expect(problems).toEqual([]);
   });
 
+  test('a payables table, then Excel, then Word: an export card with its download each time (A31)', async ({ page }) => {
+    const problems = watchConsole(page);
+    await page.goto('/chat');
+    const asks: [string, string][] = [
+      ['Show me a table with all payables with the destination IBAN, due date and entity', 'CSV'],
+      ['Make that an Excel file', 'Excel'],
+      ['Now a Word document', 'Word'],
+    ];
+    for (const [n, [text, format]] of asks.entries()) {
+      await ask(page, page, text);
+      const card = page.locator('[data-card="export"]').nth(n);
+      await expect(card.getByRole('heading', { name: 'Payables' })).toBeVisible();
+      await expect(card.getByTestId('export-table-meta')).toHaveText(new RegExp(`^${format} · \\d+ documents?$`));
+      const download = page.waitForEvent('download');
+      await card.getByRole('link', { name: `Download the ${format} file` }).click();
+      expect((await download).suggestedFilename()).toBe(`Payables.${['csv', 'xlsx', 'docx'][n]}`);
+    }
+    await expect(page.locator('[data-tool="export_table"]').first()).toContainText('Made the table file');
+    expect(problems).toEqual([]);
+  });
+
   test('the conversation list: newest first, search, and opening one reloads its transcript (C3 §7.2)', async ({ page }) => {
     await page.goto('/chat');
     await ask(page, page, 'How much did we pay last year?');

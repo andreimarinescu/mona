@@ -23,6 +23,7 @@ export const DOC: DocumentSummary = {
   fiscalYear: 2026,
   amount: { value: 955.2, currency: 'EUR' },
   dueDate: null,
+  paymentIban: null,
   status: 'filed',
   reasons: [],
   confidence: 71,
@@ -144,10 +145,31 @@ export const EXPORT: ExportPack = {
   documentCount: 12,
   zipUrl: '/api/exports/exp_01j9zq3k8e6y4v2m7c5r1t0b9a/zip',
   csvUrl: '/api/exports/exp_01j9zq3k8e6y4v2m7c5r1t0b9a/csv',
+  format: null,
+  title: null,
+  fileName: null,
+  fileUrl: null,
+  truncated: false,
+};
+
+export const TABLE_EXPORT: ExportPack = {
+  id: 'exp_01j9zq3k8e6y4v2m7c5r1t0b9b',
+  entityId: null,
+  entityName: null,
+  fiscalYear: null,
+  status: 'ready',
+  documentCount: 7,
+  zipUrl: null,
+  csvUrl: null,
+  format: 'xlsx',
+  title: 'Payables',
+  fileName: 'Payables.xlsx',
+  fileUrl: '/api/exports/exp_01j9zq3k8e6y4v2m7c5r1t0b9b/xlsx',
+  truncated: false,
 };
 
 /** One assistant message carrying every card kind, as the adapter streams them (C3 §5.5). */
-export function cardsMessage(over: Partial<{ interview: Interview; draft: Draft; preview: RulePreview }> = {}): MonaUIMessage {
+export function cardsMessage(over: Partial<{ interview: Interview; draft: Draft; preview: RulePreview; exportPack: ExportPack }> = {}): MonaUIMessage {
   return {
     id: 'msg_cards',
     role: 'assistant',
@@ -161,7 +183,7 @@ export function cardsMessage(over: Partial<{ interview: Interview; draft: Draft;
       { type: 'data-interview', id: INTERVIEW.id, data: over.interview ?? INTERVIEW },
       { type: 'data-rulePreview', id: RULE.id, data: over.preview ?? APPLIED_PREVIEW },
       { type: 'data-draft', id: DRAFT.id, data: over.draft ?? DRAFT },
-      { type: 'data-export', id: EXPORT.id, data: EXPORT },
+      { type: 'data-export', id: (over.exportPack ?? EXPORT).id, data: over.exportPack ?? EXPORT },
       { type: 'text', text: 'In 2025 you paid €3,820.80 [1].', state: 'done' },
     ],
   } as MonaUIMessage;

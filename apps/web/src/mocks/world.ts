@@ -353,6 +353,7 @@ export function createWorld(options: WorldOptions = {}) {
       periodEnd: null,
       fiscalYear: null,
       dueDate: null,
+      paymentIban: null,
       status: init.status ?? 'processing',
       reasons: [],
       confidence: null,
@@ -453,6 +454,7 @@ export function createWorld(options: WorldOptions = {}) {
         counterpartyId: counterpartyId(item.counterparty),
         reference: item.reference ?? null,
         dueDate: item.dueDate ?? null,
+        paymentIban: item.paymentIban ?? null,
         pageCount: item.showcase ? 1 : 2,
         amount: item.amount === undefined ? undefined : { value: item.amount, currency: 'EUR' },
       });

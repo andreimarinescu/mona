@@ -37,6 +37,7 @@ class Hit(Strict):
     amount: float | None
     currency: Literal["EUR", "RON"] | None
     due_date: date | None
+    payment_iban: str | None
     status: Literal["filed", "review", "unreadable"]
 
 
@@ -71,6 +72,7 @@ class DocumentResult(Carded):
     amount: float | None
     currency: Literal["EUR", "RON"] | None
     due_date: date | None
+    payment_iban: str | None
     addressee: str | None
     path: str
     filed_by: Literal["mona", "user"] | None
@@ -140,6 +142,7 @@ class DeadlineItem(Strict):
     days_left: int
     amount: float | None
     currency: Literal["EUR", "RON"] | None
+    payment_iban: str | None
     status: Literal["open"]
     reminder_on: date | None
 

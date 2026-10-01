@@ -58,6 +58,7 @@ def deadline_query(scope: Scope, *clauses: Any, statuses: Collection[str] = ("op
             Deadline.entity_id,
             Entity.key.label("entity_key"),
             Entity.display_name.label("entity_name"),
+            Document.payment_iban,
         )
         .join(Entity, Entity.id == Deadline.entity_id)
         .outerjoin(Document, Document.id == Deadline.document_id)

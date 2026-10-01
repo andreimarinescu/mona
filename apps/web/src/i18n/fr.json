@@ -242,7 +242,11 @@
         "running": "En cours…",
         "done": "Terminé"
       },
-      "interrupted": "interrompu"
+      "interrupted": "interrompu",
+      "export_table": {
+        "running": "Création du tableau…",
+        "done": "Tableau créé"
+      }
     },
     "banner": {
       "debrief": "Passons en revue les questions sur ce lot."
@@ -452,7 +456,8 @@
       },
       "mark": {
         "unreadable": "Marqués illisibles"
-      }
+      },
+      "export": "Fichiers tableaux"
     },
     "action": {
       "file_mona": "Mona a classé {{doc}}",
@@ -490,7 +495,9 @@
       "mark": {
         "unreadable_mona": "Mona a marqué {{doc}} comme illisible",
         "unreadable_user": "Vous avez marqué {{doc}} comme illisible"
-      }
+      },
+      "export_mona": "Mona a créé un fichier tableau",
+      "export_user": "Vous avez créé un fichier tableau"
     },
     "group": {
       "intake_batch_mona": "Mona a traité un lot reçu",
@@ -626,6 +633,7 @@
       "period_end": "Fin de période",
       "amount": "Montant",
       "due_date": "Échéance",
+      "payment_iban": "IBAN de paiement",
       "addressee": "Destinataire"
     },
     "picker": {
@@ -955,6 +963,19 @@
     "card": {
       "title": "Dossier pour le comptable",
       "meta": "{{entity}} · exercice {{year}}"
+    },
+    "table": {
+      "title": "Fichier tableau",
+      "meta_one": "{{format}} · {{n}} document",
+      "meta_many": "{{format}} · {{n}} de documents",
+      "meta_other": "{{format}} · {{n}} documents",
+      "download": "Télécharger le fichier {{format}}",
+      "truncated": "Seuls les 500 premiers documents sont dans le fichier.",
+      "format": {
+        "csv": "CSV",
+        "xlsx": "Excel",
+        "docx": "Word"
+      }
     }
   },
   "language": {

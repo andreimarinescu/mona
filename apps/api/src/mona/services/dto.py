@@ -107,6 +107,7 @@ def document_summary(
         fiscal_year=doc["fiscal_year"],
         amount=Money(value=doc["amount"], currency=doc["currency"]) if doc["currency"] else None,
         due_date=doc["due_date"],
+        payment_iban=doc["payment_iban"],
         status=doc["status"],
         reasons=list(doc["reasons"]),
         confidence=doc["confidence"],

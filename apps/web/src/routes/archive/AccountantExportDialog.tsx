@@ -136,7 +136,7 @@ function ExportBody({ onClose }: { onClose(): void }) {
         {ready && pack ? (
           <div className="flex flex-col gap-4" data-testid="export-ready">
             <Banner tone="success" title={t('export.ready.title')}>
-              {t('export.ready.body', { count: pack.documentCount ?? 0, n: n(pack.documentCount ?? 0), entity: pack.entityName, year: format.number(pack.fiscalYear, lang, { useGrouping: false }) })}
+              {t('export.ready.body', { count: pack.documentCount ?? 0, n: n(pack.documentCount ?? 0), entity: pack.entityName, year: format.number(pack.fiscalYear ?? fiscalYear, lang, { useGrouping: false }) })}
             </Banner>
             <div className="flex flex-wrap gap-3">
               {pack.zipUrl ? (

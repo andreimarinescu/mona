@@ -18,7 +18,7 @@ from mona.settings import get_settings
 
 FIELD_ORDER = (
     "entity", "counterparty", "issuer", "reference", "doc_type", "doc_date", "period_start",
-    "period_end", "amount", "due_date", "addressee",
+    "period_end", "amount", "due_date", "payment_iban", "addressee",
 )  # fmt: skip
 SENTENCE_ORDER = ("unreadable", "conflict", "entity", "asked", "low")
 

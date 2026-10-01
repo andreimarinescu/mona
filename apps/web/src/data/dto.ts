@@ -21,6 +21,7 @@ export type FieldKey =
   | 'period_end'
   | 'amount'
   | 'due_date'
+  | 'payment_iban'
   | 'addressee';
 export type PipelineStage = 'queued' | 'reading' | 'ocr' | 'classifying' | 'filing' | 'done' | 'failed';
 
@@ -64,6 +65,7 @@ export interface DocumentSummary {
   fiscalYear: number | null;
   amount?: Money;
   dueDate: string | null;
+  paymentIban: string | null;
   status: DocStatus;
   reasons: Reason[];
   confidence: number | null;
@@ -138,7 +140,8 @@ export type JournalAction =
   | 'rule.change'
   | 'deadline.add'
   | 'reminder.add'
-  | 'mark.unreadable';
+  | 'mark.unreadable'
+  | 'export';
 
 export type UndoState = 'undoable' | 'undone' | 'superseded' | 'not_undoable';
 
@@ -233,13 +236,18 @@ export interface ExportPreview {
 
 export interface ExportPack {
   id: string;
-  entityId: string;
-  entityName: string;
-  fiscalYear: number;
+  entityId: string | null;
+  entityName: string | null;
+  fiscalYear: number | null;
   status: 'building' | 'ready' | 'failed';
   documentCount: number | null;
   zipUrl: string | null;
   csvUrl: string | null;
+  format: 'csv' | 'xlsx' | 'docx' | null;
+  title: string | null;
+  fileName: string | null;
+  fileUrl: string | null;
+  truncated: boolean;
 }
 
 export interface ReminderResult {

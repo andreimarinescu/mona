@@ -116,6 +116,7 @@ SUMMARY = {
     "fiscalYear": 2026,
     "amount": MONEY,
     "dueDate": "2026-10-14",
+    "paymentIban": "FR7699999000010123456789012",
     "status": "filed",
     "reasons": [],
     "confidence": 93,
@@ -212,7 +213,9 @@ SAMPLES = {
                 "title": "Réponse", "body": "Madame, Monsieur", "docxUrl": None},
     dto.ExportPack: {"id": ID("exp"), "entityId": ID("ent"), "entityName": "Cabinet Marchand",
                      "fiscalYear": 2025, "status": "ready", "documentCount": 12,
-                     "zipUrl": "/api/exports/x.zip", "csvUrl": "/api/exports/x.csv"},
+                     "zipUrl": "/api/exports/x.zip", "csvUrl": "/api/exports/x.csv",
+                     "format": None, "title": None, "fileName": None, "fileUrl": None,
+                     "truncated": False},
     dto.Entity: {
         "id": ID("ent"), "key": "cabinet", "displayName": "Cabinet Marchand SELARL",
         "folderName": "Cabinet Marchand", "legalForm": "SELARL", "siren": "123456782",

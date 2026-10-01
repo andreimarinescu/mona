@@ -199,6 +199,9 @@ test.describe('document viewer', () => {
     await expect(side.locator('[data-field="amount"] q')).toHaveText('Montant à payer 1 284,00 €');
     await expect(side.locator('[data-field="amount"] q')).toHaveAttribute('lang', 'fr');
     await expect(side.locator('[data-field="due_date"]')).toContainText('15 October 2026');
+    await expect(side.locator('[data-field="payment_iban"]')).toContainText('Payment IBAN');
+    await expect(side.locator('[data-field="payment_iban"]')).toContainText('FR76 9999 9000 0101 2345 6789 012');
+    await expect(side.locator('[data-field="payment_iban"]')).toContainText('Found on the page');
     await expect(side.locator('[data-field="addressee"]')).toContainText('Not found on the page');
     await expect(side.locator('[data-field="amount"]')).toContainText('Found on the page');
     await expect(page.getByTestId('filed-section')).toContainText('Cabinet Marchand');
@@ -222,6 +225,10 @@ test.describe('document viewer', () => {
     const issuer = page.getByTestId('side-panel').locator('[data-field="issuer"]');
     await issuer.getByRole('button', { name: 'Show on page: Issuer' }).click();
     await expect(frame.locator('.textLayer .highlight').first()).toContainText('Union de recouvrement fictive');
+
+    const iban = page.getByTestId('side-panel').locator('[data-field="payment_iban"]');
+    await iban.getByRole('button', { name: 'Show on page: Payment IBAN' }).click();
+    await expect(frame.locator('.textLayer .highlight').first()).toContainText('FR76');
   });
 
   test('an unverified field falls back to its value', async ({ page }) => {

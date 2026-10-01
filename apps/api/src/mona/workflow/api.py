@@ -19,7 +19,7 @@ from mona.dto.base import Dto
 from mona.ids import is_id
 from mona.services import ServiceError
 from mona.visibility import scope_for
-from mona.workflow import deadlines, drafts, exports
+from mona.workflow import deadlines, drafts, exports, tables
 from mona.workflow.common import RestError, errors, from_service, get_ctx, not_found
 from mona.workflow.http import Page, etagged
 
@@ -348,3 +348,23 @@ async def export_zip(export_id: str) -> FileResponse:
 )
 async def export_csv(export_id: str) -> FileResponse:
     return await _file(export_id, "csv", "text/csv; charset=utf-8")
+
+
+@router.get(
+    "/exports/{export_id}/xlsx",
+    operation_id="downloadExportXlsx",
+    response_class=FileResponse,
+    responses=errors(401, 404, 423),
+)
+async def export_xlsx(export_id: str) -> FileResponse:
+    return await _file(export_id, "xlsx", tables.MEDIA["xlsx"])
+
+
+@router.get(
+    "/exports/{export_id}/docx",
+    operation_id="downloadExportDocx",
+    response_class=FileResponse,
+    responses=errors(401, 404, 423),
+)
+async def export_docx(export_id: str) -> FileResponse:
+    return await _file(export_id, "docx", DOCX)

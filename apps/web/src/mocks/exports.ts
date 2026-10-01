@@ -69,10 +69,20 @@ export function createExports(world: ExportsWorld) {
     const running = [...jobs.values()].find((j) => view(j).status === 'building' && j.pack.entityId === entityId && j.pack.fiscalYear === fiscalYear);
     if (running) return { pack: view(running), created: false };
     const { documentCount } = preview(entityId, fiscalYear);
-    const pack: ExportPack = { id: world.nextId('exp'), entityId, entityName: entity.displayName, fiscalYear, status: 'building', documentCount, zipUrl: null, csvUrl: null };
+    const pack: ExportPack = { id: world.nextId('exp'), entityId, entityName: entity.displayName, fiscalYear, status: 'building', documentCount, zipUrl: null, csvUrl: null, format: null, title: null, fileName: null, fileUrl: null, truncated: false };
     jobs.set(pack.id, { pack, readyAt: world.now() + world.buildMs, fails: control.failNext });
     control.failNext = false;
     return { pack: { ...pack }, created: true };
+  }
+
+  function table(format: 'csv' | 'xlsx' | 'docx', title: string, documentCount: number): ExportPack {
+    const id = world.nextId('exp');
+    const pack: ExportPack = {
+      id, entityId: null, entityName: null, fiscalYear: null, status: 'ready', documentCount, zipUrl: null, csvUrl: null,
+      format, title, fileName: `${title}.${format}`, fileUrl: `/api/exports/${id}/${format}`, truncated: false,
+    };
+    jobs.set(id, { pack, readyAt: world.now(), fails: false });
+    return { ...pack };
   }
 
   function get(id: string): ExportPack {
@@ -81,5 +91,5 @@ export function createExports(world: ExportsWorld) {
     return view(job);
   }
 
-  return { preview, start, get, control };
+  return { preview, start, table, get, control };
 }

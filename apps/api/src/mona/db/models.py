@@ -383,6 +383,7 @@ class Document(Base):
     amount: Mapped[Decimal | None]
     currency: Mapped[str | None]
     due_date: Mapped[date | None]
+    payment_iban: Mapped[str | None]
     addressee: Mapped[str | None]
     addressee_person_id: Mapped[str | None] = _fk("people.id", "SET NULL")
     confidence: Mapped[int | None] = _small()
@@ -670,8 +671,8 @@ class Export(Base):
     __tablename__ = "exports"
 
     id: Mapped[str] = _id("exp")
-    entity_id: Mapped[str] = _fk("entities.id", "RESTRICT")
-    fiscal_year: Mapped[int]
+    entity_id: Mapped[str | None] = _fk("entities.id", "RESTRICT")
+    fiscal_year: Mapped[int | None]
     status: Mapped[str] = mapped_column(server_default="building")
     document_count: Mapped[int | None]
     zip_path: Mapped[str | None]
@@ -679,6 +680,10 @@ class Export(Base):
     error: Mapped[str | None]
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = _updated()
+    format: Mapped[str | None]
+    title: Mapped[str | None]
+    file_path: Mapped[str | None]
+    truncated: Mapped[bool] = mapped_column(server_default=text("false"))
 
 
 # §7 Chat

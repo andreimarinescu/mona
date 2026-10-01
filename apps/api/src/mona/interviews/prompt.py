@@ -173,7 +173,7 @@ def _quotes(conn: Connection, docs: list[Doc]) -> dict[str, list[str]]:
     out: dict[str, list[tuple[int, str]]] = {}
     for r in conn.execute(
         select(ef.c.extraction_id, ef.c.key, ef.c.quote).where(
-            ef.c.extraction_id.in_(list(by_ext)), ef.c.verified
+            ef.c.extraction_id.in_(list(by_ext)), ef.c.verified, ef.c.key != "payment_iban"
         )
     ):
         rank = FIELD_ORDER.index(r.key) if r.key in FIELD_ORDER else len(FIELD_ORDER)

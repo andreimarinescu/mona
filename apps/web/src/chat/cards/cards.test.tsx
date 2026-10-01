@@ -2,7 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
-import { APPLIED_PREVIEW, DEADLINE, DOC, DRAFT, EXPORT, INTERVIEW, cardsMessage } from '../../test/chatFixtures';
+import { APPLIED_PREVIEW, DEADLINE, DOC, DRAFT, EXPORT, INTERVIEW, TABLE_EXPORT, cardsMessage } from '../../test/chatFixtures';
 import { useMockApi } from '../../test/mockApi';
 import { renderInApp } from '../../test/renderInApp';
 import { toasts } from '../../toast/store';
@@ -99,6 +99,15 @@ describe('each card renders from its C3 part (C1 DTOs)', () => {
     expect(e.getByText('12 documents from Cabinet Marchand, fiscal year 2025.')).toBeInTheDocument();
     expect(e.getByRole('link', { name: 'Download the zip' })).toHaveAttribute('href', EXPORT.zipUrl);
     expect(e.getByRole('link', { name: 'Download the CSV index' })).toHaveAttribute('href', EXPORT.csvUrl);
+  });
+
+  it('ExportCard for a table file (A31): its title, format and row count, one download', async () => {
+    await renderCards({ exportPack: TABLE_EXPORT });
+    const e = within(card('export'));
+    expect(e.getByText('Payables')).toBeInTheDocument();
+    expect(e.getByText('Excel · 7 documents')).toBeInTheDocument();
+    expect(e.getByRole('link', { name: 'Download the Excel file' })).toHaveAttribute('href', TABLE_EXPORT.fileUrl);
+    expect(e.queryByRole('link', { name: 'Download the zip' })).toBeNull();
   });
 
   it('a [n] marker becomes a Citation of the n-th document card, listed under Sources', async () => {

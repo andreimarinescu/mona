@@ -38,5 +38,6 @@ const DATE_FIELDS: FieldKey[] = ['doc_date', 'period_start', 'period_end', 'due_
 export function formatFieldValue(field: ExtractedField, lang: Lang): string {
   if (field.money) return format.money(field.money.value, field.money.currency, lang);
   if (DATE_FIELDS.includes(field.key) && /^\d{4}-\d{2}-\d{2}$/.test(field.value)) return format.date(calendarDate(field.value), lang);
+  if (field.key === 'payment_iban') return field.value.replace(/(.{4})(?=.)/g, '$1 ');
   return field.value;
 }

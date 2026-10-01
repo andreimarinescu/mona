@@ -30,6 +30,7 @@ L4_TOOLS = {
     "schedule_reminder",
     "draft_reply",
     "export_accountant_pack",
+    "export_table",
 }
 
 

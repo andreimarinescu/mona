@@ -242,7 +242,11 @@
         "running": "Lucrează…",
         "done": "Gata"
       },
-      "interrupted": "întrerupt"
+      "interrupted": "întrerupt",
+      "export_table": {
+        "running": "Pregătesc tabelul…",
+        "done": "Tabelul este gata"
+      }
     },
     "banner": {
       "debrief": "Să trecem prin întrebările despre acest lot."
@@ -452,7 +456,8 @@
       },
       "mark": {
         "unreadable": "Marcate ilizibile"
-      }
+      },
+      "export": "Fișiere tabel"
     },
     "action": {
       "file_mona": "Mona a arhivat {{doc}}",
@@ -490,7 +495,9 @@
       "mark": {
         "unreadable_mona": "Mona a marcat {{doc}} ca ilizibil",
         "unreadable_user": "Ați marcat {{doc}} ca ilizibil"
-      }
+      },
+      "export_mona": "Mona a creat un fișier tabel",
+      "export_user": "Ați creat un fișier tabel"
     },
     "group": {
       "intake_batch_mona": "Mona a procesat un lot primit",
@@ -626,6 +633,7 @@
       "period_end": "Sfârșit de perioadă",
       "amount": "Sumă",
       "due_date": "Scadență",
+      "payment_iban": "IBAN de plată",
       "addressee": "Destinatar"
     },
     "picker": {
@@ -955,6 +963,19 @@
     "card": {
       "title": "Pachet pentru contabil",
       "meta": "{{entity}} · exercițiul financiar {{year}}"
+    },
+    "table": {
+      "title": "Fișier tabel",
+      "meta_one": "{{format}} · {{n}} document",
+      "meta_few": "{{format}} · {{n}} documente",
+      "meta_other": "{{format}} · {{n}} de documente",
+      "download": "Descărcați fișierul {{format}}",
+      "truncated": "Doar primele 500 de documente sunt în fișier.",
+      "format": {
+        "csv": "CSV",
+        "xlsx": "Excel",
+        "docx": "Word"
+      }
     }
   },
   "language": {

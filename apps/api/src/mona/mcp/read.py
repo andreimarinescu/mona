@@ -52,6 +52,7 @@ from mona.mcp.filters import (
     ref,
     resolve_entity,
 )
+from mona.pipeline.payment_iban import mask
 from mona.text import norm
 
 DocIdParam = Annotated[str, Field(pattern=r"^doc_[0-9a-hjkmnp-tv-z]{26}$")]
@@ -103,6 +104,7 @@ def _summary_columns() -> list[Any]:
         Document.amount,
         Document.currency,
         Document.due_date,
+        Document.payment_iban,
         Document.status,
     ]
 
@@ -115,7 +117,11 @@ def _joined(stmt: Any) -> Any:
     )
 
 
-def _summary(r: Any) -> dict:
+def _iban(value: str | None, scope: Scope) -> str | None:
+    return mask(value) if scope.channel == "telegram" else value
+
+
+def _summary(r: Any, scope: Scope) -> dict:
     return {
         "id": r.id,
         "title": clip(r.title),
@@ -126,6 +132,7 @@ def _summary(r: Any) -> dict:
         "amount": _num(r.amount),
         "currency": r.currency,
         "due_date": _day(r.due_date),
+        "payment_iban": _iban(r.payment_iban, scope),
         "status": r.status,
     }
 
@@ -191,7 +198,7 @@ async def search_documents(
         ).all()
         carded = 1 <= total <= SEARCH_CARDS
         result = _page(
-            {"total": total, "next_cursor": None, "results": [_summary(r) for r in rows]},
+            {"total": total, "next_cursor": None, "results": [_summary(r, scope) for r in rows]},
             "results",
             offset=offset,
             total=total,
@@ -292,6 +299,7 @@ async def get_document(document_id: DocIdParam) -> dict:
             "amount": _num(d.amount),
             "currency": d.currency,
             "due_date": _day(d.due_date),
+            "payment_iban": _iban(d.payment_iban, scope),
             "addressee": clip(d.addressee),
             "path": clip(d.current_path, 400),
             "filed_by": d.filed_by,
@@ -554,6 +562,7 @@ async def list_deadlines(
                 "days_left": (r.due_date - today).days,
                 "amount": _num(r.amount),
                 "currency": r.currency,
+                "payment_iban": _iban(r.payment_iban, scope),
                 "status": r.status,
                 "reminder_on": _day(reminders.get(r.id)),
             }

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { KINDS } from '../routes/activity/kinds';
 import i18n from './index';
 
-const ACTIONS = ['file', 'move', 'rename', 'unfile', 'delete', 'undo', 'redo', 'doc.update', 'rule.create', 'rule.change', 'deadline.add', 'reminder.add', 'mark.unreadable'];
+const ACTIONS = ['file', 'move', 'rename', 'unfile', 'delete', 'undo', 'redo', 'doc.update', 'rule.create', 'rule.change', 'deadline.add', 'reminder.add', 'mark.unreadable', 'export'];
 const GROUP_KINDS = ['intake_batch', 'rule_apply', 'correction', 'undo', 'redo', 'refile'];
-const FIELDS = ['entity', 'counterparty', 'issuer', 'reference', 'doc_type', 'doc_date', 'period_start', 'period_end', 'amount', 'due_date', 'addressee'];
+const FIELDS = ['entity', 'counterparty', 'issuer', 'reference', 'doc_type', 'doc_date', 'period_start', 'period_end', 'amount', 'due_date', 'payment_iban', 'addressee'];
 
 function keys(): string[] {
   return [

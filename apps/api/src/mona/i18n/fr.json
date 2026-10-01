@@ -35,7 +35,30 @@
       "subcategory": "Sous-catégorie",
       "amount": "Montant",
       "currency": "Devise",
-      "dueDate": "Échéance"
+      "dueDate": "Échéance",
+      "paymentIban": "IBAN de paiement"
+    },
+    "table": {
+      "defaultTitle": "Documents",
+      "column": {
+        "title": "Titre",
+        "counterparty": "Émetteur",
+        "entity": "Entité",
+        "category": "Catégorie",
+        "doc_date": "Date",
+        "due_date": "Échéance",
+        "amount": "Montant",
+        "currency": "Devise",
+        "payment_iban": "IBAN de paiement",
+        "reference": "Référence",
+        "status": "Statut",
+        "path": "Dossier"
+      },
+      "status": {
+        "filed": "Classé",
+        "review": "À vérifier",
+        "unreadable": "Illisible"
+      }
     }
   },
   "chat": {

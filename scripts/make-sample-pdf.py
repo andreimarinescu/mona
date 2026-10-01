@@ -30,6 +30,7 @@ LINES = [
     ("Helvetica-Bold", 12, "Date limite de paiement : 15 octobre 2026"),
     ("Helvetica", 11, ""),
     ("Helvetica", 11, "Paiement par prélèvement ou virement, référence 2026-T3-EXEMPLE."),
+    ("Helvetica", 11, "IBAN : FR76 9999 9000 0101 2345 6789 012"),
     ("Helvetica", 11, "En l’absence de paiement à l’échéance, des majorations de retard s’appliquent."),
 ]
 

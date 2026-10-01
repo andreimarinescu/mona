@@ -35,7 +35,30 @@
       "subcategory": "Subcategory",
       "amount": "Amount",
       "currency": "Currency",
-      "dueDate": "Due date"
+      "dueDate": "Due date",
+      "paymentIban": "Payment IBAN"
+    },
+    "table": {
+      "defaultTitle": "Documents",
+      "column": {
+        "title": "Title",
+        "counterparty": "Counterparty",
+        "entity": "Entity",
+        "category": "Category",
+        "doc_date": "Date",
+        "due_date": "Due date",
+        "amount": "Amount",
+        "currency": "Currency",
+        "payment_iban": "Payment IBAN",
+        "reference": "Reference",
+        "status": "Status",
+        "path": "Folder"
+      },
+      "status": {
+        "filed": "Filed",
+        "review": "In review",
+        "unreadable": "Unreadable"
+      }
     }
   },
   "chat": {

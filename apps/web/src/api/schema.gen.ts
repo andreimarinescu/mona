@@ -1244,6 +1244,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/exports/{export_id}/xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Xlsx */
+        get: operations["downloadExportXlsx"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exports/{export_id}/docx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Docx */
+        get: operations["downloadExportDocx"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1784,6 +1818,8 @@ export interface components {
             amount?: components["schemas"]["Money"] | null;
             /** Duedate */
             dueDate: string | null;
+            /** Paymentiban */
+            paymentIban: string | null;
             /**
              * Status
              * @enum {string}
@@ -1891,6 +1927,8 @@ export interface components {
             amount?: components["schemas"]["Money"] | null;
             /** Duedate */
             dueDate: string | null;
+            /** Paymentiban */
+            paymentIban: string | null;
             /**
              * Status
              * @enum {string}
@@ -2187,7 +2225,7 @@ export interface components {
             /** Documenttitle */
             documentTitle: string;
             /** Field */
-            field: ("entity" | "counterparty" | "issuer" | "reference" | "doc_type" | "doc_date" | "period_start" | "period_end" | "amount" | "due_date" | "addressee") | null;
+            field: ("entity" | "counterparty" | "issuer" | "reference" | "doc_type" | "doc_date" | "period_start" | "period_end" | "amount" | "due_date" | "addressee" | "payment_iban") | null;
             /** Page */
             page: number;
             /** Quote */
@@ -2218,11 +2256,11 @@ export interface components {
             /** Id */
             id: string;
             /** Entityid */
-            entityId: string;
+            entityId: string | null;
             /** Entityname */
-            entityName: string;
+            entityName: string | null;
             /** Fiscalyear */
-            fiscalYear: number;
+            fiscalYear: number | null;
             /**
              * Status
              * @enum {string}
@@ -2234,6 +2272,16 @@ export interface components {
             zipUrl: string | null;
             /** Csvurl */
             csvUrl: string | null;
+            /** Format */
+            format: ("csv" | "xlsx" | "docx") | null;
+            /** Title */
+            title: string | null;
+            /** Filename */
+            fileName: string | null;
+            /** Fileurl */
+            fileUrl: string | null;
+            /** Truncated */
+            truncated: boolean;
         };
         /** ExportPreview */
         ExportPreview: {
@@ -2256,7 +2304,7 @@ export interface components {
              * Key
              * @enum {string}
              */
-            key: "entity" | "counterparty" | "issuer" | "reference" | "doc_type" | "doc_date" | "period_start" | "period_end" | "amount" | "due_date" | "addressee";
+            key: "entity" | "counterparty" | "issuer" | "reference" | "doc_type" | "doc_date" | "period_start" | "period_end" | "amount" | "due_date" | "addressee" | "payment_iban";
             /** Value */
             value: string;
             money?: components["schemas"]["Money"] | null;
@@ -2607,7 +2655,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "file" | "move" | "rename" | "unfile" | "delete" | "undo" | "redo" | "doc.update" | "rule.create" | "rule.change" | "deadline.add" | "reminder.add" | "mark.unreadable";
+            action: "file" | "move" | "rename" | "unfile" | "delete" | "undo" | "redo" | "doc.update" | "rule.create" | "rule.change" | "deadline.add" | "reminder.add" | "mark.unreadable" | "export";
             /** Documentids */
             documentIds: string[];
             /** Subjectid */
@@ -9048,6 +9096,100 @@ export interface operations {
         };
     };
     downloadExportCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    downloadExportXlsx: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    downloadExportDocx: {
         parameters: {
             query?: never;
             header?: never;

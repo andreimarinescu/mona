@@ -35,6 +35,7 @@ from mona.dto.enums import (
     DocStatus,
     DraftStatus,
     DsCategory,
+    ExportFormat,
     ExportStatus,
     FieldKey,
     GroupKind,
@@ -317,13 +318,18 @@ class Draft(Dto):
 
 class ExportPack(Dto):
     id: ExportId
-    entity_id: EntityId
-    entity_name: str
-    fiscal_year: int
+    entity_id: EntityId | None
+    entity_name: str | None
+    fiscal_year: int | None
     status: ExportStatus
     document_count: int | None
     zip_url: str | None
     csv_url: str | None
+    format: ExportFormat | None
+    title: str | None
+    file_name: str | None
+    file_url: str | None
+    truncated: bool
 
 
 # §11.3 (after the types it embeds)
@@ -358,6 +364,7 @@ class DocumentSummary(Dto):
     fiscal_year: int | None
     amount: Money | None = None
     due_date: Day | None
+    payment_iban: str | None
     status: DocStatus
     reasons: list[Reason]
     confidence: Percent | None

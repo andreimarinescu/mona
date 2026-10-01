@@ -9,6 +9,7 @@ from sqlalchemy import Connection, func, insert, select, update
 from mona.fileops.ops import keep_review
 from mona.ids import new_id
 from mona.pipeline import cache
+from mona.pipeline import payment_iban as pay
 from mona.pipeline import prompt as prompts
 from mona.pipeline import schema as output_schema
 from mona.pipeline.evidence import Checked, check, field_confidence
@@ -54,6 +55,7 @@ class Decision:
     from_cache: bool = False
     checks: dict[str, Checked] = field(default_factory=dict)
     find_queries: dict[str, str | None] = field(default_factory=dict)
+    payment_iban: pay.PaymentIban | None = None
 
 
 def request_schema(snap: Snapshot) -> dict[str, Any]:
@@ -285,6 +287,9 @@ def decide(
         path=placement.path if placement else None,
         checks=checks,
         find_queries=finds,
+        payment_iban=pay.find(
+            all_pages, {a.iban_hash for a in snap.world.accounts.values()}, snap.world.iban_salt
+        ),
     )
     return decision, work
 
@@ -354,6 +359,8 @@ def _persist(
                 confidence=field_confidence(w.model_percent, chk.verified),
             )
         )  # fmt: skip
+    if d.payment_iban is not None:
+        conn.execute(insert(ef).values(**pay.field_row(ext_id, d.payment_iban)))
     ent = snap.entities[d.entity]["id"] if d.entity else None
     unit = snap.sub_units[(d.entity, d.unit)]["id"] if d.entity and d.unit else None
     pl = w.placement
@@ -381,6 +388,7 @@ def _persist(
         "amount": v["amount"] if v["currency"] in MONEY else None,
         "currency": v["currency"] if v["currency"] in MONEY else None,
         "title": title,
+        "payment_iban": d.payment_iban.value if d.payment_iban else None,
         "addressee_person_id": {k: i for i, k in snap.people_keys.items()}.get(w.person),
         "counterparty_id": w.counterparty_id, "entity_id": ent, "sub_unit_id": unit,
         "category_id": d.category, "subcategory_key": d.subcategory,

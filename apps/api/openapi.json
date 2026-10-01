@@ -7687,6 +7687,116 @@
           }
         }
       }
+    },
+    "/api/exports/{export_id}/xlsx": {
+      "get": {
+        "tags": [
+          "workflow"
+        ],
+        "summary": "Export Xlsx",
+        "operationId": "downloadExportXlsx",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Export Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "423": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Locked"
+          }
+        }
+      }
+    },
+    "/api/exports/{export_id}/docx": {
+      "get": {
+        "tags": [
+          "workflow"
+        ],
+        "summary": "Export Docx",
+        "operationId": "downloadExportDocx",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Export Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "423": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Locked"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9513,6 +9623,17 @@
             ],
             "title": "Duedate"
           },
+          "paymentIban": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paymentiban"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -9725,6 +9846,7 @@
           "periodEnd",
           "fiscalYear",
           "dueDate",
+          "paymentIban",
           "status",
           "reasons",
           "confidence",
@@ -9984,6 +10106,17 @@
             ],
             "title": "Duedate"
           },
+          "paymentIban": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paymentiban"
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -10165,6 +10298,7 @@
           "periodEnd",
           "fiscalYear",
           "dueDate",
+          "paymentIban",
           "status",
           "reasons",
           "confidence",
@@ -11135,7 +11269,8 @@
                   "period_end",
                   "amount",
                   "due_date",
-                  "addressee"
+                  "addressee",
+                  "payment_iban"
                 ]
               },
               {
@@ -11235,15 +11370,36 @@
             "title": "Id"
           },
           "entityId": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Entityid"
           },
           "entityName": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Entityname"
           },
           "fiscalYear": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Fiscalyear"
           },
           "status": {
@@ -11287,6 +11443,59 @@
               }
             ],
             "title": "Csvurl"
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "csv",
+                  "xlsx",
+                  "docx"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "fileName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "fileUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fileurl"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
           }
         },
         "additionalProperties": false,
@@ -11299,7 +11508,12 @@
           "status",
           "documentCount",
           "zipUrl",
-          "csvUrl"
+          "csvUrl",
+          "format",
+          "title",
+          "fileName",
+          "fileUrl",
+          "truncated"
         ],
         "title": "ExportPack"
       },
@@ -11363,7 +11577,8 @@
               "period_end",
               "amount",
               "due_date",
-              "addressee"
+              "addressee",
+              "payment_iban"
             ],
             "title": "Key"
           },
@@ -12541,7 +12756,8 @@
               "rule.change",
               "deadline.add",
               "reminder.add",
-              "mark.unreadable"
+              "mark.unreadable",
+              "export"
             ],
             "title": "Action"
           },

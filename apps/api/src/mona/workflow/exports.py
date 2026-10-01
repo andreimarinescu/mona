@@ -32,6 +32,7 @@ COLUMNS = (
     "amount",
     "currency",
     "dueDate",
+    "paymentIban",
 )
 
 
@@ -232,7 +233,7 @@ def build_export(ctx: Ctx, export_id: str) -> str:
 
 
 def _csv(docs: list[dict[str, Any]], lang: str) -> bytes:
-    """C9 §3.3: titles, counterparties and references only; no IBAN, quote or page text."""
+    """C9 §3.3 and A30: no quote or page text; the only IBAN is the payee's `payment_iban`."""
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator="\r\n")
     w.writerow([t(f"export.csv.{c}", lang) for c in COLUMNS])
@@ -251,6 +252,7 @@ def _csv(docs: list[dict[str, Any]], lang: str) -> bytes:
                     f"{doc['amount']:.2f}" if doc["amount"] is not None else None,
                     doc["currency"],
                     doc["due_date"].isoformat() if doc["due_date"] else None,
+                    doc["payment_iban"],
                 )
             ]
         )
@@ -258,13 +260,19 @@ def _csv(docs: list[dict[str, Any]], lang: str) -> bytes:
 
 
 def file_path(ctx: Ctx, export_id: str, kind: str) -> tuple[Path, str]:
-    """The ready pack's zip or CSV; `not_found` (hint `not_ready`) before that."""
+    """The ready pack's zip or CSV, or a table's file (A31) by its format; `not_found` (hint
+    `not_ready`) before that."""
     x = T["exports"]
     with ctx.engine.connect() as conn:
         exp = conn.execute(select(x).where(x.c.id == export_id)).mappings().first()
     if exp is None:
         raise ServiceError("not_found", "No export with that id.")
-    rel = exp["zip_path" if kind == "zip" else "csv_path"]
+    kinds = {"zip": "zip_path", "csv": "csv_path"}
+    if exp["format"] is not None:
+        kinds = {exp["format"]: "file_path"}
+    if kind not in kinds:
+        raise ServiceError("not_found", "This export has no file of that kind.")
+    rel = exp[kinds[kind]]
     if exp["status"] != "ready" or not rel:
         raise ServiceError("not_found", "The pack isn't ready.", hint="not_ready")
     path = exports_root(ctx) / rel

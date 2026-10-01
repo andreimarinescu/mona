@@ -125,6 +125,50 @@ def _a24_sha256() -> list[str]:
     ]
 
 
+def _section(tag: str) -> str:
+    return AMENDMENTS.read_text().split(f"## {tag} ", 1)[1].split("\n## ", 1)[0]
+
+
+FIELD_KEYS = (
+    "'entity','counterparty','issuer','reference','doc_type','doc_date',"
+    "'period_start','period_end','amount','due_date','addressee'"
+)
+JOURNAL_ACTIONS = (
+    "'file','move','rename','unfile','delete','undo','redo',"
+    "'doc.update','rule.create','rule.change','deadline.add','reminder.add','mark.unreadable'"
+)
+
+
+def _a30_payment_iban() -> list[str]:
+    """Amendment A30's `payment_iban` column and evidence row, as migration 0008 makes them."""
+    section = _section("A30")
+    assert "`DocumentSummary.paymentIban`" in section and "`verified: true`" in section
+    return [
+        "ALTER TABLE documents ADD COLUMN payment_iban text NULL"
+        " CHECK (payment_iban ~ '^[A-Z]{2}[0-9]{2}[0-9A-Z]{11,30}$')",
+        "ALTER TABLE extraction_fields DROP CONSTRAINT extraction_fields_key_check,"
+        f" ADD CONSTRAINT extraction_fields_key_check CHECK (key IN ({FIELD_KEYS},'payment_iban'))",
+    ]
+
+
+def _a31_exports() -> list[str]:
+    """Amendment A31's table exports and their activity entry, as migration 0009 makes them."""
+    section = _section("A31")
+    assert "`csv` | `xlsx` | `docx`" in section and "an activity entry" in section
+    return [
+        "ALTER TABLE exports ALTER COLUMN entity_id DROP NOT NULL,"
+        " ALTER COLUMN fiscal_year DROP NOT NULL,"
+        " ADD COLUMN format text NULL CHECK (format IN ('csv','xlsx','docx')),"
+        " ADD COLUMN title text NULL,"
+        " ADD COLUMN file_path text NULL,"
+        " ADD COLUMN truncated boolean NOT NULL DEFAULT false,"
+        " ADD CONSTRAINT exports_pack_scope_check"
+        " CHECK (format IS NOT NULL OR (entity_id IS NOT NULL AND fiscal_year IS NOT NULL))",
+        "ALTER TABLE file_ops DROP CONSTRAINT file_ops_action_check,"
+        f" ADD CONSTRAINT file_ops_action_check CHECK (action IN ({JOURNAL_ACTIONS},'export'))",
+    ]
+
+
 def contract_ddl() -> list[str]:
     creates, fks, others = [], [], []
     auth = [b for b in sql_blocks(C2.read_text()) if b.lstrip().startswith("auth_sessions")]
@@ -138,4 +182,7 @@ def contract_ddl() -> list[str]:
                 others.append(" ".join(re.sub(r"--[^\n]*", "", src).split()))
     search = [s for s in others if "TEXT SEARCH" in s]
     indexes = [s for s in others if s not in search]
-    return search + creates + fks + indexes + [_a9_column(), _a18_defaults(), *_a24_sha256()]
+    return (
+        search + creates + fks + indexes
+        + [_a9_column(), _a18_defaults(), *_a24_sha256(), *_a30_payment_iban(), *_a31_exports()]
+    )  # fmt: skip

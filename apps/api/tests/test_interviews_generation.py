@@ -296,6 +296,25 @@ def test_evidence_is_verified_on_its_page_and_kept_only_for_affected_documents(c
     assert ev[0]["find_query"] == "Assuré : M. Paul Marchand"
 
 
+def test_the_payment_iban_quote_never_reaches_the_debrief_prompt():
+    w = World()
+    doc = w.doc("Dentalis facture", batch=w.batch(), counterparty="agipi")
+    iban = "FR76 9999 9000 0101 2345 6789 012"
+    with w.engine.begin() as conn:
+        ext = conn.execute(
+            text("SELECT extraction_id FROM documents WHERE id = :d"), {"d": doc}
+        ).scalar_one()
+        conn.execute(
+            T["extraction_fields"].insert().values(
+                extraction_id=ext, key="payment_iban", value=iban.replace(" ", ""), quote=iban,
+                page=1, stated_page=1, verified=True, confidence=100,
+            )
+        )  # fmt: skip
+        inp = build_input(conn, [doc], "en", w.ctx.textcache, w.clock())
+    [entry] = inp.body["documents"]
+    assert entry["quotes"] == ["agipi"]
+
+
 def test_evidence_find_query_is_the_pipelines_and_never_crosses_a_column():
     w = World()
     page = (

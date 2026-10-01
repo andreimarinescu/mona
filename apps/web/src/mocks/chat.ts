@@ -115,6 +115,16 @@ export function createChat(world: World, options: { chunkDelayMs?: number; draft
       const cards = batch.debrief ? [{ type: 'data' as const, kind: 'interview' as const, id: batch.debrief.interviewId }] : [];
       return { reasoning: ['The person opened the debrief for this batch. I will show the existing questions.'], tools: [{ name: 'start_interview', cards }], text: `${noted}Let us go through your questions.` };
     }
+    const table = /\b(word|docx)\b/.test(m) ? 'docx' : /\b(excel|xlsx)\b/.test(m) ? 'xlsx' : /\b(table|csv|tableau)\b/.test(m) ? 'csv' : null;
+    if (table) {
+      const payables = [...world.docs.values()].filter((d) => !d.deleted && d.summary.dueDate);
+      const pack = world.exports.table(table, 'Payables', payables.length);
+      return {
+        reasoning: ['The person wants the payables as a table file. I pick the documents with a due date and the columns asked for.'],
+        tools: [{ name: 'export_table', cards: [{ type: 'data', kind: 'export', id: pack.id }] }],
+        text: lang === 'fr' ? `${noted}Voici le fichier avec ${payables.length} documents.` : `${noted}Here is the file with ${payables.length} documents.`,
+      };
+    }
     if (/draft|brouillon|rédige|réponse/.test(m)) {
       const doc = [...world.docs.values()].find((d) => d.summary.dueDate && !d.deleted)!;
       const { id } = startDraft(doc.summary.id, lang);

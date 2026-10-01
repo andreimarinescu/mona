@@ -15,4 +15,5 @@ export const KINDS = [
   'deadline.add',
   'reminder.add',
   'mark.unreadable',
+  'export',
 ] as const;

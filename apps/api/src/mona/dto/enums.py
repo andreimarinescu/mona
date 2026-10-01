@@ -11,7 +11,7 @@ Actor = Literal["mona", "user"]
 Via = Literal["ui", "chat", "telegram", "pipeline"]
 FieldKey = Literal[
     "entity", "counterparty", "issuer", "reference", "doc_type", "doc_date", "period_start",
-    "period_end", "amount", "due_date", "addressee",
+    "period_end", "amount", "due_date", "addressee", "payment_iban",
 ]  # fmt: skip
 DsCategory = Literal[
     "bank", "invoice", "tax", "insurance", "payroll", "training", "travel", "personal"
@@ -21,7 +21,7 @@ DocLocation = Literal["inbox", "archive"]
 PathLocation = Literal["inbox", "archive", "trash"]
 JournalAction = Literal[
     "file", "move", "rename", "unfile", "delete", "undo", "redo", "doc.update", "rule.create",
-    "rule.change", "deadline.add", "reminder.add", "mark.unreadable",
+    "rule.change", "deadline.add", "reminder.add", "mark.unreadable", "export",
 ]  # fmt: skip
 UndoState = Literal["undoable", "undone", "superseded", "not_undoable"]
 GroupUndoState = Literal["undoable", "partial", "undone", "not_undoable"]
@@ -34,5 +34,6 @@ InterviewStatus = Literal["generating", "ready", "done", "failed", "cancelled"]
 QuestionStatus = Literal["open", "answered", "skipped"]
 DraftStatus = Literal["generating", "ready", "failed"]
 ExportStatus = Literal["building", "ready", "failed"]
+ExportFormat = Literal["csv", "xlsx", "docx"]
 Visibility = Literal["practice", "personal"]
 DocSource = Literal["drop", "telegram"]

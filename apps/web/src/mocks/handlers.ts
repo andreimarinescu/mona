@@ -225,6 +225,17 @@ export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDe
       }
       return new HttpResponse('date,counterparty,title,reference\n', { headers: { 'content-type': 'text/csv', 'content-disposition': `attachment; filename="export-${params.id}.csv"` } });
     }),
+    http.get('/api/exports/:id/:format', ({ params }) => {
+      try {
+        const pack = world.exports.get(String(params.id));
+        if (pack.format !== params.format) throw new ExportError(404, 'not_found', 'No file of that kind.');
+        return new HttpResponse(new Uint8Array([0x50, 0x4b, 0x05, 0x06, ...new Array(18).fill(0)]), {
+          headers: { 'content-type': 'application/octet-stream', 'content-disposition': `attachment; filename="${pack.fileName}"` },
+        });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
 
     http.post('/api/reminders', async ({ request }) => {
       const body = (await request.json()) as Parameters<World['createReminder']>[0];

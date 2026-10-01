@@ -271,6 +271,7 @@ export interface ArchiveSeedDoc {
   date: string;
   amount?: number;
   dueDate?: string;
+  paymentIban?: string;
   rule?: string;
   filedBy?: 'mona' | 'user';
   showcase?: boolean;
@@ -287,7 +288,7 @@ export const ARCHIVE_SEED: ArchiveSeedDoc[] = [
   { ...URSSAF, title: 'Annual statement 2025', fileName: '2026-02-10_URSSAF_Attestation-2025.pdf', date: '2026-02-10', amount: 4788 },
   { ...URSSAF, title: 'Call for contributions, Q1 2026', fileName: '2026-03-21_URSSAF_Appel_T1.pdf', date: '2026-03-21', amount: 1197 },
   { ...URSSAF, title: 'Call for contributions, Q2 2026', fileName: '2026-06-20_URSSAF_Appel_T2.pdf', date: '2026-06-20', amount: 1284 },
-  { ...URSSAF, title: 'Call for contributions, Q3 2026', fileName: '2026-09-22_URSSAF_Appel_T3.pdf', date: '2026-09-22', amount: 1284, dueDate: '2026-10-15', reference: '2026-T3-EXEMPLE', showcase: true },
+  { ...URSSAF, title: 'Call for contributions, Q3 2026', fileName: '2026-09-22_URSSAF_Appel_T3.pdf', date: '2026-09-22', amount: 1284, dueDate: '2026-10-15', paymentIban: 'FR7699999000010123456789012', reference: '2026-T3-EXEMPLE', showcase: true },
   { title: 'CFE advance, May 2025', fileName: '2025-05-15_SIE-Laval_CFE_Acompte.pdf', counterparty: 'SIE Laval', docType: 'tax notice', entityId: CABINET.id, categoryId: 'tax', subcategoryKey: null, date: '2025-05-15', amount: 306, rule: 'SIE Laval' },
   { title: 'CFE balance, December 2025', fileName: '2025-12-15_SIE-Laval_CFE_Solde.pdf', counterparty: 'SIE Laval', docType: 'tax notice', entityId: CABINET.id, categoryId: 'tax', subcategoryKey: null, date: '2025-12-15', amount: 306, rule: 'SIE Laval' },
   { title: 'Mutuelle Horizon, annual premium', fileName: '2026-01-12_MutuelleHorizon_Cotisation.pdf', counterparty: 'Mutuelle Horizon', docType: 'premium notice', entityId: CABINET.id, categoryId: 'insurance', subcategoryKey: null, date: '2026-01-12', amount: 842 },
@@ -319,6 +320,7 @@ export const SHOWCASE_FIELDS: SeedField[] = [
   { key: 'period_end', value: '2026-09-30', page: 1, quote: 'au 30 septembre 2026', verified: true, findQuery: '30 septembre 2026', confidence: 94 },
   { key: 'amount', value: '1284.00', money: { value: 1284, currency: 'EUR' }, page: 1, quote: 'Montant à payer 1 284,00 €', verified: true, findQuery: '1 284,00', confidence: 98 },
   { key: 'due_date', value: '2026-10-15', page: 1, quote: 'Date limite de paiement : 15 octobre 2026', verified: true, findQuery: 'Date limite de paiement : 15 octobre 2026', confidence: 96 },
+  { key: 'payment_iban', value: 'FR7699999000010123456789012', page: 1, quote: 'FR76 9999 9000 0101 2345 6789 012', verified: true, findQuery: 'FR76 9999 9000 0101 2345 6789 012', confidence: 100 },
   { key: 'addressee', value: 'Cabinet dentaire Exemple', page: 1, quote: 'Cabinet dentaire Exemple SELARL', verified: false, findQuery: null, confidence: 58 },
 ];
 

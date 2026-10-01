@@ -56,4 +56,8 @@ describe('field values', () => {
     expect(formatFieldValue(field(), 'fr')).toBe('1 284,00 €');
     expect(formatFieldValue({ ...field(), key: 'due_date', money: undefined, value: '2026-10-02' }, 'en')).toBe('2 October 2026');
   });
+
+  it('groups a payment IBAN by four', () => {
+    expect(formatFieldValue({ ...field(), key: 'payment_iban', money: undefined, value: 'FR7699999000010123456789012' }, 'en')).toBe('FR76 9999 9000 0101 2345 6789 012');
+  });
 });

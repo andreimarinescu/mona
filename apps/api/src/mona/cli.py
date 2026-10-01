@@ -246,6 +246,18 @@ def pipeline_evidence(
     typer.echo(f"{len(cases)} cases → {out}")
 
 
+@pipeline_app.command("backfill-iban")
+def pipeline_backfill_iban() -> None:
+    """Fill `payment_iban` (A30) for documents classified before it existed; idempotent."""
+    from mona.pipeline import runtime
+    from mona.pipeline.payment_iban import backfill
+
+    out = backfill(runtime.get_context())
+    typer.echo(
+        f"{out.checked} documents checked, {out.changed} updated, {out.no_text} without text"
+    )
+
+
 ops_app = typer.Typer(
     no_args_is_help=True, help="Snapshot steps run by the host wrapper deploy/bin/mona (C9 §6.3)."
 )

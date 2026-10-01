@@ -105,6 +105,7 @@ async def document_summaries(
             fiscal_year=r.fiscal_year,
             amount=_money(r.amount, r.currency),
             due_date=r.due_date,
+            payment_iban=r.payment_iban,
             status=r.status,
             reasons=list(r.reasons),
             confidence=r.confidence,
@@ -306,13 +307,14 @@ async def export(conn: AsyncConnection, export_id: str) -> dto.ExportPack | None
     e = (
         await conn.execute(
             select(Export, Entity.display_name)
-            .join(Entity, Entity.id == Export.entity_id)
+            .outerjoin(Entity, Entity.id == Export.entity_id)
             .where(Export.id == export_id)
         )
     ).first()
     if e is None:
         return None
     ready = e.status == "ready"
+    table = ready and e.format is not None and e.file_path is not None
     return dto.ExportPack(
         id=e.id,
         entity_id=e.entity_id,
@@ -322,6 +324,11 @@ async def export(conn: AsyncConnection, export_id: str) -> dto.ExportPack | None
         document_count=e.document_count,
         zip_url=f"/api/exports/{e.id}/zip" if ready and e.zip_path else None,
         csv_url=f"/api/exports/{e.id}/csv" if ready and e.csv_path else None,
+        format=e.format,
+        title=e.title,
+        file_name=e.file_path.rsplit("/", 1)[-1] if e.file_path else None,
+        file_url=f"/api/exports/{e.id}/{e.format}" if table else None,
+        truncated=e.truncated,
     )
 
 
