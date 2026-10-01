@@ -153,3 +153,45 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - Any other tool whose result renders as a card and gives the model only ids gets the same treatment: the few fields it needs to mention the card accurately, within §2.3's cap.
 - **Why:** walkthrough 1 #2/#9. The tool returned only a count, so Qwen 3.6 invented three questions about a document that doesn't exist, and kept referring to them in the next turn. D15: ground the model in tool output instead of trusting it.
 - **Lanes:** L2 (FIX-4).
+
+## A22 · 2026-10-01 · C5 §1.3: the model-output cache records the page budget
+
+- **Change:** the model-output file also records `"pages_sent": n`, the page budget of the prompt the stored answer came from; absent means the full budget. A cache hit rebuilds the prompt with `max_pages = pages_sent` before evidence verification, so the result is the same live or cached.
+- **Why:** FIX-4, item 6b. A document whose answer came from the A14 one-page retry scored 95 live and 75 from the cache: the cached answer was verified against the 3-page prompt, and one quote became ambiguous (−20).
+- **Lanes:** L1 (FIX-6).
+
+## A23 · 2026-10-01 · C2 §8: Delete with a mismatched file name
+
+- **Change:** `POST /api/documents/{id}/delete` whose `fileName` doesn't equal the document's current file name returns **422 `invalid_value`** with `details: {field: "fileName"}`, not 409 `stale`. `stale` stays for a document that changed under the operation.
+- **Why:** walkthrough 1 #10. The `stale` message ("the document changed meanwhile") hid that the typed name was wrong.
+- **Lanes:** L2 (FIX-6).
+
+## A24 · 2026-10-01 · C1 §4 `documents.sha256`, C1 §4.1 intake: a deleted document doesn't block a re-upload
+
+- **Change:**
+  - `sha256` is unique among documents with `deleted_at IS NULL` (a partial unique index, migration 0007), not across all rows.
+  - Intake dedupe (C7 §8.4) compares only against those.
+  - A re-upload of a deleted file's bytes becomes a fresh document with the new upload's settings (e.g. visitor). The deleted row and its journal stay as they are.
+  - Undo of the old delete is refused with 409 `conflict` (`details.reason: "duplicate"`) while a live document with the same sha256 exists.
+- **Why:** Andrei's ruling (D17, walkthrough 1 #10). A mis-tagged upload, deleted, couldn't be uploaded again.
+- **Lanes:** L1, L2 (FIX-6).
+
+## A25 · 2026-10-01 · C6 §4.5–§4.6: every candidate cluster gets a question
+
+- **Change:** a new step after §4.5. While there are fewer than 7 kept questions, each input cluster (§4.2) none of whose documents a kept question affects, taken largest first, gets:
+  1. **A targeted pass 2:**
+     - the §4.4 system message unchanged; the user message carries the §4.2 input reduced to that cluster's documents (registry unchanged) and pass 1's analysis;
+     - the schema with `questions: array[1..1]`; thinking off; timeout 30 s; no retry;
+     - §4.5 runs on its output, and a surviving question is kept.
+  2. **Otherwise, a deterministic question** built from the cluster's own classifications, with no model call:
+     - `text` = C8 key `interview.question.where` ("Where should the documents from {counterparty} go?", in the interview's language);
+     - `affected` = the cluster's documents; `evidence` = the cluster's verified counterparty quotes (at most 3);
+     - option `a` = `always` to the destination Mona proposed (the entity and category of the cluster's most common current classification, with the counterparty condition prepended as §4.5 step 2 does), marked `suggested`, `suggestion_confidence` = that classification's confidence;
+     - option `b` = "Ask me each time" (§4.5 step 4).
+     - If the cluster has no proposed entity or category, only the "It depends; let me explain" path applies, and the cluster stays uncovered.
+
+  At most 3 targeted calls per interview; any later uncovered clusters go straight to step 2. The questions are persisted with the rest in `impact` order (§4.6). The §4.5 sentence "Candidates left uncovered by every question are not an error" now holds only beyond the 7-question cap.
+- **Why:**
+  - Walkthrough 2 preparation: in 3 of 3 live debriefs on Qwen 3.6, pass 2 asked nothing about the three AGIPI documents queued as first-seen (A17). They would have stayed in review with no question.
+  - D15: a check guarantees coverage instead of trusting the model. D16: a product fix, not a stage fix.
+- **Lanes:** L4 (FIX-7).

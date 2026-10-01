@@ -2,6 +2,16 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D17 · 2026-10-01 · A re-upload after a delete is a new document; FIX-4 follow-ups
+
+- **Re-upload:** a deleted document no longer blocks intake. Re-uploading its bytes makes a fresh document with that upload's settings (A24). Andrei's ruling: it's what a person expects after deleting a mis-tagged upload.
+- **Orchestrator calls (defects, no product change):**
+  - A22 (the model-output cache records the page budget);
+  - A23 (Delete with a mismatched name is `invalid_value`);
+  - the Review page offers no "every document like this" for a visitor document (Visitors can't be a rule action, C1 §2.1/A2).
+- **Later:** switching an already-uploaded document to visitor. The upload tick covers the demo.
+- **Debrief coverage (orchestrator, under D15/D16):** every candidate cluster gets a question (A25), through a targeted pass 2 and then a deterministic question from Mona's own proposal. On Qwen 3.6 the debrief skipped AGIPI in 3 of 3 live runs.
+
 ## D16 · 2026-10-01 · Walkthrough 1 rulings; no showcase-only code
 
 - **Visitor uploads** never queue on confidence (A20).
