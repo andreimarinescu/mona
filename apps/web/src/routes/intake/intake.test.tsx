@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BatchCounts, BatchDetail, BatchSummary, DocumentSummary } from '../../data/dto';
 import i18n from '../../i18n';
 import { AppStateProvider } from '../../state/AppStateProvider';
+import { renderRoute } from '../../test/renderRoute';
 import { useAppState } from '../../state/context';
 import { BatchQuestionsBanner } from './BatchQuestionsBanner';
 import { PipelineRow } from './PipelineRow';
@@ -90,12 +91,13 @@ describe('PipelineRow per-file results (C2 §5.1)', () => {
     ...over,
   });
   const renderRow = (i: BatchDetail['items'][number], onRestore = vi.fn()) =>
-    render(
+    renderRoute(
       <table>
         <tbody>
           <PipelineRow item={i} onRestore={onRestore} busy={false} />
         </tbody>
       </table>,
+      '/intake',
     );
 
   it.each([
@@ -103,32 +105,44 @@ describe('PipelineRow per-file results (C2 §5.1)', () => {
     ['too_large', 'Too large: files can be up to 25 MB.'],
     ['empty', 'The file is empty.'],
     ['unreadable_file', "The file can't be opened. Send it again or take a clearer photo."],
-  ] as const)('a rejected file says why (%s)', (rejectReason, text) => {
-    renderRow(item({ outcome: 'rejected', rejectReason }));
+  ] as const)('a rejected file says why (%s)', async (rejectReason, text) => {
+    await renderRow(item({ outcome: 'rejected', rejectReason }));
     expect(screen.getByText('Not added')).toBeInTheDocument();
     expect(screen.getAllByText(text).length).toBeGreaterThan(0);
   });
 
-  it('a duplicate says it is one already had, and names the earlier document', () => {
-    renderRow(item({ outcome: 'duplicate', documentId: 'doc_old', document: docAt('done', 'filed', { title: 'Energie Verte bill' }) }));
+  it('a duplicate says it is one already had, and names the earlier document', async () => {
+    await renderRow(item({ outcome: 'duplicate', documentId: 'doc_old', document: docAt('done', 'filed', { title: 'Energie Verte bill' }) }));
     expect(screen.getByText('Already had')).toBeInTheDocument();
     expect(screen.getAllByText('Same as “Energie Verte bill”').length).toBeGreaterThan(0);
   });
 
   it('a duplicate that is in the trash offers Restore, which undoes the delete entry', async () => {
     const onRestore = vi.fn();
-    renderRow(item({ outcome: 'duplicate', deleted: true, restoreJournalId: 4200, documentId: 'doc_old' }), onRestore);
+    await renderRow(item({ outcome: 'duplicate', deleted: true, restoreJournalId: 4200, documentId: 'doc_old' }), onRestore);
     await userEvent.click(screen.getAllByRole('button', { name: 'Restore' })[0]!);
     expect(onRestore).toHaveBeenCalledWith(4200);
   });
 
-  it('shows "Filed by Mona" only inside the 24 h badge window', () => {
-    const { unmount } = renderRow(item({ documentId: 'doc_a', document: docAt('done', 'filed', { badgeUntil: '2026-10-02T06:00:00Z', path: ['Cabinet'] }) }));
+  it('shows "Filed by Mona" only inside the 24 h badge window', async () => {
+    const { unmount } = await renderRow(item({ documentId: 'doc_a', document: docAt('done', 'filed', { badgeUntil: '2026-10-02T06:00:00Z', path: ['Cabinet'] }) }));
     expect(screen.getByText('Filed by Mona')).toBeInTheDocument();
     unmount();
-    renderRow(item({ documentId: 'doc_a', document: docAt('done', 'filed', { badgeUntil: null, path: ['Cabinet'] }) }));
+    await renderRow(item({ documentId: 'doc_a', document: docAt('done', 'filed', { badgeUntil: null, path: ['Cabinet'] }) }));
     expect(screen.queryByText('Filed by Mona')).not.toBeInTheDocument();
     expect(screen.getByText('Filed')).toBeInTheDocument();
+  });
+
+  it('a filed or review row links its file name to the document viewer; a processing one does not', async () => {
+    const { router, unmount } = await renderRow(item({ originalName: 'urssaf.pdf', documentId: 'doc_a', document: docAt('done', 'filed', { path: ['Cabinet'] }) }));
+    await userEvent.click(screen.getByRole('link', { name: 'urssaf.pdf' }));
+    expect(router.state.location.pathname).toBe('/documents/doc_a');
+    unmount();
+    const review = await renderRow(item({ originalName: 'letter.pdf', documentId: 'doc_b', document: docAt('done', 'review', { id: 'doc_b' }) }));
+    expect(screen.getByRole('link', { name: 'letter.pdf' })).toHaveAttribute('href', '/documents/doc_b');
+    review.unmount();
+    await renderRow(item({ originalName: 'scan.pdf', documentId: 'doc_c', document: docAt('ocr', 'processing', { id: 'doc_c' }) }));
+    expect(screen.queryByRole('link', { name: 'scan.pdf' })).not.toBeInTheDocument();
   });
 });
 

@@ -131,6 +131,12 @@ async def test_search_filters(archive, args, expected):
     assert not res.is_error, res.text
     assert ids(res) == {archive[k] for k in expected}
     assert res.data["total"] == len(expected)
+    if "query" in args:
+        return
+    summed = await call("sum_amounts", args)
+    assert not summed.is_error, summed.text
+    no_amount = {e["id"] for e in summed.data["excluded"] if e["reason"] == "no_amount"}
+    assert set(summed.data["document_ids"]) | no_amount == {archive[k] for k in expected}
 
 
 async def test_search_never_returns_processing_or_deleted(archive):
@@ -182,6 +188,17 @@ async def test_sum_by_filters(archive):
     assert "truncated" not in res.data
 
 
+async def test_sum_by_status(archive):
+    rows.document("Unknown bill", entity=None, category=None, status="review", amount=75.0)
+    filed = await call("sum_amounts", {"status": "filed", "date_from": "2025-01-01"})
+    review = await call("sum_amounts", {"status": "review"})
+    assert filed.data["totals"] == [
+        {"currency": "EUR", "total": 3140.0},
+        {"currency": "RON", "total": 250.0},
+    ]
+    assert review.data["totals"] == [{"currency": "EUR", "total": 75.0}]
+
+
 async def test_sum_keeps_currencies_apart_and_lists_documents_without_amount(archive):
     res = await call("sum_amounts", {"date_from": "2025-01-01", "date_to": "2025-12-31"})
     assert res.data["totals"] == [
@@ -207,7 +224,13 @@ async def test_sum_by_ids_reports_unknown_ones(archive):
 
 
 @pytest.mark.parametrize(
-    "args", [{}, {"document_ids": ["doc_01m3sg44rengv1yevkp7ca1xg5"], "year": 2025}]
+    "args",
+    [
+        {},
+        {"status": "any"},
+        {"document_ids": ["doc_01m3sg44rengv1yevkp7ca1xg5"], "year": 2025},
+        {"document_ids": ["doc_01m3sg44rengv1yevkp7ca1xg5"], "status": "filed"},
+    ],
 )
 async def test_sum_needs_exactly_ids_or_filters(archive, args):
     res = await call("sum_amounts", args)

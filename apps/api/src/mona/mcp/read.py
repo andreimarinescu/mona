@@ -328,6 +328,7 @@ async def sum_amounts(
     date_to: date | None = None,
     amount_min: AmountParam = None,
     amount_max: AmountParam = None,
+    status: StatusParam = "any",
 ) -> dict:
     filters = dict(
         entity=entity,
@@ -340,7 +341,7 @@ async def sum_amounts(
         amount_min=amount_min,
         amount_max=amount_max,
     )
-    has_filter = any(v is not None for v in filters.values())
+    has_filter = any(v is not None for v in filters.values()) or status != "any"
     if (document_ids is None) == (not has_filter):
         raise ToolFailure(
             "invalid_argument",
@@ -349,7 +350,7 @@ async def sum_amounts(
         )
     async with get_engine().begin() as conn:
         scope = await scope_for(conn, channel())
-        clauses = await document_clauses(scope, **filters)
+        clauses = await document_clauses(scope, **filters, status=status)
         excluded: list[dict] = []
         if clauses is None:
             clauses = [false()]

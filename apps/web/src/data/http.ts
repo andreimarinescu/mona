@@ -52,6 +52,12 @@ async function loadCsrf(): Promise<string | null> {
   return csrfPending;
 }
 
+/** C2 §2.4: the session CSRF header every write carries, the chat transport's included. */
+export async function csrfHeaders(): Promise<Record<string, string>> {
+  const token = csrfToken ?? (await loadCsrf());
+  return token ? { 'X-CSRF-Token': token } : {};
+}
+
 function parseJson(text: string): unknown {
   try {
     return text ? JSON.parse(text) : null;
@@ -86,10 +92,7 @@ export async function request<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DEL
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(opts.json);
   }
-  if (method !== 'GET') {
-    const token = csrfToken ?? (await loadCsrf());
-    if (token) headers['X-CSRF-Token'] = token;
-  }
+  if (method !== 'GET') Object.assign(headers, await csrfHeaders());
   let res: Response;
   try {
     res = await fetch(withQuery(path, opts.query), { method, headers, body, signal: opts.signal, credentials: 'same-origin' });

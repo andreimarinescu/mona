@@ -1,5 +1,6 @@
 import { DefaultChatTransport } from 'ai';
 import type { Lang } from '@mona/ui';
+import { csrfHeaders } from '../data/http';
 import type { MonaUIMessage, PageContext } from './types';
 
 export interface TurnContext {
@@ -20,6 +21,7 @@ export function monaTransport(ctx: TurnContext) {
   let replyLanguage: Lang | undefined;
   const transport = new DefaultChatTransport<MonaUIMessage>({
     api: '/api/chat',
+    headers: csrfHeaders,
     prepareSendMessagesRequest: ({ messages }) => {
       const override = nextContext;
       nextContext = null;

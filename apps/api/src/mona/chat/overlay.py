@@ -64,6 +64,7 @@ def build_overlay(
     pinned: bool = False,
 ) -> str:
     """`notes` are the pending note texts, oldest first."""
+    route = page_route(route)
     name = LANGUAGE_NAMES[language]
     said = "asked for replies in" if pinned else "wrote in"
     lines = [
@@ -85,3 +86,15 @@ def build_overlay(
         if len(notes) > MAX_NOTES:
             lines.append(f"- (and {len(notes) - MAX_NOTES} earlier actions)")
     return "\n".join(lines)
+
+
+_PAGE = re.compile(r"(?:^|&)page=(\d{1,4})(?:&|$)")
+
+
+def page_route(route: str) -> str:
+    """A document route keeps only `page`: evidence links put a quote from the page in `q`."""
+    path, _, query = route.partition("#")[0].partition("?")
+    if not path.startswith("/documents/"):
+        return route
+    page = _PAGE.search(query)
+    return f"{path}?page={page.group(1)}" if page else path

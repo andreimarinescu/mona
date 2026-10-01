@@ -191,6 +191,19 @@ def test_correction_refiles_and_closes_the_review_item(s):
     assert (again.outcome, again.journal_ids) == ("unchanged", [])
 
 
+def test_correcting_a_processing_document_is_refused_and_its_batch_still_finishes(s):
+    done = []
+    s.ctx.on_batch_done = done.append
+    doc = opco_doc(s)
+    with pytest.raises(ServiceError) as err:
+        correct_document(s.ctx, doc, actor="mona", via="chat", entity="studio")
+    assert (err.value.code, err.value.hint) == ("conflict", "processing")
+    assert (s.row(doc)["status"], s.row(doc)["location"]) == ("processing", "inbox")
+    classify(s, doc, OPCO_PATH)
+    file_document(s.ctx, doc)
+    assert done == [s.batch] and s.row(doc)["pipeline_stage"] == "done"
+
+
 def test_correction_of_a_date_writes_doc_update_and_a_rename(s):
     doc = opco_doc(s, status="review")
     correct_document(s.ctx, doc, actor="user", via="ui", entity="cabinet")

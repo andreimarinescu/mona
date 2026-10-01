@@ -5,7 +5,9 @@ import { useAppState } from '../../state/context';
 import i18n from '../../i18n';
 import { useMockApi } from '../../test/mockApi';
 import { renderRoute } from '../../test/renderRoute';
+import type { BriefFacts } from '../../data/dto';
 import { HomePage } from './HomePage';
+import { MonaBrief } from './MonaBrief';
 import { ingestionFigures } from './ingestion';
 import { DateTile } from './DateTile';
 import { render } from '@testing-library/react';
@@ -79,6 +81,46 @@ describe('HomePage', () => {
     const entry = await screen.findByRole('textbox', { name: 'Ask Mona' });
     await userEvent.click(screen.getByRole('button', { name: 'ask' }));
     expect(entry).toHaveFocus();
+  });
+
+  describe('the questions link (C6 §3.4)', () => {
+    function Outbox() {
+      const { chat } = useAppState();
+      return <pre data-testid="outbox">{JSON.stringify(chat.outbox?.pageContext ?? null)}</pre>;
+    }
+    const facts = (interviewId: string, openQuestions: number): BriefFacts => ({
+      generatedAt: '2026-10-01T07:00:00Z',
+      since: '2026-09-30T18:00:00Z',
+      filed: { count: 0, byEntity: [] },
+      needsReview: { count: 0, byReason: {} },
+      dueSoon: [],
+      remindersToday: [],
+      learned: [],
+      pendingInterview: { interviewId, openQuestions },
+    });
+    async function follow(f: BriefFacts) {
+      await renderRoute(
+        <>
+          <MonaBrief facts={f} journalEntryCount={0} name="Léa" anonymous={false} />
+          <Outbox />
+        </>,
+      );
+      await userEvent.click(await screen.findByRole('button', { name: /question/ }));
+      await waitFor(() => expect(screen.getByTestId('outbox')).not.toHaveTextContent('null'));
+      return JSON.parse(screen.getByTestId('outbox').textContent!) as { route: string; summary: string };
+    }
+
+    it('opens chat on the pending batch debrief, naming its batch and interview', async () => {
+      const world = api.world();
+      const batchId = world.latestBatch().items[0]!.id;
+      const iv = world.interviews.debrief(batchId, world.reviewList({}).items.filter((d) => d.status === 'review').slice(0, 2).map((d) => d.id));
+      expect(await follow(facts(iv.id, iv.openQuestions))).toEqual({ route: '/', summary: `Home, batch ${batchId} debrief ${iv.id}, ${iv.openQuestions} questions` });
+    });
+
+    it('still names the interview when its scope cannot be read', async () => {
+      const id = 'int_00000000000000000000000099';
+      expect(await follow(facts(id, 2))).toEqual({ route: '/', summary: `Home, interview ${id}, 2 questions` });
+    });
   });
 
   it('is in French when the profile is', async () => {

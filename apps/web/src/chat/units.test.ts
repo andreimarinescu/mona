@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { unlock } from '../data/auth';
 import { asFeed } from '../data/conversations';
+import { setCsrfToken } from '../data/http';
 import { chatErrorCode } from './errorCode';
 import { monaTransport } from './transport';
 import type { MonaUIMessage } from './types';
@@ -40,5 +42,38 @@ describe('monaTransport body (C3 §2)', () => {
     t.setReplyLanguage('en');
     t.setConversationId('cnv_1');
     expect(await body(t, 'b')).toEqual({ conversationId: 'cnv_1', message: 'b', pageContext: { route: '/archive', summary: 'Archive' }, locale: 'fr', replyLanguage: 'en' });
+  });
+});
+
+describe('monaTransport headers (C2 §2.4)', () => {
+  afterEach(() => {
+    setCsrfToken(null);
+    vi.unstubAllGlobals();
+  });
+
+  it('sends the session CSRF token from the auth state, and the new one after an unlock', async () => {
+    let token = 'tok-before';
+    const sent: (string | null)[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url === '/api/auth/state') return Response.json({ csrfToken: token });
+        if (url === '/api/auth/unlock') {
+          token = 'tok-after';
+          return Response.json({ authenticated: true, locked: false, locale: 'en', csrfToken: token, autoLockMinutes: 15, profileName: 'x' });
+        }
+        sent.push(new Headers(init?.headers).get('x-csrf-token'));
+        return new Response('data: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } });
+      }),
+    );
+    setCsrfToken(null);
+    const t = monaTransport({ pageContext: () => ({ route: '/chat', summary: 'Chat page' }), locale: () => 'en' });
+    const messages = [{ id: 'u', role: 'user', parts: [{ type: 'text', text: 'hi' }] }] as MonaUIMessage[];
+    const send = () => t.transport.sendMessages({ chatId: 'x', messages, abortSignal: undefined, trigger: 'submit-message', messageId: undefined });
+    await send();
+    await unlock('pw');
+    await send();
+    expect(sent).toEqual(['tok-before', 'tok-after']);
   });
 });

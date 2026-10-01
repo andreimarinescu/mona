@@ -1,4 +1,5 @@
 import { Badge, Button, ReasonChip, StatusPill } from '@mona/ui';
+import { Link } from '@tanstack/react-router';
 import { DocStatusPill } from '../../components/DocStatusPill';
 import { useTranslation } from 'react-i18next';
 import type { BatchDetail } from '../../data/dto';
@@ -50,12 +51,20 @@ export function PipelineRow({ item, onRestore, busy }: { item: Item; onRestore(j
     }
   }
 
+  const viewable = item.outcome === 'accepted' && item.documentId && doc && doc.status !== 'processing';
+
   return (
     <tr className="border-t border-border align-middle" data-outcome={item.outcome} data-document-id={item.documentId ?? undefined}>
       <th scope="row" className="max-w-[280px] px-4 py-3 text-left align-middle font-normal text-text [font:var(--type-filename)]">
-        <span className="block truncate" title={item.originalName}>
-          {item.originalName}
-        </span>
+        {viewable ? (
+          <Link to="/documents/$documentId" params={{ documentId: item.documentId! }} className="block truncate text-text no-underline hover:underline" title={item.originalName}>
+            {item.originalName}
+          </Link>
+        ) : (
+          <span className="block truncate" title={item.originalName}>
+            {item.originalName}
+          </span>
+        )}
         <span className="mt-1 block font-ui text-[13px] leading-[18px] text-text-muted md:hidden">{where}</span>
       </th>
       <td className="px-2 py-3">{doc && item.outcome === 'accepted' ? <PipelineStepper doc={doc} /> : null}</td>

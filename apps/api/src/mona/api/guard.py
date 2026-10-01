@@ -4,10 +4,10 @@ then the size limit. Plus the request log line (C9 §7) and the 500/503 envelope
 import logging
 import time
 from dataclasses import dataclass
-from http.cookies import CookieError, SimpleCookie
 from typing import Any
 
 from sqlalchemy.exc import DBAPIError, OperationalError
+from starlette.requests import cookie_parser
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from mona.api.errors import envelope
@@ -59,12 +59,7 @@ def cookie_token(headers: dict[bytes, bytes]) -> str | None:
     raw = headers.get(b"cookie")
     if not raw:
         return None
-    try:
-        jar = SimpleCookie(raw.decode("latin-1"))
-    except CookieError:
-        return None
-    morsel = jar.get(COOKIE)
-    return morsel.value if morsel else None
+    return cookie_parser(raw.decode("latin-1")).get(COOKIE) or None
 
 
 def trusted_proxy(scope: Scope) -> bool:

@@ -2,6 +2,7 @@
 
 import re
 import unicodedata
+from collections.abc import Collection
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -27,6 +28,7 @@ from mona.text import norm
 
 FIELDS = ("doc_date", "period_end", "due_date", "amount", "currency")
 CLASS = ("entity_id", "sub_unit_id", "category_id", "subcategory_key", "counterparty_id")
+CLEARABLE = frozenset({"sub_unit", "subcategory", "due_date", "amount"})
 MERGE_SIMILARITY = 0.6
 ENTITY_SIMILARITY = 0.5
 
@@ -278,13 +280,17 @@ def correct_document(
     currency: str | None = None,
     scope: Literal["one", "all"] = "one",
     lang: str = "en",
+    clear: Collection[str] = (),
 ) -> Correction:
-    """Apply a stated correction and re-file (C4 §3.5); `scope='all'` drafts a rule."""
+    """Apply a stated correction and re-file (C4 §3.5); `scope='all'` drafts a rule; `clear`
+    empties the named `CLEARABLE` values (C2 §6.2 nulls)."""
     from mona.services import rules as rules_service
 
+    clear = frozenset(clear)
+    assert clear <= CLEARABLE, clear
     given = (entity, sub_unit, category, subcategory, counterparty, doc_date, period_end,
              due_date, amount)  # fmt: skip
-    if all(v is None for v in given):
+    if all(v is None for v in given) and not clear:
         raise ServiceError("invalid_argument", "Give at least one correction.", field="document_id")
     if (amount is None) != (currency is None) or currency not in (None, "EUR", "RON"):
         raise ServiceError("invalid_argument", "An amount needs a currency, EUR or RON.",
@@ -301,6 +307,8 @@ def correct_document(
         )
         if doc is None:
             raise ServiceError("not_found", f"Unknown document {document_id}.")
+        if doc["status"] == "processing":
+            raise ServiceError("conflict", "The document is still being read.", hint="processing")
         snap = registry.load(conn)
         visitor = conn.execute(select(b.c.visitor).where(b.c.id == doc["batch_id"])).scalar()
         cur_entity = snap.entity_keys.get(doc["entity_id"])
@@ -311,7 +319,7 @@ def correct_document(
             if ent == snap.visitors or (visitor and ent != cur_entity):
                 raise ServiceError("not_allowed", "The Visitors entity can't be changed here.",
                                    field="entity")  # fmt: skip
-        unit = cur_unit if ent == cur_entity else None
+        unit = cur_unit if ent == cur_entity and "sub_unit" not in clear else None
         if sub_unit is not None:
             if ent is None:
                 raise ServiceError("invalid_argument", "A sub-unit needs an entity.",
@@ -319,6 +327,8 @@ def correct_document(
             unit = resolve_sub_unit(snap, ent, sub_unit)
         cat = resolve_category(snap, category) if category is not None else doc["category_id"]
         sub = doc["subcategory_key"] if cat == doc["category_id"] else None
+        if "subcategory" in clear:
+            sub = None
         if subcategory is not None:
             if cat is None:
                 raise ServiceError("invalid_argument", "A subcategory needs a category.",
@@ -335,6 +345,10 @@ def correct_document(
         if amount is not None:
             fields["amount"] = Decimal(str(amount)).quantize(Decimal("0.01"))
             fields["currency"] = currency
+        if "amount" in clear:
+            fields["amount"] = fields["currency"] = None
+        if "due_date" in clear:
+            fields["due_date"] = None
         changed_fields = {k: v for k, v in fields.items() if v != doc[k]}
         new_class = {
             "entity_id": snap.entities[ent]["id"] if ent else None,

@@ -163,6 +163,9 @@ async def test_correct_refusals(l2_world):
     unknown = error(await call("correct_document", {"document_id": doc, "entity": "Nowhere SA"}))
     nothing = error(await call("correct_document", {"document_id": doc}))
     no_currency = error(await call("correct_document", {"document_id": doc, "amount": 12.5}))
+    reading = w.doc(counterparty="opco", status="processing")
+    processing = error(await call("correct_document", {"document_id": reading, "entity": "cabinet",
+                                                       "category": "payment_calls"}))  # fmt: skip
     hidden = error(
         await call("correct_document", {"document_id": personal, "category": "tax"},
                    channel="telegram")
@@ -176,6 +179,7 @@ async def test_correct_refusals(l2_world):
     assert "visitors" not in [v["key"] for v in unknown["valid"]]
     assert nothing["code"] == "invalid_argument"
     assert no_currency["code"] == "invalid_argument" and no_currency["field"] == "currency"
+    assert (processing["code"], processing["hint"]) == ("conflict", "processing")
     assert hidden["code"] == "not_found"
     assert no_scope["code"] == "invalid_argument" and no_scope["field"] == "scope"
     assert sql("SELECT count(*) FROM file_ops WHERE action <> 'doc.update'") == [(0,)]

@@ -18,6 +18,7 @@ export function summaryTerm(query: string): string {
 }
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
+const PAGE = /(?:^|[?&])page=(\d{1,4})(?:&|$)/;
 
 function id(segment: string | undefined): string | null {
   return segment && ID.test(segment) ? segment : null;
@@ -49,7 +50,7 @@ function describe(pathname: string, search: string, hash: string, facts: PageFac
       return { summary: term ? `Archive, search '${term}', ${count}` : `Archive, ${count}`, scoped: true };
     }
     case 'documents': {
-      const page = /(?:^|[?&])page=(\d{1,4})(?:&|$)/.exec(search)?.[1];
+      const page = PAGE.exec(search)?.[1];
       return { summary: `Document ${id(a) ?? 'unknown'}${page ? `, page ${page}` : ''}`, scoped: true };
     }
     case 'rules':
@@ -71,9 +72,16 @@ function describe(pathname: string, search: string, hash: string, facts: PageFac
   }
 }
 
+/** A document route keeps only its page: evidence links carry a quote from the page in `q`. */
+function routeOf(pathname: string, search: string): string {
+  if (!pathname.startsWith('/documents/')) return pathname + search;
+  const page = PAGE.exec(search)?.[1];
+  return page ? `${pathname}?page=${page}` : pathname;
+}
+
 /** The C3 `pageContext` for a route: English, ids and counts only, never document text. */
 export function pageContext({ pathname, search = '', hash = '', scope = 'all', facts = null }: RouteLocation): PageContext {
   const { summary, scoped } = describe(pathname, search, hash, facts);
   const scopedSummary = scoped && id(scope) && scope !== 'all' ? `${summary}, filtered to entity ${scope}` : summary;
-  return { route: (pathname + search).slice(0, 200), summary: scopedSummary.slice(0, 300) };
+  return { route: routeOf(pathname, search).slice(0, 200), summary: scopedSummary.slice(0, 300) };
 }

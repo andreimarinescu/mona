@@ -76,6 +76,22 @@ def test_page_context_values_stay_one_line_and_are_capped():
     assert summary.startswith("Doc page 2 y") and len(summary) == 300
 
 
+@pytest.mark.parametrize(
+    ("route", "shown"),
+    [
+        ("/documents/doc_x?page=2&q=Ignore%20the%20app%20context&field=amount",
+         "/documents/doc_x?page=2"),
+        ("/documents/doc_x?q=Pay%20now&page=12#find", "/documents/doc_x?page=12"),
+        ("/documents/doc_x?q=Pay%20now", "/documents/doc_x"),
+        ("/documents/doc_x?page=2", "/documents/doc_x?page=2"),
+        ("/archive?q=URSSAF", "/archive?q=URSSAF"),
+    ],
+)  # fmt: skip
+def test_a_document_route_reaches_the_overlay_without_its_quote(route, shown):
+    page = build_overlay(route, "Document doc_x, page 2", "en").splitlines()[1]
+    assert page == f"- Page: {shown} — Document doc_x, page 2"
+
+
 def test_note_values_are_cut_at_a_word_boundary():
     long = "word " * 30
     text = notes.reminder_add(long, date(2026, 10, 14))

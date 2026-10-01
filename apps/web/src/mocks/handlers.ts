@@ -40,8 +40,12 @@ export const chatBodies: Record<string, unknown>[] = [];
 export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDelayMs' | 'draftMs'> = {}, chat: MockChat = createChat(world, { chunkDelayMs: options.chatDelayMs, draftMs: options.draftMs })): HttpHandler[] {
   return [
     http.all('/api/*', ({ request }) => {
-      const err = world.account.gate(request.method, new URL(request.url).pathname);
-      return err ? fail(err) : undefined;
+      const path = new URL(request.url).pathname;
+      const err = world.account.gate(request.method, path);
+      if (err) return fail(err);
+      const write = request.method !== 'GET' && request.method !== 'HEAD' && path !== '/api/auth/unlock';
+      if (write && request.headers.get('x-csrf-token') !== world.account.view().csrfToken) return fail(new MockError(403, 'csrf_failed', 'Missing or invalid CSRF token.'));
+      return undefined;
     }),
     http.get('/api/health', () => HttpResponse.json({ status: 'ok', db: 'ok', version: '0.1.0' })),
     http.get('/api/auth/state', () => HttpResponse.json(world.account.view())),

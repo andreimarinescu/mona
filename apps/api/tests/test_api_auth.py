@@ -246,6 +246,23 @@ async def test_expired_or_revoked_sessions_are_unauthenticated(l2_auth, app):
             assert (await c.get(PROTECTED)).status_code == 401
 
 
+@pytest.mark.parametrize(
+    "foreign",
+    ['prefs={"theme":"dark"}', "msg=hello world", "flag", "path=/a/b", 'x="', "=;;"],
+)
+async def test_a_malformed_foreign_cookie_does_not_hide_the_session(l2_auth, app, foreign):
+    _, token = new_session()
+    cookie = {"cookie": f"{foreign}; {COOKIE}={token}; after=1"}
+    async with client(app, base_url="http://localhost", headers=cookie) as c:
+        read = await c.get(PROTECTED)
+        state = (await c.get("/api/auth/state")).json()
+        unlocked = await c.post("/api/auth/unlock", json={"password": PASSWORD})
+    assert read.status_code == 200
+    assert state["authenticated"] and state["csrfToken"] == csrf_token(token)
+    assert unlocked.status_code == 200 and "set-cookie" not in unlocked.headers
+    assert sql("SELECT count(*) FROM auth_sessions") == [(1,)]
+
+
 async def test_password_change_revokes_every_other_session(l2_auth, app):
     _, other = new_session()
     _, mine = new_session()

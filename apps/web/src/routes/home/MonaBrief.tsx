@@ -2,7 +2,8 @@ import { Button, MonaAvatar, format } from '@mona/ui';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { InternalLink } from '../../components/InternalLink';
-import type { BriefFacts } from '../../data/dto';
+import type { BriefFacts, Interview } from '../../data/dto';
+import { get } from '../../data/http';
 import { useLang } from '../../shell/useLang';
 import { useAppState } from '../../state/context';
 import { briefSentences, mostUrgent, type BriefLink, type BriefSentence } from './brief';
@@ -22,6 +23,15 @@ function hrefOf(link: BriefLink): string | null {
   }
 }
 
+/** The ids `start_interview` needs to show this interview again instead of starting another. */
+async function pendingSummary(pending: { interviewId: string; openQuestions: number }): Promise<string> {
+  const { interviewId: id, openQuestions: n } = pending;
+  const interview = await get<Interview>(`/api/interviews/${id}`).catch(() => null);
+  if (interview?.scope.type === 'batch') return `Home, batch ${interview.scope.batchId} debrief ${id}, ${n} questions`;
+  if (interview?.scope.type === 'queue') return `Home, review queue debrief ${id}, ${n} questions`;
+  return `Home, interview ${id}, ${n} questions`;
+}
+
 export interface MonaBriefProps {
   facts: BriefFacts;
   journalEntryCount: number;
@@ -39,8 +49,11 @@ export function MonaBrief({ facts, journalEntryCount, name, anonymous, now = new
   const sentences = briefSentences(facts, { t, lang, hour: now.getHours(), name, anonymous });
   const urgent = mostUrgent(facts.dueSoon);
 
-  const questions = () =>
-    openChat({ send: { message: t('chat.banner.debrief'), pageContext: { route: '/', summary: `Home, ${facts.pendingInterview?.openQuestions ?? 0} questions` } } });
+  async function questions(opener: HTMLElement) {
+    if (!facts.pendingInterview) return;
+    const summary = await pendingSummary(facts.pendingInterview);
+    openChat({ opener, send: { message: t('chat.banner.debrief'), pageContext: { route: '/', summary } } });
+  }
 
   function render(s: BriefSentence) {
     if (!s.link) return s.text;
@@ -53,7 +66,7 @@ export function MonaBrief({ facts, journalEntryCount, name, anonymous, now = new
       );
     }
     return (
-      <button type="button" className={`cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] ${LINK}`} data-brief-link={s.id} onClick={questions}>
+      <button type="button" className={`cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] ${LINK}`} data-brief-link={s.id} onClick={(e) => void questions(e.currentTarget)}>
         {s.text}
       </button>
     );

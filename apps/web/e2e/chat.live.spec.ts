@@ -61,14 +61,10 @@ async function tools(reply: ReturnType<Page['locator']>) {
   return reply.locator('[data-testid="tool-chip"]').evaluateAll((els) => els.map((e) => e.getAttribute('data-tool')));
 }
 
-// The web has no unlock screen or CSRF middleware yet (L3), so the test unlocks and adds the token.
+// The session cookie only; the web sends the CSRF token itself.
 test.beforeEach(async ({ page }) => {
   const res = await page.request.post('/api/auth/unlock', { data: { password: process.env.MONA_OWNER_PASSWORD } });
   expect(res.ok()).toBe(true);
-  const { csrfToken } = (await res.json()) as { csrfToken: string };
-  await page.route('**/api/chat', (route) =>
-    route.continue({ headers: { ...route.request().headers(), 'x-csrf-token': csrfToken } }),
-  );
 });
 
 test.afterAll(() => {

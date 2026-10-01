@@ -318,12 +318,64 @@ async def test_correcting_into_visitors_is_403_and_bad_input_is_400(l2_world, ap
             json={"entityId": ents["visitors"], "categoryId": "payment_calls"},
         )
         empty = await cl.post(f"/api/documents/{doc}/correct", json={})
-        clear = await cl.post(f"/api/documents/{doc}/correct", json={"dueDate": None})
         unknown = await cl.post(f"/api/documents/{doc}/correct", json={"colour": "red"})
     assert visitors.status_code == 403 and visitors.json()["error"]["code"] == "not_allowed"
-    assert empty.status_code == 400 and clear.status_code == 400
-    assert clear.json()["error"]["field"] == "dueDate"
+    assert empty.status_code == 400
     assert unknown.status_code == 400 and unknown.json()["error"]["field"] == "colour"
+
+
+async def test_the_review_page_body_with_a_null_subcategory_files_the_document(l2_world, app):
+    w = l2_world
+    doc = w.doc(counterparty="agipi", category="insurance", subcategory="per", entity="personal",
+                doc_date=date(2025, 4, 14))  # fmt: skip
+    ents = w.ids("entities")
+    body = {"entityId": ents["cabinet"], "categoryId": "payment_calls", "subcategoryKey": None}
+    async with api_client(app) as cl:
+        res = await cl.post(f"/api/documents/{doc}/correct", json=body)
+    assert res.status_code == 200, res.text
+    r = res.json()
+    assert r["outcome"] == "moved" and r["document"]["status"] == "filed"
+    row = w.row(doc)
+    assert (row["category_id"], row["subcategory_key"]) == ("payment_calls", None)
+    assert row["current_path"].startswith("Cabinet Marchand/Appels de paiement/")
+
+
+async def test_a_null_clears_the_subcategory_sub_unit_due_date_and_amount(l2_world, app):
+    w = l2_world
+    doc = w.doc(counterparty="hello-bank", category="bank", subcategory="releve", entity="lmnp",
+                doc_date=date(2025, 6, 30), due_date=date(2025, 7, 15), amount=42)  # fmt: skip
+    unit = w.ids("sub_units")["angers-strasbourg"]
+    async with api_client(app) as cl:
+        first = await cl.post(f"/api/documents/{doc}/correct", json={"subUnitId": unit})
+        assert first.status_code == 200, first.text
+        assert w.row(doc)["sub_unit_id"] == unit
+        res = await cl.post(
+            f"/api/documents/{doc}/correct",
+            json={"subUnitId": None, "subcategoryKey": None, "dueDate": None, "amount": None},
+        )
+        again = await cl.post(f"/api/documents/{doc}/correct", json={"dueDate": None})
+    assert res.status_code == 200, res.text
+    row = w.row(doc)
+    assert (row["sub_unit_id"], row["subcategory_key"]) == (None, None)
+    assert (row["due_date"], row["amount"], row["currency"]) == (None, None, None)
+    assert row["category_id"] == "bank" and row["status"] == "filed"
+    assert again.status_code == 200 and again.json()["outcome"] == "unchanged"
+
+
+async def test_correcting_a_processing_document_is_a_conflict(l2_world, app):
+    w = l2_world
+    doc = w.doc(counterparty="opco", status="processing")
+    ents = w.ids("entities")
+    async with api_client(app) as cl:
+        res = await cl.post(
+            f"/api/documents/{doc}/correct",
+            json={"entityId": ents["cabinet"], "categoryId": "payment_calls"},
+        )
+    assert res.status_code == 409
+    assert res.json()["error"]["code"] == "conflict"
+    assert res.json()["error"]["details"] == {"reason": "processing"}
+    row = w.row(doc)
+    assert (row["status"], row["location"]) == ("processing", "inbox")
 
 
 async def test_like_this_drafts_a_rule_whose_preview_matches_the_rules_endpoint(l2_world, app):

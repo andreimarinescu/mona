@@ -27,7 +27,6 @@ from mona.api.models import (
 from mona.db import get_sync_engine
 from mona.dto.models import DocumentDetail, DocumentSummary
 from mona.fileops import Change, FileOpError, inbox_name, resolve_inside
-from mona.naming import to_camel
 from mona.rules import store
 from mona.services import Ctx, correct_document, registry
 from mona.services.registry import T
@@ -494,17 +493,15 @@ async def confirm_document(document_id: DocId, ctx: CtxDep, lang: Lang) -> dict[
     return await run(_confirm, ctx, document_id, lang)
 
 
-NULLABLE = ("sub_unit_id", "subcategory_key", "due_date", "amount")
+NULLABLE = {"sub_unit_id": "sub_unit", "subcategory_key": "subcategory", "due_date": "due_date",
+            "amount": "amount"}  # fmt: skip
 
 
 def _correct(ctx: Ctx, document_id: str, body: CorrectionRequest, lang: str) -> dict[str, Any]:
     given = {k: getattr(body, k) for k in body.model_fields_set}
     if not given:
         raise ApiFailure(400, "invalid_request", "Give at least one correction.")
-    for name in NULLABLE:
-        if name in given and given[name] is None:
-            raise ApiFailure(400, "invalid_request", "Clearing a value isn't supported.",
-                             field=to_camel(name))  # fmt: skip
+    clear = {NULLABLE[k] for k, v in given.items() if k in NULLABLE and v is None}
     body_id(body.entity_id, "ent", "entityId")
     body_id(body.sub_unit_id, "sub", "subUnitId")
     kw: dict[str, Any] = {}
@@ -533,7 +530,9 @@ def _correct(ctx: Ctx, document_id: str, body: CorrectionRequest, lang: str) -> 
             kw[name] = getattr(body, name)
     if body.amount is not None:
         kw["amount"], kw["currency"] = body.amount.value, body.amount.currency
-    result = correct_document(ctx, document_id, actor="user", via="ui", lang=lang, **kw)
+    result = correct_document(
+        ctx, document_id, actor="user", via="ui", lang=lang, clear=clear, **kw
+    )
     moved = result.outcome == "moved"
     if result.group_id and moved:
         _close_scope(document_id, "one", None)

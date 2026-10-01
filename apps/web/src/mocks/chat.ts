@@ -55,7 +55,7 @@ function title(message: string): string {
   return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 1))}…`;
 }
 
-const DEBRIEF = /^Intake, batch (bat_[0-9a-hjkmnp-tv-z]{26}) (?:running|finished), \d+ questions$/;
+const DEBRIEF = /^(?:Intake, batch (bat_[0-9a-hjkmnp-tv-z]{26}) (?:running|finished)|Home, batch (bat_[0-9a-hjkmnp-tv-z]{26}) debrief int_\w+), \d+ questions$/;
 
 /** A scripted Mona over the mock world: C3 streams for a few asks, transcripts, and pending notes in her next reply. */
 export function createChat(world: World, options: { chunkDelayMs?: number; draftMs?: number } = {}) {
@@ -111,7 +111,7 @@ export function createChat(world: World, options: { chunkDelayMs?: number; draft
     const noted = notes.length > 0 ? `Noted: ${notes.join(' ')} ` : '';
     const debrief = DEBRIEF.exec(body.pageContext.summary);
     if (debrief) {
-      const batch = world.batchDetail(debrief[1]!).batch;
+      const batch = world.batchDetail((debrief[1] ?? debrief[2])!).batch;
       const cards = batch.debrief ? [{ type: 'data' as const, kind: 'interview' as const, id: batch.debrief.interviewId }] : [];
       return { reasoning: ['The person opened the debrief for this batch. I will show the existing questions.'], tools: [{ name: 'start_interview', cards }], text: `${noted}Let us go through your questions.` };
     }
