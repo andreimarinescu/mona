@@ -23,7 +23,7 @@ from mona.interviews.config import (
     cache_mode,
     pass1_budget_s,
 )
-from mona.interviews.coverage import cover, deterministic, input_clusters, reduced
+from mona.interviews.coverage import about, cover, deterministic, input_clusters, reduced
 from mona.interviews.model import LanguageModel, ModelError, get_model
 from mona.interviews.prompt import (
     PASS1_SYSTEM,
@@ -100,16 +100,14 @@ def pass2(model: LanguageModel, inp: Input, analysis: str, lang: str, schema: di
     raise ModelError(type(last).__name__ if last else "pass2")
 
 
-def targeted_pass2(
-    model: LanguageModel, inp: Input, analysis: str, lang: str, schema: dict
-) -> dict | None:
-    """A25 step 1: one question over a reduced input; 30 s, no retry."""
+def targeted_pass2(model: LanguageModel, inp: Input, lang: str, schema: dict) -> dict | None:
+    """A25 step 1: one question over a reduced input, without pass 1's analysis (A26)."""
     one = {**schema, "properties": {**schema["properties"]}}
     one["properties"]["questions"] = {**schema["properties"]["questions"], "maxItems": 1}
     try:
         out = model.complete_json(
             pass2_system(lang),
-            pass2_user(inp.text(), analysis),
+            inp.text(),
             one,
             name="mona_interview",
             temperature=0,
@@ -130,6 +128,7 @@ class Live:
     analysis: str | None = None
     inp: Input | None = None
     targeted: list[dict[str, Any]] = field(default_factory=list)
+    rejected: int = 0
     timings: dict[str, float] = field(default_factory=dict)
     error: BaseException | None = None
     done: threading.Event = field(default_factory=threading.Event)
@@ -293,7 +292,7 @@ class Generation:
                     conn, inp, row["lang"], self.ctx.textcache, seed=seed
                 ).run(output)
             if not seed:
-                self._cover(live, model, inp, analysis, row["lang"], enums)
+                self._cover(live, model, inp, row["lang"], enums)
             live.output, live.analysis, live.inp = output, analysis, inp
         except BaseException as e:  # noqa: BLE001
             live.error = e
@@ -305,7 +304,6 @@ class Generation:
         live: Live,
         model: LanguageModel,
         inp: Input,
-        analysis: str,
         lang: str,
         enums: dict[str, list[str]],
     ) -> None:
@@ -319,14 +317,18 @@ class Generation:
                 return None
             small = reduced(inp, cluster)
             t0 = time.monotonic()
-            out = targeted_pass2(model, small, analysis, lang, build(list(small.aliases), enums))
+            out = targeted_pass2(model, small, lang, build(list(small.aliases), enums))
             live.timings["targeted"] += time.monotonic() - t0
             if self.abandon.is_set():
                 raise Abandoned
             if out is None:
                 return None
             with self.ctx.engine.connect() as conn:
-                kept = Compiler(conn, inp, lang, self.ctx.textcache).run(out)
+                compiler = Compiler(conn, inp, lang, self.ctx.textcache)
+                kept = compiler.run(out)
+                if kept and not about(compiler, cluster, kept[0].text):
+                    live.rejected += 1
+                    return None
             if not kept:
                 return None
             live.targeted.append(out["questions"][0])
@@ -400,13 +402,14 @@ class Generation:
         seed = row["kind"] == "seed"
         state = persist(self.ctx, self.id, live.questions or [], analysis=live.analysis, seed=seed)
         logger.info(
-            "interview %s: %s, pass 1 %.1f s%s, pass 2 %.1f s, targeted %.1f s, %s",
+            "interview %s: %s, pass 1 %.1f s%s, pass 2 %.1f s, targeted %.1f s%s, %s",
             self.id,
             state,
             live.timings.get("pass1", 0),
             " (cut)" if (live.analysis or "").startswith(CUT_PREFIX) else "",
             live.timings.get("pass2", 0),
             live.timings.get("targeted", 0),
+            f" ({live.rejected} targeted-rejected)" if live.rejected else "",
             made(live.questions or []),
         )
         if state == "ready" and batch and live.inp is not None and live.output is not None:

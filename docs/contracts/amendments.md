@@ -195,3 +195,12 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - Walkthrough 2 preparation: in 3 of 3 live debriefs on Qwen 3.6, pass 2 asked nothing about the three AGIPI documents queued as first-seen (A17). They would have stayed in review with no question.
   - D15: a check guarantees coverage instead of trusting the model. D16: a product fix, not a stage fix.
 - **Lanes:** L4 (FIX-7).
+
+## A26 · 2026-10-01 · A25: a targeted question is about its own cluster
+
+- **Change** (A25 step 1):
+  - The targeted pass 2's user message carries the reduced §4.2 input **without pass 1's analysis**: no `\n\nAnalysis:\n` part.
+  - After §4.5, the targeted question is kept only if its `text`, after `norm()` (C5 §2), contains the `norm()` of the cluster's counterparty: its registry `name` or any of its aliases (`counterparty_aliases.alias_norm`), or, for a cluster without a resolved counterparty, its extracted counterparty string.
+  - Otherwise the targeted question is dropped and step 2's deterministic question is used.
+- **Why:** the stage build on Qwen 3.6 produced a targeted question about the Hello bank statements ("…LMNP Hello bank (…6187) or a personal joint account?") whose only affected document was the La Médicale insurance notice. Pass 1's analysis of the whole batch leaked into the one-cluster call. An answer would have filed the notice under the wrong entity. D15: a check, not trust.
+- **Lanes:** L4 (FIX-8).

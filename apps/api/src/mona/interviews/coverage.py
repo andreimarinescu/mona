@@ -12,6 +12,7 @@ from mona.i18n import t
 from mona.interviews.compile import Compiled, Compiler
 from mona.interviews.config import MAX_QUESTIONS, MAX_TARGETED
 from mona.interviews.prompt import Input
+from mona.text import norm
 
 T = Base.metadata.tables
 EVIDENCE_MAX = 3
@@ -42,6 +43,25 @@ def reduced(inp: Input, cluster: Cluster) -> Input:
 
 def uncovered(cluster: Cluster, questions: list[Compiled]) -> bool:
     return not set(cluster) & {d for q in questions for d in q.affected}
+
+
+def about(compiler: Compiler, cluster: Cluster, text: str) -> bool:
+    """A26: the text names the cluster's counterparty, an alias, or its extracted string."""
+    docs = [compiler.inp.docs[d] for d in cluster]
+    ids = {d.counterparty_id for d in docs if d.counterparty_id}
+    names = {norm(d.extracted_counterparty or "") for d in docs if not d.counterparty_id}
+    if ids:
+        cp, a = T["counterparties"], T["counterparty_aliases"]
+        names |= set(
+            compiler.conn.execute(select(cp.c.name_norm).where(cp.c.id.in_(ids))).scalars()
+        )
+        names |= set(
+            compiler.conn.execute(
+                select(a.c.alias_norm).where(a.c.counterparty_id.in_(ids))
+            ).scalars()
+        )
+    n = norm(text)
+    return any(x and x in n for x in names)
 
 
 def _evidence(compiler: Compiler, cluster: Cluster) -> list[dict[str, Any]]:

@@ -13,7 +13,7 @@ from sqlalchemy import Connection
 from mona.interviews.candidates import clusters, load_docs
 from mona.interviews.compile import Compiled, Compiler
 from mona.interviews.config import MAX_QUESTIONS
-from mona.interviews.coverage import cover, deterministic
+from mona.interviews.coverage import about, cover, deterministic
 from mona.interviews.prompt import Input
 
 V = 1
@@ -113,12 +113,14 @@ def _as_output(cached: dict[str, Any], alias_of_sha: dict[str, str]) -> dict[str
 
 
 def _compile(compiler: Compiler, questions: list[dict[str, Any]]) -> list[Compiled]:
-    """§4.5 on pass 2's questions, then each targeted one while there is room (A25)."""
+    """§4.5 on pass 2's questions, then each targeted one about its cluster while there is room."""
     out = compiler.run({"questions": [q for q in questions if q["made"] != "targeted"]})
     for q in questions:
         if q["made"] != "targeted" or len(out) >= MAX_QUESTIONS:
             continue
         for c in compiler.run({"questions": [q]}):
+            if not about(compiler, c.affected, c.text):
+                continue
             c.made = "targeted"
             c.model_order = max((x.model_order for x in out), default=-1) + 1
             out.append(c)

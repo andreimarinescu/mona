@@ -1,4 +1,4 @@
-"""Amendment A25: every candidate cluster gets a question (targeted pass 2, then deterministic)."""
+"""Amendments A25 and A26: every candidate cluster gets a question about its own counterparty."""
 
 import json
 from collections.abc import Callable
@@ -92,7 +92,9 @@ def test_a_cluster_pass2_skips_gets_a_targeted_question(caplog, monkeypatch):
     assert call["schema"]["properties"]["questions"]["maxItems"] == 1
     assert small["registry"] == full["registry"] and small["rules"] == full["rules"]
     assert small["documents"] == [d for d in full["documents"] if d["title"].startswith("AGIPI")]
-    assert call["user"].split("\n\nAnalysis:\n")[1] == main["user"].split("\n\nAnalysis:\n")[1]
+    assert "\n\nAnalysis:\n" in main["user"]
+    assert "\n\nAnalysis:\n" not in call["user"]
+    assert input_of(call["user"]) == json.loads(call["user"])
     qs = w.questions(interview_id)
     q = next(q for q in qs if set(q["affected_document_ids"]) == tagged(w, "agipi"))
     assert q["text"] == "How should AGIPI documents be filed?"
@@ -217,7 +219,8 @@ def test_the_seven_question_cap_holds(monkeypatch):
     _, first = start(w, spec)
     extra = [{**questions(spec, AGIPI)[0], "text": f"AGIPI again {n}"} for n in range(3)]
     main = questions(spec, AGIPI, HELLO, BOIS) + extra
-    model = RecordedModel(w, pass2=by_input(main, {ORELIA: questions(spec, ORELIA)[0]}))
+    orelia = {**questions(spec, ORELIA)[0], "text": "Is the Orélia Télécom line for the flat?"}
+    model = RecordedModel(w, pass2=by_input(main, {ORELIA: orelia}))
     assert run(w, first, model) == "ready"
     assert len(targeted_calls(model)) == 1
     qs = w.questions(first)
@@ -306,3 +309,75 @@ def test_the_cache_replays_targeted_questions_and_rebuilds_deterministic_ones(mo
     assert run(w, replay, model) == "cache"
     assert model.calls == []
     assert sorted(q["text"] for q in w.questions(replay)) == live
+
+
+HELLO_TEXT = "Do these statements belong to the LMNP Hello bank or a personal joint account?"
+
+
+def test_a_targeted_question_about_another_counterparty_gives_the_deterministic_one(
+    caplog, monkeypatch
+):
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "fallback")
+    w = World()
+    spec = spec_with(entity="personal")
+    _, interview_id = start(w, spec)
+    stray = {**questions(spec, AGIPI)[0], "text": HELLO_TEXT}
+    model = RecordedModel(
+        w, pass2=by_input(questions(spec, HELLO, UNIM, BOIS, ORELIA), {AGIPI: stray})
+    )
+    with caplog.at_level("INFO", logger="mona.interviews.generate"):
+        assert run(w, interview_id, model) == "ready"
+    assert len(targeted_calls(model)) == 1
+    q = next(
+        q
+        for q in w.questions(interview_id)
+        if set(q["affected_document_ids"]) == tagged(w, "agipi")
+    )
+    assert q["text"] == "Where should the documents from AGIPI go?"
+    assert sorted(made(caplog, interview_id)) == ["deterministic"] + ["pass2"] * 4
+    assert "(1 targeted-rejected)" in caplog.text
+    (path,) = (w.ctx.textcache / "debrief").glob("*.json")
+    assert HELLO_TEXT not in path.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("cluster", "text"),
+    [
+        (AGIPI, "How should A.G.I.P.I. documents be filed?"),
+        (ORELIA, "Is the ORELIA TELECOM fibre line for the flat or personal?"),
+    ],
+    ids=["registry-alias", "extracted-string"],
+)
+def test_a_targeted_question_naming_its_counterparty_is_kept(cluster, text, caplog, monkeypatch):
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "off")
+    w = World()
+    spec = spec_with(entity="personal")
+    _, interview_id = start(w, spec)
+    rest = [n for n in (AGIPI, HELLO, UNIM, BOIS, ORELIA) if n != cluster]
+    answer = {**questions(spec, cluster)[0], "text": text}
+    model = RecordedModel(w, pass2=by_input(questions(spec, *rest), {cluster: answer}))
+    with caplog.at_level("INFO", logger="mona.interviews.generate"):
+        assert run(w, interview_id, model) == "ready"
+    assert text in [q["text"] for q in w.questions(interview_id)]
+    assert sorted(made(caplog, interview_id)) == ["pass2"] * 4 + ["targeted"]
+    assert "targeted-rejected" not in caplog.text
+
+
+def test_the_cache_drops_a_targeted_question_about_another_counterparty(monkeypatch):
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "fallback")
+    w = World()
+    spec = spec_with(entity="personal")
+    b, interview_id = start(w, spec)
+    pass2 = by_input(questions(spec, HELLO, UNIM, BOIS, ORELIA), {AGIPI: questions(spec, AGIPI)[0]})
+    assert run(w, interview_id, RecordedModel(w, pass2=pass2)) == "ready"
+    (path,) = (w.ctx.textcache / "debrief").glob("*.json")
+    cached = json.loads(path.read_text(encoding="utf-8"))
+    assert cached["questions"][-1]["made"] == "targeted"
+    cached["questions"][-1]["text"] = HELLO_TEXT
+    path.write_text(json.dumps(cached), encoding="utf-8")
+    monkeypatch.setenv("MONA_DEBRIEF_CACHE", "prefer")
+    service.cancel(w.ctx, interview_id)
+    replay = service.start(w.ctx, {"type": "batch", "batch_id": b}, lang="en").interview_id
+    assert run(w, replay, RecordedModel(w)) == "cache"
+    texts = [q["text"] for q in w.questions(replay)]
+    assert HELLO_TEXT not in texts and "Where should the documents from AGIPI go?" in texts
