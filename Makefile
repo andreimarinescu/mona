@@ -49,6 +49,7 @@ api-client:
 		|| { echo "apps/web/src/api/schema.gen.ts is stale: run npm run gen:api -w apps/web"; exit 1; }
 
 py-check:
+	cd apps/api && uv run --frozen python ../../scripts/no-practice-names.py
 	cd apps/api && uv run --frozen ruff check .
 	cd apps/api && uv run --frozen ruff format --check .
 	cd apps/api && uv run --frozen pytest

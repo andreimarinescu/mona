@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +22,18 @@ class Settings(BaseSettings):
     mona_llm_model: str = "qwen/qwen3.7-flash"
     mona_llm_backend: Literal["openrouter", "llama-server"] = "openrouter"
     mona_llm_base_url: str | None = None
+    mona_hermes_home: Path | None = None
+    mona_hermes_seed: Path | None = None
+    mona_hermes_env_keys: str = ""
+    mona_uid: int | None = None
+    mona_gid: int | None = None
+    hermes_uid: int | None = None
+    hermes_gid: int | None = None
+
+    @field_validator("mona_hermes_home", "mona_hermes_seed", "mona_seed_overlay", mode="before")
+    @classmethod
+    def _empty_is_unset(cls, v: object) -> object:
+        return None if v == "" else v
 
     @property
     def libpq_url(self) -> str:

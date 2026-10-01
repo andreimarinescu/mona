@@ -1,18 +1,20 @@
+x-python-env: &python-env
+  HOME: /tmp
+  DATABASE_URL: postgresql+psycopg://mona:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/mona
+  MONA_ENV: dev
+  MONA_DATA_DIR: /data
+  PROCRASTINATE_APP: mona.jobs.app
+  PROCRASTINATE_LOG_LEVEL: info
+  MONA_LLM_MODEL: ${MONA_LLM_MODEL:-qwen/qwen3.7-flash}
+  HERMES_URL: http://hermes:8642
+  PYTHONDONTWRITEBYTECODE: "1"
+
 x-python: &python
   build: ./apps/api
   image: ${COMPOSE_PROJECT_NAME}-python:dev
   user: "${MONA_UID:-1000}:${MONA_GID:-1000}"
   env_file: .env
-  environment:
-    HOME: /tmp
-    DATABASE_URL: postgresql+psycopg://mona:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/mona
-    MONA_ENV: dev
-    MONA_DATA_DIR: /data
-    PROCRASTINATE_APP: mona.jobs.app
-    PROCRASTINATE_LOG_LEVEL: info
-    MONA_LLM_MODEL: ${MONA_LLM_MODEL:-qwen/qwen3.7-flash}
-    HERMES_URL: http://hermes:8642
-    PYTHONDONTWRITEBYTECODE: "1"
+  environment: *python-env
   volumes:
     - ./apps/api:/app
     - ./data:/data
@@ -78,6 +80,26 @@ services:
     <<: *python
     command: mona worker --queues cpu --concurrency 3
 
+  # One-shot ops container of the host wrapper (deploy/bin/mona, C9 §6.3); never started by `up`.
+  ops:
+    <<: *python
+    profiles: [ops]
+    user: "0:0"
+    environment:
+      <<: *python-env
+      MONA_HERMES_HOME: /hermes
+      MONA_HERMES_SEED: /hermes-seed
+      MONA_UID: ${MONA_UID:-1000}
+      MONA_GID: ${MONA_GID:-1000}
+      HERMES_UID: ${HERMES_UID:-1000}
+      HERMES_GID: ${HERMES_GID:-1000}
+    volumes:
+      - ./apps/api:/app
+      - ./data:/data
+      - ./demo/seed:/seed:ro
+      - ./deploy/hermes:/hermes-seed:ro
+      - hermes_data:/hermes
+
   web:
     image: node:24
     working_dir: /repo
@@ -102,7 +124,7 @@ services:
         for d in memories cache cache/documents cache/images; do
         [ -d /opt/data/$$d ] || install -d -m 755 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /opt/data/$$d;
         done;
-        for f in config.yaml SOUL.md memories/MEMORY.md memories/USER.md; do
+        for f in config.yaml SOUL.md; do
         [ -e /opt/data/$$f ] || install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/$$f /opt/data/$$f;
         done
     restart: "no"

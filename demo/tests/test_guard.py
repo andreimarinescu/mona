@@ -55,12 +55,14 @@ def _owner_only(value: str) -> bool:
     return {t.lower() for t in re.findall(r"[^\W\d_]+", value)} <= OWNER_TOKENS
 
 
+GENERATED = Path.home() / "DevFiles/mona-hq/demo-data/synthetic/generated-identifiers.yaml"
+
+
 def private_needles(overlay: dict) -> set[str]:
-    needles = {v.strip() for v in leaves(overlay) if len(v.strip()) >= 4 and not _owner_only(v)}
-    for person in overlay.get("people", {}).values():
-        for value in leaves(person):
-            needles |= {t for t in re.findall(r"[^\W\d_]{3,}", value) if t.lower() not in OWNER_TOKENS}
-    return needles
+    """Identifiers only (D1: names may be committed); the generator's fictional values are not private."""
+    fictional = set(leaves(yaml.safe_load(GENERATED.read_text()))) if GENERATED.exists() else set()
+    identifiers = {k: v for k, v in overlay.items() if k != "people"}
+    return {v.strip() for v in leaves(identifiers) if len(v.strip()) >= 4 and not _owner_only(v) and v not in fictional}
 
 
 @pytest.mark.parametrize("name", sorted(PATTERNS))
@@ -78,7 +80,7 @@ def test_no_private_values_in_any_tracked_file(overlay):
     if overlay is None:
         pytest.skip("private overlay not available")
     needles = private_needles(overlay)
-    assert len(needles) >= 10
+    assert len(needles) >= 3
     files = list({*tracked_text_files(), *untracked_demo_files()})
     for path in files:
         text = path.read_text(encoding="utf-8", errors="replace")

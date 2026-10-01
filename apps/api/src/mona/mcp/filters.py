@@ -22,7 +22,11 @@ CategoryParam = Annotated[
 ]
 CounterpartyParam = Annotated[
     str | None,
-    Field(min_length=1, max_length=160, description="Counterparty name or alias, e.g. AGIPI."),
+    Field(
+        min_length=1,
+        max_length=160,
+        description="Counterparty name or alias: a supplier, insurer, bank or public body.",
+    ),
 ]
 YearParam = Annotated[int | None, Field(ge=2000, le=2100, description="Year of the document date.")]
 FiscalYearParam = Annotated[int | None, Field(ge=2000, le=2100)]

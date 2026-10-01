@@ -78,6 +78,34 @@ def seed_load(
         typer.echo(str(e), err=True)
         raise typer.Exit(1) from None
     typer.echo(str(summary))
+    _render_memory(settings.mona_hermes_home)
+
+
+def _render_memory(home: Path | None) -> None:
+    from mona.db import get_sync_engine
+    from mona.demo.memory import write
+    from mona.demo.tools import OpsEnv, chown_tree
+    from mona.settings import get_settings
+
+    if home is None:
+        typer.echo("Hermes memory not rendered: MONA_HERMES_HOME is not set")
+        return
+    with get_sync_engine().connect() as conn:
+        paths = write(conn, home)
+    chown_tree(home / "memories", OpsEnv.from_settings(get_settings()).hermes_owner)
+    typer.echo("rendered " + ", ".join(p.name for p in paths))
+
+
+@app.command("hermes-memory")
+def hermes_memory(
+    home: Annotated[
+        Path | None, typer.Option(help="The Hermes profile; defaults to MONA_HERMES_HOME.")
+    ] = None,
+) -> None:
+    """D12: render memories/MEMORY.md and USER.md from the loaded registry."""
+    from mona.settings import get_settings
+
+    _render_memory(home or get_settings().mona_hermes_home)
 
 
 rules_app = typer.Typer(no_args_is_help=True, help="Import and export rules.yaml (C5 §10).")
@@ -222,3 +250,124 @@ def pipeline_evidence(
     cases = evidence_cases(runtime.get_context(), batch)
     out.write_text(json.dumps(cases, indent=1, ensure_ascii=False))
     typer.echo(f"{len(cases)} cases → {out}")
+
+
+ops_app = typer.Typer(
+    no_args_is_help=True, help="Snapshot steps run by the host wrapper deploy/bin/mona (C9 §6.3)."
+)
+app.add_typer(ops_app, name="ops")
+
+
+def _ops_env():
+    from mona.demo.tools import OpsEnv
+    from mona.settings import get_settings
+
+    return OpsEnv.from_settings(get_settings())
+
+
+def _finish(rep) -> None:
+    for line in rep.lines:
+        typer.echo(line)
+    if rep.problems:
+        for p in rep.problems:
+            typer.echo(f"refused: {p}", err=True)
+        raise typer.Exit(1)
+
+
+def _ops_errors(fn):
+    import functools
+
+    @functools.wraps(fn)
+    def run(*args, **kwargs):
+        from mona.demo.tools import OpsError
+
+        try:
+            return fn(*args, **kwargs)
+        except OpsError as e:
+            typer.echo(f"error: {e}", err=True)
+            raise typer.Exit(2) from None
+
+    return run
+
+
+@ops_app.command("snapshot")
+@_ops_errors
+def ops_snapshot(
+    name: Annotated[str, typer.Option(help="Snapshot directory under /data/snapshots.")],
+    reference: Annotated[
+        str | None, typer.Option(help="ISO instant the snapshot stands for (default now).")
+    ] = None,
+    findquery: Annotated[
+        Path | None, typer.Option(help="pdf.js-checked `mona pipeline evidence` cases; - = stdin.")
+    ] = None,
+) -> None:
+    """C9 §6.2 checks, then the copy (the wrapper stops the workers and Hermes around it)."""
+    import sys
+    from datetime import datetime
+
+    from mona.demo.snapshot import take
+
+    ref = datetime.fromisoformat(reference) if reference else None
+    cases = None
+    if findquery is not None:
+        cases = sys.stdin.buffer.read() if str(findquery) == "-" else findquery.read_bytes()
+    _finish(take(_ops_env(), name, ref, cases))
+
+
+@ops_app.command("refresh-textcache")
+@_ops_errors
+def ops_refresh_textcache(name: Annotated[str, typer.Option()]) -> None:
+    """Replace the snapshot's data/textcache/ with the current one (C9 §6.3)."""
+    from mona.demo.snapshot import refresh_textcache
+
+    refresh_textcache(_ops_env(), name)
+    typer.echo(f"snapshot {name}: text cache refreshed")
+
+
+@ops_app.command("verify")
+@_ops_errors
+def ops_verify(name: Annotated[str, typer.Option()]) -> None:
+    """§6.3 step 1: sha256sums and the schema head."""
+    from mona.demo.snapshot import verify
+
+    m = verify(_ops_env(), name)
+    counts = ", ".join(f"{k} {v}" for k, v in m["counts"].items())
+    typer.echo(f"snapshot {name}: reference {m['reference_instant']}; {counts}")
+
+
+@ops_app.command("restore")
+@_ops_errors
+def ops_restore(
+    name: Annotated[str, typer.Option()],
+    anchor: Annotated[str, typer.Option(help="today or YYYY-MM-DD.")] = "today",
+) -> None:
+    """§6.3 steps 1 and 3–5 with the services stopped."""
+    from datetime import date
+
+    from mona.demo.snapshot import restore
+
+    day = None if anchor == "today" else date.fromisoformat(anchor)
+    _finish(restore(_ops_env(), name, day))
+
+
+@ops_app.command("postcheck")
+@_ops_errors
+def ops_postcheck(name: Annotated[str, typer.Option()]) -> None:
+    """§6.3 step 7 once the services are healthy."""
+    from mona.demo.snapshot import postcheck
+
+    _finish(postcheck(_ops_env(), name))
+
+
+@ops_app.command("fingerprint")
+@_ops_errors
+def ops_fingerprint(
+    hermes_only: Annotated[bool, typer.Option(help="Only the restored Hermes files.")] = False,
+    files: Annotated[bool, typer.Option(help="Also every Hermes file's sha256.")] = False,
+) -> None:
+    """Digests of the database, the data trees and the Hermes profile, for comparing resets."""
+    import json
+
+    from mona.demo.fingerprint import fingerprint
+
+    typer.echo(json.dumps(fingerprint(_ops_env(), hermes_only=hermes_only, files=files), indent=1))

@@ -71,6 +71,18 @@ def test_text_layer_holds_the_key_fields(rendered, doc):
         assert fr_amount(doc["amount"]["value"]) in text
 
 
+@pytest.mark.parametrize("doc", [d for d in TEXT_DOCS if "amount" in d], ids=lambda d: d["id"])
+def test_the_amount_never_wraps_across_lines(rendered, doc):
+    out, manifest = rendered
+    layout = subprocess.run(
+        ["pdftotext", "-layout", str(out / manifest[doc["id"]]["file"]), "-"],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout
+    assert any(fr_amount(doc["amount"]["value"]) in norm(line) for line in layout.splitlines())
+
+
 def test_bank_statement_balances_and_crosses_the_year_end(rendered):
     _, manifest = rendered
     doc = next(d for d in DOCS if d["template"] == "statement")

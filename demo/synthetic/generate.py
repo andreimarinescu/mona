@@ -40,7 +40,7 @@ def fmt_amount(value: float) -> str:
         groups.insert(0, whole[-3:])
         whole = whole[:-3]
     groups.insert(0, whole)
-    return ("-" if value < 0 else "") + " ".join(groups) + "," + cents + " €"
+    return ("-" if value < 0 else "") + "\u00a0".join(groups) + "," + cents + "\u00a0€"
 
 
 def resolve_date(spec: dict, anchor: date) -> date:

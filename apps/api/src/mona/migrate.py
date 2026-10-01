@@ -17,9 +17,9 @@ def alembic_config() -> Config:
     return cfg
 
 
-def apply_jobs_schema() -> bool:
+def apply_jobs_schema(conninfo: str | None = None) -> bool:
     """Apply the Procrastinate schema unless it is already there. Returns True if applied."""
-    with psycopg.connect(get_settings().libpq_url) as conn:
+    with psycopg.connect(conninfo or get_settings().libpq_url) as conn:
         exists = conn.execute("SELECT to_regclass('procrastinate_jobs')").fetchone()
         if exists and exists[0] is not None:
             return False
@@ -27,6 +27,23 @@ def apply_jobs_schema() -> bool:
     return True
 
 
-def migrate() -> None:
-    command.upgrade(alembic_config(), "head")
-    apply_jobs_schema()
+def migrate(url: str | None = None) -> None:
+    cfg = alembic_config()
+    if url:
+        cfg.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
+    command.upgrade(cfg, "head")
+    apply_jobs_schema(libpq(url) if url else None)
+
+
+def libpq(url: str) -> str:
+    """A SQLAlchemy URL without its driver suffix."""
+    scheme, sep, rest = url.partition("://")
+    return scheme.split("+", 1)[0] + sep + rest
+
+
+def head_revision() -> str:
+    from alembic.script import ScriptDirectory
+
+    head = ScriptDirectory.from_config(alembic_config()).get_current_head()
+    assert head is not None
+    return head

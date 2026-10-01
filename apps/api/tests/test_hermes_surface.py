@@ -48,12 +48,8 @@ def test_config_pins_channels_and_turns_off_mcp_extras():
     assert set(CONFIG["provider_routing"]) == {"models"}
 
 
-def test_profile_seed_ships_memories_and_empty_cache_dirs():
+def test_profile_seed_ships_empty_cache_dirs_and_no_hand_written_memory():
     seed = ROOT / "deploy" / "hermes"
-    for name in ("MEMORY.md", "USER.md"):
-        entries = (seed / "memories" / name).read_text().split("\n§\n")
-        assert all(e.strip() for e in entries)
-    assert len((seed / "memories" / "USER.md").read_text()) <= 1375
-    assert len((seed / "memories" / "MEMORY.md").read_text()) <= 2200
+    assert [p.name for p in (seed / "memories").iterdir()] == ["README.md"]
     for sub in ("documents", "images"):
         assert [p.name for p in (seed / "cache" / sub).iterdir()] == [".gitkeep"]

@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+# Host wrapper for the ops commands (C9 §6.3): it stops and starts services itself and runs every
+# DB and file step as `mona ops <step>` in a one-shot container of the api image (compose service
+# `ops`), so no service needs the Docker socket. Any other subcommand is forwarded unchanged.
+#
+#   mona demo-snapshot --name <n> [--reference <ISO>] [--findquery <cases.json>]
+#   mona demo-snapshot --refresh-textcache --name <n>
+#   mona demo-reset [--name demo] [--prefiled] [--anchor today|YYYY-MM-DD] [--yes]
+#   mona backup --name <n> [--to <dir>]        (default ~/DevFiles/mona-hq/demo-data/snapshots)
+#   mona restore --name <n> [--from <dir>] [--anchor …] [--yes]
+#   mona <anything else>                       (e.g. seed load /seed, hermes-memory)
+#
+# Environment: MONA_COMPOSE (default "docker compose"; add -p <project> per stack), MONA_ROOT (the
+# directory holding compose.yaml), MONA_SEED_OVERLAY_HOST (identifiers overlay for seed load).
+set -euo pipefail
+
+ROOT=${MONA_ROOT:-$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)}
+read -r -a COMPOSE <<<"${MONA_COMPOSE:-docker compose}"
+cd "$ROOT"
+
+WORKERS=(worker-llm worker-cpu)
+HEALTH_TIMEOUT=120
+
+die() { echo "mona: $*" >&2; exit 1; }
+compose() { "${COMPOSE[@]}" "$@"; }
+
+ops_run() {
+  local extra=()
+  if [[ -n "${MONA_SEED_OVERLAY_HOST:-}" ]]; then
+    extra+=(-v "$MONA_SEED_OVERLAY_HOST:/seed-private/identifiers.yaml:ro"
+            -e MONA_SEED_OVERLAY=/seed-private/identifiers.yaml)
+  fi
+  compose --profile ops run --rm --no-deps -T "${extra[@]}" ops "$@"
+}
+
+ops() { ops_run mona "$@"; }
+
+wait_healthy() {
+  local deadline=$((SECONDS + HEALTH_TIMEOUT)) state
+  while ((SECONDS < deadline)); do
+    state=$(compose ps --format '{{.Service}}={{.Health}}' api hermes 2>/dev/null | sort | tr '\n' ' ')
+    [[ "$state" == "api=healthy hermes=healthy " ]] && return 0
+    sleep 2
+  done
+  die "services not healthy after ${HEALTH_TIMEOUT}s: ${state:-none}"
+}
+
+start_services() {
+  compose start api "${WORKERS[@]}" hermes >/dev/null
+  wait_healthy
+}
+
+demo_snapshot() {
+  local name="" args=() refresh=0 cases=""
+  while (($#)); do
+    case "$1" in
+      --name) name=$2; shift 2 ;;
+      --reference) args+=(--reference "$2"); shift 2 ;;
+      --findquery) cases=$2; shift 2 ;;
+      --refresh-textcache) refresh=1; shift ;;
+      *) die "demo-snapshot: unknown option $1" ;;
+    esac
+  done
+  [[ -n "$name" ]] || die "demo-snapshot: --name is required"
+  if ((refresh)); then
+    ops ops refresh-textcache --name "$name"
+    return
+  fi
+  compose stop -t 120 "${WORKERS[@]}" hermes >/dev/null
+  trap 'start_services' EXIT
+  if [[ -n "$cases" ]]; then
+    ops ops snapshot --name "$name" "${args[@]}" --findquery - <"$cases"
+  else
+    ops ops snapshot --name "$name" "${args[@]}"
+  fi
+}
+
+demo_reset() {
+  local name=demo anchor=today yes=0 t0=$SECONDS
+  while (($#)); do
+    case "$1" in
+      --name) name=$2; shift 2 ;;
+      --prefiled) name=demo-prefiled; shift ;;
+      --anchor) anchor=$2; shift 2 ;;
+      --yes) yes=1; shift ;;
+      *) die "demo-reset: unknown option $1" ;;
+    esac
+  done
+  ops ops verify --name "$name"
+  if ((!yes)); then
+    read -r -p "Replace the current state with snapshot '$name'? [y/N] " answer
+    [[ "$answer" == [yY]* ]] || die "nothing changed"
+  fi
+  compose stop -t 120 "${WORKERS[@]}" hermes api >/dev/null
+  ops ops restore --name "$name" --anchor "$anchor"
+  start_services
+  ops ops postcheck --name "$name"
+  echo "demo-reset $name: done in $((SECONDS - t0)) s"
+}
+
+backup() {
+  local name="" to="${HOME}/DevFiles/mona-hq/demo-data/snapshots"
+  while (($#)); do
+    case "$1" in
+      --name) name=$2; shift 2 ;;
+      --to) to=$2; shift 2 ;;
+      *) die "backup: unknown option $1" ;;
+    esac
+  done
+  [[ -n "$name" ]] || die "backup: --name is required"
+  mkdir -p "$to"
+  rm -rf "${to:?}/$name.incoming"
+  mkdir "$to/$name.incoming"
+  ops_run tar -C /data/snapshots -cf - "$name" | tar -C "$to/$name.incoming" -xf -
+  (cd "$to/$name.incoming/$name" && sha256sum -c --quiet sha256sums) || die "backup: sha256sums failed"
+  rm -rf "${to:?}/$name"
+  mv "$to/$name.incoming/$name" "$to/$name"
+  rmdir "$to/$name.incoming"
+  echo "backup $name: $to/$name, sha256sums verified"
+}
+
+restore() {
+  local name="" from="${HOME}/DevFiles/mona-hq/demo-data/snapshots" rest=()
+  while (($#)); do
+    case "$1" in
+      --name) name=$2; shift 2 ;;
+      --from) from=$2; shift 2 ;;
+      *) rest+=("$1"); shift ;;
+    esac
+  done
+  [[ -n "$name" && -d "$from/$name" ]] || die "restore: no snapshot $from/$name"
+  (cd "$from/$name" && sha256sum -c --quiet sha256sums) || die "restore: sha256sums failed"
+  tar -C "$from" -cf - "$name" | ops_run sh -ec "
+    rm -rf /data/snapshots/.$name.incoming && mkdir -p /data/snapshots/.$name.incoming
+    tar -C /data/snapshots/.$name.incoming -xf -
+    rm -rf /data/snapshots/$name && mv /data/snapshots/.$name.incoming/$name /data/snapshots/$name
+    rmdir /data/snapshots/.$name.incoming
+    chown -R \"\$MONA_UID:\$MONA_GID\" /data/snapshots/$name"
+  demo_reset --name "$name" "${rest[@]}"
+}
+
+cmd=${1:-}
+[[ -n "$cmd" ]] || die "usage: mona demo-snapshot|demo-reset|backup|restore|<mona subcommand> …"
+shift
+case "$cmd" in
+  demo-snapshot) demo_snapshot "$@" ;;
+  demo-reset) demo_reset "$@" ;;
+  backup) backup "$@" ;;
+  restore) restore "$@" ;;
+  *) ops "$cmd" "$@" ;;
+esac
