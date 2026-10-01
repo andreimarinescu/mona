@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from mona.chat import notes
-from mona.chat.overlay import build_overlay, detect_language, reply_language
+from mona.chat.overlay import build_overlay, reply_language
 from mona.chat.turns import title_for
 
 HEAD = (
@@ -114,28 +114,12 @@ def test_note_texts():
     assert notes.undo(2, "the AGIPI move") == "Undid 2 change(s): the AGIPI move."
 
 
-@pytest.mark.parametrize(
-    ("message", "lang"),
-    [
-        ("How much did we pay AGIPI last year?", "en"),
-        ("What's due this month?", "en"),
-        ("Rédigez une réponse au SIE pour demander un échéancier", "fr"),
-        ("Combien avons-nous payé à l'URSSAF ?", "fr"),
-        ("Câte documente AGIPI avem în arhivă?", "ro"),
-        ("Cat am platit pentru asigurari si ce este scadent?", "ro"),
-        ("OK", None),
-        ("Find the URSSAF letter", None),
-    ],
-)
-def test_detect_language(message, lang):
-    assert detect_language(message) == lang
-
-
 def test_reply_language_order():
     assert reply_language("OK", None, "fr", "en") == ("fr", False)
     assert reply_language("OK", None, None, "ro") == ("ro", False)
     assert reply_language("How much did we pay AGIPI in total?", None, "fr", "ro") == ("en", False)
     assert reply_language("Combien avons-nous payé à l'URSSAF ?", "en", None, "fr") == ("en", True)
+    assert reply_language("Open the Prévoyance folder", None, "fr", "fr") == ("en", False)
 
 
 @pytest.mark.parametrize(

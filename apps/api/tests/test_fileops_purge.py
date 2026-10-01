@@ -8,7 +8,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, update
 from typer.testing import CliRunner
 
 from mona import cli, jobs
@@ -17,6 +17,7 @@ from mona.fileops.purge import purge_visitors
 from mona.ids import new_id
 from mona.pipeline import runtime
 from mona.services import file_document, undo
+from mona.services.corrections import resolve_counterparty
 from mona.services.registry import T
 from tests.services_world import Services
 
@@ -185,6 +186,37 @@ def test_purge_after_24_hours_removes_the_batch_and_everything_derived(s):
     out = purge_visitors(s.ctx.ops)
     assert out.purged == [w.filed, w.review] and out.batches == [w.batch] and out.failed == []
     assert_purged(s, w)
+
+
+def test_purge_removes_extracted_counterparties_only_visitors_used(s):
+    w = visitor_batch(s)
+    c, d, cl, r, a = (T[t] for t in ("counterparties", "documents", "classifications", "rules",
+                                     "accounts"))  # fmt: skip
+    with s.engine.begin() as conn:
+        made = {k: resolve_counterparty(conn, f"Eaux Fictives {k}")
+                for k in ("only", "shared", "ruled", "banked")}  # fmt: skip
+        made["seed"] = conn.execute(select(c.c.id).where(c.c.origin == "seed").limit(1)).scalar()
+        key = conn.execute(select(c.c.key).where(c.c.id == made["ruled"])).scalar_one()
+        conn.execute(update(d).where(d.c.id.in_([w.filed, w.review])).values(
+            counterparty_id=made["only"]))  # fmt: skip
+        conn.execute(update(d).where(d.c.id == w.practice).values(counterparty_id=made["shared"]))
+        for doc, cp in ((w.filed, "shared"), (w.review, "ruled")):
+            conn.execute(update(cl).where(cl.c.document_id == doc).values(counterparty_id=made[cp]))
+        for doc, cp in ((w.filed, "banked"), (w.review, "seed")):
+            conn.execute(insert(cl).values(
+                id=new_id("cls"), document_id=doc, method="llm", counterparty_id=made[cp],
+                confidence=50, band="low", reasons=[]))  # fmt: skip
+        ruled = {"field": "counterparty", "op": "in", "value": ["opco", key]}
+        conn.execute(update(r).where(r.c.key == "opco-cabinet").values(conditions=[ruled]))
+        account = conn.execute(select(a.c.id).limit(1)).scalar_one()
+        conn.execute(update(a).where(a.c.id == account).values(bank_counterparty_id=made["banked"]))
+    out = purge_visitors(s.ctx.ops, ignore_age=True)
+    assert out.purged == [w.filed, w.review] and out.failed == []
+    with s.engine.connect() as conn:
+        left = set(conn.execute(select(c.c.id)).scalars())
+        aliases = set(conn.execute(select(T["counterparty_aliases"].c.counterparty_id)).scalars())
+    assert made["only"] not in left | aliases
+    assert {made[k] for k in ("shared", "ruled", "banked", "seed")} <= left
 
 
 def test_a_crash_after_the_files_is_completed_by_the_next_run(s):

@@ -727,6 +727,27 @@ def test_exemplars_come_from_similar_trusted_filings(l1m2_demo_engine, tmp_path)
     assert "Montant" not in block and "prélev" not in block
 
 
+def test_visitor_documents_are_never_exemplars(l1m2_demo_engine, tmp_path):
+    from mona.pipeline.prompt import exemplar_lines
+
+    p = Pipeline(l1m2_demo_engine, tmp_path / "data")
+    doc = ids(p.drop_synthetic(["syn-test-opco"]))[0]
+    p.drain()
+    row = p.row(doc)
+    probe = {"id": "doc_probe", "head_norm": row["head_norm"]}
+    d, b, e = T["documents"], T["batches"], T["entities"]
+    with p.engine.begin() as conn:
+        trusted = exemplar_lines(conn, probe)
+        conn.execute(update(b).where(b.c.id == row["batch_id"]).values(visitor=True))
+        visitor_batch = exemplar_lines(conn, probe)
+        conn.execute(update(b).where(b.c.id == row["batch_id"]).values(visitor=False))
+        visitors = conn.execute(select(e.c.id).where(e.c.purge_after_hours.is_not(None))).scalar()
+        conn.execute(update(d).where(d.c.id == doc).values(entity_id=visitors))
+        visitors_entity = exemplar_lines(conn, probe)
+    assert len(trusted) == 1 and "OPCO" in trusted[0]
+    assert visitor_batch == visitors_entity == []
+
+
 def test_thumbnail_uses_the_ocr_copy_when_there_is_one(l1m2_demo_engine, tmp_path):
     p = Pipeline(l1m2_demo_engine, tmp_path / "data")
     doc = ids(p.drop_synthetic(["syn-supplier-rotated"]))[0]

@@ -29,8 +29,9 @@ def test_the_demo_registry_renders_both_files(l1m2_demo_engine):
     assert "Medical Digital Design (SASU, fiscal year ends 30 September)" in m[0]
     assert "LMNP (sub-unit Angers-Strasbourg)" in m[0]
     assert "Visitors" not in m[0] and "Personnel" not in m[0]
-    assert m[1].startswith(
-        "Personnel (famille) holds the personal papers of Alex, Sam, Christine and"
+    assert m[1] == (
+        "A personal household entity holds family papers, kept apart from the practice. Its"
+        " documents never appear on Telegram or in an accountant pack."
     )
     assert m[2].startswith("Visitors holds documents volunteered by visitors")
     assert "removed after 24 hours" in m[2]
@@ -39,6 +40,27 @@ def test_the_demo_registry_renders_both_files(l1m2_demo_engine):
     assert u[0] == "The owner is Claudiu Gamulescu (Claudiu). Claudiu runs the back office."
     assert u[1].startswith("Address Claudiu formally")
     assert u[2] == "Claudiu's interface language is English."
+
+
+def test_the_memory_names_no_personal_entity_or_family_member(l1m2_demo_engine):
+    """C9 §3.4: the memory is shared with Telegram, where personal entities are invisible."""
+    with l1m2_demo_engine.connect() as conn:
+        mem, _ = memory.render(conn)
+        hidden = conn.execute(
+            text("SELECT display_name, folder_name FROM entities WHERE visibility = 'personal'")
+        ).all()
+        family = conn.execute(
+            text(
+                "SELECT p.display_name, p.short_name FROM people p WHERE p.id IN"
+                " (SELECT person_id FROM entity_people ep JOIN entities e ON e.id = ep.entity_id"
+                "  WHERE e.visibility = 'personal')"
+                " AND p.id NOT IN (SELECT person_id FROM entity_people ep JOIN entities e"
+                "  ON e.id = ep.entity_id WHERE e.visibility = 'practice')"
+            )
+        ).all()
+    names = {n for row in (*hidden, *family) for n in row if n}
+    assert family and names
+    assert [n for n in names if n in mem] == []
 
 
 def test_a_registry_change_changes_the_rendering(l1m2_demo_engine):

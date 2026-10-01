@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import Connection, delete, func, select, text, update
+from sqlalchemy import Connection, delete, exists, func, select, text, update
 from sqlalchemy.exc import DBAPIError
 
 from mona.fileops.ops import FileOps, tx
@@ -115,6 +115,44 @@ def _delete_groups(conn: Connection, groups: set[str]) -> None:
                 gone.add(gid)
 
 
+def _rule_counterparties(conn: Connection) -> set[str]:
+    """Counterparty keys any rule names, in a condition or its action."""
+    r = T["rules"]
+    keys: set[str] = set()
+    for conditions, action in conn.execute(select(r.c.conditions, r.c.action)):
+        for c in conditions or []:
+            if c.get("field") == "counterparty" and c.get("op") in ("equals", "in"):
+                v = c.get("value")
+                keys.update(v if isinstance(v, list) else [v])
+        keys.add((action or {}).get("counterparty"))
+    return keys
+
+
+def _drop_counterparties(conn: Connection, ids: set[str]) -> None:
+    """`extracted` counterparties the purged document leaves without any document, account or
+    rule naming them; locked first so a concurrent classification can't take one up meanwhile."""
+    c, d, cl, a = T["counterparties"], T["documents"], T["classifications"], T["accounts"]
+    named: set[str] | None = None
+    for cid in sorted(ids):
+        row = conn.execute(
+            select(c.c.key, c.c.origin).where(c.c.id == cid).with_for_update()
+        ).first()
+        if row is None or row.origin != "extracted":
+            continue
+        used = conn.execute(
+            select(
+                exists().where(d.c.counterparty_id == cid)
+                | exists().where(cl.c.counterparty_id == cid)
+                | exists().where(a.c.bank_counterparty_id == cid)
+            )
+        ).scalar()
+        if used:
+            continue
+        named = _rule_counterparties(conn) if named is None else named
+        if row.key not in named:
+            conn.execute(delete(c).where(c.c.id == cid))
+
+
 def _rows(conn: Connection, doc: Mapping[str, Any]) -> bool:
     """§5.3 step 2, in one transaction; True when the batch went with its last document."""
     f, d, b = T["file_ops"], T["documents"], T["batches"]
@@ -137,8 +175,13 @@ def _rows(conn: Connection, doc: Mapping[str, Any]) -> bool:
     conn.execute(delete(f).where(f.c.id.in_(ids)))
     ce = T["card_events"]
     conn.execute(delete(ce).where(ce.c.subject["document_id"].astext == doc_id))
+    cl = T["classifications"]
+    counterparties = {doc["counterparty_id"]} | set(
+        conn.execute(select(cl.c.counterparty_id).where(cl.c.document_id == doc_id)).scalars()
+    )
     conn.execute(delete(dl).where(dl.c.document_id == doc_id))
     conn.execute(delete(d).where(d.c.id == doc_id))
+    _drop_counterparties(conn, {x for x in counterparties if x})
     left = select(func.count()).select_from(d).where(d.c.batch_id == batch_id)
     last = not conn.execute(left).scalar()
     if last:

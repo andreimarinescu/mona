@@ -21,6 +21,7 @@ from mona.services import apply_rule as apply_service
 from mona.services import correct_document as correct_service
 from mona.services import preview_rule as preview_service
 from mona.services import undo as undo_service
+from mona.services.rules import Visible
 from mona.visibility import rule_visibility
 
 RuleIdParam = Annotated[str, Field(pattern=r"^rul_[0-9a-hjkmnp-tv-z]{26}$")]
@@ -33,6 +34,11 @@ SKIP_STATES = {"undone": "already_undone"}
 
 def via(scope: Scope) -> str:
     return "chat" if scope.channel == "web" else "telegram"
+
+
+def candidate_filter(scope: Scope) -> Visible:
+    """C4 §2.6 for rule candidates: off the web, invisible documents are never listed or moved."""
+    return None if scope.channel == "web" else scope.document_visible
 
 
 async def call_service(fn: Any, *args: Any, **kwargs: Any) -> Any:
@@ -152,6 +158,9 @@ async def correct_document(
         currency=currency, scope=scope,
     )  # fmt: skip
     doc = result.document
+    preview, keep = result.preview, candidate_filter(s)
+    if preview is not None and keep is not None:
+        preview = await call_service(preview_service, get_ctx(), result.rule.id, visible=keep)
     out: dict[str, Any] = {
         "document_id": document_id,
         "outcome": result.outcome,
@@ -159,7 +168,7 @@ async def correct_document(
         "journal_ids": result.journal_ids,
         "group_id": result.group_id,
         "rule": {"id": result.rule.id, "state": result.rule.state} if result.rule else None,
-        "preview": preview_result(result.preview) if result.preview else None,
+        "preview": preview_result(preview) if preview else None,
     }
     if result.rule is not None:
         cards = [("rulePreview", {"rule_id": result.rule.id})]
@@ -180,7 +189,9 @@ async def preview_rule(rule_id: RuleIdParam) -> dict:
     async with get_engine().begin() as conn:
         s = await scope_for(conn, channel())
         await visible_rule(s, rule_id)
-        preview = await call_service(preview_service, get_ctx(), rule_id)
+        preview = await call_service(
+            preview_service, get_ctx(), rule_id, visible=candidate_filter(s)
+        )
         out = preview_result(preview)
         out["card_refs"] = await write_cards(
             s, "preview_rule", [("rulePreview", {"rule_id": rule_id})]
@@ -197,7 +208,9 @@ async def apply_rule(rule_id: RuleIdParam) -> dict:
     async with get_engine().begin() as conn:
         s = await scope_for(conn, channel())
         await visible_rule(s, rule_id)
-    applied = await call_service(apply_service, get_ctx(), rule_id, actor="mona", via=via(s))
+    applied = await call_service(
+        apply_service, get_ctx(), rule_id, actor="mona", via=via(s), visible=candidate_filter(s)
+    )
     async with get_engine().begin() as conn:
         s = await scope_for(conn, channel())
         refs = await write_cards(s, "apply_rule", [("rulePreview", {"rule_id": rule_id})])

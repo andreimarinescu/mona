@@ -1,6 +1,6 @@
 """`preview_rule` / `apply_rule` (C4 §3.8/§3.9, C1 §11.5) and rules drafted from corrections."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -24,6 +24,8 @@ from mona.services.dto import split
 from mona.services.errors import ServiceError
 from mona.services.placement import Candidate, rule_candidates, subject
 from mona.services.registry import Snapshot, T
+
+Visible = Callable[[Mapping[str, Any]], bool] | None
 
 
 def draft_from_correction(
@@ -116,20 +118,26 @@ def _move(doc: Mapping[str, Any], before: Mapping[str, Any], after: Mapping[str,
     )
 
 
-def _candidates(ctx: Ctx, conn: Connection, snap: Snapshot, rule_id: str) -> list[Candidate]:
-    return rule_candidates(conn, snap, registry.rule_specs(conn), rule_id, ctx.textcache)
+def _candidates(
+    ctx: Ctx, conn: Connection, snap: Snapshot, rule_id: str, visible: Visible
+) -> list[Candidate]:
+    cands = rule_candidates(conn, snap, registry.rule_specs(conn), rule_id, ctx.textcache)
+    return cands if visible is None else [c for c in cands if visible(c.doc)]
 
 
 def _stays(c: Candidate) -> bool:
     return c.doc["location"] == "archive" and is_suffix_of(c.doc["current_path"], c.placement.path)
 
 
-def preview_rule(ctx: Ctx, rule_id: str, *, lang: str = "en") -> RulePreview:
-    """C4 §3.8; once applied, the application itself (C1 §11.5 "Applied")."""
+def preview_rule(
+    ctx: Ctx, rule_id: str, *, lang: str = "en", visible: Visible = None
+) -> RulePreview:
+    """C4 §3.8; once applied, the application itself (C1 §11.5 "Applied"). `visible` drops
+    documents the channel can't see (C4 §2.6) from moves, stays and the counts."""
     with ctx.engine.connect() as conn:
         row = _rule(conn, rule_id)
         snap = registry.load(conn)
-        cands = _candidates(ctx, conn, snap, rule_id)
+        cands = _candidates(ctx, conn, snap, rule_id, visible)
         applied = _applied_group(conn, rule_id)
         if applied is None:
             moves = [
@@ -142,7 +150,7 @@ def preview_rule(ctx: Ctx, rule_id: str, *, lang: str = "en") -> RulePreview:
             f, d = T["file_ops"], T["documents"]
             entries = (
                 conn.execute(
-                    select(f, d.c.title, d.c.original_name)
+                    select(f, d.c.title, d.c.original_name, d.c.entity_id, d.c.deleted_at)
                     .join(d, d.c.id == f.c.document_id)
                     .where(f.c.group_id == applied, f.c.fs_state == "done")
                     .order_by(f.c.id)
@@ -150,6 +158,8 @@ def preview_rule(ctx: Ctx, rule_id: str, *, lang: str = "en") -> RulePreview:
                 .mappings()
                 .all()
             )
+            if visible is not None:
+                entries = [e for e in entries if visible(e)]
             moves = [_move({**e, "id": e["document_id"]}, e["before"], e["after"]) for e in entries]
             in_group = {e["document_id"] for e in entries}
             stays = [c.doc["id"] for c in cands if c.doc["id"] not in in_group]
@@ -212,8 +222,11 @@ def _classify(
     return cls_id, sc.confidence, sc.band
 
 
-def apply_rule(ctx: Ctx, rule_id: str, *, actor: str, via: str, lang: str = "en") -> Applied:
-    """C4 §3.9: activate, then move every "moves" candidate in one `rule_apply` group."""
+def apply_rule(
+    ctx: Ctx, rule_id: str, *, actor: str, via: str, lang: str = "en", visible: Visible = None
+) -> Applied:
+    """C4 §3.9: activate, then move every "moves" candidate in one `rule_apply` group; a
+    document `visible` rejects is neither moved nor counted."""
     now = ctx.clock()
     with ctx.engine.begin() as conn:
         row = _rule(conn, rule_id)
@@ -221,7 +234,7 @@ def apply_rule(ctx: Ctx, rule_id: str, *, actor: str, via: str, lang: str = "en"
         if unresolved(body, store.registry(conn)):
             raise ServiceError("conflict", "The rule is invalid.", hint="rule_invalid")
         snap = registry.load(conn)
-        cands = _candidates(ctx, conn, snap, rule_id)
+        cands = _candidates(ctx, conn, snap, rule_id, visible)
         moves = [c for c in cands if not _stays(c)]
         group = None
         if moves:
@@ -263,5 +276,5 @@ def apply_rule(ctx: Ctx, rule_id: str, *, actor: str, via: str, lang: str = "en"
                 store.record_firing(conn, rule_id, now)
         else:
             out.unchanged += 1
-    out.preview = preview_rule(ctx, rule_id, lang=lang)
+    out.preview = preview_rule(ctx, rule_id, lang=lang, visible=visible)
     return out

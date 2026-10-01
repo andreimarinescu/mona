@@ -34,10 +34,7 @@ def render(conn: Connection) -> tuple[str, str]:
             "SELECT e.display_name, e.legal_form, e.visibility, e.fy_end_month, e.fy_end_day,"
             " e.purge_after_hours,"
             " (SELECT array_agg(s.label ORDER BY s.key) FROM sub_units s"
-            "  WHERE s.entity_id = e.id) AS sub_units,"
-            " (SELECT array_agg(coalesce(p.short_name, p.display_name) ORDER BY p.key)"
-            "  FROM entity_people ep JOIN people p ON p.id = ep.person_id"
-            "  WHERE ep.entity_id = e.id) AS people"
+            "  WHERE s.entity_id = e.id) AS sub_units"
             " FROM entities e ORDER BY e.sort_order, e.key"
         )
     ).all()
@@ -50,13 +47,16 @@ def render(conn: Connection) -> tuple[str, str]:
     practice = [e for e in entities if e.visibility == "practice" and e.purge_after_hours is None]
     if practice:
         memory.append("Entities: " + "; ".join(_entity_line(e) for e in practice) + ".")
-    for e in entities:
-        if e.visibility == "personal":
-            whose = f" of {_join(e.people)}" if e.people else ""
-            memory.append(
-                f"{e.display_name} holds the personal papers{whose}. Its documents never appear"
-                " on Telegram or in an accountant pack."
-            )
+    personal = sum(e.visibility == "personal" for e in entities)
+    if personal:
+        # C9 §3.4: memory is shared with Telegram, where personal entities don't exist.
+        memory.append(
+            "A personal household entity holds family papers, kept apart from the practice. Its"
+            " documents never appear on Telegram or in an accountant pack."
+            if personal == 1
+            else f"{personal} personal household entities hold family papers, kept apart from"
+            " the practice. Their documents never appear on Telegram or in an accountant pack."
+        )
     for e in entities:
         if e.purge_after_hours is not None:
             memory.append(

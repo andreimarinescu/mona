@@ -255,6 +255,38 @@ async def test_a_personal_rule_is_not_found_on_telegram(l2_world):
     assert not shown.is_error
 
 
+async def test_telegram_rule_candidates_leave_out_hidden_documents(l2_world):
+    """C4 §5.7: a practice rule's personal and entity-less candidates are absent on Telegram."""
+    w = l2_world
+    opco = w.rule_id("opco-cabinet")
+    practice = w.doc(counterparty="opco", entity="cabinet", title="Practice call")
+    personal = w.doc(counterparty="opco", entity="personal", title="PRIVATE-PERSONAL-TITLE")
+    orphan = w.doc(counterparty="opco", title="NO-ENTITY-TITLE")
+    web = ok(await call("preview_rule", {"rule_id": opco}), PreviewResult)
+    tg = ok(await call("preview_rule", {"rule_id": opco}, channel="telegram"), PreviewResult)
+    assert web["moves_total"] == 3
+    assert [m["document_id"] for m in tg["moves"]] == [practice]
+    assert (tg["moves_total"], tg["stays_total"]) == (1, 0)
+    assert "PRIVATE" not in json.dumps(tg) and "NO-ENTITY" not in json.dumps(tg)
+
+    applied = ok(await call("apply_rule", {"rule_id": opco}, channel="telegram"), ApplyResult)
+    after = ok(await call("preview_rule", {"rule_id": opco}, channel="telegram"), PreviewResult)
+    assert (applied["moved"], applied["unchanged"], applied["failed"]) == (1, 0, [])
+    assert w.row(practice)["location"] == "archive"
+    assert w.row(personal)["location"] == w.row(orphan)["location"] == "inbox"
+    assert [m["document_id"] for m in after["moves"]] == [practice]
+
+    sibling = w.doc(counterparty="opco", entity="cabinet")
+    fixed = ok(
+        await call("correct_document", {"document_id": sibling, "entity": "studio",
+                                        "category": "payment_calls", "scope": "all"},
+                   channel="telegram"),
+        CorrectResult,
+    )  # fmt: skip
+    assert [m["document_id"] for m in fixed["preview"]["moves"]] == [practice]
+    assert fixed["preview"]["moves_total"] == 1
+
+
 # --- undo ---
 
 

@@ -3,7 +3,7 @@ import hmac
 import re
 import unicodedata
 
-_CANDIDATE = re.compile(r"\b[A-Z]{2}[0-9]{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?\b")
+IBAN_PATTERN = re.compile(r"\b[A-Z]{2}[0-9]{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?\b")
 _LENGTHS = {"FR": 27, "RO": 24}
 
 
@@ -35,5 +35,5 @@ def iban_last4(iban: str) -> str:
 def iban_candidates(text: str) -> list[str]:
     """C5 §4.3: valid IBANs found in page text, normalised. Never log the result."""
     upper = unicodedata.normalize("NFKC", text).upper()
-    found = (normalize_iban(m.group(0)) for m in _CANDIDATE.finditer(upper))
+    found = (normalize_iban(m.group(0)) for m in IBAN_PATTERN.finditer(upper))
     return list(dict.fromkeys(c for c in found if is_valid_iban(c)))

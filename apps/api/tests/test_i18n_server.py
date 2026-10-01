@@ -1,10 +1,10 @@
-"""The server catalog (C8 §1.1) and its formatter (C8 §11 items 3 and 7)."""
+"""The server catalog (C8 §1.1), its formatter and `detect_language` (C8 §11 items 2, 3 and 7)."""
 
 import re
 
 import pytest
 
-from mona.i18n import LANGS, catalog, plural_category, t
+from mona.i18n import LANGS, catalog, detect_language, plural_category, t
 
 SENTENCES = ("default", "low", "entity", "conflict", "asked", "unreadable")
 CONTRACT_KEYS = [f"review.sentence.{k}{v}" for k in SENTENCES for v in ("", "_anon")] + [
@@ -75,3 +75,38 @@ def test_romanian_plural_categories():
 
 def test_an_unknown_language_falls_back_to_english():
     assert t("interview.option.ask", "de") == "Ask me each time"
+
+
+C8_VECTORS = [
+    ("How much did we pay AGIPI last year?", "en"),
+    ("What's due this month?", "en"),
+    ("Let's go through your questions about this batch.", "en"),
+    ("Rédigez une réponse au SIE pour demander un échéancier", "fr"),
+    ("Combien avons-nous payé à AGIPI l'année dernière ?", "fr"),
+    ("Passons en revue les questions sur ce lot.", "fr"),
+    ("Cât am plătit la AGIPI anul trecut?", "ro"),
+    ("Cat am platit la AGIPI anul trecut?", "ro"),
+    ("Ce avem de plătit luna asta?", "ro"),
+    ("Ce facturi avem de la AGIPI?", "ro"),
+    ("Să trecem prin întrebările despre acest lot.", "ro"),
+    ("Bună ziua", "ro"),
+    ("Merci", None),
+    ("OK", None),
+    ("AGIPI 2025", None),
+    ("URSSAF Q3 invoice", None),
+    ("Open the Prévoyance folder", "en"),
+    ("What's in Impôts et taxes?", "en"),
+    ("Show me the Relevé de compte from Hello bank", "en"),
+    ("open the prévoyance folder", "en"),
+]
+C3_SENTENCES = [
+    ("Combien avons-nous payé à l'URSSAF ?", "fr"),
+    ("Câte documente AGIPI avem în arhivă?", "ro"),
+    ("Cat am platit pentru asigurari si ce este scadent?", "ro"),
+    ("Buna\u0306 ziua", "ro"),
+]
+
+
+@pytest.mark.parametrize(("text", "lang"), C8_VECTORS + C3_SENTENCES)
+def test_detect_language(text, lang):
+    assert detect_language(text) == lang

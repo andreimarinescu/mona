@@ -3,11 +3,14 @@ and server-side formatting (C8 §6.4, §7)."""
 
 import json
 import re
+import unicodedata
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from functools import cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal, cast
+
+from mona.text import norm
 
 LANGS = ("en", "fr", "ro")
 LANGUAGE_NAMES = {"en": "English", "fr": "French", "ro": "Romanian"}
@@ -127,3 +130,48 @@ def format_money(value: Decimal | float, currency: str, lang: str) -> str:
     if currency == "RON":
         return f"{number}{NBSP}lei"
     return f"€{number}" if lang == "en" else f"{number}{NBSP}€"
+
+
+_LETTERS = re.compile(r"[^\W\d_]+")
+_CUES = {"ro": set("ășşțţ"), "fr": set("éèêëàçùûôœïÿ")}
+_WORDS = {
+    lang: frozenset(words.split())
+    for lang, words in {
+        "en": "the and what whats how is are was were did do does we our my me you your of to"
+        " for from with about this that these those which when where who due pay paid much many"
+        " last next year month week show find open folder please can could have has any all it"
+        " its let lets go through questions draft reply remind invoice invoices statement a an"
+        " in on at by",
+        "fr": "le la les des du de et est sont que quoi qui quel quelle quels quelles combien nous"
+        " vous avons avez pour une un au aux ou ce cette ces dans sur avec mon ma mes notre nos"
+        " votre vos pas ne il elle je paye payes payee doit echeance echeancier mois annee"
+        " derniere dernier redigez rediger reponse demander facture factures releve merci"
+        " bonjour passons revue lot en a",
+        "ro": "si este sunt ce cat cata cate cati avem aveti pentru nu in pe ca cu aceasta acest"
+        " aceste acesti am ati la din anul trecut luna asta cand unde cine care platit platim"
+        " plata plati scadent scadenta dumneavoastra va rog documente factura facturile extras"
+        " raspuns redactati buna ziua multumesc sa se mi ne al ale lui unei unui acum despre prin"
+        " trecem intrebarile de o",
+    }.items()
+}
+
+
+Lang = Literal["en", "fr", "ro"]
+
+
+def detect_language(text: str) -> Lang | None:
+    """C8 §4: letter cues from the first and lower-case words (capitalised words are usually
+    names), word hits through `norm()`, at least 2 and 1 clear of the runner-up."""
+    words = _LETTERS.findall(unicodedata.normalize("NFC", text))
+    cue_words = [w.lower() for i, w in enumerate(words) if i == 0 or not w[0].isupper()]
+    cues = {lang for lang, marks in _CUES.items() if any(marks & set(w) for w in cue_words)}
+    counted = [norm(w) for w in words if len(w) >= 2]
+    if len(counted) < 3:
+        return cast(Lang, cues.pop()) if len(cues) == 1 else None
+    scores = {
+        lang: (lang in cues) + sum(w in vocab for w in counted) for lang, vocab in _WORDS.items()
+    }
+    best, runner_up = sorted(scores.values(), reverse=True)[:2]
+    if best < 2 or best - runner_up < 1:
+        return None
+    return cast(Lang, max(scores, key=scores.__getitem__))

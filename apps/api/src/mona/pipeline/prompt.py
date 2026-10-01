@@ -211,6 +211,8 @@ EXEMPLARS = text(
     WHERE d.status = 'filed' AND d.deleted_at IS NULL AND d.id <> :id
       AND d.head_norm IS NOT NULL AND d.category_id IS NOT NULL
       AND (c.method IN ('user', 'rule') OR c.band = 'high')
+      AND e.purge_after_hours IS NULL
+      AND NOT EXISTS (SELECT 1 FROM batches b WHERE b.id = d.batch_id AND b.visitor)
       AND similarity(d.head_norm, :head) >= :min
     ORDER BY sim DESC, d.id
     LIMIT 50
@@ -219,7 +221,8 @@ EXEMPLARS = text(
 
 
 def exemplar_lines(conn: Connection, doc: Mapping[str, Any]) -> list[str]:
-    """C5 §5.5: ≤ 5 similar filed documents, ≤ 2 per counterparty; never their text."""
+    """C5 §5.5: ≤ 5 similar filed documents, ≤ 2 per counterparty, never a Visitors one (C9 §5.5);
+    never their text."""
     if not doc["head_norm"]:
         return []
     per_cp: dict[Any, int] = {}

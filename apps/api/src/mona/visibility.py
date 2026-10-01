@@ -3,6 +3,7 @@
 Invisible rows behave as absent. Visitors documents are listed on `web` but left out of every
 figure (sums, the brief, deadlines, reminders) on every channel (§5.5)."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -48,6 +49,14 @@ class Scope:
             if self.hidden_entities:
                 out.append(doc.entity_id.not_in(self.hidden_entities))
         return out
+
+    def document_visible(self, doc: Mapping[str, Any]) -> bool:
+        """`document_clauses` on a fetched document row; keep the two in step."""
+        if doc["deleted_at"] is not None:
+            return False
+        if self.channel == "telegram":
+            return doc["entity_id"] is not None and doc["entity_id"] not in self.hidden_entities
+        return True
 
     def figures_clauses(self, doc: Any = Document) -> list[Any]:
         """Left out of every figure on every channel: documents of a visitor batch (§5.5)."""
