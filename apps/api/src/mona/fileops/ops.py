@@ -236,6 +236,14 @@ class FileOps:
             raise FileOpError("not_found", f"unknown document {document_id}")
         return row
 
+    def _live_twin(self, conn: Connection, doc: Mapping[str, Any]) -> bool:
+        """A24: another live document holds the same bytes."""
+        d = T["documents"]
+        q = select(d.c.id).where(
+            d.c.sha256 == doc["sha256"], d.c.deleted_at.is_(None), d.c.id != doc["id"]
+        )
+        return conn.execute(q.limit(1)).first() is not None
+
     def _src(self, state: Mapping[str, Any]) -> tuple[Path, str]:
         if state.get("adopted"):
             return self.roots.trash, state["trash_copy"]
@@ -648,6 +656,11 @@ class FileOps:
                 conn.rollback()
                 return UndoResult(journal_id, state, document_id=doc["id"])  # type: ignore[arg-type]
             t = chain(conn, e)[-1]
+            if doc["deleted_at"] is not None and t["before"]["location"] != "trash":
+                if self._live_twin(conn, doc):
+                    conn.rollback()
+                    raise FileOpError("conflict", "a live document has the same bytes",
+                                      hint="duplicate")  # fmt: skip
             conn.rollback()
             plan = _Plan(
                 document_id=doc["id"],

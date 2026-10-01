@@ -93,24 +93,28 @@ def model_output(
     """C5 §1.3 model-output cache: a hit needs `v`, `prompt_version`, `model` and today's schema.
 
     A14: an empty answer for a readable document is asked once more with the first page only;
-    the cache keeps the final answer unless it is still empty. Returns the prompt the answer
-    came from."""
+    the cache keeps the final answer unless it is still empty, with its page budget (A22).
+    Returns the prompt the answer came from."""
     sha = doc["sha256"]
     readable = sum(solid_chars(page) for page in s.pages) >= UNREADABLE_MIN
     if not bypass_cache:
-        raw = cache.read_model(ctx.textcache, sha, PROMPT_VERSION, model.model)
-        if (
-            raw is not None
-            and not output_schema.errors(raw, schema)
-            and not (readable and output_schema.empty_answer(raw))
-        ):
-            return raw, None, p
+        entry = cache.read_model_entry(ctx.textcache, sha, PROMPT_VERSION, model.model)
+        if entry is not None:
+            raw, pages_sent = entry
+            if not output_schema.errors(raw, schema) and not (
+                readable and output_schema.empty_answer(raw)
+            ):
+                if pages_sent is not None:
+                    p = prompts.build(s, max_pages=pages_sent)
+                return raw, None, p
+    budget = prompts.PAGES_SENT
     result = model.complete(p.system, p.user, schema)
     if readable and output_schema.empty_answer(result.raw):
-        p = prompts.build(s, max_pages=1)
+        budget = 1
+        p = prompts.build(s, max_pages=budget)
         result = model.complete(p.system, p.user, schema)
     if not (readable and output_schema.empty_answer(result.raw)):
-        cache.write_model(ctx.textcache, sha, PROMPT_VERSION, model.model, result.raw)
+        cache.write_model(ctx.textcache, sha, PROMPT_VERSION, model.model, result.raw, budget)
     return result.raw, result, p
 
 

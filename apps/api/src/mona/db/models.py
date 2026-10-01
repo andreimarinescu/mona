@@ -342,10 +342,16 @@ class Document(Base):
         ),
         Index("documents_cpt", "counterparty_id", postgresql_where=text("deleted_at IS NULL")),
         Index("documents_doc_date", "doc_date", postgresql_where=text("deleted_at IS NULL")),
+        Index(
+            "documents_sha256_live",
+            "sha256",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
     )
 
     id: Mapped[str] = _id("doc")
-    sha256: Mapped[str] = mapped_column(unique=True)
+    sha256: Mapped[str]
     original_name: Mapped[str]
     mime_type: Mapped[str]
     size_bytes: Mapped[int] = mapped_column(BigInteger)

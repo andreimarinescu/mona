@@ -1,4 +1,5 @@
-"""Intake (C1 §4.1, C7 §8.4): dedupe by sha256, place in the inbox, queue `extract_text`."""
+"""Intake (C1 §4.1, C7 §8.4): dedupe by sha256 among live documents (A24), place in the inbox,
+queue `extract_text`."""
 
 import hashlib
 import os
@@ -192,7 +193,8 @@ def _ingest_one(
     if mime is None:
         item.reject_reason = "unsupported_type"
         return item
-    existing = conn.execute(select(d.c.id, d.c.location).where(d.c.sha256 == item.sha256)).first()
+    live = (d.c.sha256 == item.sha256, d.c.deleted_at.is_(None))
+    existing = conn.execute(select(d.c.id, d.c.location).where(*live)).first()
     if existing is not None:
         item.outcome, item.document_id = "duplicate", existing.id
         item.deleted = existing.location == "trash"
@@ -208,12 +210,12 @@ def _ingest_one(
             location="inbox", current_path=rel, status="processing", pipeline_stage="queued",
             entity_id=visitors, created_at=now, updated_at=now,
         )
-        .on_conflict_do_nothing(index_elements=["sha256"])
+        .on_conflict_do_nothing(index_elements=["sha256"], index_where=d.c.deleted_at.is_(None))
         .returning(d.c.id)
     ).scalar()  # fmt: skip
     if inserted is None:
         written.pop().unlink(missing_ok=True)
-        other = conn.execute(select(d.c.id, d.c.location).where(d.c.sha256 == item.sha256)).one()
+        other = conn.execute(select(d.c.id, d.c.location).where(*live)).one()
         item.outcome, item.document_id = "duplicate", other.id
         item.deleted = other.location == "trash"
         return item

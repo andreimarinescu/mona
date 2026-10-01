@@ -8,7 +8,6 @@ import pytest
 
 from mona.api import intake
 from mona.app import create_app
-from mona.services import delete_document
 from mona.settings import get_settings
 from tests.api_client import api_client
 
@@ -121,32 +120,36 @@ async def test_the_same_bytes_again_are_a_duplicate_and_the_batch_is_done(l2_wor
     assert sql("SELECT count(*) FROM documents WHERE sha256 = %s", (item["sha256"],)) == [(1,)]
 
 
-async def test_a_trashed_documents_bytes_offer_restore_and_the_undo_restores_it(l2_world, app):
-    w = l2_world
-    data = unique("trash")
-    doc = w.doc(content=data)
-    delete_document(w.ctx, doc, actor="user", via="ui")
+async def test_a_deleted_documents_bytes_upload_again_as_a_new_visitor_document(l2_world, app):
+    """A24."""
+    data = unique("reupload")
     async with api_client(app) as c:
-        body = (await c.post("/api/intake", files=files(("again.pdf", data)))).json()
-        item = body["items"][0]
-        [(entry,)] = sql(
-            "SELECT id FROM file_ops WHERE document_id = %s AND action = 'delete'", (doc,)
-        )
-        assert (item["outcome"], item["documentId"], item["deleted"]) == ("duplicate", doc, True)
-        assert item["restoreJournalId"] == entry
-        shown = (await c.get(f"/api/batches/{body['batch']['id']}")).json()["items"][0]
-        assert (shown["deleted"], shown["restoreJournalId"], shown["document"]) == (
-            True, entry, None,
-        )  # fmt: skip
-        undo = await c.post(f"/api/journal/{entry}/undo", json={})
-        assert undo.status_code == 200, undo.text
-        after = (await c.get(f"/api/batches/{body['batch']['id']}")).json()["items"][0]
-    assert sql("SELECT location, deleted_at FROM documents WHERE id = %s", (doc,)) == [
-        ("inbox", None)
-    ]
-    assert (after["deleted"], after["restoreJournalId"], after["document"]["id"]) == (
-        False, None, doc,
-    )  # fmt: skip
+        first = (await c.post("/api/intake", files=files(("x.pdf", data)))).json()
+        old = first["items"][0]["documentId"]
+        [(path,)] = sql("SELECT current_path FROM documents WHERE id = %s", (old,))
+        gone = await c.post(f"/api/documents/{old}/delete", json={"confirm": True,
+                                                                  "fileName": path})  # fmt: skip
+        assert gone.status_code == 200, gone.text
+        entry = gone.json()["undo"]["journalId"]
+        again = await c.post("/api/intake", files=files(("x.pdf", data)), data={"visitor": "true"})
+        item = again.json()["items"][0]
+        twin = item["documentId"]
+        refused = await c.post(f"/api/journal/{entry}/undo", json={})
+        had = (await c.post("/api/intake", files=files(("y.pdf", data)))).json()["items"][0]
+        [(twin_path,)] = sql("SELECT current_path FROM documents WHERE id = %s", (twin,))
+        await c.post(f"/api/documents/{twin}/delete", json={"confirm": True, "fileName": twin_path})
+        restored = await c.post(f"/api/journal/{entry}/undo", json={})
+    assert (item["outcome"], item["deleted"], item["restoreJournalId"]) == ("accepted", False, None)
+    assert twin != old and again.json()["batch"]["visitor"] is True
+    visitors = "SELECT e.purge_after_hours IS NOT NULL FROM documents d JOIN entities e"
+    assert sql(visitors + " ON e.id = d.entity_id WHERE d.id = %s", (twin,)) == [(True,)]
+    assert refused.status_code == 409
+    assert refused.json()["error"]["code"] == "conflict"
+    assert refused.json()["error"]["details"] == {"reason": "duplicate"}
+    assert (had["outcome"], had["documentId"], had["deleted"]) == ("duplicate", twin, False)
+    assert restored.status_code == 200, restored.text
+    assert sql("SELECT id, deleted_at IS NULL FROM documents WHERE sha256 = %s ORDER BY id",
+               (item["sha256"],)) == sorted([(old, True), (twin, False)])  # fmt: skip
 
 
 async def test_the_visitor_flag_and_title_mark_the_batch(l2_world, app):

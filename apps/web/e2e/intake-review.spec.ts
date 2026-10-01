@@ -145,6 +145,22 @@ test.describe('review', () => {
     await expect(page.getByTestId('review-detail')).toContainText('Horizon letter of 24 September');
   });
 
+  test('a corrected visitor document files to Visitors without offering every document like this', async ({ page }) => {
+    await page.goto('/intake');
+    await page.getByRole('checkbox', { name: /Visitor document/ }).check();
+    await page.getByTestId('file-input').setInputFiles([{ name: 'scan_visitor.pdf', mimeType: 'application/pdf', buffer: PDF('visitor') }]);
+    await expect(page.getByTestId('batch-summary')).toHaveText('0 filed, 1 need you, 0 unreadable, 0 already had', { timeout: 15_000 });
+    await page.getByRole('navigation').getByRole('link', { name: /Review queue/ }).click();
+    await page.getByTestId('review-item').getByRole('link', { name: 'scan visitor' }).click();
+    const detail = page.getByTestId('review-detail');
+    await expect(detail.getByTestId('visitors-entity')).toHaveValue('Visitors');
+    await detail.getByLabel('Category', { exact: true }).selectOption({ label: 'Bank' });
+    await detail.getByRole('button', { name: 'Correct and file' }).click();
+    await expect(toastRegion(page).getByText('Moved “scan visitor” to Visitors')).toBeVisible();
+    await expect(page.getByTestId('review-item').filter({ hasText: 'scan visitor' })).toHaveCount(0);
+    await expect(page.getByTestId('scope-prompt')).toHaveCount(0);
+  });
+
   test('Just this one closes the prompt without a rule', async ({ page }) => {
     await page.goto('/review');
     const detail = page.getByTestId('review-detail');

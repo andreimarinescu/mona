@@ -811,6 +811,7 @@
       "typeName": "To confirm, type its file name:",
       "fileName": "File name",
       "confirm": "Delete document",
+      "nameMismatch": "The typed name isn’t the document’s current file name.",
       "done": "Deleted “{{title}}”"
     },
     "evidence": {

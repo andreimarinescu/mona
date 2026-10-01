@@ -28,7 +28,8 @@ export function ReviewPage() {
   const desktop = useIsDesktop();
   const undo = useUndoRunner();
   const refresh = useRefreshAfterWrite();
-  const entities = useEntityList().data?.items ?? [];
+  const entityList = useEntityList().data;
+  const entities = entityList?.items ?? [];
 
   const [reason, setReason] = useState<Reason | 'all'>('all');
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -92,7 +93,8 @@ export function ReviewPage() {
     try {
       const result = await correctDocument(doc.id, body);
       const now = result.document ?? doc;
-      setCorrections((c) => ({ ...c, [doc.id]: now }));
+      if (entityList?.visitorsEntityId && now.entityId === entityList.visitorsEntityId) go(neighbourAfter(items, doc.id));
+      else setCorrections((c) => ({ ...c, [doc.id]: now }));
       const target = result.undo;
       toasts.push({
         key: `corrected-${doc.id}`,

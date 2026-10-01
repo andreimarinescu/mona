@@ -840,6 +840,7 @@
       "typeName": "Pour confirmer, saisissez son nom de fichier :",
       "fileName": "Nom du fichier",
       "confirm": "Supprimer le document",
+      "nameMismatch": "Le nom saisi n’est pas le nom actuel du fichier.",
       "done": "« {{title}} » supprimé"
     },
     "evidence": {

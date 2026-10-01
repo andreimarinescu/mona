@@ -123,14 +123,14 @@ async def test_the_same_bytes_again_are_a_duplicate_carded_only_where_visible(l2
     assert sql("SELECT count(*) FROM documents WHERE sha256 = %s", (SHA,)) == [(1,)]
 
 
-async def test_a_trashed_duplicate_says_deleted_and_gets_no_card(l2_world, cache):
+async def test_a_deleted_documents_bytes_are_a_new_document(l2_world, cache):
+    """A24."""
     w = l2_world
     doc = w.doc(content=PDF)
     delete_document(w.ctx, doc, actor="user", via="ui")
     body = ok(await call("ingest_attachment", {"path": f"documents/{NAME}"}))
-    assert (body["outcome"], body["document_id"], body["deleted"], body["card_refs"]) == (
-        "duplicate", doc, True, [],
-    )  # fmt: skip
+    assert (body["outcome"], body["deleted"]) == ("accepted", False)
+    assert body["document_id"] not in (None, doc) and len(body["card_refs"]) == 1
 
 
 async def test_unsupported_bytes_are_rejected_without_a_card(l2_world, cache):

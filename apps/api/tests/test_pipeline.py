@@ -100,12 +100,18 @@ def test_duplicates_create_no_document_and_a_batch_of_them_is_done(l1m2_demo_eng
         assert conn.execute(select(func.count()).select_from(T["documents"])).scalar() == 1
 
 
-def test_a_duplicate_of_a_trashed_document_says_so(l1m2_demo_engine, tmp_path):
+def test_a_deleted_documents_bytes_are_a_new_document_then_a_duplicate_of_it(
+    l1m2_demo_engine, tmp_path
+):
+    """A24: dedupe compares with live documents only."""
     p = Pipeline(l1m2_demo_engine, tmp_path / "data")
     doc = ids(p.drop_synthetic(["syn-sie-letter"], outputs=False))[0]
     delete_document(p.ctx, doc, actor="user", via="ui")
-    again = ingest_file(p.ctx, content_for("syn-sie-letter"), "again.pdf")
-    assert (again.items[0].outcome, again.items[0].deleted) == ("duplicate", True)
+    again = ingest_file(p.ctx, content_for("syn-sie-letter"), "again.pdf").items[0]
+    third = ingest_file(p.ctx, content_for("syn-sie-letter"), "third.pdf").items[0]
+    assert (again.outcome, again.deleted) == ("accepted", False) and again.document_id != doc
+    assert (third.outcome, third.document_id) == ("duplicate", again.document_id)
+    assert (p.row(doc)["location"], p.row(again.document_id)["location"]) == ("trash", "inbox")
 
 
 def test_rejects(l1m2_demo_engine, tmp_path, monkeypatch):

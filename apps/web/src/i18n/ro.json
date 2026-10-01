@@ -840,6 +840,7 @@
       "typeName": "Pentru confirmare, introduceți numele fișierului:",
       "fileName": "Numele fișierului",
       "confirm": "Ștergeți documentul",
+      "nameMismatch": "Numele introdus nu este numele actual al fișierului.",
       "done": "„{{title}}” a fost șters"
     },
     "evidence": {

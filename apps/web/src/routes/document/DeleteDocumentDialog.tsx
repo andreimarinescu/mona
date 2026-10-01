@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DocumentDetail } from '../../data/dto';
+import { ApiError } from '../../data/http';
 import { invalidateAfterWrite, toastFailure, useUndoRunner } from '../../data/journal';
 import { deleteDocument } from '../../data/review';
 import { toasts } from '../../toast/store';
@@ -15,6 +16,7 @@ export function DeleteDocumentDialog({ doc, onClose }: { doc: DocumentDetail; on
   const undo = useUndoRunner();
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
+  const [mismatch, setMismatch] = useState(false);
   const matches = typed === doc.fileName;
 
   async function submit(e: React.FormEvent) {
@@ -29,7 +31,8 @@ export function DeleteDocumentDialog({ doc, onClose }: { doc: DocumentDetail; on
       void invalidateAfterWrite(qc);
       void navigate({ to: '/archive' });
     } catch (err) {
-      toastFailure(err);
+      if (err instanceof ApiError && err.code === 'invalid_value' && err.field === 'fileName') setMismatch(true);
+      else toastFailure(err);
       setBusy(false);
     }
   }
@@ -59,7 +62,18 @@ export function DeleteDocumentDialog({ doc, onClose }: { doc: DocumentDetail; on
             {doc.fileName}
           </code>
         </p>
-        <Input label={t('viewer.delete.fileName')} value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" spellCheck={false} autoFocus />
+        <Input
+          label={t('viewer.delete.fileName')}
+          value={typed}
+          onChange={(e) => {
+            setTyped(e.target.value);
+            setMismatch(false);
+          }}
+          error={mismatch ? t('viewer.delete.nameMismatch') : undefined}
+          autoComplete="off"
+          spellCheck={false}
+          autoFocus
+        />
       </form>
     </Dialog>
   );

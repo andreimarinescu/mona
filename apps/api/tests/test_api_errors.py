@@ -67,7 +67,13 @@ async def test_every_status_comes_in_the_envelope(l2_world, app, monkeypatch):
         check(await cl.get("/api/documents/rul_" + "0" * 26), 404, "not_found")
         check(await cl.get(f"/api/documents/{doc}/thumbnail"), 404, "not_ready")
         check(await cl.post(f"/api/documents/{doc}/delete", json={"confirm": True,
-              "fileName": "other.pdf"}), 409, "stale")  # fmt: skip
+              "fileName": "other.pdf"}), 422, "invalid_value")  # fmt: skip
+        with monkeypatch.context() as m:
+            read = documents.views.doc_row
+            moved = {"current_path": "moved/other.pdf"}
+            m.setattr(documents.views, "doc_row", lambda *a, **k: {**read(*a, **k), **moved})
+            check(await cl.post(f"/api/documents/{doc}/delete", json={"confirm": True,
+                  "fileName": "other.pdf"}), 409, "stale")  # fmt: skip
         check(await cl.delete(f"/api/entities/{ids['lmnp']}"), 409, "in_use")
         check(await cl.post("/api/auth/heartbeat", content=b"x" * (70 * 1024),
               headers={"content-type": "application/json"}), 413, "too_large")  # fmt: skip

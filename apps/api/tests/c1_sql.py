@@ -115,6 +115,16 @@ def _a18_defaults() -> str:
     )
 
 
+def _a24_sha256() -> list[str]:
+    """Amendment A24's partial unique index on `sha256`, as migration 0007 makes it."""
+    section = AMENDMENTS.read_text().split("## A24 ", 1)[1].split("\n## ", 1)[0]
+    assert "a partial unique index" in section and "`deleted_at IS NULL`" in section
+    return [
+        "ALTER TABLE documents DROP CONSTRAINT documents_sha256_key",
+        "CREATE UNIQUE INDEX documents_sha256_live ON documents (sha256) WHERE deleted_at IS NULL",
+    ]
+
+
 def contract_ddl() -> list[str]:
     creates, fks, others = [], [], []
     auth = [b for b in sql_blocks(C2.read_text()) if b.lstrip().startswith("auth_sessions")]
@@ -128,4 +138,4 @@ def contract_ddl() -> list[str]:
                 others.append(" ".join(re.sub(r"--[^\n]*", "", src).split()))
     search = [s for s in others if "TEXT SEARCH" in s]
     indexes = [s for s in others if s not in search]
-    return search + creates + fks + indexes + [_a9_column(), _a18_defaults()]
+    return search + creates + fks + indexes + [_a9_column(), _a18_defaults(), *_a24_sha256()]

@@ -459,7 +459,7 @@ async def test_delete_needs_confirm_and_the_current_file_name(l2_world, app):
         no_confirm = await cl.post(
             f"/api/documents/{doc}/delete", json={"confirm": False, "fileName": name}
         )
-        stale = await cl.post(
+        mismatch = await cl.post(
             f"/api/documents/{doc}/delete", json={"confirm": True, "fileName": "other.pdf"}
         )
         assert w.row(doc)["deleted_at"] is None
@@ -470,7 +470,11 @@ async def test_delete_needs_confirm_and_the_current_file_name(l2_world, app):
             f"/api/documents/{doc}/delete", json={"confirm": True, "fileName": name}
         )
     assert no_confirm.status_code == 400
-    assert stale.status_code == 409 and stale.json()["error"]["code"] == "stale"
+    assert mismatch.status_code == 422
+    assert mismatch.json()["error"] == {
+        "code": "invalid_value", "field": "fileName", "details": {"field": "fileName"},
+        "message": "The typed name isn't the document's current file name.",
+    }  # fmt: skip
     body = res.json()
     assert res.status_code == 200 and body["document"] is None and body["outcome"] == "moved"
     assert w.row(doc)["location"] == "trash"

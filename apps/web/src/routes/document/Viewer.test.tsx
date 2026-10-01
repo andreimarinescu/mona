@@ -113,4 +113,21 @@ describe('the viewer', () => {
     expect(() => world.document(doc.id)).toThrow();
     expect(world.entries.find((e) => e.action === 'delete')?.documentIds).toEqual([doc.id]);
   });
+
+  it('Delete shows why the server refused a name that is no longer the current one', async () => {
+    const world = api.world();
+    const summary = [...world.docs.values()].find((d) => d.summary.title === 'Call for contributions, Q3 2026')!.summary;
+    const doc = world.document(summary.id);
+    await renderRoute(<Viewer doc={doc} search={{}} />, `/documents/${doc.id}`);
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Delete this document?' });
+    world.docs.get(doc.id)!.summary.fileName = 'renamed-meanwhile.pdf';
+    const input = within(dialog).getByLabelText('File name');
+    await userEvent.type(input, doc.fileName);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete document' }));
+    expect(await within(dialog).findByText('The typed name isn’t the document’s current file name.')).toBeInTheDocument();
+    expect(world.document(doc.id).id).toBe(doc.id);
+    await userEvent.type(input, 'x');
+    expect(within(dialog).queryByText('The typed name isn’t the document’s current file name.')).not.toBeInTheDocument();
+  });
 });

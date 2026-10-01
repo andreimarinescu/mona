@@ -685,7 +685,10 @@ def _delete(ctx: Ctx, document_id: str, body: DeleteRequest, lang: str) -> dict[
     if doc is None:
         raise ApiFailure(404, "not_found", "No document with that id.")
     if doc["current_path"].rpartition("/")[2] != body.file_name:
-        raise ApiFailure(409, "stale", "The document changed meanwhile; re-read and retry.")
+        raise ApiFailure(
+            422, "invalid_value", "The typed name isn't the document's current file name.",
+            field="fileName", details={"field": "fileName"},
+        )  # fmt: skip
     try:
         r = ctx.ops.delete(
             document_id, actor="user", via="ui", expected=(doc["location"], doc["current_path"])
@@ -702,7 +705,7 @@ def _delete(ctx: Ctx, document_id: str, body: DeleteRequest, lang: str) -> dict[
 
 @router.post(
     "/documents/{id}/delete", operation_id="deleteDocument", response_model=FileOpResult,
-    responses=errors(400, 401, 403, 404, 409, 415, 423),
+    responses=errors(400, 401, 403, 404, 409, 415, 422, 423),
 )  # fmt: skip
 async def delete_document(
     document_id: DocId, body: DeleteRequest, ctx: CtxDep, lang: Lang

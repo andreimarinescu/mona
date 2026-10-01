@@ -369,7 +369,7 @@ export function createWorld(options: WorldOptions = {}) {
       thumbnailUrl: null,
       pdfUrl: `/api/documents/${docId}/pdf`,
     };
-    const doc: Doc = { summary, sha256: init.sha256 ?? docId.padEnd(64, '0').replace(/[^0-9a-f]/g, '0'), deleted: false, fields: [], suggestion: null };
+    const doc: Doc = { summary, sha256: init.sha256 ?? [...docId].map((c) => c.charCodeAt(0).toString(16).padStart(2, '0')).join('').padEnd(64, '0').slice(0, 64), deleted: false, fields: [], suggestion: null };
     docs.set(docId, doc);
     return doc;
   }
@@ -533,18 +533,19 @@ export function createWorld(options: WorldOptions = {}) {
           s.confidence = 92;
           fileDoc(doc, entityId, 'invoices', 'supplies', { actor: 'mona', via: 'pipeline', groupId: batch.groupId, batchId: batch.id, at: finishedAt, confidence: 92 });
         } else if (doc.plan.outcome === 'review') {
+          const entity = batch.visitor ? entityById(VISITORS_ID)! : CABINET;
           s.status = 'review';
           s.reasons = ['low'];
           s.confidence = 64;
           s.band = 'low';
-          s.entityId = CABINET.id;
-          s.entityName = CABINET.displayName;
+          s.entityId = entity.id;
+          s.entityName = entity.displayName;
           s.categoryId = 'invoices';
           doc.suggestion = {
-            entityId: CABINET.id,
+            entityId: entity.id,
             categoryId: 'invoices',
             subcategoryKey: null,
-            sentence: `I think this document from ${s.counterparty ?? 'an unknown sender'} belongs to ${CABINET.displayName}, but I'm not sure enough to file it.`,
+            sentence: `I think this document from ${s.counterparty ?? 'an unknown sender'} belongs to ${entity.displayName}, but I'm not sure enough to file it.`,
             evidence: [{ field: 'counterparty', quote: s.counterparty ?? s.title }],
           };
         } else {
@@ -586,13 +587,11 @@ export function createWorld(options: WorldOptions = {}) {
       const png = file.bytes.length >= 4 && file.bytes[0] === 0x89 && file.bytes[1] === 0x50;
       const jpg = file.bytes.length >= 3 && file.bytes[0] === 0xff && file.bytes[1] === 0xd8;
       const base: IntakeItem = { id: itemId, originalName: file.name, sha256, sizeBytes: file.bytes.length, outcome: 'accepted', rejectReason: null, documentId: null, deleted: false, restoreJournalId: null };
-      const existing = [...docs.values()].find((d) => d.sha256 === sha256);
+      const existing = liveTwin(sha256);
       if (file.bytes.length === 0) Object.assign(base, { outcome: 'rejected', rejectReason: 'empty' });
       else if (!pdf && !png && !jpg) Object.assign(base, { outcome: 'rejected', rejectReason: 'unsupported_type' });
-      else if (existing) {
-        const del = existing.deleted ? [...entries].reverse().find((e) => e.action === 'delete' && e.documentIds[0] === existing.summary.id) : undefined;
-        Object.assign(base, { outcome: 'duplicate', documentId: existing.summary.id, deleted: existing.deleted, restoreJournalId: del?.id ?? null });
-      } else {
+      else if (existing) Object.assign(base, { outcome: 'duplicate', documentId: existing.summary.id });
+      else {
         const title = file.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
         const doc = addDoc({ title, fileName: file.name, counterparty: title.split(' ')[0] ?? null, docType: 'document', batchId: batch.id, arrivedAt: startedAt, sha256 });
         doc.plan = { index: accepted, outcome: planFor(file.name) };
@@ -697,7 +696,7 @@ export function createWorld(options: WorldOptions = {}) {
   function deleteDocument(docId: string, body: { confirm?: boolean; fileName?: string }): FileOpResult {
     const doc = getDoc(docId);
     if (body.confirm !== true) throw new MockError(400, 'invalid_request', 'Deleting needs confirm: true.', 'confirm');
-    if (body.fileName !== doc.summary.fileName) throw new MockError(409, 'stale', 'The document changed meanwhile; re-read and retry.');
+    if (body.fileName !== doc.summary.fileName) throw new MockError(422, 'invalid_value', "The typed name isn't the document's current file name.", 'fileName', { field: 'fileName' });
     const before = stateOf(doc);
     doc.deleted = true;
     const entry = record({ actor: 'user', via: 'ui', action: 'delete', doc, before, after: stateOf(doc) });
@@ -824,6 +823,10 @@ export function createWorld(options: WorldOptions = {}) {
     return { preview: after, groupId: group.id, moved: after.movesTotal, unchanged: 0, failed: [] };
   }
 
+  function liveTwin(sha256: string, except?: Doc): Doc | undefined {
+    return [...docs.values()].find((d) => d.sha256 === sha256 && !d.deleted && d !== except);
+  }
+
   function undoEntry(e: Entry, groupId: string | null): Entry {
     const { tip } = chainTip(e);
     const doc = docs.get(e.documentIds[0]!)!;
@@ -845,6 +848,11 @@ export function createWorld(options: WorldOptions = {}) {
     if (state === 'not_undoable') throw new MockError(422, 'not_undoable', 'Not undoable.');
     if (state === 'undone') throw new MockError(409, 'already_undone', 'Already undone.');
     if (state === 'superseded') throw new MockError(409, 'superseded', 'Superseded.');
+    const { tip } = chainTip(e);
+    const doc = docs.get(e.documentIds[0]!)!;
+    if (doc.deleted && tip.before?.location !== 'trash' && liveTwin(doc.sha256, doc)) {
+      throw new MockError(409, 'conflict', 'The change conflicts with the current state.', null, { reason: 'duplicate' });
+    }
     const next = undoEntry(e, null);
     note(conversationId, 'undo', `Undid 1 change(s): ${docs.get(e.documentIds[0]!)!.summary.title}.`);
     return {
