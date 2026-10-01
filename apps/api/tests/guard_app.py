@@ -1,7 +1,7 @@
 """The api for the real-uvicorn tests: counts the body bytes the app pulls (GET /__read).
 
-`/api/intake` stands in for the upload route: its body parameter makes FastAPI read the body
-before resolving the session dependency, as a real upload route would."""
+`/api/intake/probe` has the upload's limits and a body parameter, which makes FastAPI read the
+body before resolving the session dependency."""
 
 from typing import Annotated
 
@@ -13,7 +13,7 @@ from mona.app import create_app
 api = create_app()
 
 
-@api.post("/api/intake", include_in_schema=False)
+@api.post("/api/intake/probe", include_in_schema=False)
 async def intake(
     data: Annotated[bytes, Body(media_type="application/octet-stream")],
     _: Annotated[object, Depends(current_session)],

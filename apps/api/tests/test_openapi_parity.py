@@ -10,7 +10,8 @@ C1_DTOS = {
     "Person", "Category", "Counterparty",
 }  # fmt: skip
 C2_DTOS = {
-    "ApiError", "AuthState", "ShellState", "BriefFacts", "HomeView", "BatchSummary",
+    "ApiError", "AuthState", "ShellState", "BriefFacts", "HomeView", "BatchSummary", "IntakeItem",
+    "IntakeResult", "BatchDetail",
     "DocumentPage", "FolderNode", "FolderListing", "FileOpResult", "CorrectionRequest",
     "RuleListItem", "RulePatch", "ApplyResult", "LearnedItem", "EntityWrite", "EntityDetail",
     "PersonDetail", "TemplatePreview", "ActivityPage", "UndoResult", "SettingsView",

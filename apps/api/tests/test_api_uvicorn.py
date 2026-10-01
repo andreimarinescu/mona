@@ -78,14 +78,21 @@ def bytes_read(port: int) -> int:
 
 
 def raw_post(
-    port: int, path: str, headers: dict[str, str], chunks: int = 0, method: str = "POST"
+    port: int,
+    path: str,
+    headers: dict[str, str],
+    chunks: int = 0,
+    method: str = "POST",
+    first: bytes = b"",
 ) -> int:
-    """A request with these headers; a chunked body sends 1 MiB chunks until the server answers or
-    `chunks` are sent. Returns the status."""
+    """A request with these headers; a chunked body sends `first`, then 1 MiB chunks until the
+    server answers or `chunks` are sent. Returns the status."""
     sock = socket.create_connection(("127.0.0.1", port), timeout=30)
     head = f"{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n"
     head += "".join(f"{k}: {v}\r\n" for k, v in headers.items()) + "\r\n"
     sock.sendall(head.encode())
+    if first:
+        sock.sendall(b"%x\r\n" % len(first) + first + b"\r\n")
     chunk = b"%x\r\n" % MIB + b"x" * MIB + b"\r\n"
     for _ in range(chunks):
         if select.select([sock], [], [], 0)[0]:
@@ -108,19 +115,42 @@ def test_compose_runs_the_api_without_the_access_log():
     assert "--no-access-log" in api_flags()
 
 
-def test_bodies_are_refused_before_auth_reads_them(server):
+@pytest.mark.parametrize("path", ["/api/intake", "/api/intake/probe"])
+def test_bodies_are_refused_before_auth_reads_them(server, path):
     port, _ = server
     declared = raw_post(
-        port, "/api/intake",
+        port, path,
         {"Content-Type": "application/octet-stream", "Content-Length": str(300 * MIB)},
     )  # fmt: skip
     assert bytes_read(port) < MIB and declared in (401, 413)
     chunked = raw_post(
-        port, "/api/intake",
+        port, path,
         {"Content-Type": "application/octet-stream", "Transfer-Encoding": "chunked"},
         chunks=300,
     )  # fmt: skip
     assert bytes_read(port) < MIB and chunked in (401, 413)
+
+
+def test_a_signed_in_upload_over_250_mb_declared_is_413_unread(server):
+    port, _ = server
+    _, token = new_session()
+    headers = {
+        "Content-Type": "multipart/form-data; boundary=b", "Content-Length": str(251 * MIB),
+        "Cookie": f"{COOKIE}={token}", **session_headers(token),
+    }  # fmt: skip
+    assert raw_post(port, "/api/intake", headers) == 413 and bytes_read(port) == 0
+
+
+def test_an_upload_part_is_refused_as_it_streams_past_25_mb(server):
+    port, _ = server
+    _, token = new_session()
+    headers = {
+        "Content-Type": "multipart/form-data; boundary=b", "Transfer-Encoding": "chunked",
+        "Cookie": f"{COOKIE}={token}", **session_headers(token),
+    }  # fmt: skip
+    part = b'--b\r\nContent-Disposition: form-data; name="file"; filename="big.pdf"\r\n\r\n%PDF-'
+    status = raw_post(port, "/api/intake", headers, chunks=60, first=part)
+    assert status == 413 and 25 * MIB < bytes_read(port) < 28 * MIB
 
 
 def test_a_chunked_json_body_past_64_kib_is_413_once_past_the_limit(server):

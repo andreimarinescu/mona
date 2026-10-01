@@ -11,7 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mona import __version__
-from mona.api import auth, documents, home, journal, registry, rules, system
+from mona.api import auth, documents, home, intake, journal, registry, rules, system
 from mona.api.errors import install as install_errors
 from mona.api.guard import ApiGuard, RequestLog
 from mona.chat.router import router as chat_router
@@ -105,6 +105,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(chat_router)
     app.include_router(documents.router)
+    app.include_router(intake.router)
     app.include_router(rules.router)
     app.include_router(journal.router)
     app.include_router(home.router)

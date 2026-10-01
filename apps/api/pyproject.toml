@@ -18,6 +18,7 @@ dependencies = [
     "pyyaml==6.0.3",
     "argon2-cffi==25.1.0",
     "python-docx==1.2.0",
+    "python-multipart==0.0.32",
 ]
 
 [project.scripts]

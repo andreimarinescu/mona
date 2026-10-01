@@ -114,6 +114,36 @@ class BatchSummary(Dto):
     debrief: BatchDebrief | None
 
 
+class IntakeItem(Dto):
+    id: str
+    original_name: str
+    sha256: str
+    size_bytes: int
+    outcome: Literal["accepted", "duplicate", "rejected"]
+    reject_reason: Literal["unsupported_type", "too_large", "empty", "unreadable_file"] | None
+    document_id: str | None
+    deleted: bool
+    restore_journal_id: int | None
+
+
+class IntakeResult(Dto):
+    batch: BatchSummary
+    items: list[IntakeItem]
+
+
+class BatchItem(IntakeItem):
+    document: DocumentSummary | None
+
+
+class BatchDetail(Dto):
+    batch: BatchSummary
+    items: list[BatchItem]
+
+
+class BatchPatch(Dto):
+    title: Annotated[str, Field(max_length=120)] | None
+
+
 class ReviewBlock(Dto):
     total: int
     items: list[DocumentSummary]

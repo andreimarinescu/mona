@@ -23,7 +23,7 @@ READ_TOOLS = {
     "list_deadlines",
     "get_brief",
 }
-WRITE_TOOLS = {"correct_document", "preview_rule", "apply_rule", "undo"}
+WRITE_TOOLS = {"correct_document", "preview_rule", "apply_rule", "undo", "ingest_attachment"}
 L4_TOOLS = {
     "start_interview",
     "answer_question",
@@ -103,6 +103,12 @@ async def test_descriptions_are_the_contract_text():
     by_name = {t["name"]: t["description"] for t in await list_tools()}
     assert by_name["sum_amounts"].startswith("Add up document amounts, either for a list")
     assert by_name["get_brief"].endswith("amounts and due dates first, one short paragraph.")
+    assert by_name["ingest_attachment"] == (
+        "Add a file the person sent you on Telegram to Mona's intake, using the exact path the "
+        "attachment was saved to. Set for_visitor when the person says the document belongs to a "
+        "visitor at an event; it is kept apart and removed after 24 hours. Tell the person it is "
+        "being read; it shows up in Intake."
+    )
 
 
 # Channel (C4 §1.2) and attribution (C3 §5.2, §8.3)

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     mona_seed_overlay: Path | None = None
     hermes_api_key: SecretStr | None = None
     hermes_url: str = "http://hermes:8642"
+    mona_attach_root: Path = Path("/opt/data/cache")
     mona_llm_model: str = "qwen/qwen3.7-flash"
     mona_llm_backend: Literal["openrouter", "llama-server"] = "openrouter"
     mona_llm_base_url: str | None = None

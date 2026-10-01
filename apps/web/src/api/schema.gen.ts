@@ -381,6 +381,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/intake": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload */
+        post: operations["uploadIntake"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Batches */
+        get: operations["listBatches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/batches/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Batch */
+        get: operations["getBatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Batch */
+        patch: operations["patchBatch"];
+        trace?: never;
+    };
     "/api/rules": {
         parameters: {
             query?: never;
@@ -1360,6 +1412,42 @@ export interface components {
             status: "generating" | "ready" | "done" | "failed" | "cancelled";
             /** Openquestions */
             openQuestions: number;
+        };
+        /** BatchDetail */
+        BatchDetail: {
+            batch: components["schemas"]["BatchSummary"];
+            /** Items */
+            items: components["schemas"]["BatchItem"][];
+        };
+        /** BatchItem */
+        BatchItem: {
+            /** Id */
+            id: string;
+            /** Originalname */
+            originalName: string;
+            /** Sha256 */
+            sha256: string;
+            /** Sizebytes */
+            sizeBytes: number;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "accepted" | "duplicate" | "rejected";
+            /** Rejectreason */
+            rejectReason: ("unsupported_type" | "too_large" | "empty" | "unreadable_file") | null;
+            /** Documentid */
+            documentId: string | null;
+            /** Deleted */
+            deleted: boolean;
+            /** Restorejournalid */
+            restoreJournalId: number | null;
+            document: components["schemas"]["DocumentSummary"] | null;
+        };
+        /** BatchPatch */
+        BatchPatch: {
+            /** Title */
+            title: string | null;
         };
         /** BatchScope */
         BatchScope: {
@@ -2352,6 +2440,36 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** IntakeItem */
+        IntakeItem: {
+            /** Id */
+            id: string;
+            /** Originalname */
+            originalName: string;
+            /** Sha256 */
+            sha256: string;
+            /** Sizebytes */
+            sizeBytes: number;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "accepted" | "duplicate" | "rejected";
+            /** Rejectreason */
+            rejectReason: ("unsupported_type" | "too_large" | "empty" | "unreadable_file") | null;
+            /** Documentid */
+            documentId: string | null;
+            /** Deleted */
+            deleted: boolean;
+            /** Restorejournalid */
+            restoreJournalId: number | null;
+        };
+        /** IntakeResult */
+        IntakeResult: {
+            batch: components["schemas"]["BatchSummary"];
+            /** Items */
+            items: components["schemas"]["IntakeItem"][];
+        };
         /** Interview */
         Interview: {
             /** Id */
@@ -2649,6 +2767,17 @@ export interface components {
             route: string;
             /** Summary */
             summary: string;
+        };
+        /** Page[BatchSummary] */
+        Page_BatchSummary_: {
+            /** Items */
+            items: components["schemas"]["BatchSummary"][];
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
         };
         /** Page[Deadline] */
         Page_Deadline_: {
@@ -4516,6 +4645,277 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unsupported Media Type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    uploadIntake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file: string[];
+                    /** @enum {string} */
+                    visitor?: "true" | "false";
+                    title?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unsupported Media Type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    listBatches: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_BatchSummary_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    getBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    patchBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchSummary"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
