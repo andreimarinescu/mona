@@ -2,6 +2,13 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D16 · 2026-10-01 · Walkthrough 1 rulings; no showcase-only code
+
+- **Visitor uploads** never queue on confidence (A20).
+- **The 7:00 sum beat** asks "What do we owe AGIPI?", which the data answers. No new synthetic documents (demo-script v2).
+- **The stage's cached debrief** has no approve-and-lock code. The rehearsal procedure decides it: refresh the stage only after a rehearsal whose questions Andrei approved (C6 §4.7, runbooks).
+- **Standing direction:** **no showcase-only code.** The product should work as well as it can. The demo is prepared by people, who approve what goes on stage and stage it carefully. A demo problem gets fixed in the product (D15: signals, checks, instructions) or in staging, never with code that exists only for the stage.
+
 ## D15 · 2026-10-01 · Andrei's rulings on the debrief beat, thresholds, sitting 4 and the walkthrough
 
 - **The 4:00 beat:**

@@ -135,3 +135,21 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
 - **Change:** the Visitors purge also deletes counterparties with `origin='extracted'` that no document, classification, account or rule references once the visitor documents are gone. It never deletes a counterparty that anything else still references.
 - **Why:** integrated review 1 (R12). Settings › Privacy and the stage line promise that everything Mona derived from a visitor's document is deleted. FIX-2 built it; this ratifies it.
 - **Lanes:** L1 (done in FIX-2).
+
+## A20 · 2026-10-01 · C5 §9.3: a visitor upload never queues on confidence
+
+- **Change:**
+  - In a visitor batch, `low` from `confidence < settings.confidence_low` (or category `unknown`) doesn't queue. The document files to `Visitors/…`, and the journal entry carries its band.
+  - `unreadable` still queues, and so does a model step that failed after retries.
+  - Practice documents are unaffected.
+- **Why:** Andrei's ruling (D16, walkthrough 1 #11). A visitor document goes to Visitors whatever the model says, and it's purged after 24 h, so a review adds nothing. The phone photo scored 70% and queued at the 9:30 beat.
+- **Lanes:** L1 (FIX-4).
+
+## A21 · 2026-10-01 · C4 §3.6: `start_interview` returns the questions it shows
+
+- **Change:**
+  - When the interview is `ready`, the result also carries `questions`: `[{"n", "text", "affected": <count>, "options": [<label>…]}]`, the open questions in card order, in the interview language. It is `[]` while `generating`.
+  - The description adds: "The card shows the questions; introduce them in one line and never restate or invent them."
+  - Any other tool whose result renders as a card and gives the model only ids gets the same treatment: the few fields it needs to mention the card accurately, within §2.3's cap.
+- **Why:** walkthrough 1 #2/#9. The tool returned only a count, so Qwen 3.6 invented three questions about a document that doesn't exist, and kept referring to them in the next turn. D15: ground the model in tool output instead of trusting it.
+- **Lanes:** L2 (FIX-4).
