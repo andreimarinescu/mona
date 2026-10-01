@@ -6,9 +6,11 @@ import logging
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from mona.http import refuse
+from mona.interviews import tools as _interview_tools  # noqa: F401
 from mona.mcp import read as _read  # noqa: F401  (registers the tools)
 from mona.mcp.core import mcp
 from mona.settings import get_settings
+from mona.workflow import tools as _workflow_tools  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

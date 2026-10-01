@@ -171,3 +171,41 @@ def l1m2_demo_engine(l1m2_demo_template):
 @pytest.fixture
 def l1m2_learned_engine(l1m2_learned_template):
     yield from _engine_on(l1m2_learned_template)
+
+
+@pytest.fixture(scope="session")
+def l4_template(database):
+    """At head with the synthetic seed's pre-seeded rules and the Procrastinate schema."""
+    from procrastinate.schema import SchemaManager
+
+    from tests.pg import conninfo_for
+    from tests.services_world import load_fixture_seed
+
+    with scratch_db() as db:
+        alembic(db, "upgrade", "head")
+        engine = create_engine(sqlalchemy_url_for(db))
+        load_fixture_seed(engine, sqlalchemy_url_for(db), tier="preseeded")
+        engine.dispose()
+        with psycopg.connect(conninfo_for(db)) as conn:
+            conn.execute(SchemaManager.get_schema())
+        yield db
+
+
+@pytest.fixture
+async def l4_db(l4_template, tmp_path):
+    """A fresh copy of `l4_template` behind get_settings()/get_engine() and a tmp data dir."""
+    from mona.workflow.common import get_ctx
+
+    with scratch_db(template=l4_template) as db, pytest.MonkeyPatch.context() as mp:
+        mp.setenv("DATABASE_URL", sqlalchemy_url_for(db))
+        mp.setenv("MONA_SERVICE_KEY", SERVICE_KEY)
+        mp.setenv("MONA_DATA_DIR", str(tmp_path / "data"))
+        _clear_caches()
+        get_ctx.cache_clear()
+        try:
+            yield db
+        finally:
+            await get_engine().dispose()
+            get_sync_engine().dispose()
+            _clear_caches()
+            get_ctx.cache_clear()

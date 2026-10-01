@@ -1,7 +1,7 @@
 """C1 §11 DTOs."""
 
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Annotated, Any, ClassVar
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import Field, field_validator
 
@@ -260,6 +260,35 @@ class InterviewQuestion(Dto):
     answer: InterviewAnswer | None
 
 
+class BatchScope(Dto):
+    type: Literal["batch"]
+    batch_id: BatchId
+
+
+class QueueScope(Dto):
+    type: Literal["queue"]
+
+
+class CounterpartyScope(Dto):
+    type: Literal["counterparty"]
+    counterparty_id: CounterpartyId
+
+
+class DocumentsScope(Dto):
+    type: Literal["documents"]
+    document_ids: list[DocId] = Field(min_length=1, max_length=50)
+
+
+class SeedScope(Dto):
+    type: Literal["seed"]
+
+
+InterviewScope = Annotated[
+    BatchScope | QueueScope | CounterpartyScope | DocumentsScope | SeedScope,
+    Field(discriminator="type"),
+]
+
+
 class Interview(Dto):
     id: InterviewId
     kind: InterviewKind
@@ -267,6 +296,13 @@ class Interview(Dto):
     questions: list[InterviewQuestion]
     batch_id: BatchId | None
     created_at: Timestamp
+    lang: Lang  # C6 §5.1 from here on
+    scope: InterviewScope
+    open_questions: int
+    ready_at: Timestamp | None
+    finished_at: Timestamp | None
+    error: Literal["no_questions", "generation_failed", "timeout"] | None
+    source: Literal["live", "cache"] | None
 
 
 class Draft(Dto):

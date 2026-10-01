@@ -23,6 +23,13 @@ READ_TOOLS = {
     "list_deadlines",
     "get_brief",
 }
+L4_TOOLS = {
+    "start_interview",
+    "answer_question",
+    "schedule_reminder",
+    "draft_reply",
+    "export_accountant_pack",
+}
 
 
 # Auth and transport (C4 §1.1, §5.1)
@@ -70,7 +77,7 @@ async def test_a_body_over_64_kib_is_413():
 
 async def test_only_tools_are_registered():
     tools = await list_tools()
-    assert {t["name"] for t in tools} == READ_TOOLS
+    assert {t["name"] for t in tools} == READ_TOOLS | L4_TOOLS
     async with mcp_client() as c:
         for method, key in (("resources/list", "resources"), ("prompts/list", "prompts")):
             assert rpc_result(await rpc(c, method))[key] == []

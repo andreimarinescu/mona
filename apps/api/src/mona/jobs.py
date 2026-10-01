@@ -7,7 +7,10 @@ from mona.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
-app = App(connector=PsycopgConnector(conninfo=get_settings().libpq_url))
+app = App(
+    connector=PsycopgConnector(conninfo=get_settings().libpq_url),
+    import_paths=["mona.interviews.jobs", "mona.workflow.jobs"],
+)
 
 
 @app.task(name="ping_llm", queue="llm")

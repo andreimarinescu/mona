@@ -1,0 +1,21 @@
+{
+  "export": {
+    "csv": {
+      "file": "Fichier",
+      "title": "Titre",
+      "date": "Date",
+      "counterparty": "Émetteur",
+      "reference": "Référence",
+      "category": "Catégorie",
+      "subcategory": "Sous-catégorie",
+      "amount": "Montant",
+      "currency": "Devise",
+      "dueDate": "Échéance"
+    }
+  },
+  "interview": {
+    "option": {
+      "ask": "Me demander à chaque fois"
+    }
+  }
+}

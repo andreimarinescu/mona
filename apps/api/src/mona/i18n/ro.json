@@ -1,0 +1,21 @@
+{
+  "export": {
+    "csv": {
+      "file": "Fișier",
+      "title": "Titlu",
+      "date": "Data",
+      "counterparty": "Emitent",
+      "reference": "Referință",
+      "category": "Categorie",
+      "subcategory": "Subcategorie",
+      "amount": "Sumă",
+      "currency": "Monedă",
+      "dueDate": "Scadență"
+    }
+  },
+  "interview": {
+    "option": {
+      "ask": "Întrebați-mă de fiecare dată"
+    }
+  }
+}

@@ -14,29 +14,44 @@
   },
   "model_visible_tools": {
     "api_server": [
+      "mcp__mona__answer_question",
+      "mcp__mona__draft_reply",
+      "mcp__mona__export_accountant_pack",
       "mcp__mona__get_brief",
       "mcp__mona__get_document",
       "mcp__mona__list_deadlines",
       "mcp__mona__list_review_queue",
+      "mcp__mona__schedule_reminder",
       "mcp__mona__search_documents",
+      "mcp__mona__start_interview",
       "mcp__mona__sum_amounts",
       "memory"
     ],
     "telegram": [
+      "mcp__mona_tg__answer_question",
+      "mcp__mona_tg__draft_reply",
+      "mcp__mona_tg__export_accountant_pack",
       "mcp__mona_tg__get_brief",
       "mcp__mona_tg__get_document",
       "mcp__mona_tg__list_deadlines",
       "mcp__mona_tg__list_review_queue",
+      "mcp__mona_tg__schedule_reminder",
       "mcp__mona_tg__search_documents",
+      "mcp__mona_tg__start_interview",
       "mcp__mona_tg__sum_amounts",
       "memory"
     ],
     "cron": [
+      "mcp__mona_tg__answer_question",
+      "mcp__mona_tg__draft_reply",
+      "mcp__mona_tg__export_accountant_pack",
       "mcp__mona_tg__get_brief",
       "mcp__mona_tg__get_document",
       "mcp__mona_tg__list_deadlines",
       "mcp__mona_tg__list_review_queue",
+      "mcp__mona_tg__schedule_reminder",
       "mcp__mona_tg__search_documents",
+      "mcp__mona_tg__start_interview",
       "mcp__mona_tg__sum_amounts"
     ]
   }

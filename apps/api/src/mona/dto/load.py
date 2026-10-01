@@ -180,19 +180,29 @@ async def next_reminders(conn: AsyncConnection, deadline_ids: list[str]) -> dict
     return {r.deadline_id: r for r in rows}
 
 
+def interview_scope(scope: dict[str, Any]) -> dict[str, Any]:
+    """C6 §2.1: the DTO form is the camelCase scope without the candidate snapshot."""
+    kind = scope.get("type", "queue")
+    keys = {"batch": "batch_id", "counterparty": "counterparty_id", "documents": "document_ids"}
+    out: dict[str, Any] = {"type": kind}
+    if kind in keys:
+        out[keys[kind]] = scope[keys[kind]]
+    return out
+
+
 async def interview(conn: AsyncConnection, interview_id: str) -> dto.Interview | None:
     iv = (await conn.execute(select(Interview).where(Interview.id == interview_id))).first()
     if iv is None:
         return None
+    qs = (
+        await conn.execute(
+            select(InterviewQuestion)
+            .where(InterviewQuestion.interview_id == interview_id)
+            .order_by(InterviewQuestion.ordinal)
+        )
+    ).all()
     questions: list[dto.InterviewQuestion] = []
     if iv.status != "generating":
-        qs = (
-            await conn.execute(
-                select(InterviewQuestion)
-                .where(InterviewQuestion.interview_id == interview_id)
-                .order_by(InterviewQuestion.ordinal)
-            )
-        ).all()
         qids = [q.id for q in qs]
         answers = {
             a.question_id: a
@@ -210,28 +220,36 @@ async def interview(conn: AsyncConnection, interview_id: str) -> dto.Interview |
         ).all():
             rule_ids.setdefault(qid, []).append(rid)
         doc_ids = {e["document_id"] for q in qs for e in q.evidence}
-        titles = {
-            r.id: r.title or r.original_name
+        doc_ids |= {d for q in qs for d in q.affected_document_ids}
+        docs = {
+            r.id: r
             for r in await conn.execute(
-                select(Document.id, Document.title, Document.original_name).where(
-                    Document.id.in_(doc_ids)
-                )
+                select(
+                    Document.id, Document.title, Document.original_name, Document.deleted_at
+                ).where(Document.id.in_(doc_ids))
             )
         }
         for q in qs:
             a = answers.get(q.id)
+            affects = [
+                d for d in q.affected_document_ids if d in docs and docs[d].deleted_at is None
+            ]
             questions.append(
                 dto.InterviewQuestion(
                     id=q.id,
                     ordinal=q.ordinal,
                     question=q.text,
                     lang=iv.lang,
-                    affects=list(q.affected_document_ids),
-                    affects_count=len(q.affected_document_ids),
+                    affects=affects,
+                    affects_count=len(affects),
                     evidence=[
                         {
                             **e,
-                            "document_title": titles.get(e["document_id"], ""),
+                            "document_title": (
+                                docs[e["document_id"]].title or docs[e["document_id"]].original_name
+                                if e["document_id"] in docs
+                                else ""
+                            ),
                         }
                         for e in q.evidence
                     ],
@@ -249,6 +267,9 @@ async def interview(conn: AsyncConnection, interview_id: str) -> dto.Interview |
                     ),
                 )
             )
+    source = None
+    if qs:
+        source = "cache" if iv.analysis is None else "live"
     return dto.Interview(
         id=iv.id,
         kind=iv.kind,
@@ -256,6 +277,13 @@ async def interview(conn: AsyncConnection, interview_id: str) -> dto.Interview |
         questions=questions,
         batch_id=iv.batch_id,
         created_at=iv.created_at,
+        lang=iv.lang,
+        scope=interview_scope(iv.scope),
+        open_questions=sum(1 for q in qs if q.status == "open"),
+        ready_at=iv.ready_at,
+        finished_at=iv.finished_at,
+        error=iv.error,
+        source=source,
     )
 
 

@@ -57,6 +57,7 @@ from mona.mcp.filters import (
     resolve_entity,
 )
 from mona.text import norm
+from mona.workflow.deadlines import deadline_query
 
 DocIdParam = Annotated[str, Field(pattern=r"^doc_[0-9a-hjkmnp-tv-z]{26}$")]
 
@@ -501,27 +502,7 @@ async def list_review_queue(
 
 
 def _deadline_query(scope: Scope, *clauses: Any) -> Any:
-    return (
-        select(
-            Deadline.id,
-            Deadline.document_id,
-            Deadline.label,
-            Deadline.due_date,
-            Deadline.amount,
-            Deadline.currency,
-            Deadline.status,
-            Entity.key.label("entity_key"),
-            Entity.display_name.label("entity_name"),
-        )
-        .join(Entity, Entity.id == Deadline.entity_id)
-        .outerjoin(Document, Document.id == Deadline.document_id)
-        .where(
-            Deadline.status == "open",
-            Document.deleted_at.is_(None),
-            scope.visible_entity_clause(Deadline.entity_id),
-            *clauses,
-        )
-    )
+    return deadline_query(*clauses, hidden_entities=scope.hidden_entities)
 
 
 @tool(

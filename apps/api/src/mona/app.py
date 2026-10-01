@@ -16,8 +16,10 @@ from mona.chat.router import MAX_BODY, ApiFailure
 from mona.chat.router import router as chat_router
 from mona.db import get_engine, get_sync_engine
 from mona.http import BodyLimit
+from mona.interviews.api import router as interviews_router
 from mona.mcp.server import MAX_MCP_BODY, ServiceKeyAuth, build_mcp_app
 from mona.settings import get_settings
+from mona.workflow.api import router as workflow_router
 
 INVALID_REQUEST = {"error": {"code": "invalid_request", "message": "The request is invalid."}}
 
@@ -74,6 +76,8 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Mona", version=__version__, lifespan=lifespan)
     app.include_router(router)
     app.include_router(chat_router)
+    app.include_router(interviews_router)
+    app.include_router(workflow_router)
     app.add_exception_handler(ApiFailure, _api_failure)
     app.add_exception_handler(RequestValidationError, _invalid)
     too_large = {"error": "payload_too_large"}
