@@ -24,7 +24,7 @@ function language(text: string): 'en' | 'fr' {
 }
 
 async function send(page: Page, text: string) {
-  await page.getByRole('textbox', { name: 'Ask Mona…' }).fill(text);
+  await page.getByRole('textbox', { name: 'Write to Mona…' }).fill(text);
   await page.evaluate(() => {
     const w = window as unknown as { turn: Record<string, number> };
     const before = document.querySelectorAll('[data-role="assistant"]').length;

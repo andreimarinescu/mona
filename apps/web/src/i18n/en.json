@@ -140,34 +140,7 @@
       "findEvent": "Find via event bus"
     },
     "chat": {
-      "title": "Chat (dev harness)",
-      "composer": {
-        "placeholder": "Ask Mona…",
-        "send": "Send"
-      },
-      "thinking": {
-        "live": "Mona is thinking…",
-        "done": "Thought for {{seconds}} seconds",
-        "doneShort": "Mona's thinking"
-      },
-      "doc": {
-        "open": "Open",
-        "due": "Due {{date}}"
-      },
-      "interview": {
-        "affects": "Documents affected: {{count}}",
-        "suggested": "Suggested"
-      },
-      "error": {
-        "mona_offline": "Mona is offline right now. Try again in a moment.",
-        "stream_interrupted": "The answer was cut off. Try again.",
-        "internal": "Something went wrong. Try again."
-      },
-      "loading": "Loading the conversation…",
-      "deadline": {
-        "today": "Due today",
-        "overdue": "Overdue"
-      }
+      "title": "Chat (dev harness)"
     }
   },
   "chat": {
@@ -239,10 +212,93 @@
       "generic": {
         "running": "Working…",
         "done": "Done"
-      }
+      },
+      "interrupted": "interrupted"
     },
     "banner": {
       "debrief": "Let's go through your questions about this batch."
+    },
+    "thinking": {
+      "live": "Mona is thinking…",
+      "done_one": "Thought for 1 second",
+      "done_other": "Thought for {{count}} seconds",
+      "untimed": "Reasoning",
+      "show": "Show reasoning",
+      "hide": "Hide reasoning"
+    },
+    "error": {
+      "mona_offline": "Mona is offline right now. Try again in a moment.",
+      "stream_interrupted": "The answer was cut off. Try again.",
+      "internal": "Something went wrong. Try again."
+    },
+    "offline": {
+      "title": "Mona is offline"
+    },
+    "languageDivider": {
+      "continuing": "Continuing in {{language}}",
+      "keep": "Keep {{language}}",
+      "kept": "Replies stay in {{language}}"
+    },
+    "composer": {
+      "placeholder": "Write to Mona…",
+      "send": "Send",
+      "stop": "Stop",
+      "attach": "Attach files",
+      "drop": "Drop to attach to your message",
+      "dropHint": "PDF, JPG or PNG, up to 25 MB each. They go to Intake.",
+      "hintPage": "Mona replies in the language you write in. Files you attach go to Intake.",
+      "hintPanel": "Esc closes the panel. The conversation stays in Chat.",
+      "offline": "Mona is offline. You can write again when she’s back."
+    },
+    "attachment": {
+      "uploading": "Uploading…",
+      "accepted": "Added to Intake",
+      "duplicate": "Already had",
+      "rejected": "Not added",
+      "failed": "Upload failed"
+    },
+    "sources": "Sources",
+    "citation": "Source {{n}}: {{title}}",
+    "you": "You",
+    "loading": "Loading the conversation…",
+    "transcriptError": "I couldn’t load this conversation.",
+    "doc": {
+      "open": "Open",
+      "entity": "Entity",
+      "category": "Category",
+      "date": "Date",
+      "amount": "Amount",
+      "confidence": "Confidence",
+      "path": "Folder"
+    },
+    "draft": {
+      "title": "Draft reply",
+      "badge": "Draft · not sent",
+      "language": "In {{language}}. Anything I couldn’t find is left in [BRACKETS].",
+      "generating": "Mona is writing the draft…",
+      "failed": "I couldn’t write this draft. Ask me again in the chat.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "download": "Download .docx",
+      "neverSends": "Mona never sends anything. Paste it where you need it, or print it."
+    },
+    "list": {
+      "title": "Conversations",
+      "new": "New conversation",
+      "search": "Search conversations",
+      "empty": "No conversations yet.",
+      "noMatch": "No conversation matches “{{q}}”.",
+      "more": "Show more"
+    },
+    "page": {
+      "newTitle": "New conversation",
+      "openAsPanel": "Open as panel",
+      "back": "Conversations",
+      "emptyTitle": "Ask Mona about your documents",
+      "emptyBody": "She searches the archive, adds up amounts, finds what’s due and drafts replies. Everything stays on this computer."
+    },
+    "panel": {
+      "openAsPage": "Open in Chat"
     }
   },
   "common": {
@@ -567,7 +623,8 @@
       "counts": "{{moves}} move · {{stays}} stay",
       "noMoves": "No other documents to move. The rule applies to future ones.",
       "more_one": "and {{n}} more",
-      "more_other": "and {{n}} more"
+      "more_other": "and {{n}} more",
+      "journalHint": "Every move lands in the journal with Undo."
     },
     "source": {
       "interview": "From an interview",
@@ -764,6 +821,60 @@
     "failed": {
       "title": "The export didn't finish",
       "body": "Nothing was sent. Try again in a moment."
+    },
+    "card": {
+      "title": "Accountant pack",
+      "meta": "{{entity}} · fiscal year {{year}}"
     }
+  },
+  "language": {
+    "en": "English",
+    "fr": "French",
+    "ro": "Romanian"
+  },
+  "interview": {
+    "eyebrow": "A question from Mona",
+    "progress": "Question {{n}} of {{total}}",
+    "suggested": "Suggested",
+    "affects_one": "Affects 1 document",
+    "affects_other": "Affects {{count}} documents",
+    "explain": {
+      "link": "It depends; let me explain",
+      "prefill": "About “{{question}}”: "
+    },
+    "skip": "Skip this question",
+    "keys": "Press 1, 2 or 3 to answer.",
+    "evidence": "Open {{title}}, page {{page}}",
+    "answered": "You answered: {{answer}}",
+    "answeredText": "You explained: {{text}}",
+    "skipped": "You skipped this question.",
+    "askRule": "Documents like these will always come to you for review.",
+    "noRule": "I noted your answer. These documents stay in review for now.",
+    "done": "That’s all my questions. Thank you.",
+    "cancelled": "These questions were withdrawn.",
+    "applyAll": "Apply all ({{count}} rules)",
+    "appliedAll": "All {{count}} rules applied",
+    "generating": "Mona is preparing her questions…",
+    "error": {
+      "no_questions": "Nothing to ask right now.",
+      "failed": "I couldn’t prepare the questions. Try again from the chat."
+    },
+    "toast": {
+      "appliedAll_one": "Applied the rules: moved {{n}} document",
+      "appliedAll_other": "Applied the rules: moved {{n}} documents"
+    }
+  },
+  "deadline": {
+    "dueToday": "Due today",
+    "dueIn_one": "Due in {{n}} day",
+    "dueIn_other": "Due in {{n}} days",
+    "overdue_one": "Overdue by {{n}} day",
+    "overdue_other": "Overdue by {{n}} days",
+    "paidBy": "debit from {{account}}",
+    "openLetter": "Open letter",
+    "remindOn": "Remind me on {{date}}",
+    "reminderSet": "Reminder set for {{date}}",
+    "done": "Mark as done",
+    "markedDone": "Marked as done"
   }
 }

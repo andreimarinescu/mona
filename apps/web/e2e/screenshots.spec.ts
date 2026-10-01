@@ -105,3 +105,79 @@ test.describe('screenshots at 1440', () => {
     await shot(page, 'export-dialog');
   });
 });
+
+test.describe('chat screenshots at 1440 (p3, p4, p5) and 390', () => {
+  test.skip(!dir, 'set SHOTS_DIR to write the screenshots');
+  test.use({ viewport: { width: 1440, height: 1024 } });
+
+  const chatShot = (page: Page, name: string) => page.screenshot({ path: `${dir}/${name}.png` });
+  const composer = (scope: Page | ReturnType<Page['locator']>) => scope.getByRole('textbox', { name: 'Write to Mona…' });
+  async function ask(scope: Page | ReturnType<Page['locator']>, page: Page, text: string) {
+    const replies = (scope === page ? page.locator('main') : scope).locator('[data-role="assistant"]');
+    const before = await replies.count();
+    await composer(scope).fill(text);
+    await composer(scope).press('Enter');
+    await replies.nth(before).waitFor();
+    await (scope === page ? page.locator('main') : scope).locator('[data-chat-status="ready"]').waitFor();
+  }
+
+  test('p3 and p4: the debrief in the chat page, then rule previews, a draft and the language switch', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.addInitScript(() => {
+      localStorage.setItem('mona.msw', '1');
+      localStorage.setItem('mona.msw.step', '150');
+      localStorage.setItem('mona.msw.chatDelay', '10');
+    });
+    await page.goto('/intake');
+    await page.getByTestId('file-input').setInputFiles(['scan_per_1.pdf', 'scan_vie_1.pdf', 'scan_per_2.pdf', 'invoice_x.pdf'].map((name) => ({ name, mimeType: 'application/pdf', buffer: PDF(name) })));
+    await page.getByRole('button', { name: 'Answer now' }).click({ timeout: 20_000 });
+    const panel = page.locator('[role="complementary"][aria-label="Mona"]');
+    await panel.locator('[data-card="interview"]').waitFor();
+    await page.locator('[data-chat-status="ready"]').waitFor();
+    await ask(panel, page, 'How much did we pay last year?');
+    await panel.getByRole('button', { name: 'Open in Chat' }).click();
+    await page.locator('main [data-card="interview"]').waitFor();
+    await page.locator('main [data-card="interview"]').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
+    await chatShot(page, 'chat-p3-interview');
+
+    await page.locator('main [data-card="interview"]').getByRole('button', { name: 'Personal: split retirement and life insurance' }).click();
+    await page.locator('main [data-card="rulePreview"]').nth(1).waitFor();
+    await page.locator('main [data-card="rulePreview"]').first().scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
+    await chatShot(page, 'chat-p4-previews');
+    await ask(page, page, 'Pouvez-vous rédiger une réponse pour demander un échéancier ?');
+    await page.locator('main [data-card="draft"] [data-testid="draft-body"]').waitFor({ timeout: 10_000 });
+    await page.waitForTimeout(400);
+    await chatShot(page, 'chat-p4-draft-language');
+  });
+
+  test('p5: the panel over the archive, with a deadline and a live answer', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('mona.msw', '1');
+      localStorage.setItem('mona.msw.chatDelay', '70');
+    });
+    await page.goto('/archive?q=URSSAF');
+    await page.getByTestId('results-table').waitFor();
+    await page.getByRole('button', { name: 'Ask Mona', exact: true }).click();
+    const panel = page.locator('[role="complementary"][aria-label="Mona"]');
+    await ask(panel, page, 'When is the next payment due, and how much?');
+    await composer(panel).fill('And the same quarter last year? How much did we pay?');
+    await composer(panel).press('Enter');
+    await panel.locator('[data-testid="thinking"][data-live="true"]').waitFor();
+    await page.waitForTimeout(250);
+    await chatShot(page, 'chat-p5-panel');
+  });
+
+  test('Chat at 390', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript(() => {
+      localStorage.setItem('mona.msw', '1');
+      localStorage.setItem('mona.msw.chatDelay', '10');
+    });
+    await page.goto('/chat');
+    await ask(page, page, "What's due this month?");
+    await page.waitForTimeout(300);
+    await chatShot(page, 'chat-390');
+  });
+});

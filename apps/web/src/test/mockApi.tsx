@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { setupServer } from 'msw/node';
 import type { ReactNode } from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
-import { createHandlers, createWorld, type World, type WorldOptions } from '../mocks';
+import { createChat, createHandlers, createWorld, type World, type WorldOptions } from '../mocks';
+import type { MockChat } from '../mocks/chat';
 import { AppStateProvider } from '../state/AppStateProvider';
 import { toasts } from '../toast/store';
 
@@ -11,6 +12,7 @@ export function useMockApi(options: WorldOptions | (() => WorldOptions) = {}) {
   const server = setupServer();
   const nativeFetch = globalThis.fetch;
   let current: World;
+  let chat: MockChat;
 
   beforeAll(() => {
     vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
@@ -19,8 +21,10 @@ export function useMockApi(options: WorldOptions | (() => WorldOptions) = {}) {
     server.listen({ onUnhandledFrame: 'error' });
   });
   beforeEach(() => {
-    current = createWorld(typeof options === 'function' ? options() : options);
-    server.resetHandlers(...createHandlers(current));
+    const opts = typeof options === 'function' ? options() : options;
+    current = createWorld(opts);
+    chat = createChat(current, { chunkDelayMs: opts.chatDelayMs ?? 0, draftMs: opts.draftMs ?? 0 });
+    server.resetHandlers(...createHandlers(current, {}, chat));
   });
   afterEach(() => {
     toasts.clear();
@@ -29,7 +33,7 @@ export function useMockApi(options: WorldOptions | (() => WorldOptions) = {}) {
     server.close();
     vi.unstubAllGlobals();
   });
-  return { world: () => current, server };
+  return { world: () => current, chat: () => chat, server };
 }
 
 export function queryWrapper() {

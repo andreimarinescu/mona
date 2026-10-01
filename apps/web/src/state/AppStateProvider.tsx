@@ -22,7 +22,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     chatOpen.current = true;
     const outbox = opts?.send ? { id: ++outboxId.current, ...opts.send } : null;
     setChat((c) => {
-      const switched = opts?.conversationId !== undefined && opts.conversationId !== c.conversationId;
+      const switched = (opts?.conversationId !== undefined && opts.conversationId !== c.conversationId) || !!opts?.reload;
       return {
         open: true,
         everOpened: true,
@@ -33,10 +33,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const closeChat = useCallback(() => {
+  const closeChat = useCallback<AppState['closeChat']>((opts) => {
     if (!chatOpen.current) return;
     chatOpen.current = false;
-    setChat((c) => ({ ...c, open: false }));
+    setChat((c) => ({ ...c, open: false, generation: opts?.remount ? c.generation + 1 : c.generation }));
     const target = opener.current?.isConnected ? opener.current : askButton.current;
     opener.current = null;
     target?.focus();

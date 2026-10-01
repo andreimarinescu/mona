@@ -19,6 +19,9 @@ export const ENTITIES: Entity[] = [
 
 export const CABINET = ENTITIES[0]!;
 export const ATELIER = ENTITIES[2]!;
+export const PERSONAL = ENTITIES[3]!;
+/** A fictional insurer for the mock debrief. */
+export const PRIVATE_INSURER = 'Prévia Retraite';
 
 export const CATEGORIES: CategoryDto[] = [
   {

@@ -11,9 +11,11 @@ export interface RulePreviewCardProps {
   onApply?: () => void;
   /** Inside another card (the scope prompt): no card chrome of its own. */
   embedded?: boolean;
+  /** A line next to the actions. */
+  hint?: string;
 }
 
-export function RulePreviewCard({ preview, applying, onApply, embedded }: RulePreviewCardProps) {
+export function RulePreviewCard({ preview, applying, onApply, embedded, hint }: RulePreviewCardProps) {
   const { t } = useTranslation();
   const lang = useLang();
   const { rule } = preview;
@@ -32,6 +34,7 @@ export function RulePreviewCard({ preview, applying, onApply, embedded }: RulePr
           <InternalLink href={`/rules/${rule.id}`} className="mona-btn mona-btn--ghost no-underline">
             {t('rules.preview.adjust')}
           </InternalLink>
+          {hint ? <span className="font-ui text-[13px] leading-[18px] text-text-muted">{hint}</span> : null}
         </div>
   );
   const body = (

@@ -15,11 +15,12 @@ export function useExportPreview(entityId: string | undefined, fiscalYear: numbe
 
 export const startExport = (entityId: string, fiscalYear: number) => post<ExportPack>('/api/exports', { entityId, fiscalYear });
 
-export function useExportPack(id: string | undefined) {
+export function useExportPack(id: string | undefined, snapshot?: ExportPack) {
   const since = useRef<{ id: string | undefined; at: number }>({ id, at: 0 });
   return useQuery({
     queryKey: ['export', id],
     enabled: !!id,
+    initialData: snapshot,
     queryFn: ({ signal }) => {
       if (since.current.id !== id || since.current.at === 0) since.current = { id, at: Date.now() };
       return get<ExportPack>(`/api/exports/${id}`, undefined, signal);

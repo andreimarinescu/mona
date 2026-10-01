@@ -368,10 +368,23 @@ export interface Counterparty {
   kind: string | null;
 }
 
+export type ConditionField = 'counterparty' | 'text' | 'doc_type' | 'category' | 'entity' | 'addressee' | 'person' | 'iban' | 'siren' | 'amount';
+
+export interface Condition {
+  field: ConditionField;
+  op: string;
+  value?: unknown;
+}
+
+export type RuleAction = Record<string, unknown>;
+
 export interface Rule {
   id: string;
   name: string;
   condition: string;
+  conditionText?: string;
+  conditions?: Condition[];
+  action?: RuleAction;
   destination: string[];
   enabled: boolean;
   state: 'draft' | 'active' | 'disabled';
@@ -417,4 +430,84 @@ export interface ShellState {
   processingCount: number;
   queue: { llm: number; cpu: number };
   mona: 'online' | 'offline';
+}
+
+export interface RuleDraft {
+  kind: 'always' | 'depends' | 'ask';
+  discriminator: ConditionField | null;
+  branches: { conditions: Condition[]; action: RuleAction }[];
+}
+
+export interface InterviewOption {
+  id: string;
+  label: string;
+  suggested?: boolean;
+  ruleDraft: RuleDraft | null;
+}
+
+export interface InterviewQuestion {
+  id: string;
+  ordinal: number;
+  question: string;
+  lang: Lang;
+  affects: string[];
+  affectsCount: number;
+  evidence: Evidence[];
+  options: InterviewOption[];
+  suggestionConfidence: number;
+  status: 'open' | 'answered' | 'skipped';
+  answer: { optionId: string | null; freeText: string | null; ruleIds: string[] } | null;
+}
+
+export type InterviewScope =
+  | { type: 'batch'; batchId: string }
+  | { type: 'queue' }
+  | { type: 'counterparty'; counterpartyId: string }
+  | { type: 'documents'; documentIds: string[] }
+  | { type: 'seed' };
+
+export type InterviewStatus = 'generating' | 'ready' | 'done' | 'failed' | 'cancelled';
+
+export interface Interview {
+  id: string;
+  kind: 'seed' | 'debrief' | 'on_demand';
+  status: InterviewStatus;
+  questions: InterviewQuestion[];
+  batchId: string | null;
+  createdAt: string;
+  lang: Lang;
+  scope: InterviewScope;
+  openQuestions: number;
+  readyAt: string | null;
+  finishedAt: string | null;
+  error: 'no_questions' | 'generation_failed' | 'timeout' | null;
+  source: 'live' | 'cache' | null;
+}
+
+export interface AnswerResult {
+  question: InterviewQuestion;
+  rules: Rule[];
+  previews: RulePreview[];
+  interviewStatus: InterviewStatus;
+}
+
+export interface ApplyAllResult {
+  results: ApplyResult[];
+}
+
+export interface Draft {
+  id: string;
+  documentId: string;
+  lang: Lang;
+  status: 'generating' | 'ready' | 'failed';
+  title: string | null;
+  body: string | null;
+  docxUrl: string | null;
+}
+
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  lastMessageAt: string;
+  turnCount: number;
 }

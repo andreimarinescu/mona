@@ -148,34 +148,7 @@
       "findEvent": "Caută prin magistrala de evenimente"
     },
     "chat": {
-      "title": "Chat (banc de dev)",
-      "composer": {
-        "placeholder": "Întrebați-o pe Mona…",
-        "send": "Trimiteți"
-      },
-      "thinking": {
-        "live": "Mona se gândește…",
-        "done": "S-a gândit {{seconds}} secunde",
-        "doneShort": "Raționamentul Monei"
-      },
-      "doc": {
-        "open": "Deschideți",
-        "due": "Scadent {{date}}"
-      },
-      "interview": {
-        "affects": "Documente vizate: {{count}}",
-        "suggested": "Sugerat"
-      },
-      "error": {
-        "mona_offline": "Mona este offline acum. Încercați din nou în câteva clipe.",
-        "stream_interrupted": "Răspunsul a fost întrerupt. Încercați din nou.",
-        "internal": "Ceva nu a mers. Încercați din nou."
-      },
-      "loading": "Se încarcă conversația…",
-      "deadline": {
-        "today": "Scadent azi",
-        "overdue": "Întârziat"
-      }
+      "title": "Chat (banc de dev)"
     }
   },
   "chat": {
@@ -247,10 +220,94 @@
       "generic": {
         "running": "Lucrează…",
         "done": "Gata"
-      }
+      },
+      "interrupted": "întrerupt"
     },
     "banner": {
       "debrief": "Să trecem prin întrebările despre acest lot."
+    },
+    "thinking": {
+      "live": "Mona se gândește…",
+      "done_one": "A reflectat o secundă",
+      "done_few": "A reflectat {{count}} secunde",
+      "done_other": "A reflectat {{count}} de secunde",
+      "untimed": "Raționament",
+      "show": "Afișați raționamentul",
+      "hide": "Ascundeți raționamentul"
+    },
+    "error": {
+      "mona_offline": "Mona nu este conectată acum. Încercați din nou în câteva clipe.",
+      "stream_interrupted": "Răspunsul s-a întrerupt. Încercați din nou.",
+      "internal": "Ceva nu a funcționat. Încercați din nou."
+    },
+    "offline": {
+      "title": "Mona nu este conectată"
+    },
+    "languageDivider": {
+      "continuing": "Conversația continuă în {{language}}",
+      "keep": "Rămâneți la {{language}}",
+      "kept": "Răspunsurile rămân în {{language}}"
+    },
+    "composer": {
+      "placeholder": "Scrieți-i Monei…",
+      "send": "Trimiteți",
+      "stop": "Opriți",
+      "attach": "Atașați fișiere",
+      "drop": "Plasați aici pentru a atașa la mesaj",
+      "dropHint": "PDF, JPG sau PNG, de cel mult 25 MB fiecare. Ajung la Primire.",
+      "hintPage": "Mona răspunde în limba în care scrieți. Fișierele atașate ajung la Primire.",
+      "hintPanel": "Esc închide panoul. Conversația rămâne în Conversație.",
+      "offline": "Mona nu este conectată. Veți putea scrie din nou când revine."
+    },
+    "attachment": {
+      "uploading": "Se încarcă…",
+      "accepted": "Adăugat la Primire",
+      "duplicate": "Deja primit",
+      "rejected": "Neadăugat",
+      "failed": "Încărcarea nu a reușit"
+    },
+    "sources": "Surse",
+    "citation": "Sursa {{n}}: {{title}}",
+    "you": "Dumneavoastră",
+    "loading": "Se încarcă conversația…",
+    "transcriptError": "Nu am putut încărca această conversație.",
+    "doc": {
+      "open": "Deschideți",
+      "entity": "Entitate",
+      "category": "Categorie",
+      "date": "Dată",
+      "amount": "Sumă",
+      "confidence": "Încredere",
+      "path": "Dosar"
+    },
+    "draft": {
+      "title": "Ciornă de răspuns",
+      "badge": "Ciornă · netrimisă",
+      "language": "În {{language}}. Ce nu am găsit a rămas între [PARANTEZE].",
+      "generating": "Mona scrie ciorna…",
+      "failed": "Nu am putut scrie această ciornă. Cereți-mi-o din nou în conversație.",
+      "copy": "Copiați",
+      "copied": "Copiat",
+      "download": "Descărcați .docx",
+      "neverSends": "Mona nu trimite niciodată nimic. Lipiți textul unde aveți nevoie sau tipăriți-l."
+    },
+    "list": {
+      "title": "Conversații",
+      "new": "Conversație nouă",
+      "search": "Căutați în conversații",
+      "empty": "Nicio conversație deocamdată.",
+      "noMatch": "Nicio conversație nu se potrivește cu „{{q}}”.",
+      "more": "Afișați mai multe"
+    },
+    "page": {
+      "newTitle": "Conversație nouă",
+      "openAsPanel": "Deschideți ca panou",
+      "back": "Conversații",
+      "emptyTitle": "Întrebați-o pe Mona despre documentele dumneavoastră",
+      "emptyBody": "Caută în arhivă, adună sume, găsește scadențele și scrie răspunsuri. Totul rămâne pe acest computer."
+    },
+    "panel": {
+      "openAsPage": "Deschideți în Conversație"
     }
   },
   "common": {
@@ -590,7 +647,8 @@
       "noMoves": "Niciun alt document de mutat. Regula se va aplica celor viitoare.",
       "more_one": "și încă {{n}}",
       "more_few": "și încă {{n}}",
-      "more_other": "și încă {{n}}"
+      "more_other": "și încă {{n}}",
+      "journalHint": "Fiecare mutare intră în jurnal, cu Anulare."
     },
     "source": {
       "interview": "Din întrebări",
@@ -796,6 +854,64 @@
     "failed": {
       "title": "Exportul nu s-a încheiat",
       "body": "Nu s-a trimis nimic. Încercați din nou peste o clipă."
+    },
+    "card": {
+      "title": "Pachet pentru contabil",
+      "meta": "{{entity}} · exercițiul financiar {{year}}"
     }
+  },
+  "language": {
+    "en": "engleză",
+    "fr": "franceză",
+    "ro": "română"
+  },
+  "interview": {
+    "eyebrow": "O întrebare de la Mona",
+    "progress": "Întrebarea {{n}} din {{total}}",
+    "suggested": "Sugerat",
+    "affects_one": "Privește 1 document",
+    "affects_few": "Privește {{count}} documente",
+    "affects_other": "Privește {{count}} de documente",
+    "explain": {
+      "link": "Depinde; vă explic",
+      "prefill": "Despre „{{question}}”: "
+    },
+    "skip": "Săriți peste această întrebare",
+    "keys": "Apăsați 1, 2 sau 3 pentru a răspunde.",
+    "evidence": "Deschideți {{title}}, pagina {{page}}",
+    "answered": "Ați răspuns: {{answer}}",
+    "answeredText": "Ați explicat: {{text}}",
+    "skipped": "Ați sărit peste această întrebare.",
+    "askRule": "Documentele de acest tip vă vor fi trimise mereu spre verificare.",
+    "noRule": "Am notat răspunsul. Deocamdată documentele rămân la verificat.",
+    "done": "Acestea au fost toate întrebările mele. Vă mulțumesc.",
+    "cancelled": "Aceste întrebări au fost retrase.",
+    "applyAll": "Aplicați tot ({{count}} reguli)",
+    "appliedAll": "Toate cele {{count}} reguli au fost aplicate",
+    "generating": "Mona își pregătește întrebările…",
+    "error": {
+      "no_questions": "Nimic de întrebat deocamdată.",
+      "failed": "Nu am putut pregăti întrebările. Încercați din nou din conversație."
+    },
+    "toast": {
+      "appliedAll_one": "Regulile au fost aplicate: am mutat {{n}} document",
+      "appliedAll_few": "Regulile au fost aplicate: am mutat {{n}} documente",
+      "appliedAll_other": "Regulile au fost aplicate: am mutat {{n}} de documente"
+    }
+  },
+  "deadline": {
+    "dueToday": "Scadent astăzi",
+    "dueIn_one": "Scadent peste {{n}} zi",
+    "dueIn_few": "Scadent peste {{n}} zile",
+    "dueIn_other": "Scadent peste {{n}} de zile",
+    "overdue_one": "Întârziat cu {{n}} zi",
+    "overdue_few": "Întârziat cu {{n}} zile",
+    "overdue_other": "Întârziat cu {{n}} de zile",
+    "paidBy": "debitat din {{account}}",
+    "openLetter": "Deschideți scrisoarea",
+    "remindOn": "Reamintiți-mi pe {{date}}",
+    "reminderSet": "Memento setat pentru {{date}}",
+    "done": "Marcați ca achitat",
+    "markedDone": "Marcat ca achitat"
   }
 }

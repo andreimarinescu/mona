@@ -148,34 +148,7 @@
       "findEvent": "Trouver via le bus d’événements"
     },
     "chat": {
-      "title": "Discussion (banc de dev)",
-      "composer": {
-        "placeholder": "Demandez à Mona…",
-        "send": "Envoyer"
-      },
-      "thinking": {
-        "live": "Mona réfléchit…",
-        "done": "A réfléchi {{seconds}} secondes",
-        "doneShort": "Réflexion de Mona"
-      },
-      "doc": {
-        "open": "Ouvrir",
-        "due": "Échéance {{date}}"
-      },
-      "interview": {
-        "affects": "Documents concernés : {{count}}",
-        "suggested": "Suggéré"
-      },
-      "error": {
-        "mona_offline": "Mona est hors ligne pour le moment. Réessayez dans un instant.",
-        "stream_interrupted": "La réponse a été interrompue. Réessayez.",
-        "internal": "Un problème est survenu. Réessayez."
-      },
-      "loading": "Chargement de la conversation…",
-      "deadline": {
-        "today": "Échéance aujourd'hui",
-        "overdue": "En retard"
-      }
+      "title": "Discussion (banc de dev)"
     }
   },
   "chat": {
@@ -247,10 +220,94 @@
       "generic": {
         "running": "En cours…",
         "done": "Terminé"
-      }
+      },
+      "interrupted": "interrompu"
     },
     "banner": {
       "debrief": "Passons en revue les questions sur ce lot."
+    },
+    "thinking": {
+      "live": "Mona réfléchit…",
+      "done_one": "Réflexion : {{count}} seconde",
+      "done_many": "Réflexion : {{count}} secondes",
+      "done_other": "Réflexion : {{count}} secondes",
+      "untimed": "Réflexion",
+      "show": "Afficher la réflexion",
+      "hide": "Masquer la réflexion"
+    },
+    "error": {
+      "mona_offline": "Mona est hors ligne pour le moment. Réessayez dans un instant.",
+      "stream_interrupted": "La réponse a été interrompue. Réessayez.",
+      "internal": "Un problème est survenu. Réessayez."
+    },
+    "offline": {
+      "title": "Mona est hors ligne"
+    },
+    "languageDivider": {
+      "continuing": "La conversation continue en {{language}}",
+      "keep": "Rester en {{language}}",
+      "kept": "Les réponses restent en {{language}}"
+    },
+    "composer": {
+      "placeholder": "Écrivez à Mona…",
+      "send": "Envoyer",
+      "stop": "Arrêter",
+      "attach": "Joindre des fichiers",
+      "drop": "Déposez ici pour joindre à votre message",
+      "dropHint": "PDF, JPG ou PNG, jusqu’à 25 Mo chacun. Ils vont dans la réception.",
+      "hintPage": "Mona répond dans la langue dans laquelle vous écrivez. Les fichiers joints vont dans la réception.",
+      "hintPanel": "Échap ferme le panneau. La conversation reste dans Discussion.",
+      "offline": "Mona est hors ligne. Vous pourrez écrire à nouveau à son retour."
+    },
+    "attachment": {
+      "uploading": "Envoi…",
+      "accepted": "Ajouté à la réception",
+      "duplicate": "Déjà reçu",
+      "rejected": "Non ajouté",
+      "failed": "Échec de l’envoi"
+    },
+    "sources": "Sources",
+    "citation": "Source {{n}} : {{title}}",
+    "you": "Vous",
+    "loading": "Chargement de la conversation…",
+    "transcriptError": "Je n’ai pas pu charger cette conversation.",
+    "doc": {
+      "open": "Ouvrir",
+      "entity": "Entité",
+      "category": "Catégorie",
+      "date": "Date",
+      "amount": "Montant",
+      "confidence": "Confiance",
+      "path": "Dossier"
+    },
+    "draft": {
+      "title": "Projet de réponse",
+      "badge": "Brouillon · non envoyé",
+      "language": "En {{language}}. Ce que je n’ai pas trouvé reste entre [CROCHETS].",
+      "generating": "Mona rédige le brouillon…",
+      "failed": "Je n’ai pas pu rédiger ce brouillon. Redemandez-le-moi dans la discussion.",
+      "copy": "Copier",
+      "copied": "Copié",
+      "download": "Télécharger le .docx",
+      "neverSends": "Mona n’envoie jamais rien. Collez-le où vous en avez besoin, ou imprimez-le."
+    },
+    "list": {
+      "title": "Conversations",
+      "new": "Nouvelle conversation",
+      "search": "Rechercher dans les conversations",
+      "empty": "Aucune conversation pour l’instant.",
+      "noMatch": "Aucune conversation ne correspond à « {{q}} ».",
+      "more": "Afficher plus"
+    },
+    "page": {
+      "newTitle": "Nouvelle conversation",
+      "openAsPanel": "Ouvrir en panneau",
+      "back": "Conversations",
+      "emptyTitle": "Interrogez Mona sur vos documents",
+      "emptyBody": "Elle cherche dans les archives, additionne les montants, repère les échéances et rédige des réponses. Tout reste sur cet ordinateur."
+    },
+    "panel": {
+      "openAsPage": "Ouvrir dans Discussion"
     }
   },
   "common": {
@@ -590,7 +647,8 @@
       "noMoves": "Aucun autre document à déplacer. La règle s’appliquera aux suivants.",
       "more_one": "et {{n}} autre",
       "more_many": "et {{n}} autres",
-      "more_other": "et {{n}} autres"
+      "more_other": "et {{n}} autres",
+      "journalHint": "Chaque déplacement est inscrit au journal, avec Annuler."
     },
     "source": {
       "interview": "Issue d’une question",
@@ -796,6 +854,64 @@
     "failed": {
       "title": "L’export ne s’est pas terminé",
       "body": "Rien n’a été envoyé. Réessayez dans un instant."
+    },
+    "card": {
+      "title": "Dossier pour le comptable",
+      "meta": "{{entity}} · exercice {{year}}"
     }
+  },
+  "language": {
+    "en": "anglais",
+    "fr": "français",
+    "ro": "roumain"
+  },
+  "interview": {
+    "eyebrow": "Une question de Mona",
+    "progress": "Question {{n}} sur {{total}}",
+    "suggested": "Suggéré",
+    "affects_one": "Concerne {{count}} document",
+    "affects_many": "Concerne {{count}} de documents",
+    "affects_other": "Concerne {{count}} documents",
+    "explain": {
+      "link": "Ça dépend ; je vous explique",
+      "prefill": "À propos de « {{question}} » : "
+    },
+    "skip": "Passer cette question",
+    "keys": "Appuyez sur 1, 2 ou 3 pour répondre.",
+    "evidence": "Ouvrir {{title}}, page {{page}}",
+    "answered": "Votre réponse : {{answer}}",
+    "answeredText": "Votre explication : {{text}}",
+    "skipped": "Vous avez passé cette question.",
+    "askRule": "Les documents de ce type vous seront toujours soumis pour vérification.",
+    "noRule": "J’ai noté votre réponse. Ces documents restent à vérifier pour l’instant.",
+    "done": "Je n’ai plus de questions. Merci.",
+    "cancelled": "Ces questions ont été retirées.",
+    "applyAll": "Tout appliquer ({{count}} règles)",
+    "appliedAll": "Les {{count}} règles sont appliquées",
+    "generating": "Mona prépare ses questions…",
+    "error": {
+      "no_questions": "Rien à vous demander pour l’instant.",
+      "failed": "Je n’ai pas pu préparer les questions. Réessayez depuis la conversation."
+    },
+    "toast": {
+      "appliedAll_one": "Règles appliquées : {{n}} document déplacé",
+      "appliedAll_many": "Règles appliquées : {{n}} de documents déplacés",
+      "appliedAll_other": "Règles appliquées : {{n}} documents déplacés"
+    }
+  },
+  "deadline": {
+    "dueToday": "À régler aujourd’hui",
+    "dueIn_one": "À régler dans {{n}} jour",
+    "dueIn_many": "À régler dans {{n}} de jours",
+    "dueIn_other": "À régler dans {{n}} jours",
+    "overdue_one": "En retard de {{n}} jour",
+    "overdue_many": "En retard de {{n}} de jours",
+    "overdue_other": "En retard de {{n}} jours",
+    "paidBy": "prélevé sur {{account}}",
+    "openLetter": "Ouvrir le courrier",
+    "remindOn": "Me le rappeler le {{date}}",
+    "reminderSet": "Rappel programmé pour le {{date}}",
+    "done": "Marquer comme réglé",
+    "markedDone": "Marqué comme réglé"
   }
 }

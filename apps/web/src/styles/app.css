@@ -90,3 +90,19 @@
 .skip-link:focus {
   transform: none;
 }
+
+.mona-caret {
+  animation: mona-caret-blink 1s steps(1) infinite;
+}
+
+@keyframes mona-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mona-caret {
+    animation: none;
+  }
+}

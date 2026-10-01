@@ -28,6 +28,7 @@ import type {
 } from '../data/dto';
 import { listFolder, norm, parseSearchParams, searchDocuments } from './archive';
 import { createExports } from './exports';
+import { createInterviews } from './interviews';
 import { makeId } from './ids';
 import { ARCHIVE_SEED, ATELIER, CABINET, CATEGORIES, ENTITIES, FISCAL_YEAR_END, NORDTEL_AMOUNT, NORDTEL_DATES, NORDTEL_FILED_TITLES, REVIEW_SEED, SHOWCASE_FIELDS, VISITORS_ID } from './seed';
 import { calendarDate, toIsoDate } from '../data/calendar';
@@ -88,6 +89,9 @@ export interface WorldOptions {
   debriefDelayMs?: number;
   exportMs?: number;
   seed?: boolean;
+  /** Read by the chat handlers, not the world. */
+  chatDelayMs?: number;
+  draftMs?: number;
 }
 
 const UNDOABLE: JournalAction[] = ['file', 'move', 'rename', 'unfile', 'delete', 'undo', 'redo'];
@@ -260,6 +264,7 @@ export function createWorld(options: WorldOptions = {}) {
   }
 
   const reminders = new Map<string, { id: string; targetId: string; remindOn: string }>();
+  const deadlineStatus = new Map<string, Deadline['status']>();
   const counterpartyIds = new Map<string, string>();
   const ruleIds = new Map<string, string>();
   const today = () => toIsoDate(new Date(now()));
@@ -283,7 +288,7 @@ export function createWorld(options: WorldOptions = {}) {
     const reminder = [...reminders.values()].find((r) => r.targetId === id || r.targetId === s.id);
     const daysLeft = Math.round((calendarDate(s.dueDate).getTime() - calendarDate(today()).getTime()) / 86_400_000);
     return [
-      { id, documentId: s.id, label: s.title, entityId: s.entityId ?? '', entityName: s.entityName ?? '', dueDate: s.dueDate, amount: s.amount, status: 'open', daysLeft, reminder: reminder ? { id: reminder.id, remindOn: reminder.remindOn } : null },
+      { id, documentId: s.id, label: s.title, entityId: s.entityId ?? '', entityName: s.entityName ?? '', dueDate: s.dueDate, amount: s.amount, status: deadlineStatus.get(id) ?? 'open', daysLeft, reminder: reminder ? { id: reminder.id, remindOn: reminder.remindOn } : null },
     ];
   }
 
@@ -493,6 +498,8 @@ export function createWorld(options: WorldOptions = {}) {
     };
     const status: BatchSummary['status'] = batch.finishedAt === null ? 'running' : 'done';
     const debriefReady = batch.debriefAt !== null && now() >= batch.debriefAt && counts.review > 0;
+    const reviewIds = live.filter((d) => d.summary.status === 'review').map((d) => d.summary.id);
+    const iv = interviews.forBatch(batch.id) ?? (debriefReady ? interviews.debrief(batch.id, reviewIds) : null);
     return {
       id: batch.id,
       source: 'drop',
@@ -503,7 +510,7 @@ export function createWorld(options: WorldOptions = {}) {
       finishedAt: batch.finishedAt === null ? null : new Date(batch.finishedAt).toISOString(),
       counts,
       groupId: batch.groupId,
-      debrief: debriefReady ? { interviewId: id('int'), status: 'ready', openQuestions: 2 } : null,
+      debrief: iv ? { interviewId: iv.id, status: iv.status, openQuestions: iv.openQuestions } : null,
     };
   }
 
@@ -717,18 +724,24 @@ export function createWorld(options: WorldOptions = {}) {
     );
   }
 
-  const ruleSource = new Map<string, string>();
+  /** What a rule moves: a like-this rule follows its corrected document, an interview rule its branch. */
+  interface RuleTarget {
+    candidates(): Doc[];
+    stays(): string[];
+    place(d: Doc, groupId: string): void;
+  }
+  const ruleTargets = new Map<string, RuleTarget>();
   const ruleGroups = new Map<string, string>();
 
   function preview(rule: Rule): RulePreview {
-    const source = docs.get(ruleSource.get(rule.id) ?? '')!;
+    const target = ruleTargets.get(rule.id)!;
     const groupId = ruleGroups.get(rule.id) ?? null;
     const applied = groupId !== null && groupDto(groups.get(groupId)!).undoState !== 'undone';
     const moves = applied
       ? entries
-          .filter((e) => e.groupId === groupId && e.action === 'move')
+          .filter((e) => e.groupId === groupId && (e.action === 'move' || e.action === 'file'))
           .map((e) => ({ documentId: e.documentIds[0]!, title: docs.get(e.documentIds[0]!)!.summary.title, from: e.before!.path, fromFileName: e.before!.fileName, to: e.after!.path, toFileName: e.after!.fileName }))
-      : candidates(source).map((d) => ({
+      : target.candidates().map((d) => ({
           documentId: d.summary.id,
           title: d.summary.title,
           from: d.summary.path,
@@ -736,7 +749,8 @@ export function createWorld(options: WorldOptions = {}) {
           to: rule.destination,
           toFileName: d.summary.fileName,
         }));
-    return { rule: { ...rule }, moves, movesTotal: moves.length, stays: [source.summary.id], staysTotal: 1, applied, groupId: applied ? groupId : null };
+    const stays = target.stays();
+    return { rule: { ...rule }, moves, movesTotal: moves.length, stays, staysTotal: stays.length, applied, groupId: applied ? groupId : null };
   }
 
   function likeThis(docId: string) {
@@ -744,14 +758,49 @@ export function createWorld(options: WorldOptions = {}) {
     if (!doc.correction) throw new MockError(404, 'not_found', 'No correction.');
     if (!doc.summary.counterparty) throw new MockError(422, 'invalid_value', 'No counterparty.', 'counterparty');
     const rule = ruleFor(doc);
-    ruleSource.set(rule.id, doc.summary.id);
+    ruleTargets.set(rule.id, {
+      candidates: () => candidates(doc),
+      stays: () => [doc.summary.id],
+      place: (d, groupId) => {
+        const before = stateOf(d);
+        d.summary.entityId = doc.summary.entityId;
+        d.summary.entityName = doc.summary.entityName;
+        d.summary.path = rule.destination;
+        d.summary.filedBy = 'user';
+        record({ actor: 'user', via: 'ui', action: 'move', doc: d, before, after: stateOf(d), groupId, ruleId: rule.id });
+      },
+    });
     return { rule, preview: preview(rule) };
   }
 
-  function applyRule(ruleId: string): ApplyResult {
+  function registerRule(rule: Rule, target: RuleTarget) {
+    rules.set(rule.id, rule);
+    ruleTargets.set(rule.id, target);
+  }
+
+  /** Files a document at an explicit place, as a rule application does (one journal `file` entry). */
+  function fileTo(d: Doc, to: { entityId: string; categoryId: string; subcategoryKey: string | null; path: string[] }, groupId: string, ruleId: string) {
+    const before = stateOf(d);
+    const s = d.summary;
+    Object.assign(s, { entityId: to.entityId, entityName: entityById(to.entityId)?.displayName ?? null, categoryId: to.categoryId, subcategoryKey: to.subcategoryKey, path: to.path });
+    Object.assign(s, { location: 'archive', status: 'filed', reasons: [], filedAt: new Date(now()).toISOString(), filedBy: 'user', rule: { id: ruleId, name: rules.get(ruleId)?.name ?? '' } });
+    record({ actor: 'user', via: 'ui', action: 'file', doc: d, before, after: stateOf(d), groupId, ruleId });
+  }
+
+  const notes: { conversationId: string; kind: string; text: string; consumed: boolean }[] = [];
+  function note(conversationId: string | undefined, kind: string, text: string) {
+    if (conversationId) notes.push({ conversationId, kind, text, consumed: false });
+  }
+  function consumeNotes(conversationId: string): string[] {
+    return notes.filter((n) => n.conversationId === conversationId && !n.consumed).map((n) => {
+      n.consumed = true;
+      return n.text;
+    });
+  }
+
+  function applyRule(ruleId: string, conversationId?: string): ApplyResult {
     const rule = rules.get(ruleId);
     if (!rule) throw new MockError(404, 'not_found', 'Unknown rule.');
-    const source = docs.get(ruleSource.get(ruleId)!)!;
     const current = preview(rule);
     if (current.applied) return { preview: current, groupId: null, moved: 0, unchanged: current.movesTotal, failed: [] };
     const group = newGroup('rule_apply', 'user', 'ui', { ruleId });
@@ -759,15 +808,9 @@ export function createWorld(options: WorldOptions = {}) {
     record({ actor: 'user', via: 'ui', action: 'rule.change', groupId: group.id, ruleId });
     rule.state = 'active';
     rule.enabled = true;
-    for (const d of candidates(source)) {
-      const before = stateOf(d);
-      d.summary.entityId = source.summary.entityId;
-      d.summary.entityName = source.summary.entityName;
-      d.summary.path = rule.destination;
-      d.summary.filedBy = 'user';
-      record({ actor: 'user', via: 'ui', action: 'move', doc: d, before, after: stateOf(d), groupId: group.id, ruleId });
-    }
+    for (const d of ruleTargets.get(ruleId)!.candidates()) ruleTargets.get(ruleId)!.place(d, group.id);
     const after = preview(rule);
+    note(conversationId, 'rule.apply', `Applied the rule "${rule.name}": ${after.movesTotal} documents moved, ${after.staysTotal} already in place.`);
     return { preview: after, groupId: group.id, moved: after.movesTotal, unchanged: 0, failed: [] };
   }
 
@@ -784,7 +827,7 @@ export function createWorld(options: WorldOptions = {}) {
     return next;
   }
 
-  function entryUndo(entryId: number): UndoResult {
+  function entryUndo(entryId: number, conversationId?: string): UndoResult {
     tick();
     const e = entryById(entryId);
     if (!e) throw new MockError(404, 'not_found', 'Unknown entry.');
@@ -793,6 +836,7 @@ export function createWorld(options: WorldOptions = {}) {
     if (state === 'undone') throw new MockError(409, 'already_undone', 'Already undone.');
     if (state === 'superseded') throw new MockError(409, 'superseded', 'Superseded.');
     const next = undoEntry(e, null);
+    note(conversationId, 'undo', `Undid 1 change(s): ${docs.get(e.documentIds[0]!)!.summary.title}.`);
     return {
       groupId: null,
       undone: [{ journalId: e.id, documentId: e.documentIds[0]!, title: docs.get(e.documentIds[0]!)!.summary.title, to: next.after! }],
@@ -802,7 +846,7 @@ export function createWorld(options: WorldOptions = {}) {
     };
   }
 
-  function groupUndo(groupId: string): UndoResult {
+  function groupUndo(groupId: string, conversationId?: string): UndoResult {
     tick();
     const g = groups.get(groupId);
     if (!g) throw new MockError(404, 'not_found', 'Unknown group.');
@@ -831,6 +875,7 @@ export function createWorld(options: WorldOptions = {}) {
         ruleStates.push({ ruleId: rule.id, state: 'draft' });
       }
     }
+    note(conversationId, 'undo', `Undid ${undone.length} change(s): ${g.ruleId ? `the rule "${rules.get(g.ruleId)?.name ?? ''}"` : 'a group'}.`);
     return { groupId: u.id, undone, skipped, entries: created.map(dto), ruleStates };
   }
 
@@ -946,7 +991,7 @@ export function createWorld(options: WorldOptions = {}) {
     return listFolder(liveSummaries(), path, entityId);
   }
 
-  function createReminder(body: { deadlineId?: string; documentId?: string; remindOn?: string; note?: string }): { created: boolean; result: ReminderResult } {
+  function createReminder(body: { deadlineId?: string; documentId?: string; remindOn?: string; note?: string; conversationId?: string }): { created: boolean; result: ReminderResult } {
     if (!!body.deadlineId === !!body.documentId) throw new MockError(400, 'invalid_request', 'Exactly one of deadlineId and documentId.', 'deadlineId');
     if (!body.remindOn || !/^\d{4}-\d{2}-\d{2}$/.test(body.remindOn)) throw new MockError(400, 'invalid_request', 'remindOn is a date.', 'remindOn');
     if (body.remindOn < today()) throw new MockError(422, 'invalid_value', 'The reminder date has passed.', 'remindOn');
@@ -956,16 +1001,37 @@ export function createWorld(options: WorldOptions = {}) {
     const existing = [...reminders.values()].find((r) => r.targetId === targetId && r.remindOn === body.remindOn);
     const reminder = existing ?? { id: id('rem'), targetId, remindOn: body.remindOn };
     if (!existing) reminders.set(reminder.id, reminder);
+    if (!existing) note(body.conversationId, 'reminder.add', `Set a reminder for "${doc.summary.title}" on ${reminder.remindOn}.`);
     return { created: !existing, result: { reminderId: reminder.id, remindOn: reminder.remindOn, created: !existing, deadline: deadlinesOf(doc)[0] ?? null } };
+  }
+
+  function allDeadlines(): Deadline[] {
+    tick();
+    return [...docs.values()].filter((d) => !d.deleted).flatMap(deadlinesOf);
+  }
+
+  function markDeadline(deadlineId: string, status: Deadline['status']): Deadline {
+    const found = allDeadlines().find((d) => d.id === deadlineId);
+    if (!found) throw new MockError(404, 'not_found', 'Unknown deadline.');
+    deadlineStatus.set(deadlineId, status);
+    return { ...found, status };
   }
 
   function cancelReminder(reminderId: string) {
     if (!reminders.delete(reminderId)) throw new MockError(404, 'not_found', 'Unknown reminder.');
   }
 
+  const interviews = createInterviews({ now, id, docs, registerRule, fileTo, applyRule, previewRule, ruleState: (ruleId) => rules.get(ruleId)?.state, note });
+
   if (options.seed !== false) seed();
 
-  return { now, tick, intake, batchDetail, latestBatch, reviewList, document, confirm, correct, likeThis, applyRule, previewRule: (ruleId: string) => preview(rules.get(ruleId)!), entryUndo, groupUndo, activity, groupView, shell, entityList, categories: () => ({ items: CATEGORIES }), search, folders, exports: exportJobs, createReminder, cancelReminder, docs, entries, batches, thumbnail: (docId: string) => getDoc(docId).summary.title };
+  function previewRule(ruleId: string): RulePreview {
+    const rule = rules.get(ruleId);
+    if (!rule) throw new MockError(404, 'not_found', 'Unknown rule.');
+    return preview(rule);
+  }
+
+  return { now, tick, id, intake, batchDetail, latestBatch, reviewList, document, confirm, correct, likeThis, applyRule, previewRule, registerRule, fileTo, note, consumeNotes, notes, allDeadlines, markDeadline, summaryOf: (d: Doc) => summaryOf(d), interviews, entryUndo, groupUndo, activity, groupView, shell, entityList, categories: () => ({ items: CATEGORIES }), search, folders, exports: exportJobs, createReminder, cancelReminder, docs, entries, batches, thumbnail: (docId: string) => getDoc(docId).summary.title };
 }
 
 export type World = ReturnType<typeof createWorld>;

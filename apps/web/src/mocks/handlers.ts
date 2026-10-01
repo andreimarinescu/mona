@@ -1,11 +1,22 @@
 import { HttpResponse, bypass, http, type HttpHandler } from 'msw';
+import { ChatError, createChat, type ChatRequestBody, type MockChat } from './chat';
 import { ExportError } from './exports';
-import { MockError, type World } from './world';
+import { InterviewError } from './interviews';
+import { MockError, type World, type WorldOptions } from './world';
 
 function fail(err: unknown) {
   if (err instanceof MockError || err instanceof ExportError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field } }, { status: err.status });
+  if (err instanceof InterviewError) return HttpResponse.json({ error: { code: err.code, message: err.message, details: err.details } }, { status: err.status });
+  if (err instanceof ChatError) return HttpResponse.json({ error: { code: err.code, message: err.message } }, { status: err.status });
   throw err;
 }
+
+async function bodyOf(request: Request): Promise<Record<string, unknown>> {
+  const text = await request.text();
+  return text ? (JSON.parse(text) as Record<string, unknown>) : {};
+}
+
+const conversationOf = (body: Record<string, unknown>) => (typeof body.conversationId === 'string' ? body.conversationId : undefined);
 
 function guard<T>(run: () => T | Promise<T>) {
   return async () => {
@@ -22,24 +33,9 @@ function thumbnailSvg(title: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400"><rect width="300" height="400" fill="#fff"/><text x="24" y="48" font-family="sans-serif" font-size="18" font-weight="700" fill="#222">${safe.slice(0, 28)}</text><g fill="#ddd"><rect x="24" y="88" width="252" height="8"/><rect x="24" y="112" width="220" height="8"/><rect x="24" y="136" width="240" height="8"/><rect x="24" y="160" width="180" height="8"/></g></svg>`;
 }
 
-function chatStream(): Response {
-  const chunks = [
-    { type: 'start', messageId: 'msg_mock', messageMetadata: { conversationId: 'cnv_mock' } },
-    { type: 'start-step' },
-    { type: 'text-start', id: 't1' },
-    { type: 'text-delta', id: 't1', delta: 'Let us go through your questions.' },
-    { type: 'text-end', id: 't1' },
-    { type: 'finish-step' },
-    { type: 'finish', finishReason: 'stop' },
-  ];
-  return new Response(chunks.map((c) => `data: ${JSON.stringify(c)}\n\n`).join('') + 'data: [DONE]\n\n', {
-    headers: { 'content-type': 'text/event-stream', 'x-vercel-ai-ui-message-stream': 'v1' },
-  });
-}
-
 export const chatBodies: Record<string, unknown>[] = [];
 
-export function createHandlers(world: World): HttpHandler[] {
+export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDelayMs' | 'draftMs'> = {}, chat: MockChat = createChat(world, { chunkDelayMs: options.chatDelayMs, draftMs: options.draftMs })): HttpHandler[] {
   return [
     http.get('/api/health', () => HttpResponse.json({ status: 'ok', db: 'ok', version: '0.1.0' })),
     http.get('/api/auth/state', () =>
@@ -117,7 +113,10 @@ export function createHandlers(world: World): HttpHandler[] {
     }),
     http.post('/api/documents/:id/like-this', ({ params }) => guard(() => world.likeThis(String(params.id)))()),
     http.get('/api/rules/:id/preview', ({ params }) => guard(() => world.previewRule(String(params.id)))()),
-    http.post('/api/rules/:id/apply', ({ params }) => guard(() => world.applyRule(String(params.id)))()),
+    http.post('/api/rules/:id/apply', async ({ params, request }) => {
+      const body = await bodyOf(request);
+      return guard(() => world.applyRule(String(params.id), conversationOf(body)))();
+    }),
 
     http.get('/api/activity', ({ request }) => {
       const q = new URL(request.url).searchParams;
@@ -126,8 +125,14 @@ export function createHandlers(world: World): HttpHandler[] {
       )();
     }),
     http.get('/api/journal/groups/:id', ({ params }) => guard(() => world.groupView(String(params.id)))()),
-    http.post('/api/journal/groups/:id/undo', ({ params }) => guard(() => world.groupUndo(String(params.id)))()),
-    http.post('/api/journal/:id/undo', ({ params }) => guard(() => world.entryUndo(Number(params.id)))()),
+    http.post('/api/journal/groups/:id/undo', async ({ params, request }) => {
+      const body = await bodyOf(request);
+      return guard(() => world.groupUndo(String(params.id), conversationOf(body)))();
+    }),
+    http.post('/api/journal/:id/undo', async ({ params, request }) => {
+      const body = await bodyOf(request);
+      return guard(() => world.entryUndo(Number(params.id), conversationOf(body)))();
+    }),
 
     http.get('/api/exports/preview', ({ request }) => {
       const q = new URL(request.url).searchParams;
@@ -180,9 +185,50 @@ export function createHandlers(world: World): HttpHandler[] {
       }
     }),
 
+    http.patch('/api/deadlines/:id', async ({ params, request }) => {
+      const body = (await bodyOf(request)) as { status: 'open' | 'done' | 'dismissed' };
+      return guard(() => world.markDeadline(String(params.id), body.status))();
+    }),
+
+    http.get('/api/interviews/:id', ({ params }) => guard(() => world.interviews.get(String(params.id)))()),
+    http.post('/api/interviews/:id/questions/:qid/answer', async ({ params, request }) => {
+      const body = (await bodyOf(request)) as { optionId?: string; freeText?: string; conversationId?: string };
+      return guard(() => world.interviews.answer(String(params.id), String(params.qid), body))();
+    }),
+    http.post('/api/interviews/:id/questions/:qid/skip', async ({ params, request }) => {
+      const body = await bodyOf(request);
+      return guard(() => world.interviews.skip(String(params.id), String(params.qid), conversationOf(body)))();
+    }),
+    http.post('/api/interviews/:id/questions/:qid/apply', async ({ params, request }) => {
+      const body = await bodyOf(request);
+      return guard(() => world.interviews.applyAll(String(params.id), String(params.qid), conversationOf(body)))();
+    }),
+
+    http.get('/api/drafts/:id', ({ params }) => guard(() => chat.draft(String(params.id)))()),
+    http.get('/api/drafts/:id/docx', ({ params, request }) => {
+      try {
+        const { bytes, name } = chat.docx(String(params.id), new URL(request.url).searchParams.get('conversationId') ?? undefined);
+        return new HttpResponse(bytes, {
+          headers: { 'content-type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}` },
+        });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
+
+    http.get('/api/conversations', ({ request }) => {
+      const q = new URL(request.url).searchParams;
+      return HttpResponse.json(chat.list(q.get('q') ?? '', q.get('cursor'), Number(q.get('limit') ?? 30)));
+    }),
+    http.get('/api/conversations/:id/messages', ({ params }) => guard(() => chat.messages(String(params.id)))()),
     http.post('/api/chat', async ({ request }) => {
-      chatBodies.push((await request.json()) as Record<string, unknown>);
-      return chatStream();
+      const body = (await request.json()) as ChatRequestBody;
+      chatBodies.push(body as unknown as Record<string, unknown>);
+      try {
+        return chat.stream(body, request.signal);
+      } catch (err) {
+        return fail(err);
+      }
     }),
   ];
 }

@@ -46,9 +46,9 @@ export function undoTargetPath(target: UndoTarget): string {
   return 'journalId' in target ? `/api/journal/${target.journalId}/undo` : `/api/journal/groups/${target.groupId}/undo`;
 }
 
-export const postUndo = (target: UndoTarget) => post<UndoResult>(undoTargetPath(target));
+export const postUndo = (target: UndoTarget, conversationId?: string) => post<UndoResult>(undoTargetPath(target), conversationId ? { conversationId } : {});
 
-const VOLATILE = ['review', 'document', 'activity', 'group', 'batch', 'batches', 'shell-counts', 'rule-preview', 'archive', 'folders'];
+const VOLATILE = ['review', 'document', 'activity', 'group', 'batch', 'batches', 'shell-counts', 'rule-preview', 'interview', 'archive', 'folders'];
 
 export function invalidateAfterWrite(qc: QueryClient) {
   return Promise.all(VOLATILE.map((key) => qc.invalidateQueries({ queryKey: [key] })));
@@ -64,9 +64,9 @@ export type UndoKind = 'undo' | 'redo';
 export function useUndoRunner() {
   const qc = useQueryClient();
   return useCallback(
-    async (target: UndoTarget, kind: UndoKind = 'undo'): Promise<UndoResult | null> => {
+    async (target: UndoTarget, kind: UndoKind = 'undo', conversationId?: string): Promise<UndoResult | null> => {
       try {
-        const result = await postUndo(target);
+        const result = await postUndo(target, conversationId);
         toasts.push({ key: kind, message: kind === 'undo' ? 'toast.undone' : 'toast.redone', count: Math.max(result.undone.length, 1), tone: 'neutral' });
         if (result.skipped.length > 0) {
           toasts.push({ key: 'skipped', message: 'toast.undoSkipped', count: result.skipped.length, tone: 'warning' });

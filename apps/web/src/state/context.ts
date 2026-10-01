@@ -27,9 +27,11 @@ export interface AppState {
   /** What the current screen shows (counts, search), published by the screen for the page context. */
   pageFacts: PageFacts | null;
   setPageFacts(facts: PageFacts | null): void;
-  openChat(opts?: { opener?: HTMLElement | null; conversationId?: string; send?: { message: string; pageContext: PageContext } }): void;
+  /** `reload`: remount the thread even for the same conversation, so it reloads the transcript. */
+  openChat(opts?: { opener?: HTMLElement | null; conversationId?: string; reload?: boolean; send?: { message: string; pageContext: PageContext } }): void;
   clearOutbox(id: number): void;
-  closeChat(): void;
+  /** `remount`: the thread reloads its transcript when the panel opens again (its conversation moved to the Chat page). */
+  closeChat(opts?: { remount?: boolean }): void;
   setConversationId(id: string): void;
   registerAskButton(el: HTMLElement | null): void;
   registerChatEntry(el: HTMLElement | null): void;

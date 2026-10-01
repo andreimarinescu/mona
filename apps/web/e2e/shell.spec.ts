@@ -20,6 +20,8 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/folders**', (route) => route.fulfill({ json: { path: [], folders: [], documents: [] } }));
   const processing = { id: 'doc_01j9zq3k8e6y4v2m7c5r1t0b9a', title: 'Document', fileName: 'scan.pdf', status: 'processing', pipelineStage: 'queued', badgeUntil: null, pageCount: null, date: null, entityName: null, pdfUrl: '/api/documents/doc_01j9zq3k8e6y4v2m7c5r1t0b9a/pdf', fields: [], journal: [], deadlines: [], reasons: [], confidence: null };
   await page.route('**/api/documents/doc_*', (route) => route.fulfill({ json: processing }));
+  await page.route('**/api/conversations?**', (route) => route.fulfill({ json: { items: [], nextCursor: null } }));
+  await page.route('**/api/conversations/*/messages', (route) => route.fulfill({ json: [] }));
 });
 
 function watchConsole(page: Page): string[] {
@@ -46,7 +48,7 @@ const NAV: [string, string, string][] = [
 ];
 
 const PARAM_ROUTES: [string, string, string?][] = [
-  ['/chat/cnv_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Chat', 'cnv_01j9zq3k8e6y4v2m7c5r1t0b9a'],
+  ['/chat/cnv_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Chat'],
   ['/archive/folders/Cabinet%20Marchand/2026', 'Archive'],
   ['/documents/doc_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Document'],
   ['/rules/rul_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Rules', 'rul_01j9zq3k8e6y4v2m7c5r1t0b9a'],
@@ -143,7 +145,7 @@ test.describe('chat panel', () => {
     await expect(panel).toBeVisible();
     expect((await panel.boundingBox())!.width).toBe(460);
     await expect(panel.getByTestId('page-context')).toHaveText('Mona can see: Review queue');
-    await expect(panel.getByRole('textbox', { name: 'Ask Mona…' })).toBeFocused();
+    await expect(panel.getByRole('textbox', { name: 'Write to Mona…' })).toBeFocused();
     await nav(page).getByRole('link', { name: 'Archive' }).click();
     await expect(page).toHaveURL(/\/archive$/);
     await expect(panel.getByTestId('page-context')).toHaveText('Mona can see: Archive, 0 results');
@@ -160,7 +162,7 @@ test.describe('chat panel', () => {
     await page.keyboard.press('/');
     const panel = page.locator('[role="complementary"][aria-label="Mona"]');
     await expect(panel).toBeVisible();
-    await expect(panel.getByRole('textbox', { name: 'Ask Mona…' })).toBeFocused();
+    await expect(panel.getByRole('textbox', { name: 'Write to Mona…' })).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(panel).toBeHidden();
     await expect(link).toBeFocused();
@@ -169,7 +171,7 @@ test.describe('chat panel', () => {
   test('"/" does nothing inside a text field', async ({ page }) => {
     await page.goto('/rules');
     await page.getByRole('button', { name: 'Ask Mona' }).click();
-    const composer = page.getByRole('textbox', { name: 'Ask Mona…' });
+    const composer = page.getByRole('textbox', { name: 'Write to Mona…' });
     await composer.fill('a');
     await page.keyboard.press('/');
     await expect(composer).toHaveValue('a/');
@@ -205,7 +207,7 @@ test.describe('chat panel', () => {
     await page.goto('/intake');
     await page.getByRole('button', { name: 'Ask Mona' }).click();
     const panel = page.locator('[role="complementary"][aria-label="Mona"]');
-    await panel.getByRole('textbox', { name: 'Ask Mona…' }).fill('first');
+    await panel.getByRole('textbox', { name: 'Write to Mona…' }).fill('first');
     await panel.getByRole('button', { name: 'Send' }).click();
     await expect(panel.getByText('Hello from Mona')).toBeVisible();
 
@@ -214,7 +216,7 @@ test.describe('chat panel', () => {
     await expect(panel).toBeVisible();
     await expect(panel.getByText('Hello from Mona')).toBeVisible();
 
-    await panel.getByRole('textbox', { name: 'Ask Mona…' }).fill('second');
+    await panel.getByRole('textbox', { name: 'Write to Mona…' }).fill('second');
     await panel.getByRole('button', { name: 'Send' }).click();
     await expect.poll(() => bodies.length).toBe(2);
     expect(bodies[0]).toMatchObject({ message: 'first', pageContext: { route: '/intake', summary: 'Intake' }, locale: 'en' });

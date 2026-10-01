@@ -1,4 +1,5 @@
 import { DefaultChatTransport } from 'ai';
+import type { Lang } from '@mona/ui';
 import type { MonaUIMessage, PageContext } from './types';
 
 export interface TurnContext {
@@ -16,20 +17,22 @@ export function lastUserText(messages: MonaUIMessage[]): string {
 export function monaTransport(ctx: TurnContext) {
   let conversationId = ctx.conversationId;
   let nextContext: PageContext | null = null;
+  let replyLanguage: Lang | undefined;
   const transport = new DefaultChatTransport<MonaUIMessage>({
     api: '/api/chat',
-    prepareSendMessagesRequest: ({ messages }) => ({
-      body: {
-        conversationId,
-        message: lastUserText(messages),
-        pageContext: (() => {
-          const override = nextContext;
-          nextContext = null;
-          return override ?? ctx.pageContext();
-        })(),
-        locale: ctx.locale(),
-      },
-    }),
+    prepareSendMessagesRequest: ({ messages }) => {
+      const override = nextContext;
+      nextContext = null;
+      return {
+        body: {
+          conversationId,
+          message: lastUserText(messages),
+          pageContext: override ?? ctx.pageContext(),
+          locale: ctx.locale(),
+          ...(replyLanguage ? { replyLanguage } : {}),
+        },
+      };
+    },
   });
   return {
     transport,
@@ -40,6 +43,10 @@ export function monaTransport(ctx: TurnContext) {
     },
     setConversationId: (id: string) => {
       conversationId = id;
+    },
+    /** C3 §2: pinned by "Keep …"; sent on every later turn. */
+    setReplyLanguage: (lang: Lang) => {
+      replyLanguage = lang;
     },
   };
 }

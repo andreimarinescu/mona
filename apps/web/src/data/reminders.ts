@@ -6,6 +6,7 @@ export interface ReminderRequest {
   documentId?: string;
   remindOn: string;
   note?: string;
+  conversationId?: string;
 }
 
 export const createReminder = (body: ReminderRequest) => post<ReminderResult>('/api/reminders', body);

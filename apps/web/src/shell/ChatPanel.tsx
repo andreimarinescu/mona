@@ -1,5 +1,6 @@
-import { Button, MonaAvatar, Spinner } from '@mona/ui';
-import { Suspense, lazy, useEffect, useRef } from 'react';
+import { Button, Icon, MonaAvatar, Spinner } from '@mona/ui';
+import { useNavigate } from '@tanstack/react-router';
+import { Suspense, lazy, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppState } from '../state/context';
 import { usePageContext, usePageDisplay } from './usePageContext';
@@ -8,6 +9,7 @@ const ConversationThread = lazy(() => import('../chat/ConversationThread').then(
 
 export function ChatPanel() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { chat, closeChat, setConversationId, clearOutbox } = useAppState();
   const context = usePageContext();
   const display = usePageDisplay();
@@ -15,6 +17,7 @@ export function ChatPanel() {
   useEffect(() => {
     latest.current = context;
   }, [context]);
+  const pageContext = useCallback(() => latest.current, []);
   const panel = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -24,6 +27,11 @@ export function ChatPanel() {
   }, [chat.open]);
 
   if (!chat.everOpened) return null;
+  const openAsPage = () => {
+    const id = chat.conversationId;
+    closeChat({ remount: true });
+    void navigate(id ? { to: '/chat/$conversationId', params: { conversationId: id } } : { to: '/chat' });
+  };
   return (
     <aside
       ref={panel}
@@ -35,17 +43,20 @@ export function ChatPanel() {
       <header className="flex items-center gap-3">
         <MonaAvatar size={32} />
         <h2 className="m-0 flex-1 font-ui text-[18px] leading-[26px] font-semibold text-text">{t('shell.chat.title')}</h2>
-        <Button variant="quiet" iconOnly icon="x" aria-label={t('shell.chat.close')} onClick={closeChat} />
+        <Button variant="quiet" iconOnly icon="external" aria-label={t('chat.panel.openAsPage')} onClick={openAsPage} />
+        <Button variant="quiet" iconOnly icon="x" aria-label={t('shell.chat.close')} onClick={() => closeChat()} />
       </header>
-      <p className="m-0 font-ui text-[13px] leading-[18px] text-text-muted" data-testid="page-context">
+      <p className="m-0 flex items-center gap-2 border-b border-border pb-3 font-ui text-[13px] leading-[18px] text-text-muted" data-testid="page-context">
+        <Icon name="info" size={14} />
         {t('shell.chat.sees', { summary: display })}
       </p>
       <div className="min-h-0 flex-1">
-        <Suspense fallback={<Spinner label={t('dev.chat.loading')} />}>
+        <Suspense fallback={<Spinner label={t('chat.loading')} />}>
           <ConversationThread
             key={chat.generation}
+            variant="panel"
             conversationId={chat.conversationId}
-            pageContext={() => latest.current}
+            pageContext={pageContext}
             onConversationId={setConversationId}
             autoFocus
             outbox={chat.outbox}

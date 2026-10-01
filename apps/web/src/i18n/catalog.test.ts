@@ -28,7 +28,7 @@ describe('the keys built from closed enums exist in every language', () => {
 
   it('plural keys that the code passes by name exist', () => {
     for (const lng of ['en', 'fr', 'ro']) {
-      for (const k of ['toast.undone', 'toast.redone', 'toast.undoSkipped', 'review.toast.ruleApplied', 'intake.overLimit', 'rules.preview.applied']) {
+      for (const k of ['toast.undone', 'toast.redone', 'toast.undoSkipped', 'review.toast.ruleApplied', 'intake.overLimit', 'rules.preview.applied', 'chat.thinking.done', 'interview.affects', 'interview.toast.appliedAll', 'deadline.dueIn', 'deadline.overdue']) {
         expect(i18n.exists(k, { lng, count: 2 }), `${lng} ${k}`).toBe(true);
         expect(i18n.getFixedT(lng)(k, { count: 2, n: 2 })).not.toContain('{{');
       }

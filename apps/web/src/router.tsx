@@ -14,6 +14,7 @@ import { Unlock } from './routes/Unlock';
 import { parseArchiveSearch } from './data/archive';
 import { ActivityPage } from './routes/activity/ActivityPage';
 import { ArchivePage } from './routes/archive/ArchivePage';
+import { ChatPage } from './routes/chat/ChatPage';
 import { FoldersPage } from './routes/archive/FoldersPage';
 import { DocumentPage } from './routes/document/DocumentPage';
 import { parseDocumentSearch } from './routes/document/search';
@@ -44,8 +45,8 @@ const documentRoute = createRoute({ getParentRoute: () => shellRoute, path: '/do
 
 const shellRoutes = [
   page('/', 'nav.home'),
-  page('/chat', 'nav.chat'),
-  page('/chat/$conversationId', 'nav.chat'),
+  screen('/chat', ChatPage),
+  screen('/chat/$conversationId', ChatPage),
   screen('/intake', IntakePage),
   screen('/review', ReviewPage),
   screen('/review/$documentId', ReviewPage),
