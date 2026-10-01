@@ -273,3 +273,27 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - **Activity:** an activity entry, as for the accountant pack. It is never sent anywhere.
 - **Why:** Andrei asked for a payables table as CSV, then XLSX, then DOCX. With this tool, Qwen only chooses the documents and the columns.
 - **Lanes:** L2, L4 (FIX-11).
+
+## A32 · 2026-10-01 · C4 §2.4: tool errors come back as ordinary results
+
+- **Change:**
+  - Every C4 §2.4 error is returned as an ordinary tool result (`isError: false`) whose text and structured content are the same `{"error": {…}}` envelope, as A28's `budget_exhausted` already is.
+  - Schema validation (`invalid_argument` from the middleware) and `internal` included. The codes, messages, hints and `valid` lists are unchanged.
+- **Why:**
+  - Hermes 0.21.5 opens a process-wide circuit breaker after 3 consecutive MCP error results from one server: every `mona` call fails for 60 s, in every session, and the threshold is hard-coded.
+  - FIX-10 and S7 both measured it. In S7, 16 of 30 hard turns started blocked by the previous turn's errors, and Mona told the person the archive was down.
+- **Lanes:** L2 (FIX-12).
+
+## A33 · 2026-10-01 · C9 §6.5: the reset installs SOUL from the repo
+
+- **Change:**
+  - `demo-reset` (and `stage-build`'s resets) also installs `deploy/hermes/SOUL.md` into the Hermes profile, as it does `config.yaml`. The snapshot's Hermes part no longer carries SOUL; the restore leaves memories and sessions as they are.
+  - SOUL is code, versioned with the release, never stage state.
+- **Why:** S7 found that both stage snapshots hold an old SOUL (3,036 bytes), which the reset restored over the repo's, so FIX-4's and FIX-10's SOUL lines never reached the stage.
+- **Lanes:** L5/L6 (FIX-12).
+
+## A34 · 2026-10-01 · C4 §3 common filters: `has_due_date`
+
+- **Change:** the common filter parameters gain `has_due_date: boolean`, meaning documents with a non-null `due_date` (payables, demands, notices). It is accepted by `search_documents`, `sum_amounts` and `export_table`, and listed in the tools' descriptions.
+- **Why:** FIX-11's live check. "All payables" isn't a category, so the model searched category by category (5–10 calls) before exporting. One filter makes it one call.
+- **Lanes:** L2 (FIX-12).

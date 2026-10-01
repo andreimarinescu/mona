@@ -2,6 +2,19 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D19 · 2026-10-01 · Orchestrator calls under D13 after FIX-10, FIX-11 and S7 (for Andrei's review)
+
+These are defects and config with one clear answer, made while Andrei was away. Each is one commit and easy to revert if he disagrees.
+- A32: tool errors come back as ordinary results (Hermes' process-wide 60 s circuit breaker).
+- A33: the reset installs SOUL from the repo.
+- A34: a `has_due_date` filter.
+- **Hermes config:** `agent.tool_use_enforcement: false` and `agent.execution_guidance: false` in both configs. S7 found that Hermes injects ~7.4k characters telling `qwen` models to "use terminal or execute_code". Off, it saves ~1,050 tokens per call with answers still all correct.
+- `ingest_attachment` leaves the web channel's tool list (it's Telegram's; S7 saw made-up paths on the web).
+- The accountant pack writes the `export` activity entry, as `export_table` does.
+- **Held for Andrei:**
+  - **Skills (S7):** no for B (curated Hermes skills: the right recipe loaded in 4 of 24 turns, plus a nudge toward terminal and skill-writing); C (recipes as SOUL lines) is optional, a small gain for +5.6% tokens.
+  - The payroll declarations' debit IBAN, probably the practice's own account, which the seed overlay should list.
+
 ## D18 · 2026-10-01 · Requests too complex for Qwen; linking Hermes and Mona (Andrei's evening session)
 
 - **Guardrails:**
