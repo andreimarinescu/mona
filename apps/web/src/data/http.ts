@@ -14,6 +14,11 @@ export class ApiError extends Error {
   }
 }
 
+/** Query retry policy: a 4xx answer is final; anything else gets two more tries. */
+export function retryTransient(failures: number, error: unknown): boolean {
+  return failures < 2 && !(error instanceof ApiError && error.status >= 400 && error.status < 500);
+}
+
 export type Query = Record<string, string | number | boolean | null | undefined | (string | number)[]>;
 
 let csrfToken: string | null = null;

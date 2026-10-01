@@ -11,7 +11,12 @@ import { SkipLink } from './shell/SkipLink';
 import { NotFound } from './routes/NotFound';
 import { Placeholder } from './routes/Placeholder';
 import { Unlock } from './routes/Unlock';
+import { parseArchiveSearch } from './data/archive';
 import { ActivityPage } from './routes/activity/ActivityPage';
+import { ArchivePage } from './routes/archive/ArchivePage';
+import { FoldersPage } from './routes/archive/FoldersPage';
+import { DocumentPage } from './routes/document/DocumentPage';
+import { parseDocumentSearch } from './routes/document/search';
 import { IntakePage } from './routes/intake/IntakePage';
 import { ReviewPage } from './routes/review/ReviewPage';
 
@@ -34,6 +39,9 @@ const page = <const TPath extends string>(path: TPath, title: string) =>
 const screen = <const TPath extends string>(path: TPath, component: () => React.JSX.Element) =>
   createRoute({ getParentRoute: () => shellRoute, path, component });
 
+const archiveRoute = createRoute({ getParentRoute: () => shellRoute, path: '/archive', validateSearch: parseArchiveSearch, component: ArchivePage });
+const documentRoute = createRoute({ getParentRoute: () => shellRoute, path: '/documents/$documentId', validateSearch: parseDocumentSearch, component: DocumentPage });
+
 const shellRoutes = [
   page('/', 'nav.home'),
   page('/chat', 'nav.chat'),
@@ -41,9 +49,9 @@ const shellRoutes = [
   screen('/intake', IntakePage),
   screen('/review', ReviewPage),
   screen('/review/$documentId', ReviewPage),
-  page('/archive', 'nav.archive'),
-  page('/archive/folders/$', 'nav.archive'),
-  page('/documents/$documentId', 'nav.document'),
+  archiveRoute,
+  screen('/archive/folders/$', FoldersPage),
+  documentRoute,
   page('/rules', 'nav.rules'),
   page('/rules/$ruleId', 'nav.rules'),
   page('/entities', 'nav.entities'),

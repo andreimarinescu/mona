@@ -51,6 +51,35 @@
       "title": "Mona",
       "close": "Fermer la discussion",
       "sees": "Mona voit : {{summary}}"
+    },
+    "seen": {
+      "home": "Accueil",
+      "chat": "Page de discussion",
+      "intake": "Réception",
+      "review": "À vérifier",
+      "reviewDocument": "À vérifier, un document",
+      "archive": "Archives",
+      "archiveFolder_one": "Archives, vue par dossiers, sur {{count}} niveau",
+      "archiveFolder_many": "Archives, vue par dossiers, sur {{count}} de niveaux",
+      "archiveFolder_other": "Archives, vue par dossiers, sur {{count}} niveaux",
+      "archiveSearch_one": "Archives, recherche « {{q}} », {{count}} résultat",
+      "archiveSearch_many": "Archives, recherche « {{q}} », {{count}} de résultats",
+      "archiveSearch_other": "Archives, recherche « {{q}} », {{count}} résultats",
+      "archiveResults_one": "Archives, {{count}} résultat",
+      "archiveResults_many": "Archives, {{count}} de résultats",
+      "archiveResults_other": "Archives, {{count}} résultats",
+      "document": "Document",
+      "documentPage": "Document, page {{page}}",
+      "rules": "Règles",
+      "rule": "Règles, une règle",
+      "entities": "Entités et classement",
+      "category": "Entités et classement, une catégorie",
+      "activity": "Journal d’activité",
+      "settings": "Paramètres",
+      "unlock": "Écran de déverrouillage",
+      "dev": "Page développeur",
+      "unknown": "Page inconnue",
+      "filtered": "{{what}}, filtré sur {{entity}}"
     }
   },
   "placeholder": {
@@ -105,7 +134,8 @@
     "redone_other": "{{n}} modifications rétablies",
     "undoSkipped_one": "{{n}} modification n’a pas pu être annulée : le document a été déplacé depuis.",
     "undoSkipped_many": "{{n}} de modifications n’ont pas pu être annulées : les documents ont été déplacés depuis.",
-    "undoSkipped_other": "{{n}} modifications n’ont pas pu être annulées : les documents ont été déplacés depuis."
+    "undoSkipped_other": "{{n}} modifications n’ont pas pu être annulées : les documents ont été déplacés depuis.",
+    "reminderSet": "Rappel programmé pour le {{date}}"
   },
   "dev": {
     "ds": {
@@ -227,7 +257,9 @@
     "undo": "Annuler",
     "redo": "Rétablir",
     "retry": "Réessayer",
-    "filed": "Classé"
+    "filed": "Classé",
+    "cancel": "Annuler",
+    "close": "Fermer"
   },
   "intake": {
     "subtitle": "Déposez ce que vous voulez : PDF, photos, scans. Je les lis ici, sur cet ordinateur, et je classe ce dont je suis sûre.",
@@ -564,6 +596,206 @@
       "interview": "Issue d’une question",
       "correction": "Issue d’une correction",
       "seed": "Intégrée"
+    }
+  },
+  "archive": {
+    "view": {
+      "label": "Affichage",
+      "list": "Liste",
+      "folders": "Dossiers"
+    },
+    "search": {
+      "label": "Rechercher dans les archives",
+      "placeholder": "Rechercher dans les archives",
+      "askMona": "Demander plutôt à Mona"
+    },
+    "facets": {
+      "label": "Filtres",
+      "entity": "Entité",
+      "year": "Année",
+      "category": "Catégorie",
+      "anyCategory": "Toutes les catégories",
+      "counterparty": "Interlocuteur",
+      "anyCounterparty": "Tous les interlocuteurs",
+      "noCounterparty": "Aucun interlocuteur ne correspond",
+      "amount": "Montant",
+      "amountMin": "Montant minimum",
+      "amountMax": "Montant maximum",
+      "min": "Min",
+      "max": "Max",
+      "status": "Statut"
+    },
+    "status": {
+      "filed": "Classé",
+      "review": "À vérifier",
+      "unreadable": "Illisible"
+    },
+    "active": {
+      "label": "Filtres actifs",
+      "clear": "Effacer les filtres"
+    },
+    "results": {
+      "label": "Résultats",
+      "loading": "Recherche en cours…",
+      "count_one": "{{n}} document",
+      "count_many": "{{n}} de documents",
+      "count_other": "{{n}} documents",
+      "forQuery": "pour « {{q}} »"
+    },
+    "sort": {
+      "label": "Trier par",
+      "relevance": "Pertinence",
+      "date_desc": "Date, la plus récente d’abord",
+      "date_asc": "Date, la plus ancienne d’abord",
+      "arrived_desc": "Arrivée, la plus récente d’abord",
+      "amount_desc": "Montant, le plus élevé d’abord"
+    },
+    "table": {
+      "document": "Document",
+      "entity": "Entité",
+      "date": "Date",
+      "amount": "Montant",
+      "status": "Statut"
+    },
+    "empty": {
+      "title": "Aucun document ne correspond",
+      "body": "Essayez un autre mot, ou retirez un filtre.",
+      "clear": "Effacer la recherche et les filtres"
+    },
+    "tree": {
+      "label": "Dossiers des archives",
+      "item_one": "{{name}}, {{count}} document",
+      "item_many": "{{name}}, {{count}} de documents",
+      "item_other": "{{name}}, {{count}} documents",
+      "loading": "Chargement des dossiers…",
+      "empty": "Rien n’est encore classé."
+    },
+    "folder": {
+      "path": "Chemin du dossier",
+      "root": "Tous les dossiers des archives",
+      "showInExplorer": "Afficher dans l’Explorateur",
+      "explorerInfo": "Ouvrir un dossier sur cet ordinateur n’est pas encore possible depuis l’application web. Le chemin ci-dessus indique où il se trouve.",
+      "mirror": "Cette vue reflète les archives sur le disque. Un fichier listé ici se trouve dans ce dossier, sur cet ordinateur.",
+      "subfolders": "Dossiers contenus",
+      "fileName": "Nom du fichier",
+      "filedBy": "Classé par",
+      "empty": "Aucun fichier n’est classé dans ce dossier."
+    },
+    "filedBy": {
+      "user": "Vous",
+      "mona": "Mona",
+      "rule": "Mona · règle « {{rule}} »"
+    }
+  },
+  "viewer": {
+    "evidence": {
+      "page": "page {{n}}",
+      "verified": "Retrouvé dans la page",
+      "unverified": "Introuvable dans la page"
+    },
+    "fields": {
+      "none": "Mona n’a pas encore lu de champs dans ce document.",
+      "label": "Champs lus par Mona",
+      "showOn": "Afficher dans la page : {{field}}",
+      "show": "Afficher dans la page",
+      "showing": "Affiché"
+    },
+    "read": {
+      "title": "Ce que Mona a lu",
+      "hint": "Les citations sont le texte exact lu par Mona. « Afficher dans la page » le retrouve dans le PDF."
+    },
+    "filed": {
+      "title": "Classement",
+      "notYet": "Ce document n’est pas encore classé.",
+      "review": "Ouvrir dans la file à vérifier",
+      "path": "Chemin du dossier",
+      "by_mona": "Classé par Mona le {{date}}",
+      "by_user": "Classé par vous le {{date}}",
+      "unknown": "Classé",
+      "rule": "Règle"
+    },
+    "reminder": {
+      "title": "Rappel",
+      "noDeadline": "Aucune échéance n’a été trouvée dans ce document.",
+      "due": "À régler le {{date}} · {{when}}",
+      "dueToday": "aujourd’hui",
+      "dueIn_one": "dans {{n}} jour",
+      "dueIn_many": "dans {{n}} de jours",
+      "dueIn_other": "dans {{n}} jours",
+      "overdue_one": "en retard de {{n}} jour",
+      "overdue_many": "en retard de {{n}} de jours",
+      "overdue_other": "en retard de {{n}} jours",
+      "set": "Rappel programmé pour le {{date}}",
+      "cancel": "Annuler le rappel",
+      "on": "Me le rappeler le",
+      "save": "Programmer le rappel",
+      "remindMe": "Me le rappeler"
+    },
+    "history": {
+      "title": "Historique"
+    },
+    "notFound": {
+      "title": "Je ne trouve pas ce document",
+      "body": "Il a peut-être été supprimé, ou le lien n’est plus à jour."
+    },
+    "pages_one": "{{n}} page",
+    "pages_many": "{{n}} de pages",
+    "pages_other": "{{n}} pages",
+    "download": "Télécharger",
+    "askMona": "Demander à Mona",
+    "document": "Document",
+    "details": "Détails du document",
+    "frameTitle": "PDF de {{title}}",
+    "processing": {
+      "title": "Mona lit ce document",
+      "body": "Je lis encore celui-ci. Il s’affichera ici dès que j’aurai terminé."
+    },
+    "unreadable": {
+      "body": "Je n’ai pas pu lire ce document. Un scan ou une photo plus net m’aiderait.",
+      "review": "Ouvrir dans la file à vérifier"
+    }
+  },
+  "export": {
+    "open": "Exporter pour le comptable…",
+    "title": "Export pour votre comptable",
+    "intro": "Je rassemble tout ce dont votre comptable a besoin pour un exercice dans un zip, avec un index qu’il peut ouvrir dans n’importe quel tableur.",
+    "entity": "Entité",
+    "fiscalYear": "Exercice",
+    "fiscalYearHint": "Se termine le {{end}}, selon les Entités",
+    "included": {
+      "title": "Inclus",
+      "filed": "Tous les documents classés",
+      "filedHint_one": "{{n}} document, tel que classé, dans ses dossiers",
+      "filedHint_many": "{{n}} de documents, tels que classés, dans leurs dossiers",
+      "filedHint_other": "{{n}} documents, tels que classés, dans leurs dossiers",
+      "csv": "Index CSV",
+      "csvHint": "Une ligne par document : titre, interlocuteur, référence.",
+      "review": "Documents encore à vérifier",
+      "reviewHint_one": "{{n}} document est laissé de côté tant qu’il n’est pas classé.",
+      "reviewHint_many": "{{n}} de documents sont laissés de côté tant qu’ils ne sont pas classés.",
+      "reviewHint_other": "{{n}} documents sont laissés de côté tant qu’ils ne sont pas classés."
+    },
+    "build_one": "Exporter {{n}} document",
+    "build_many": "Exporter {{n}} de documents",
+    "build_other": "Exporter {{n}} documents",
+    "buildPlain": "Exporter",
+    "destination": "Enregistré sur cet ordinateur, puis téléchargé par votre navigateur.",
+    "privacy": "Les entités personnelles et Visiteurs ne sont jamais incluses. Rien n’est envoyé : vous choisissez comment transmettre le dossier.",
+    "building": "Préparation du dossier. Cela peut prendre une minute.",
+    "nothing": "Rien n’est encore classé pour cette entité et cet exercice.",
+    "noEntities": "Aucune entité professionnelle n’est encore disponible pour l’export.",
+    "ready": {
+      "title": "Le dossier est prêt",
+      "body_one": "{{n}} document de {{entity}}, exercice {{year}}.",
+      "body_many": "{{n}} de documents de {{entity}}, exercice {{year}}.",
+      "body_other": "{{n}} documents de {{entity}}, exercice {{year}}.",
+      "zip": "Télécharger le zip",
+      "csv": "Télécharger l’index CSV",
+      "hint": "Les fichiers sont aussi conservés dans le dossier d’exports de cet ordinateur."
+    },
+    "failed": {
+      "title": "L’export ne s’est pas terminé",
+      "body": "Rien n’a été envoyé. Réessayez dans un instant."
     }
   }
 }

@@ -1,8 +1,9 @@
-import { HttpResponse, http, type HttpHandler } from 'msw';
+import { HttpResponse, bypass, http, type HttpHandler } from 'msw';
+import { ExportError } from './exports';
 import { MockError, type World } from './world';
 
 function fail(err: unknown) {
-  if (err instanceof MockError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field } }, { status: err.status });
+  if (err instanceof MockError || err instanceof ExportError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field } }, { status: err.status });
   throw err;
 }
 
@@ -77,7 +78,31 @@ export function createHandlers(world: World): HttpHandler[] {
       const q = new URL(request.url).searchParams;
       return HttpResponse.json(world.reviewList({ reason: q.get('reason') ?? undefined, entityId: q.get('entityId'), offset: Number(q.get('offset') ?? 0), limit: Number(q.get('limit') ?? 50) }));
     }),
+    http.get('/api/documents', ({ request }) => guard(() => world.search(new URL(request.url).searchParams))()),
+    http.get('/api/folders', ({ request }) => {
+      const q = new URL(request.url).searchParams;
+      const path = (q.get('path') ?? '').split('/').filter(Boolean);
+      return guard(() => world.folders(path, q.get('entityId') ?? undefined))();
+    }),
     http.get('/api/documents/:id', ({ params }) => guard(() => world.document(String(params.id)))()),
+    http.get('/api/documents/:id/pdf', async ({ params }) => {
+      try {
+        world.document(String(params.id));
+      } catch (err) {
+        return fail(err);
+      }
+      const sample = await fetch(bypass('/dev/sample.pdf'));
+      return new HttpResponse(await sample.arrayBuffer(), { headers: { 'content-type': 'application/pdf', 'content-disposition': "inline; filename*=UTF-8''document.pdf" } });
+    }),
+    http.get('/api/documents/:id/original', async ({ params }) => {
+      try {
+        world.document(String(params.id));
+      } catch (err) {
+        return fail(err);
+      }
+      const sample = await fetch(bypass('/dev/sample.pdf'));
+      return new HttpResponse(await sample.arrayBuffer(), { headers: { 'content-type': 'application/pdf', 'content-disposition': "attachment; filename*=UTF-8''document.pdf" } });
+    }),
     http.get('/api/documents/:id/thumbnail', ({ params }) => {
       try {
         return new HttpResponse(thumbnailSvg(world.thumbnail(String(params.id))), { headers: { 'content-type': 'image/svg+xml' } });
@@ -103,6 +128,57 @@ export function createHandlers(world: World): HttpHandler[] {
     http.get('/api/journal/groups/:id', ({ params }) => guard(() => world.groupView(String(params.id)))()),
     http.post('/api/journal/groups/:id/undo', ({ params }) => guard(() => world.groupUndo(String(params.id)))()),
     http.post('/api/journal/:id/undo', ({ params }) => guard(() => world.entryUndo(Number(params.id)))()),
+
+    http.get('/api/exports/preview', ({ request }) => {
+      const q = new URL(request.url).searchParams;
+      return guard(() => world.exports.preview(q.get('entityId') ?? '', Number(q.get('fiscalYear'))))();
+    }),
+    http.post('/api/exports', async ({ request }) => {
+      const body = (await request.json()) as { entityId: string; fiscalYear: number };
+      try {
+        const { pack, created } = world.exports.start(body.entityId, body.fiscalYear);
+        return HttpResponse.json(pack, { status: created ? 201 : 200 });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
+    http.get('/api/exports/:id', ({ params }) => guard(() => world.exports.get(String(params.id)))()),
+    http.get('/api/exports/:id/zip', ({ params }) => {
+      try {
+        world.exports.get(String(params.id));
+      } catch (err) {
+        return fail(err);
+      }
+      return new HttpResponse(new Uint8Array([0x50, 0x4b, 0x05, 0x06, ...new Array(18).fill(0)]), {
+        headers: { 'content-type': 'application/zip', 'content-disposition': `attachment; filename="export-${params.id}.zip"` },
+      });
+    }),
+    http.get('/api/exports/:id/csv', ({ params }) => {
+      try {
+        world.exports.get(String(params.id));
+      } catch (err) {
+        return fail(err);
+      }
+      return new HttpResponse('date,counterparty,title,reference\n', { headers: { 'content-type': 'text/csv', 'content-disposition': `attachment; filename="export-${params.id}.csv"` } });
+    }),
+
+    http.post('/api/reminders', async ({ request }) => {
+      const body = (await request.json()) as Parameters<World['createReminder']>[0];
+      try {
+        const { created, result } = world.createReminder(body);
+        return HttpResponse.json(result, { status: created ? 201 : 200 });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
+    http.delete('/api/reminders/:id', ({ params }) => {
+      try {
+        world.cancelReminder(String(params.id));
+        return new HttpResponse(null, { status: 204 });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
 
     http.post('/api/chat', async ({ request }) => {
       chatBodies.push((await request.json()) as Record<string, unknown>);

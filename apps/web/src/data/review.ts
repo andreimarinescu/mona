@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ApplyResult, CorrectionRequest, DocumentDetail, DocumentSummary, FileOpResult, LikeThisResult, Page, Reason } from './dto';
-import { get, post } from './http';
+import { get, post, retryTransient } from './http';
 import { invalidateAfterWrite } from './journal';
 import { pollDelay, pollStopsOn } from './polling';
 
@@ -22,6 +22,7 @@ export function useDocument(id: string | undefined) {
   return useQuery({
     queryKey: ['document', id],
     enabled: !!id,
+    retry: retryTransient,
     queryFn: ({ signal }) => get<DocumentDetail>(`/api/documents/${id}`, undefined, signal),
     refetchInterval: (query) => (!pollStopsOn(query.state.error) && query.state.data?.status === 'processing' ? pollDelay(0) : false),
   });

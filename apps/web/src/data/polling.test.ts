@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BatchSummary } from './dto';
 import { ApiError } from './http';
-import { DEBRIEF_GRACE_MS, FAST_POLL_MS, SLOW_POLL_MS, batchNeedsPolling, batchRefetchInterval, pollDelay } from './polling';
+import { DEBRIEF_GRACE_MS, FAST_POLL_MS, SLOW_POLL_MS, batchNeedsPolling, batchRefetchInterval, jobRefetchInterval, pollDelay } from './polling';
 
 const T0 = Date.parse('2026-10-01T10:00:00Z');
 
@@ -63,5 +63,20 @@ describe('C2 §1.5 batch polling', () => {
     expect(batchRefetchInterval(running, new ApiError(423, 'locked', 'x'), T0, T0)).toBe(false);
     expect(batchRefetchInterval(running, new ApiError(500, 'internal', 'x'), T0, T0)).toBe(2_000);
     expect(batchRefetchInterval(undefined, null, T0, T0)).toBe(false);
+  });
+});
+
+describe('C2 §1.5 export polling', () => {
+  it('polls every 2 s for the first minute, then every 5 s, while building', () => {
+    expect(jobRefetchInterval('building', 'building', null, 0)).toBe(FAST_POLL_MS);
+    expect(jobRefetchInterval('building', 'building', null, 59_000)).toBe(FAST_POLL_MS);
+    expect(jobRefetchInterval('building', 'building', null, 60_000)).toBe(SLOW_POLL_MS);
+  });
+
+  it('stops when ready or failed, before the first answer, and on 401 or 423', () => {
+    expect(jobRefetchInterval('ready', 'building', null, 0)).toBe(false);
+    expect(jobRefetchInterval('failed', 'building', null, 0)).toBe(false);
+    expect(jobRefetchInterval(undefined, 'building', null, 0)).toBe(false);
+    expect(jobRefetchInterval('building', 'building', new ApiError(423, 'locked', 'x'), 0)).toBe(false);
   });
 });

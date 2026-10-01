@@ -4,12 +4,14 @@ import type {
   ApplyResult,
   Band,
   BatchDetail,
+  Deadline,
   BatchSummary,
   CorrectionRequest,
   DocRefs,
   DocumentDetail,
   DocumentSummary,
   Entity,
+  ExtractedField,
   FileOpResult,
   IntakeItem,
   JournalAction,
@@ -18,13 +20,19 @@ import type {
   PathState,
   PipelineStage,
   Reason,
+  ReminderResult,
   Rule,
   RulePreview,
   UndoResult,
   UndoState,
 } from '../data/dto';
+import { listFolder, norm, parseSearchParams, searchDocuments } from './archive';
+import { createExports } from './exports';
 import { makeId } from './ids';
-import { ATELIER, CABINET, CATEGORIES, ENTITIES, NORDTEL_FILED_TITLES, REVIEW_SEED, VISITORS_ID } from './seed';
+import { ARCHIVE_SEED, ATELIER, CABINET, CATEGORIES, ENTITIES, FISCAL_YEAR_END, NORDTEL_AMOUNT, NORDTEL_DATES, NORDTEL_FILED_TITLES, REVIEW_SEED, SHOWCASE_FIELDS, VISITORS_ID } from './seed';
+import { calendarDate, toIsoDate } from '../data/calendar';
+
+export { norm };
 
 export class MockError extends Error {
   constructor(
@@ -56,6 +64,7 @@ interface Doc {
   summary: DocumentSummary;
   sha256: string;
   deleted: boolean;
+  fields: ExtractedField[];
   plan?: Plan;
   correction?: { counterparty: string | null };
   suggestion: { entityId: string | null; categoryId: string | null; subcategoryKey: string | null; sentence: string; evidence: { field: string; quote: string }[] } | null;
@@ -77,15 +86,12 @@ export interface WorldOptions {
   now?: () => number;
   stepMs?: number;
   debriefDelayMs?: number;
+  exportMs?: number;
   seed?: boolean;
 }
 
 const UNDOABLE: JournalAction[] = ['file', 'move', 'rename', 'unfile', 'delete', 'undo', 'redo'];
 const PIPELINE_STAGES: PipelineStage[] = ['queued', 'reading', 'ocr', 'classifying', 'filing'];
-
-export function norm(s: string): string {
-  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-}
 
 export function createWorld(options: WorldOptions = {}) {
   const now = options.now ?? (() => Date.now());
@@ -253,6 +259,34 @@ export function createWorld(options: WorldOptions = {}) {
     return s;
   }
 
+  const reminders = new Map<string, { id: string; targetId: string; remindOn: string }>();
+  const counterpartyIds = new Map<string, string>();
+  const ruleIds = new Map<string, string>();
+  const today = () => toIsoDate(new Date(now()));
+  const deadlineIdOf = (doc: Doc) => doc.summary.id.replace(/^doc_/, 'ddl_');
+
+  function counterpartyId(name: string): string {
+    if (!counterpartyIds.has(name)) counterpartyIds.set(name, makeId('cpt', counterpartyIds.size + 1));
+    return counterpartyIds.get(name)!;
+  }
+
+  function fiscalYearOf(entityId: string, date: string): number {
+    const y = Number(date.slice(0, 4));
+    const end = FISCAL_YEAR_END[entityId];
+    return end && date.slice(5) > end ? y + 1 : y;
+  }
+
+  function deadlinesOf(doc: Doc): Deadline[] {
+    const s = doc.summary;
+    if (!s.dueDate || s.status === 'processing') return [];
+    const id = deadlineIdOf(doc);
+    const reminder = [...reminders.values()].find((r) => r.targetId === id || r.targetId === s.id);
+    const daysLeft = Math.round((calendarDate(s.dueDate).getTime() - calendarDate(today()).getTime()) / 86_400_000);
+    return [
+      { id, documentId: s.id, label: s.title, entityId: s.entityId ?? '', entityName: s.entityName ?? '', dueDate: s.dueDate, amount: s.amount, status: 'open', daysLeft, reminder: reminder ? { id: reminder.id, remindOn: reminder.remindOn } : null },
+    ];
+  }
+
   function detailOf(doc: Doc): DocumentDetail {
     const s = summaryOf(doc);
     const sg = doc.suggestion;
@@ -260,7 +294,8 @@ export function createWorld(options: WorldOptions = {}) {
     const band: Band = (s.confidence ?? 0) >= 85 ? 'high' : (s.confidence ?? 0) >= 60 ? 'medium' : 'low';
     return {
       ...s,
-      fields: [],
+      fields: doc.fields,
+      deadlines: deadlinesOf(doc),
       suggestion:
         reviewable && sg
           ? {
@@ -333,12 +368,12 @@ export function createWorld(options: WorldOptions = {}) {
       thumbnailUrl: null,
       pdfUrl: `/api/documents/${docId}/pdf`,
     };
-    const doc: Doc = { summary, sha256: init.sha256 ?? docId.padEnd(64, '0').replace(/[^0-9a-f]/g, '0'), deleted: false, suggestion: null };
+    const doc: Doc = { summary, sha256: init.sha256 ?? docId.padEnd(64, '0').replace(/[^0-9a-f]/g, '0'), deleted: false, fields: [], suggestion: null };
     docs.set(docId, doc);
     return doc;
   }
 
-  function fileDoc(doc: Doc, entityId: string, categoryId: string, subcategoryKey: string | null, by: { actor: 'mona' | 'user'; via: 'ui' | 'pipeline'; groupId: string | null; batchId?: string; at?: number; confidence?: number }) {
+  function fileDoc(doc: Doc, entityId: string, categoryId: string, subcategoryKey: string | null, by: { actor: 'mona' | 'user'; via: 'ui' | 'pipeline'; groupId: string | null; batchId?: string; at?: number; confidence?: number; fileName?: string }) {
     const s = doc.summary;
     const at = by.at ?? now();
     const before = stateOf(doc);
@@ -350,7 +385,7 @@ export function createWorld(options: WorldOptions = {}) {
     s.location = 'archive';
     s.status = 'filed';
     s.reasons = [];
-    s.fileName = fileNameFor(doc, at);
+    s.fileName = by.fileName ?? fileNameFor(doc, at);
     s.filedAt = new Date(at).toISOString();
     s.filedBy = by.actor;
     s.pipelineStage = 'done';
@@ -371,6 +406,11 @@ export function createWorld(options: WorldOptions = {}) {
       const doc = addDoc({ title: item.title, fileName: item.fileName, counterparty: item.counterparty, docType: item.docType, batchId, arrivedAt: hours(item.hoursAgo), source: item.source, status: item.status, pipelineStage: 'done' });
       const s = doc.summary;
       s.reasons = item.reasons as Reason[];
+      if (item.entityId) {
+        s.date = toIsoDate(new Date(hours(item.hoursAgo)));
+        s.fiscalYear = fiscalYearOf(item.entityId, s.date);
+      }
+      if (item.counterparty) s.counterpartyId = counterpartyId(item.counterparty);
       s.confidence = item.confidence;
       s.band = item.confidence == null ? null : item.confidence >= 85 ? 'high' : item.confidence >= 60 ? 'medium' : 'low';
       s.entityId = item.entityId;
@@ -386,11 +426,13 @@ export function createWorld(options: WorldOptions = {}) {
     NORDTEL_FILED_TITLES.forEach((title, i) => {
       const doc = addDoc({ title, fileName: `Nordtel_Pro_0${6 + i}26.pdf`, counterparty: 'Nordtel', docType: 'invoice', batchId, arrivedAt: hours(2_000 - i * 700), status: 'filed', pipelineStage: 'done' });
       doc.summary.reasons = [];
+      Object.assign(doc.summary, { date: NORDTEL_DATES[i], fiscalYear: fiscalYearOf(ATELIER.id, NORDTEL_DATES[i]!), amount: { value: NORDTEL_AMOUNT, currency: 'EUR' }, counterpartyId: counterpartyId('Nordtel') });
       fileDoc(doc, ATELIER.id, 'invoices', 'telecom', { actor: 'mona', via: 'pipeline', groupId: seedGroup.id, batchId, at: hours(40 + i), confidence: 93 });
     });
 
     const edf = addDoc({ title: 'Energie Verte bill, September', fileName: 'EnergieVerte_facture_sept.pdf', counterparty: 'Energie Verte', docType: 'invoice', batchId, arrivedAt: hours(60), status: 'filed', pipelineStage: 'done' });
     edf.summary.reasons = [];
+    Object.assign(edf.summary, { date: '2026-09-05', fiscalYear: 2026, amount: { value: 148.2, currency: 'EUR' }, counterpartyId: counterpartyId('Energie Verte') });
     fileDoc(edf, CABINET.id, 'invoices', 'supplies', { actor: 'mona', via: 'pipeline', groupId: seedGroup.id, batchId, at: hours(50), confidence: 91 });
     const moveBefore = stateOf(edf);
     edf.summary.entityId = ATELIER.id;
@@ -399,6 +441,39 @@ export function createWorld(options: WorldOptions = {}) {
     edf.summary.filedBy = 'user';
     edf.summary.filedAt = new Date(hours(24)).toISOString();
     record({ actor: 'user', via: 'ui', action: 'move', doc: edf, before: moveBefore, after: stateOf(edf), at: hours(24) });
+
+    for (const item of ARCHIVE_SEED) {
+      const at = calendarDate(item.date).getTime() + 9 * 3_600_000;
+      const doc = addDoc({ title: item.title, fileName: item.fileName, counterparty: item.counterparty, docType: item.docType, batchId, arrivedAt: at, pipelineStage: 'done' });
+      const s = doc.summary;
+      Object.assign(s, {
+        date: item.date,
+        fiscalYear: fiscalYearOf(item.entityId, item.date),
+        counterpartyId: counterpartyId(item.counterparty),
+        reference: item.reference ?? null,
+        dueDate: item.dueDate ?? null,
+        pageCount: item.showcase ? 1 : 2,
+        amount: item.amount === undefined ? undefined : { value: item.amount, currency: 'EUR' },
+      });
+      if (item.rule) {
+        if (!ruleIds.has(item.rule)) ruleIds.set(item.rule, makeId('rul', 900 + ruleIds.size));
+        s.rule = { id: ruleIds.get(item.rule)!, name: item.rule };
+      }
+      const filedBy = item.filedBy ?? 'mona';
+      fileDoc(doc, item.entityId, item.categoryId, item.subcategoryKey, { actor: filedBy, via: filedBy === 'user' ? 'ui' : 'pipeline', groupId: null, batchId, at, confidence: 96, fileName: item.fileName });
+      if (!item.showcase) entries.pop();
+      else {
+        s.confidence = 96;
+        record({ actor: 'mona', via: 'pipeline', action: 'deadline.add', doc, batchId, at: at + 1_000 });
+        doc.fields = SHOWCASE_FIELDS.map((f) => ({
+          key: f.key,
+          value: f.value,
+          money: f.money,
+          confidence: f.confidence,
+          evidence: { documentId: s.id, documentTitle: s.title, field: f.key, page: f.page, quote: f.quote, verified: f.verified, findQuery: f.findQuery },
+        }));
+      }
+    }
   }
 
   function batchSummary(batch: Batch): BatchSummary {
@@ -849,9 +924,48 @@ export function createWorld(options: WorldOptions = {}) {
     return { items: ENTITIES, documentCounts: counts, visitorsEntityId: VISITORS_ID };
   }
 
+  const liveSummaries = () => [...docs.values()].filter((d) => !d.deleted).map(summaryOf);
+  const entityNames = new Map(ENTITIES.map((e) => [e.id, e.displayName]));
+  const exportJobs = createExports({
+    now,
+    buildMs: options.exportMs ?? 1_500,
+    entities: ENTITIES,
+    visitorsId: VISITORS_ID,
+    documents: liveSummaries,
+    categoryLabel: (categoryId) => category(categoryId)?.labels.en ?? categoryId,
+    nextId: id,
+  });
+
+  function search(query: URLSearchParams) {
+    tick();
+    return searchDocuments(liveSummaries(), parseSearchParams(query), CATEGORIES, entityNames);
+  }
+
+  function folders(path: string[], entityId?: string) {
+    tick();
+    return listFolder(liveSummaries(), path, entityId);
+  }
+
+  function createReminder(body: { deadlineId?: string; documentId?: string; remindOn?: string; note?: string }): { created: boolean; result: ReminderResult } {
+    if (!!body.deadlineId === !!body.documentId) throw new MockError(400, 'invalid_request', 'Exactly one of deadlineId and documentId.', 'deadlineId');
+    if (!body.remindOn || !/^\d{4}-\d{2}-\d{2}$/.test(body.remindOn)) throw new MockError(400, 'invalid_request', 'remindOn is a date.', 'remindOn');
+    if (body.remindOn < today()) throw new MockError(422, 'invalid_value', 'The reminder date has passed.', 'remindOn');
+    const doc = body.documentId ? getDoc(body.documentId) : [...docs.values()].find((d) => deadlineIdOf(d) === body.deadlineId && !d.deleted);
+    if (!doc) throw new MockError(404, 'not_found', 'Unknown target.');
+    const targetId = deadlinesOf(doc)[0]?.id ?? doc.summary.id;
+    const existing = [...reminders.values()].find((r) => r.targetId === targetId && r.remindOn === body.remindOn);
+    const reminder = existing ?? { id: id('rem'), targetId, remindOn: body.remindOn };
+    if (!existing) reminders.set(reminder.id, reminder);
+    return { created: !existing, result: { reminderId: reminder.id, remindOn: reminder.remindOn, created: !existing, deadline: deadlinesOf(doc)[0] ?? null } };
+  }
+
+  function cancelReminder(reminderId: string) {
+    if (!reminders.delete(reminderId)) throw new MockError(404, 'not_found', 'Unknown reminder.');
+  }
+
   if (options.seed !== false) seed();
 
-  return { now, tick, intake, batchDetail, latestBatch, reviewList, document, confirm, correct, likeThis, applyRule, previewRule: (ruleId: string) => preview(rules.get(ruleId)!), entryUndo, groupUndo, activity, groupView, shell, entityList, categories: () => ({ items: CATEGORIES }), docs, entries, batches, thumbnail: (docId: string) => getDoc(docId).summary.title };
+  return { now, tick, intake, batchDetail, latestBatch, reviewList, document, confirm, correct, likeThis, applyRule, previewRule: (ruleId: string) => preview(rules.get(ruleId)!), entryUndo, groupUndo, activity, groupView, shell, entityList, categories: () => ({ items: CATEGORIES }), search, folders, exports: exportJobs, createReminder, cancelReminder, docs, entries, batches, thumbnail: (docId: string) => getDoc(docId).summary.title };
 }
 
 export type World = ReturnType<typeof createWorld>;

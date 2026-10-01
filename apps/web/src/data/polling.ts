@@ -29,3 +29,9 @@ export function batchRefetchInterval(batch: BatchSummary | undefined, error: unk
   if (pollStopsOn(error) || !batch || !batchNeedsPolling(batch, now)) return false;
   return pollDelay(now - pollingSince);
 }
+
+/** C2 §1.5 for a job card or dialog: poll while its status is the working one. */
+export function jobRefetchInterval(status: string | undefined, working: string, error: unknown, pollingForMs: number): number | false {
+  if (pollStopsOn(error) || status !== working) return false;
+  return pollDelay(pollingForMs);
+}

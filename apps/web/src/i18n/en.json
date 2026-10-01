@@ -50,6 +50,32 @@
       "title": "Mona",
       "close": "Close chat",
       "sees": "Mona can see: {{summary}}"
+    },
+    "seen": {
+      "home": "Home",
+      "chat": "Chat page",
+      "intake": "Intake",
+      "review": "Review queue",
+      "reviewDocument": "Review queue, one document",
+      "archive": "Archive",
+      "archiveFolder_one": "Archive, folder view, {{count}} level deep",
+      "archiveFolder_other": "Archive, folder view, {{count}} levels deep",
+      "archiveSearch_one": "Archive, search “{{q}}”, {{count}} result",
+      "archiveSearch_other": "Archive, search “{{q}}”, {{count}} results",
+      "archiveResults_one": "Archive, {{count}} result",
+      "archiveResults_other": "Archive, {{count}} results",
+      "document": "Document",
+      "documentPage": "Document, page {{page}}",
+      "rules": "Rules",
+      "rule": "Rules, one rule",
+      "entities": "Entities & taxonomy",
+      "category": "Entities & taxonomy, one category",
+      "activity": "Activity log",
+      "settings": "Settings",
+      "unlock": "Unlock screen",
+      "dev": "Developer page",
+      "unknown": "Unknown page",
+      "filtered": "{{what}}, filtered to {{entity}}"
     }
   },
   "placeholder": {
@@ -100,7 +126,8 @@
     "redone_one": "Redid {{n}} change",
     "redone_other": "Redid {{n}} changes",
     "undoSkipped_one": "{{n}} change couldn't be undone: the document has moved since.",
-    "undoSkipped_other": "{{n}} changes couldn't be undone: the documents have moved since."
+    "undoSkipped_other": "{{n}} changes couldn't be undone: the documents have moved since.",
+    "reminderSet": "Reminder set for {{date}}"
   },
   "dev": {
     "ds": {
@@ -222,7 +249,9 @@
     "undo": "Undo",
     "redo": "Redo",
     "retry": "Try again",
-    "filed": "Filed"
+    "filed": "Filed",
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "intake": {
     "subtitle": "Drop anything: PDFs, photos, scans. I read them here, on this computer, and file what I'm sure of.",
@@ -544,6 +573,197 @@
       "interview": "From an interview",
       "correction": "From a correction",
       "seed": "Built in"
+    }
+  },
+  "archive": {
+    "view": {
+      "label": "View",
+      "list": "List",
+      "folders": "Folders"
+    },
+    "search": {
+      "label": "Search the archive",
+      "placeholder": "Search the archive",
+      "askMona": "Ask Mona instead"
+    },
+    "facets": {
+      "label": "Filters",
+      "entity": "Entity",
+      "year": "Year",
+      "category": "Category",
+      "anyCategory": "All categories",
+      "counterparty": "Counterparty",
+      "anyCounterparty": "Any counterparty",
+      "noCounterparty": "No counterparty matches",
+      "amount": "Amount",
+      "amountMin": "Minimum amount",
+      "amountMax": "Maximum amount",
+      "min": "Min",
+      "max": "Max",
+      "status": "Status"
+    },
+    "status": {
+      "filed": "Filed",
+      "review": "Needs review",
+      "unreadable": "Unreadable"
+    },
+    "active": {
+      "label": "Active filters",
+      "clear": "Clear filters"
+    },
+    "results": {
+      "label": "Results",
+      "loading": "Searching…",
+      "count_one": "{{n}} document",
+      "count_other": "{{n}} documents",
+      "forQuery": "for “{{q}}”"
+    },
+    "sort": {
+      "label": "Sort by",
+      "relevance": "Relevance",
+      "date_desc": "Date, newest first",
+      "date_asc": "Date, oldest first",
+      "arrived_desc": "Arrival, newest first",
+      "amount_desc": "Amount, highest first"
+    },
+    "table": {
+      "document": "Document",
+      "entity": "Entity",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status"
+    },
+    "empty": {
+      "title": "No documents match",
+      "body": "Try a different word, or take a filter off.",
+      "clear": "Clear search and filters"
+    },
+    "tree": {
+      "label": "Archive folders",
+      "item_one": "{{name}}, {{count}} document",
+      "item_other": "{{name}}, {{count}} documents",
+      "loading": "Loading the folders…",
+      "empty": "Nothing is filed yet."
+    },
+    "folder": {
+      "path": "Folder path",
+      "root": "Every folder in the archive",
+      "showInExplorer": "Show in Explorer",
+      "explorerInfo": "Opening a folder on this computer isn't available in the web app yet. The path above is where it lives.",
+      "mirror": "This view mirrors the archive on disk. A file listed here is in that folder on this computer.",
+      "subfolders": "Folders inside",
+      "fileName": "File name",
+      "filedBy": "Filed by",
+      "empty": "Nothing is filed in this folder."
+    },
+    "filedBy": {
+      "user": "You",
+      "mona": "Mona",
+      "rule": "Mona · rule “{{rule}}”"
+    }
+  },
+  "viewer": {
+    "evidence": {
+      "page": "page {{n}}",
+      "verified": "Found on the page",
+      "unverified": "Not found on the page"
+    },
+    "fields": {
+      "none": "Mona hasn't read any fields from this document yet.",
+      "label": "Fields Mona read",
+      "showOn": "Show on page: {{field}}",
+      "show": "Show on page",
+      "showing": "Showing"
+    },
+    "read": {
+      "title": "What Mona read",
+      "hint": "Quotes are the exact text Mona read. “Show on page” finds it in the PDF."
+    },
+    "filed": {
+      "title": "Filed",
+      "notYet": "This document isn't filed yet.",
+      "review": "Open it in the review queue",
+      "path": "Folder path",
+      "by_mona": "Filed by Mona on {{date}}",
+      "by_user": "Filed by you on {{date}}",
+      "unknown": "Filed",
+      "rule": "Rule"
+    },
+    "reminder": {
+      "title": "Reminder",
+      "noDeadline": "No deadline was found on this document.",
+      "due": "Due {{date}} · {{when}}",
+      "dueToday": "today",
+      "dueIn_one": "in {{n}} day",
+      "dueIn_other": "in {{n}} days",
+      "overdue_one": "{{n}} day overdue",
+      "overdue_other": "{{n}} days overdue",
+      "set": "Reminder set for {{date}}",
+      "cancel": "Cancel reminder",
+      "on": "Remind me on",
+      "save": "Set reminder",
+      "remindMe": "Remind me"
+    },
+    "history": {
+      "title": "History"
+    },
+    "notFound": {
+      "title": "I can't find this document",
+      "body": "It may have been deleted, or the link is out of date."
+    },
+    "pages_one": "{{n}} page",
+    "pages_other": "{{n}} pages",
+    "download": "Download",
+    "askMona": "Ask Mona about this",
+    "document": "Document",
+    "details": "Document details",
+    "frameTitle": "PDF of {{title}}",
+    "processing": {
+      "title": "Mona is reading this document",
+      "body": "I'm still reading this one. It will show here as soon as I'm done."
+    },
+    "unreadable": {
+      "body": "I couldn't read this document. A clearer scan or photo would help.",
+      "review": "Open it in the review queue"
+    }
+  },
+  "export": {
+    "open": "Export for accountant…",
+    "title": "Export for your accountant",
+    "intro": "I'll gather everything your accountant needs for one fiscal year into a zip, with an index they can open in any spreadsheet.",
+    "entity": "Entity",
+    "fiscalYear": "Fiscal year",
+    "fiscalYearHint": "Ends {{end}}, as set in Entities",
+    "included": {
+      "title": "Included",
+      "filed": "All filed documents",
+      "filedHint_one": "{{n}} document, as filed, in their folders",
+      "filedHint_other": "{{n}} documents, as filed, in their folders",
+      "csv": "CSV index",
+      "csvHint": "One row per document: title, counterparty, reference.",
+      "review": "Documents still in review",
+      "reviewHint_one": "{{n}} document is left out until it's filed.",
+      "reviewHint_other": "{{n}} documents are left out until they're filed."
+    },
+    "build_one": "Export {{n}} document",
+    "build_other": "Export {{n}} documents",
+    "buildPlain": "Export",
+    "destination": "Saved on this computer, then downloaded by your browser.",
+    "privacy": "Personal entities and Visitors are never included. Nothing is sent: you choose how to pass the pack on.",
+    "building": "Building the pack. This can take a minute.",
+    "nothing": "Nothing is filed for this entity and year yet.",
+    "noEntities": "There is no company entity to export yet.",
+    "ready": {
+      "title": "The pack is ready",
+      "body_one": "{{n}} document from {{entity}}, fiscal year {{year}}.",
+      "body_other": "{{n}} documents from {{entity}}, fiscal year {{year}}.",
+      "zip": "Download the zip",
+      "csv": "Download the CSV index",
+      "hint": "The files are also kept in the exports folder on this computer."
+    },
+    "failed": {
+      "title": "The export didn't finish",
+      "body": "Nothing was sent. Try again in a moment."
     }
   }
 }

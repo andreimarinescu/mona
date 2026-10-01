@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { PageFacts } from '../shell/pageContext';
 import { AppStateContext, type AppState, type ChatState, type EntityScope } from './context';
 
 const INITIAL_CHAT: ChatState = { open: false, conversationId: undefined, generation: 0, everOpened: false, outbox: null };
@@ -6,6 +7,7 @@ const INITIAL_CHAT: ChatState = { open: false, conversationId: undefined, genera
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [scope, setScope] = useState<EntityScope>('all');
   const [chat, setChat] = useState<ChatState>(INITIAL_CHAT);
+  const [pageFacts, setPageFacts] = useState<PageFacts | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const askButton = useRef<HTMLElement | null>(null);
   const chatEntry = useRef<HTMLElement | null>(null);
@@ -65,8 +67,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AppState>(
-    () => ({ scope, setScope, chat, openChat, clearOutbox, closeChat, setConversationId, registerAskButton, registerChatEntry, askMona }),
-    [scope, chat, openChat, clearOutbox, closeChat, setConversationId, registerAskButton, registerChatEntry, askMona],
+    () => ({ scope, setScope, chat, pageFacts, setPageFacts, openChat, clearOutbox, closeChat, setConversationId, registerAskButton, registerChatEntry, askMona }),
+    [scope, chat, pageFacts, openChat, clearOutbox, closeChat, setConversationId, registerAskButton, registerChatEntry, askMona],
   );
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }

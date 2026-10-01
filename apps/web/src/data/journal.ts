@@ -48,7 +48,7 @@ export function undoTargetPath(target: UndoTarget): string {
 
 export const postUndo = (target: UndoTarget) => post<UndoResult>(undoTargetPath(target));
 
-const VOLATILE = ['review', 'document', 'activity', 'group', 'batch', 'batches', 'shell-counts', 'rule-preview'];
+const VOLATILE = ['review', 'document', 'activity', 'group', 'batch', 'batches', 'shell-counts', 'rule-preview', 'archive', 'folders'];
 
 export function invalidateAfterWrite(qc: QueryClient) {
   return Promise.all(VOLATILE.map((key) => qc.invalidateQueries({ queryKey: [key] })));

@@ -97,10 +97,25 @@ export interface Suggestion {
   conflictingRuleIds: string[];
 }
 
+export interface Deadline {
+  id: string;
+  documentId: string | null;
+  label: string;
+  entityId: string;
+  entityName: string;
+  dueDate: string;
+  amount?: Money;
+  paidBy?: string;
+  status: 'open' | 'done' | 'dismissed';
+  daysLeft: number;
+  reminder: { id: string; remindOn: string } | null;
+}
+
 export interface DocumentDetail extends DocumentSummary {
   fields: ExtractedField[];
   suggestion: Suggestion | null;
   journal: JournalEntry[];
+  deadlines: Deadline[];
 }
 
 export interface PathState {
@@ -176,6 +191,62 @@ export interface Page<T> {
   total: number;
   offset: number;
   limit: number;
+}
+
+export type DocumentSort = 'relevance' | 'date_desc' | 'date_asc' | 'arrived_desc' | 'amount_desc';
+export type ArchiveStatus = 'filed' | 'review' | 'unreadable';
+
+export interface DocumentFacets {
+  entities: { id: string; name: string; count: number }[];
+  years: { year: number; count: number }[];
+  categories: { id: string; label: string; count: number }[];
+  counterparties: { id: string; name: string; count: number }[];
+  statuses: { status: DocStatus; count: number }[];
+  amount: { min: number | null; max: number | null };
+}
+
+export interface DocumentPage extends Page<DocumentSummary> {
+  facets: DocumentFacets;
+}
+
+export interface FolderNode {
+  name: string;
+  path: string[];
+  documentCount: number;
+  hasChildren: boolean;
+}
+
+export interface FolderListing {
+  path: string[];
+  folders: FolderNode[];
+  documents: DocumentSummary[];
+}
+
+export interface ExportPreview {
+  entityId: string;
+  fiscalYear: number;
+  documentCount: number;
+  inReview: number;
+  categories: { id: string; label: string; count: number }[];
+  fiscalYears: number[];
+}
+
+export interface ExportPack {
+  id: string;
+  entityId: string;
+  entityName: string;
+  fiscalYear: number;
+  status: 'building' | 'ready' | 'failed';
+  documentCount: number | null;
+  zipUrl: string | null;
+  csvUrl: string | null;
+}
+
+export interface ReminderResult {
+  reminderId: string;
+  remindOn: string;
+  created: boolean;
+  deadline: Deadline | null;
 }
 
 export interface ActivityPage extends Feed<ActivityItem> {
@@ -272,6 +343,7 @@ export interface Entity {
   displayName: string;
   folderName: string;
   visibility: 'practice' | 'personal';
+  fiscalYearEnd: string;
   filingLanguage: Lang | null;
   subUnits: { id: string; key: string; label: string; personId: string | null }[];
 }

@@ -15,6 +15,11 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/entities', (route) => route.fulfill({ json: { items: [], documentCounts: {}, visitorsEntityId: null } }));
   await page.route('**/api/categories', (route) => route.fulfill({ json: { items: [] } }));
   await page.route('**/api/settings', (route) => route.fulfill({ json: { confidenceHigh: 85, confidenceLow: 60, badgeHours: 24 } }));
+  const facets = { entities: [], years: [], categories: [], counterparties: [], statuses: [], amount: { min: null, max: null } };
+  await page.route('**/api/documents?**', (route) => route.fulfill({ json: { ...empty, limit: 25, facets } }));
+  await page.route('**/api/folders**', (route) => route.fulfill({ json: { path: [], folders: [], documents: [] } }));
+  const processing = { id: 'doc_01j9zq3k8e6y4v2m7c5r1t0b9a', title: 'Document', fileName: 'scan.pdf', status: 'processing', pipelineStage: 'queued', badgeUntil: null, pageCount: null, date: null, entityName: null, pdfUrl: '/api/documents/doc_01j9zq3k8e6y4v2m7c5r1t0b9a/pdf', fields: [], journal: [], deadlines: [], reasons: [], confidence: null };
+  await page.route('**/api/documents/doc_*', (route) => route.fulfill({ json: processing }));
 });
 
 function watchConsole(page: Page): string[] {
@@ -43,7 +48,7 @@ const NAV: [string, string, string][] = [
 const PARAM_ROUTES: [string, string, string?][] = [
   ['/chat/cnv_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Chat', 'cnv_01j9zq3k8e6y4v2m7c5r1t0b9a'],
   ['/archive/folders/Cabinet%20Marchand/2026', 'Archive'],
-  ['/documents/doc_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Document', 'doc_01j9zq3k8e6y4v2m7c5r1t0b9a'],
+  ['/documents/doc_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Document'],
   ['/rules/rul_01j9zq3k8e6y4v2m7c5r1t0b9a', 'Rules', 'rul_01j9zq3k8e6y4v2m7c5r1t0b9a'],
   ['/entities/categories/tax', 'Entities & taxonomy', 'tax'],
 ];
@@ -64,7 +69,7 @@ test.describe('routes', () => {
     for (const [path, title, reference] of PARAM_ROUTES) {
       await page.goto(path);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
-      await expect(nav(page)).toBeVisible();
+      await expect(nav(page).first()).toBeVisible();
       if (reference) await expect(page.getByTestId('reference')).toContainText(reference);
     }
   });
@@ -83,11 +88,11 @@ test.describe('routes', () => {
   });
 
   test('the entity scope switcher feeds app state', async ({ page }) => {
-    await page.goto('/archive');
+    await page.goto('/rules');
     await expect(page.getByTestId('scope-line')).toHaveText('Showing: All entities');
     await page.getByLabel('Showing').selectOption({ label: 'SCI Les Tilleuls' });
     await expect(page.getByTestId('scope-line')).toHaveText('Showing: SCI Les Tilleuls');
-    await nav(page).getByRole('link', { name: 'Rules' }).click();
+    await nav(page).getByRole('link', { name: 'Entities & taxonomy' }).click();
     await expect(page.getByTestId('scope-line')).toHaveText('Showing: SCI Les Tilleuls');
   });
 });
@@ -132,7 +137,7 @@ test.describe('system status line', () => {
 test.describe('chat panel', () => {
   test('opens from Ask Mona, is non-modal, and Esc returns focus to the button', async ({ page }) => {
     await page.goto('/review');
-    const ask = page.getByRole('button', { name: 'Ask Mona' });
+    const ask = page.getByRole('button', { name: 'Ask Mona', exact: true });
     await ask.click();
     const panel = page.locator('[role="complementary"][aria-label="Mona"]');
     await expect(panel).toBeVisible();
@@ -141,8 +146,8 @@ test.describe('chat panel', () => {
     await expect(panel.getByRole('textbox', { name: 'Ask Mona…' })).toBeFocused();
     await nav(page).getByRole('link', { name: 'Archive' }).click();
     await expect(page).toHaveURL(/\/archive$/);
-    await expect(panel.getByTestId('page-context')).toHaveText('Mona can see: Archive');
-    await page.getByRole('button', { name: 'Ask Mona' }).focus();
+    await expect(panel.getByTestId('page-context')).toHaveText('Mona can see: Archive, 0 results');
+    await ask.focus();
     await page.keyboard.press('Escape');
     await expect(panel).toBeHidden();
     await expect(ask).toBeFocused();

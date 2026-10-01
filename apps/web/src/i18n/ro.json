@@ -51,6 +51,35 @@
       "title": "Mona",
       "close": "Închideți conversația",
       "sees": "Mona vede: {{summary}}"
+    },
+    "seen": {
+      "home": "Acasă",
+      "chat": "Pagina de conversație",
+      "intake": "Primire",
+      "review": "De verificat",
+      "reviewDocument": "De verificat, un document",
+      "archive": "Arhivă",
+      "archiveFolder_one": "Arhivă, vedere pe dosare, {{count}} nivel",
+      "archiveFolder_few": "Arhivă, vedere pe dosare, {{count}} niveluri",
+      "archiveFolder_other": "Arhivă, vedere pe dosare, {{count}} de niveluri",
+      "archiveSearch_one": "Arhivă, căutare „{{q}}”, {{count}} rezultat",
+      "archiveSearch_few": "Arhivă, căutare „{{q}}”, {{count}} rezultate",
+      "archiveSearch_other": "Arhivă, căutare „{{q}}”, {{count}} de rezultate",
+      "archiveResults_one": "Arhivă, {{count}} rezultat",
+      "archiveResults_few": "Arhivă, {{count}} rezultate",
+      "archiveResults_other": "Arhivă, {{count}} de rezultate",
+      "document": "Document",
+      "documentPage": "Document, pagina {{page}}",
+      "rules": "Reguli",
+      "rule": "Reguli, o regulă",
+      "entities": "Entități și clasificare",
+      "category": "Entități și clasificare, o categorie",
+      "activity": "Jurnal de activitate",
+      "settings": "Setări",
+      "unlock": "Ecranul de deblocare",
+      "dev": "Pagină pentru dezvoltatori",
+      "unknown": "Pagină necunoscută",
+      "filtered": "{{what}}, filtrat pe {{entity}}"
     }
   },
   "placeholder": {
@@ -105,7 +134,8 @@
     "redone_other": "Am refăcut {{n}} de modificări",
     "undoSkipped_one": "{{n}} modificare nu a putut fi anulată: documentul a fost mutat între timp.",
     "undoSkipped_few": "{{n}} modificări nu au putut fi anulate: documentele au fost mutate între timp.",
-    "undoSkipped_other": "{{n}} de modificări nu au putut fi anulate: documentele au fost mutate între timp."
+    "undoSkipped_other": "{{n}} de modificări nu au putut fi anulate: documentele au fost mutate între timp.",
+    "reminderSet": "Memento setat pentru {{date}}"
   },
   "dev": {
     "ds": {
@@ -227,7 +257,9 @@
     "undo": "Anulați",
     "redo": "Refaceți",
     "retry": "Încercați din nou",
-    "filed": "Arhivat"
+    "filed": "Arhivat",
+    "cancel": "Anulați",
+    "close": "Închideți"
   },
   "intake": {
     "subtitle": "Trageți orice: PDF-uri, fotografii, scanări. Le citesc aici, pe acest calculator, și arhivez ce știu sigur.",
@@ -564,6 +596,206 @@
       "interview": "Din întrebări",
       "correction": "Din corecții",
       "seed": "Predefinită"
+    }
+  },
+  "archive": {
+    "view": {
+      "label": "Vizualizare",
+      "list": "Listă",
+      "folders": "Dosare"
+    },
+    "search": {
+      "label": "Căutați în arhivă",
+      "placeholder": "Căutați în arhivă",
+      "askMona": "Întrebați-o mai bine pe Mona"
+    },
+    "facets": {
+      "label": "Filtre",
+      "entity": "Entitate",
+      "year": "An",
+      "category": "Categorie",
+      "anyCategory": "Toate categoriile",
+      "counterparty": "Parte",
+      "anyCounterparty": "Orice parte",
+      "noCounterparty": "Nicio parte nu se potrivește",
+      "amount": "Sumă",
+      "amountMin": "Suma minimă",
+      "amountMax": "Suma maximă",
+      "min": "Min.",
+      "max": "Max.",
+      "status": "Stare"
+    },
+    "status": {
+      "filed": "Arhivat",
+      "review": "De verificat",
+      "unreadable": "Ilizibil"
+    },
+    "active": {
+      "label": "Filtre active",
+      "clear": "Ștergeți filtrele"
+    },
+    "results": {
+      "label": "Rezultate",
+      "loading": "Se caută…",
+      "count_one": "{{n}} document",
+      "count_few": "{{n}} documente",
+      "count_other": "{{n}} de documente",
+      "forQuery": "pentru „{{q}}”"
+    },
+    "sort": {
+      "label": "Sortare după",
+      "relevance": "Relevanță",
+      "date_desc": "Data, cele mai noi întâi",
+      "date_asc": "Data, cele mai vechi întâi",
+      "arrived_desc": "Sosire, cele mai noi întâi",
+      "amount_desc": "Sumă, cele mai mari întâi"
+    },
+    "table": {
+      "document": "Document",
+      "entity": "Entitate",
+      "date": "Data",
+      "amount": "Suma",
+      "status": "Starea"
+    },
+    "empty": {
+      "title": "Niciun document nu se potrivește",
+      "body": "Încercați alt cuvânt sau scoateți un filtru.",
+      "clear": "Ștergeți căutarea și filtrele"
+    },
+    "tree": {
+      "label": "Dosarele arhivei",
+      "item_one": "{{name}}, {{count}} document",
+      "item_few": "{{name}}, {{count}} documente",
+      "item_other": "{{name}}, {{count}} de documente",
+      "loading": "Se încarcă dosarele…",
+      "empty": "Încă nu este arhivat nimic."
+    },
+    "folder": {
+      "path": "Calea dosarului",
+      "root": "Toate dosarele arhivei",
+      "showInExplorer": "Afișați în Explorer",
+      "explorerInfo": "Deschiderea unui dosar pe acest calculator nu este încă posibilă din aplicația web. Calea de mai sus arată unde se află.",
+      "mirror": "Această vedere oglindește arhiva de pe disc. Un fișier listat aici se află în acel dosar, pe acest calculator.",
+      "subfolders": "Dosare conținute",
+      "fileName": "Numele fișierului",
+      "filedBy": "Arhivat de",
+      "empty": "Niciun fișier nu este arhivat în acest dosar."
+    },
+    "filedBy": {
+      "user": "Dumneavoastră",
+      "mona": "Mona",
+      "rule": "Mona · regula „{{rule}}”"
+    }
+  },
+  "viewer": {
+    "evidence": {
+      "page": "pagina {{n}}",
+      "verified": "Găsit în pagină",
+      "unverified": "Negăsit în pagină"
+    },
+    "fields": {
+      "none": "Mona nu a citit încă niciun câmp din acest document.",
+      "label": "Câmpurile citite de Mona",
+      "showOn": "Arătați în pagină: {{field}}",
+      "show": "Arătați în pagină",
+      "showing": "Afișat"
+    },
+    "read": {
+      "title": "Ce a citit Mona",
+      "hint": "Citatele sunt textul exact citit de Mona. „Arătați în pagină” îl găsește în PDF."
+    },
+    "filed": {
+      "title": "Arhivare",
+      "notYet": "Acest document nu este încă arhivat.",
+      "review": "Deschideți-l în coada de verificare",
+      "path": "Calea dosarului",
+      "by_mona": "Arhivat de Mona pe {{date}}",
+      "by_user": "Arhivat de dumneavoastră pe {{date}}",
+      "unknown": "Arhivat",
+      "rule": "Regula"
+    },
+    "reminder": {
+      "title": "Memento",
+      "noDeadline": "În acest document nu a fost găsit niciun termen.",
+      "due": "Scadent pe {{date}} · {{when}}",
+      "dueToday": "astăzi",
+      "dueIn_one": "peste {{n}} zi",
+      "dueIn_few": "peste {{n}} zile",
+      "dueIn_other": "peste {{n}} de zile",
+      "overdue_one": "întârziat cu {{n}} zi",
+      "overdue_few": "întârziat cu {{n}} zile",
+      "overdue_other": "întârziat cu {{n}} de zile",
+      "set": "Memento setat pentru {{date}}",
+      "cancel": "Anulați mementoul",
+      "on": "Reamintiți-mi pe",
+      "save": "Setați mementoul",
+      "remindMe": "Reamintiți-mi"
+    },
+    "history": {
+      "title": "Istoric"
+    },
+    "notFound": {
+      "title": "Nu găsesc acest document",
+      "body": "Poate a fost șters sau linkul nu mai este valabil."
+    },
+    "pages_one": "{{n}} pagină",
+    "pages_few": "{{n}} pagini",
+    "pages_other": "{{n}} de pagini",
+    "download": "Descărcați",
+    "askMona": "Întrebați-o pe Mona despre acesta",
+    "document": "Document",
+    "details": "Detaliile documentului",
+    "frameTitle": "PDF-ul „{{title}}”",
+    "processing": {
+      "title": "Mona citește acest document",
+      "body": "Încă îl citesc. Va apărea aici imediat ce termin."
+    },
+    "unreadable": {
+      "body": "Nu am putut citi acest document. M-ar ajuta o scanare sau o fotografie mai clară.",
+      "review": "Deschideți-l în coada de verificare"
+    }
+  },
+  "export": {
+    "open": "Exportați pentru contabil…",
+    "title": "Export pentru contabilul dumneavoastră",
+    "intro": "Adun tot ce are nevoie contabilul pentru un exercițiu financiar într-un zip, cu un index pe care îl poate deschide în orice foaie de calcul.",
+    "entity": "Entitate",
+    "fiscalYear": "Exercițiu financiar",
+    "fiscalYearHint": "Se încheie pe {{end}}, conform setărilor din Entități",
+    "included": {
+      "title": "Inclus",
+      "filed": "Toate documentele arhivate",
+      "filedHint_one": "{{n}} document, așa cum este arhivat, în dosarele lui",
+      "filedHint_few": "{{n}} documente, așa cum sunt arhivate, în dosarele lor",
+      "filedHint_other": "{{n}} de documente, așa cum sunt arhivate, în dosarele lor",
+      "csv": "Index CSV",
+      "csvHint": "Un rând pe document: titlu, parte, referință.",
+      "review": "Documente încă în verificare",
+      "reviewHint_one": "{{n}} document rămâne deoparte până este arhivat.",
+      "reviewHint_few": "{{n}} documente rămân deoparte până sunt arhivate.",
+      "reviewHint_other": "{{n}} de documente rămân deoparte până sunt arhivate."
+    },
+    "build_one": "Exportați {{n}} document",
+    "build_few": "Exportați {{n}} documente",
+    "build_other": "Exportați {{n}} de documente",
+    "buildPlain": "Exportați",
+    "destination": "Salvat pe acest calculator, apoi descărcat de browser.",
+    "privacy": "Entitățile personale și Vizitatorii nu sunt incluse niciodată. Nu se trimite nimic: dumneavoastră alegeți cum transmiteți pachetul.",
+    "building": "Se pregătește pachetul. Poate dura un minut.",
+    "nothing": "Încă nu este arhivat nimic pentru această entitate și acest exercițiu.",
+    "noEntities": "Nu există încă nicio entitate de companie de exportat.",
+    "ready": {
+      "title": "Pachetul este gata",
+      "body_one": "{{n}} document de la {{entity}}, exercițiul {{year}}.",
+      "body_few": "{{n}} documente de la {{entity}}, exercițiul {{year}}.",
+      "body_other": "{{n}} de documente de la {{entity}}, exercițiul {{year}}.",
+      "zip": "Descărcați zip-ul",
+      "csv": "Descărcați indexul CSV",
+      "hint": "Fișierele sunt păstrate și în dosarul de exporturi de pe acest calculator."
+    },
+    "failed": {
+      "title": "Exportul nu s-a încheiat",
+      "body": "Nu s-a trimis nimic. Încercați din nou peste o clipă."
     }
   }
 }

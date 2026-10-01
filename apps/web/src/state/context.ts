@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { PageContext } from '../chat/types';
+import type { PageFacts } from '../shell/pageContext';
 
 export type EntityScope = 'all' | (string & {});
 
@@ -23,6 +24,9 @@ export interface AppState {
   scope: EntityScope;
   setScope(scope: EntityScope): void;
   chat: ChatState;
+  /** What the current screen shows (counts, search), published by the screen for the page context. */
+  pageFacts: PageFacts | null;
+  setPageFacts(facts: PageFacts | null): void;
   openChat(opts?: { opener?: HTMLElement | null; conversationId?: string; send?: { message: string; pageContext: PageContext } }): void;
   clearOutbox(id: number): void;
   closeChat(): void;

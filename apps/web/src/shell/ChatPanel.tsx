@@ -2,7 +2,7 @@ import { Button, MonaAvatar, Spinner } from '@mona/ui';
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppState } from '../state/context';
-import { usePageContext } from './usePageContext';
+import { usePageContext, usePageDisplay } from './usePageContext';
 
 const ConversationThread = lazy(() => import('../chat/ConversationThread').then((m) => ({ default: m.ConversationThread })));
 
@@ -10,6 +10,7 @@ export function ChatPanel() {
   const { t } = useTranslation();
   const { chat, closeChat, setConversationId, clearOutbox } = useAppState();
   const context = usePageContext();
+  const display = usePageDisplay();
   const latest = useRef(context);
   useEffect(() => {
     latest.current = context;
@@ -37,7 +38,7 @@ export function ChatPanel() {
         <Button variant="quiet" iconOnly icon="x" aria-label={t('shell.chat.close')} onClick={closeChat} />
       </header>
       <p className="m-0 font-ui text-[13px] leading-[18px] text-text-muted" data-testid="page-context">
-        {t('shell.chat.sees', { summary: context.summary })}
+        {t('shell.chat.sees', { summary: display })}
       </p>
       <div className="min-h-0 flex-1">
         <Suspense fallback={<Spinner label={t('dev.chat.loading')} />}>

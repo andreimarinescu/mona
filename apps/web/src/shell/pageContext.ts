@@ -1,10 +1,20 @@
 import type { PageContext } from '../chat/types';
 
+export interface PageFacts {
+  archive?: { query: string | null; results: number };
+}
+
 export interface RouteLocation {
   pathname: string;
   search?: string;
   hash?: string;
   scope?: string;
+  facts?: PageFacts | null;
+}
+
+/** A search term as it may appear in the one-line summary: no quotes or line breaks, short. */
+export function summaryTerm(query: string): string {
+  return query.replace(/['"\u2018\u2019\u201C\u201D\s]+/g, ' ').trim().slice(0, 60);
 }
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -18,7 +28,7 @@ function withId(label: string, noun: string, value: string | undefined): string 
   return v ? `${label}, ${noun} ${v}` : label;
 }
 
-function describe(pathname: string, search: string, hash: string): { summary: string; scoped: boolean } {
+function describe(pathname: string, search: string, hash: string, facts: PageFacts | null): { summary: string; scoped: boolean } {
   const seg = pathname.split('/').filter(Boolean);
   const [head, a, b] = seg;
   switch (head) {
@@ -30,8 +40,14 @@ function describe(pathname: string, search: string, hash: string): { summary: st
       return { summary: 'Intake', scoped: true };
     case 'review':
       return { summary: a ? `Review queue, document ${id(a) ?? 'unknown'}` : 'Review queue', scoped: true };
-    case 'archive':
-      return { summary: a === 'folders' ? `Archive, folder view, depth ${seg.length - 2}` : 'Archive', scoped: true };
+    case 'archive': {
+      if (a === 'folders') return { summary: `Archive, folder view, depth ${seg.length - 2}`, scoped: true };
+      const found = a === undefined ? facts?.archive : undefined;
+      if (!found) return { summary: 'Archive', scoped: true };
+      const term = found.query ? summaryTerm(found.query) : '';
+      const count = `${found.results} ${found.results === 1 ? 'result' : 'results'}`;
+      return { summary: term ? `Archive, search '${term}', ${count}` : `Archive, ${count}`, scoped: true };
+    }
     case 'documents': {
       const page = /(?:^|[?&])page=(\d{1,4})(?:&|$)/.exec(search)?.[1];
       return { summary: `Document ${id(a) ?? 'unknown'}${page ? `, page ${page}` : ''}`, scoped: true };
@@ -56,8 +72,8 @@ function describe(pathname: string, search: string, hash: string): { summary: st
 }
 
 /** The C3 `pageContext` for a route: English, ids and counts only, never document text. */
-export function pageContext({ pathname, search = '', hash = '', scope = 'all' }: RouteLocation): PageContext {
-  const { summary, scoped } = describe(pathname, search, hash);
+export function pageContext({ pathname, search = '', hash = '', scope = 'all', facts = null }: RouteLocation): PageContext {
+  const { summary, scoped } = describe(pathname, search, hash, facts);
   const scopedSummary = scoped && id(scope) && scope !== 'all' ? `${summary}, filtered to entity ${scope}` : summary;
   return { route: (pathname + search).slice(0, 200), summary: scopedSummary.slice(0, 300) };
 }

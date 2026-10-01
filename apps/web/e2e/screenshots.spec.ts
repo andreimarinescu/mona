@@ -63,4 +63,45 @@ test.describe('screenshots at 1440', () => {
     await page.getByTestId('review-detail').waitFor();
     await shot(page, 'review-mobile-detail');
   });
+
+  async function showcase(page: Page) {
+    await page.waitForFunction(() => '__mock' in window);
+    return page.evaluate(() => {
+      const world = (window as unknown as { __mock: { docs: Map<string, { summary: { id: string; title: string } }> } }).__mock;
+      return [...world.docs.values()].find((d) => d.summary.title === 'Call for contributions, Q3 2026')!.summary.id;
+    });
+  }
+
+  test('archive search, folders, viewer with a highlight, and the export dialog', async ({ page }) => {
+    await page.goto('/archive?q=URSSAF');
+    await page.getByTestId('results-table').waitFor();
+    await page.getByRole('radio', { name: /Cabinet Marchand/ }).check();
+    await page.getByLabel('Category').selectOption({ label: 'Tax · 9' });
+    await page.getByLabel('Minimum amount').fill('1000');
+    await page.getByLabel('Minimum amount').blur();
+    await page.getByTestId('active-filters').waitFor();
+    await page.waitForTimeout(500);
+    await shot(page, 'archive-search');
+
+    await page.goto('/archive/folders/Cabinet%20Marchand/2026%20Cabinet%20Marchand/Imp%C3%B4ts/Appels%20de%20paiement');
+    await page.getByTestId('folder-contents').getByRole('row').nth(1).waitFor();
+    await page.waitForTimeout(500);
+    await shot(page, 'archive-folders');
+
+    const id = await showcase(page);
+    await page.goto(`/documents/${id}`);
+    const frame = page.frameLocator('iframe[data-testid="pdf-frame"]');
+    await frame.locator('.textLayer').first().waitFor();
+    await page.getByTestId('side-panel').locator('[data-field="amount"]').getByRole('button', { name: /Show on page/ }).click();
+    await frame.locator('.textLayer .highlight').first().waitFor();
+    await page.waitForTimeout(600);
+    await shot(page, 'viewer-highlight');
+
+    await page.goto('/archive');
+    await page.getByTestId('results-table').waitFor();
+    await page.getByRole('button', { name: 'Export for accountant…' }).click();
+    await page.getByTestId('export-included').waitFor();
+    await page.waitForTimeout(500);
+    await shot(page, 'export-dialog');
+  });
 });
