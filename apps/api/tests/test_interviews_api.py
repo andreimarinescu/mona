@@ -42,7 +42,7 @@ def note_kinds(conversation_id: str) -> list[str]:
     return [
         r.kind
         for r in rows.all_rows(
-            "SELECT kind FROM card_action_notes WHERE conversation_id = %s ORDER BY created_at",
+            "SELECT kind FROM card_action_notes WHERE conversation_id = %s ORDER BY created_at, id",
             (conversation_id,),
         )
     ]

@@ -3,8 +3,13 @@ import json
 
 import httpx
 import pytest
+from sqlalchemy import insert
 
+from mona.chat import notes as chat_notes
 from mona.chat import stream as chat_stream
+from mona.db import get_engine
+from mona.db.models import CardActionNote
+from mona.ids import new_id
 from tests import rows
 from tests.api_client import api_client
 from tests.fixtures import S1_OVERLAY_STREAM
@@ -445,6 +450,35 @@ async def test_notes_are_consumed_in_the_lease_transaction():
     res, _ = await post_chat(FakeHermes(S1), conversationId=cid)
     assert res.status_code == 409
     assert [n.consumed_turn_id for n in rows.notes_of(cid)] == [None]
+
+
+async def test_notes_written_in_one_transaction_keep_their_write_order():
+    cid, tid = rows.turn(status="closed")
+    written = [f"Note {i}." for i in range(30)]
+    async with get_engine().begin() as conn:
+        for text in written:
+            await chat_notes.add_note(conn, cid, "rule.apply", text)
+    stored = rows.all_rows(
+        "SELECT created_at FROM card_action_notes WHERE conversation_id = %s", (cid,)
+    )
+    assert len({r.created_at for r in stored}) == 1
+    assert [n.text for n in rows.notes_of(cid)] == written
+    async with get_engine().begin() as conn:
+        assert await chat_notes.consume(conn, cid, tid) == written
+
+
+async def test_consume_orders_notes_by_id_not_by_storage_order():
+    cid, tid = rows.turn(status="closed")
+    ids = sorted(new_id("not") for _ in range(30))
+    async with get_engine().begin() as conn:
+        for i in reversed(range(30)):
+            await conn.execute(
+                insert(CardActionNote).values(
+                    id=ids[i], conversation_id=cid, kind="rule.apply", text=f"Note {i}."
+                )
+            )
+    async with get_engine().begin() as conn:
+        assert await chat_notes.consume(conn, cid, tid) == [f"Note {i}." for i in range(30)]
 
 
 async def test_lease_is_extended_while_upstream_events_arrive(monkeypatch):

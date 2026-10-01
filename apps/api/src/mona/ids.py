@@ -1,5 +1,6 @@
 import os
 import re
+import threading
 import time
 
 _CROCKFORD = "0123456789abcdefghjkmnpqrstvwxyz"
@@ -33,12 +34,19 @@ PREFIXES: dict[str, str] = {
     "auth_sessions": "ses",
 }
 
+_lock = threading.Lock()
+_last = 0
+
 _ID = re.compile(r"([a-z]{3})_[0-9a-hjkmnp-tv-z]{26}")
 
 
 def new_ulid() -> str:
-    """A lowercase Crockford ULID (48-bit ms time, 80 random bits)."""
+    """A lowercase Crockford ULID (48-bit ms, 80 random bits), strictly increasing per process."""
+    global _last
     value = (int(time.time() * 1000) << 80) | int.from_bytes(os.urandom(10), "big")
+    with _lock:
+        value = max(value, _last + 1)
+        _last = value
     return "".join(_CROCKFORD[(value >> shift) & 31] for shift in range(125, -1, -5))
 
 

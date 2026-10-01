@@ -437,7 +437,7 @@ def _delete_entity(entity_id: str) -> None:
 
 @router.delete(
     "/entities/{id}", operation_id="deleteEntity", status_code=204,
-    responses=errors(401, 403, 404, 409, 423),
+    responses=errors(401, 403, 404, 409, 415, 423),
 )  # fmt: skip
 async def delete_entity(entity_id: EntityId) -> Response:
     await run(_delete_entity, entity_id)
@@ -534,7 +534,7 @@ def _patch_sub_unit(sub_unit_id: str, body: SubUnitPatch) -> dict[str, Any]:
 
 @router.patch(
     "/sub-units/{id}", operation_id="patchSubUnit", response_model=EntityDetail,
-    responses=errors(400, 401, 404, 409, 415, 422, 423),
+    responses=errors(400, 401, 403, 404, 409, 415, 422, 423),
 )  # fmt: skip
 async def patch_sub_unit(sub_unit_id: SubUnitId, body: SubUnitPatch) -> dict[str, Any]:
     return await run(_patch_sub_unit, sub_unit_id, body)
@@ -563,7 +563,7 @@ def _delete_sub_unit(sub_unit_id: str) -> None:
 
 @router.delete(
     "/sub-units/{id}", operation_id="deleteSubUnit", status_code=204,
-    responses=errors(401, 404, 409, 423),
+    responses=errors(401, 403, 404, 409, 415, 423),
 )  # fmt: skip
 async def delete_sub_unit(sub_unit_id: SubUnitId) -> Response:
     await run(_delete_sub_unit, sub_unit_id)
@@ -636,7 +636,7 @@ def _delete_account(account_id: str) -> None:
 
 @router.delete(
     "/accounts/{id}", operation_id="deleteAccount", status_code=204,
-    responses=errors(401, 404, 409, 423),
+    responses=errors(401, 403, 404, 409, 415, 423),
 )  # fmt: skip
 async def delete_account(account_id: AccountId) -> Response:
     await run(_delete_account, account_id)
@@ -725,7 +725,7 @@ def _patch_person(person_id: str, body: PersonPatch) -> dict[str, Any]:
 
 @router.patch(
     "/people/{id}", operation_id="patchPerson", response_model=PersonDetail,
-    responses=errors(400, 401, 404, 409, 415, 422, 423),
+    responses=errors(400, 401, 403, 404, 409, 415, 422, 423),
 )  # fmt: skip
 async def patch_person(person_id: PersonId, body: PersonPatch) -> dict[str, Any]:
     return await run(_patch_person, person_id, body)
@@ -765,7 +765,7 @@ async def link_person(
 
 @router.delete(
     "/entities/{id}/people/{personId}", operation_id="unlinkEntityPerson",
-    response_model=EntityDetail, responses=errors(401, 403, 404, 423),
+    response_model=EntityDetail, responses=errors(401, 403, 404, 415, 423),
 )  # fmt: skip
 async def unlink_person(entity_id: EntityId, person_id: PersonPathId) -> dict[str, Any]:
     return await run(_unlink, entity_id, person_id)
@@ -912,7 +912,7 @@ def _patch_category(category_id: str, body: CategoryPatch) -> dict[str, Any]:
 
 @router.patch(
     "/categories/{id}", operation_id="patchCategory", response_model=Category,
-    responses=errors(400, 401, 404, 415, 422, 423),
+    responses=errors(400, 401, 403, 404, 415, 422, 423),
 )  # fmt: skip
 async def patch_category(id: str, body: CategoryPatch) -> dict[str, Any]:  # noqa: A002
     return await run(_patch_category, id, body)
@@ -947,7 +947,7 @@ def _put_template(category_id: str, entity_id: str, body: TemplatePair) -> dict[
 
 @router.put(
     "/categories/{id}/templates/{entityId}", operation_id="putEntityTemplate",
-    response_model=Category, responses=errors(400, 401, 404, 415, 422, 423),
+    response_model=Category, responses=errors(400, 401, 403, 404, 415, 422, 423),
 )  # fmt: skip
 async def put_template(
     id: str,  # noqa: A002
@@ -967,7 +967,7 @@ def _delete_template(category_id: str, entity_id: str) -> dict[str, Any]:
 
 @router.delete(
     "/categories/{id}/templates/{entityId}", operation_id="deleteEntityTemplate",
-    response_model=Category, responses=errors(401, 404, 423),
+    response_model=Category, responses=errors(401, 403, 404, 415, 423),
 )  # fmt: skip
 async def delete_template(id: str, entity_id: EntityPathId) -> dict[str, Any]:  # noqa: A002
     return await run(_delete_template, id, entity_id)
@@ -1007,7 +1007,7 @@ def _create_subcategory(category_id: str, body: SubcategoryWrite) -> dict[str, A
 
 @router.post(
     "/categories/{id}/subcategories", operation_id="createSubcategory", status_code=201,
-    response_model=Category, responses=errors(400, 401, 404, 409, 415, 422, 423),
+    response_model=Category, responses=errors(400, 401, 403, 404, 409, 415, 422, 423),
 )  # fmt: skip
 async def create_subcategory(id: str, body: SubcategoryWrite) -> dict[str, Any]:  # noqa: A002
     return await run(_create_subcategory, id, body)
@@ -1028,7 +1028,7 @@ def _patch_subcategory(category_id: str, key: str, body: SubcategoryPatch) -> di
 
 @router.patch(
     "/categories/{id}/subcategories/{key}", operation_id="patchSubcategory",
-    response_model=Category, responses=errors(400, 401, 404, 415, 422, 423),
+    response_model=Category, responses=errors(400, 401, 403, 404, 415, 422, 423),
 )  # fmt: skip
 async def patch_subcategory(id: str, key: str, body: SubcategoryPatch) -> dict[str, Any]:  # noqa: A002
     return await run(_patch_subcategory, id, key, body)

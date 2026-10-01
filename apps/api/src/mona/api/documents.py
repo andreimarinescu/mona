@@ -488,7 +488,7 @@ def _confirm(ctx: Ctx, document_id: str, lang: str) -> dict[str, Any]:
 
 @router.post(
     "/documents/{id}/confirm", operation_id="confirmDocument", response_model=FileOpResult,
-    responses=errors(401, 403, 404, 409, 422, 423),
+    responses=errors(401, 403, 404, 409, 415, 422, 423),
 )  # fmt: skip
 async def confirm_document(document_id: DocId, ctx: CtxDep, lang: Lang) -> dict[str, Any]:
     return await run(_confirm, ctx, document_id, lang)
@@ -672,7 +672,7 @@ def _unfile(ctx: Ctx, document_id: str, lang: str) -> dict[str, Any]:
 
 @router.post(
     "/documents/{id}/unfile", operation_id="unfileDocument", response_model=FileOpResult,
-    responses=errors(401, 404, 409, 423),
+    responses=errors(401, 403, 404, 409, 415, 423),
 )  # fmt: skip
 async def unfile(document_id: DocId, ctx: CtxDep, lang: Lang) -> dict[str, Any]:
     return await run(_unfile, ctx, document_id, lang)

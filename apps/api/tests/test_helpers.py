@@ -41,6 +41,11 @@ def test_new_ids_sort_by_creation_time():
     assert new_id("rul") > first
 
 
+def test_ids_generated_in_one_burst_are_strictly_increasing():
+    ids = [new_id("not") for _ in range(5000)]
+    assert ids == sorted(set(ids))
+
+
 def test_prefixes_cover_c1_table():
     assert len(PREFIXES) == 26
     assert len(set(PREFIXES.values())) == 26

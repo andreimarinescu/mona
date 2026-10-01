@@ -66,3 +66,24 @@ def test_l4_routes_declare_the_guards_statuses():
         method, op = ops[op_id]
         need = {"401", "423"} if method == "get" else {"401", "403", "415", "423"}
         assert need <= set(op["responses"]), (op_id, sorted(need - set(op["responses"])))
+
+
+def test_api_routes_declare_the_guards_statuses():
+    from mona.api import auth, documents, home, journal, registry, rules, system
+
+    routers = [auth, documents, home, journal, registry, rules, system]
+    ids = {r.operation_id for m in routers for r in m.router.routes}
+    ops = {
+        op["operationId"]: (method, op)
+        for item in schema()["paths"].values()
+        for method, op in item.items()
+    }
+    open_routes = {"getAuthState", "unlock"}
+    lock_exempt = {"lock", "logout"}
+    assert ids and ids <= set(ops)
+    for op_id in ids - open_routes:
+        method, op = ops[op_id]
+        need = {"401"} if op_id in lock_exempt else {"401", "423"}
+        if method != "get":
+            need |= {"403", "415"}
+        assert need <= set(op["responses"]), (op_id, sorted(need - set(op["responses"])))

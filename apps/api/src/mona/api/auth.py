@@ -147,7 +147,7 @@ async def unlock(
     return await _state(engine, token)
 
 
-@router.post("/lock", operation_id="lock", status_code=204, responses=errors(401, 403))
+@router.post("/lock", operation_id="lock", status_code=204, responses=errors(401, 403, 415))
 async def lock(engine: Engine, _: SessionDep) -> Response:
     now = clock.now()
     async with engine.begin() as conn:
@@ -155,12 +155,14 @@ async def lock(engine: Engine, _: SessionDep) -> Response:
     return Response(status_code=204)
 
 
-@router.post("/heartbeat", operation_id="heartbeat", status_code=204, responses=errors(401, 423))
+@router.post(
+    "/heartbeat", operation_id="heartbeat", status_code=204, responses=errors(401, 403, 415, 423)
+)
 async def heartbeat(_: SessionDep) -> Response:
     return Response(status_code=204)
 
 
-@router.post("/logout", operation_id="logout", status_code=204, responses=errors(401, 403))
+@router.post("/logout", operation_id="logout", status_code=204, responses=errors(401, 403, 415))
 async def logout(request: Request, engine: Engine, session: SessionDep) -> Response:
     async with engine.begin() as conn:
         await revoke(conn, only=session.id)
@@ -173,7 +175,7 @@ async def logout(request: Request, engine: Engine, session: SessionDep) -> Respo
 
 @router.put(
     "/password", operation_id="changePassword", status_code=204,
-    responses=errors(400, 401, 403, 422, 423),
+    responses=errors(400, 401, 403, 415, 422, 423),
 )  # fmt: skip
 async def change_password(body: PasswordChange, engine: Engine, session: SessionDep) -> Response:
     async with engine.connect() as conn:
