@@ -31,6 +31,13 @@ CounterpartyParam = Annotated[
 YearParam = Annotated[int | None, Field(ge=2000, le=2100, description="Year of the document date.")]
 FiscalYearParam = Annotated[int | None, Field(ge=2000, le=2100)]
 AmountParam = Annotated[float | None, Field(ge=0)]
+HasDueDateParam = Annotated[
+    bool | None,
+    Field(
+        description="True: only documents with a due date (payables, demands, notices); "
+        "false: only those without."
+    ),
+]
 StatusParam = Literal["filed", "review", "any"]
 LimitParam = Annotated[int, Field(ge=1, le=25)]
 CursorParam = Annotated[str | None, Field(min_length=1, max_length=200)]
@@ -144,6 +151,7 @@ FILTER_KEYS = (
     "date_to",
     "amount_min",
     "amount_max",
+    "has_due_date",
 )
 
 
@@ -159,6 +167,7 @@ async def document_clauses(
     date_to: date | None = None,
     amount_min: float | None = None,
     amount_max: float | None = None,
+    has_due_date: bool | None = None,
     status: str = "any",
 ) -> list[Any] | None:
     """WHERE clauses for the common filters; None when the counterparty matches nothing."""
@@ -184,4 +193,7 @@ async def document_clauses(
         clauses.append(Document.amount >= amount_min)
     if amount_max is not None:
         clauses.append(Document.amount <= amount_max)
+    if has_due_date is not None:
+        has = Document.due_date.is_not(None)
+        clauses.append(has if has_due_date else ~has)
     return clauses

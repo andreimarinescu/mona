@@ -11,7 +11,7 @@ from mona.demo import anchor, checks
 from mona.demo.anchor import timestamp_columns
 from mona.demo.fingerprint import fingerprint
 from mona.demo.hermes import job_ids
-from mona.demo.snapshot import postcheck, refresh_textcache, restore, take, verify
+from mona.demo.snapshot import postcheck, refresh_textcache, restore, take, verify, write_sums
 from mona.demo.tools import OpsError
 from mona.services.corrections import correct_document
 from mona.services.undo import delete_document
@@ -20,6 +20,7 @@ from tests.demo_world import (
     DAY,
     JOBS,
     NOW,
+    SOUL,
     build,
     canonical,
     chat_in_hermes,
@@ -176,10 +177,26 @@ def test_no_conversation_survives_and_the_brief_job_is_kept(stage):
     assert sorted(p.name for p in (home / "cron").iterdir()) == ["jobs.json"]
     assert job_ids(home) == [JOBS["jobs"][0]["id"]]
     assert (home / "config.yaml").read_text() == CONFIG
+    assert (home / "SOUL.md").read_text() == SOUL
     assert (home / ".env").read_text() == ""
     assert "Claudiu" in (home / "memories" / "USER.md").read_text()
     out = postcheck(stage.env, "scratch")
     assert out.problems == [] and "brief jobs installed: 1" in out.lines
+
+
+def test_a_reset_installs_the_repos_soul_over_an_old_snapshots(stage):
+    snap(stage)
+    part = stage.env.snapshot("scratch") / "hermes"
+    assert not (part / "SOUL.md").exists()
+    (part / "SOUL.md").write_text("# Mona, an old stage SOUL\n", encoding="utf-8")
+    write_sums(stage.env.snapshot("scratch"))
+    rehearse(stage)
+    reset(stage)
+    assert (stage.env.hermes / "SOUL.md").read_text() == SOUL
+    first = fingerprint(stage.env)
+    rehearse(stage)
+    reset(stage)
+    assert fingerprint(stage.env) == first
 
 
 def test_the_findquery_fixture_check_names_a_changed_field(stage):

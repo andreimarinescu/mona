@@ -12,6 +12,8 @@ provider_routing:
 agent:
   reasoning_effort: "medium"
   max_turns: 8
+  tool_use_enforcement: false
+  execution_guidance: false
 platform_toolsets:
   api_server: [memory, mona]
   telegram: [memory, mona_tg]
@@ -58,6 +60,7 @@ mcp_servers:
     tools:
       resources: false
       prompts: false
+      exclude: [ingest_attachment]
   mona_tg:
     url: "http://api:8765/mcp"
     headers:

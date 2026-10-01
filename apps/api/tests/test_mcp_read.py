@@ -177,6 +177,28 @@ async def test_unknown_category_lists_the_categories(archive):
     assert {"id": "bank", "label": "Bank"} in err["valid"]
 
 
+async def test_has_due_date_selects_the_payables_across_categories(archive):
+    d = rows.document
+    due = {
+        d("URSSAF appel", category="payment_calls", amount=412.0, due_date=date(2025, 10, 5),
+          doc_date=date(2025, 9, 1)),
+        d("Avis de taxe foncière", entity="personal", category="tax", amount=900.0,
+          due_date=date(2025, 10, 15), doc_date=date(2025, 8, 30)),
+        d("Relance assurance", entity="lmnp", category="insurance", due_date=date(2025, 11, 1),
+          doc_date=date(2025, 9, 20)),
+    }  # fmt: skip
+    payables = await call("search_documents", {"has_due_date": True})
+    assert ids(payables) == due and payables.data["total"] == 3
+    others = await call("search_documents", {"has_due_date": False, "limit": 25})
+    assert ids(others) == {v for k, v in archive.items() if k not in {"processing", "deleted"}}
+    summed = await call("sum_amounts", {"has_due_date": True})
+    assert summed.data["count"] == 2 and summed.data["totals"] == [
+        {"currency": "EUR", "total": 1312.0}
+    ]
+    tg = await call("search_documents", {"has_due_date": True, "entity": "cabinet"})
+    assert {r["title"] for r in tg.data["results"]} == {"URSSAF appel"}
+
+
 async def test_sum_by_filters(archive):
     res = await call("sum_amounts", {"counterparty": "AGIPI", "year": 2025})
     assert res.data["count"] == 2 and res.data["totals"] == [{"currency": "EUR", "total": 1040.0}]

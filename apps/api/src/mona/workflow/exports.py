@@ -125,9 +125,16 @@ class Started:
 
 
 def start_export(
-    ctx: Ctx, entity_id: str, fiscal_year: int, *, channel: str = "web", tool: str | None = None
+    ctx: Ctx,
+    entity_id: str,
+    fiscal_year: int,
+    *,
+    actor: str = "user",
+    via: str = "ui",
+    channel: str = "web",
+    tool: str | None = None,
 ) -> Started:
-    """The export building for the same entity and year, else a new one and its job."""
+    """The export building for the same entity and year, else a new one, its job and entry."""
     x, d = T["exports"], T["documents"]
     with ctx.engine.begin() as conn:
         exportable(conn, entity_id)
@@ -160,6 +167,13 @@ def start_export(
                     id=export_id, entity_id=entity_id, fiscal_year=fiscal_year, document_count=count
                 )
             )
+            conn.execute(
+                insert(T["file_ops"]).values(
+                    at=ctx.clock(), actor=actor, via=via, action="export", subject_id=export_id,
+                    undoable=False,
+                    after={"kind": "pack", "fiscal_year": fiscal_year, "documents": count},
+                )
+            )  # fmt: skip
             defer(
                 conn,
                 "build_export",

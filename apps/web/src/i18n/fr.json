@@ -457,7 +457,7 @@
       "mark": {
         "unreadable": "Marqués illisibles"
       },
-      "export": "Fichiers tableaux"
+      "export": "Exports"
     },
     "action": {
       "file_mona": "Mona a classé {{doc}}",
@@ -497,7 +497,9 @@
         "unreadable_user": "Vous avez marqué {{doc}} comme illisible"
       },
       "export_mona": "Mona a créé un fichier tableau",
-      "export_user": "Vous avez créé un fichier tableau"
+      "export_user": "Vous avez créé un fichier tableau",
+      "export_pack_mona": "Mona a préparé un dossier pour le comptable",
+      "export_pack_user": "Vous avez préparé un dossier pour le comptable"
     },
     "group": {
       "intake_batch_mona": "Mona a traité un lot reçu",

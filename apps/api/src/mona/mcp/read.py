@@ -44,6 +44,7 @@ from mona.mcp.filters import (
     CursorParam,
     EntityParam,
     FiscalYearParam,
+    HasDueDateParam,
     LimitParam,
     StatusParam,
     YearParam,
@@ -139,7 +140,8 @@ def _summary(r: Any, scope: Scope) -> dict:
 
 @tool(
     "Search the practice's archive. Filter by entity, category, counterparty, year or fiscal "
-    "year, date range and amount range; add a free-text query for words in the documents. "
+    "year, date range, amount range and has_due_date (true for payables: every document with a "
+    "due date); add a free-text query for words in the documents. "
     "Results already include title, entity, category, counterparty, date, amount and status, "
     "so call get_document only when you need a field not listed here. If you need a total, "
     "call sum_amounts with the same filters instead of summing yourself. Up to three results "
@@ -156,6 +158,7 @@ async def search_documents(
     date_to: date | None = None,
     amount_min: AmountParam = None,
     amount_max: AmountParam = None,
+    has_due_date: HasDueDateParam = None,
     status: StatusParam = "any",
     limit: LimitParam = DEFAULT_LIMIT,
     cursor: CursorParam = None,
@@ -170,6 +173,7 @@ async def search_documents(
         date_to=date_to,
         amount_min=amount_min,
         amount_max=amount_max,
+        has_due_date=has_due_date,
         status=status,
     )
     params = {**filters, "query": query}
@@ -320,7 +324,8 @@ async def get_document(document_id: DocIdParam) -> dict:
 
 @tool(
     "Add up document amounts, either for a list of document ids or for the same filters as "
-    "search_documents (entity, category, counterparty, year, fiscal year, dates, amounts). One "
+    "search_documents (entity, category, counterparty, year, fiscal year, dates, amounts, "
+    "has_due_date). One "
     "call answers 'how much did we pay X in 2025'. Amounts are what the documents state (billed "
     "or due); the archive doesn't record whether they were paid, so say so when it matters. "
     "Documents without an amount are listed as excluded. Up to five documents are shown as cards."
@@ -336,6 +341,7 @@ async def sum_amounts(
     date_to: date | None = None,
     amount_min: AmountParam = None,
     amount_max: AmountParam = None,
+    has_due_date: HasDueDateParam = None,
     status: StatusParam = "any",
 ) -> dict:
     filters = dict(
@@ -348,6 +354,7 @@ async def sum_amounts(
         date_to=date_to,
         amount_min=amount_min,
         amount_max=amount_max,
+        has_due_date=has_due_date,
     )
     has_filter = any(v is not None for v in filters.values()) or status != "any"
     if (document_ids is None) == (not has_filter):

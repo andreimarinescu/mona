@@ -457,7 +457,7 @@
       "mark": {
         "unreadable": "Marcate ilizibile"
       },
-      "export": "Fișiere tabel"
+      "export": "Exporturi"
     },
     "action": {
       "file_mona": "Mona a arhivat {{doc}}",
@@ -497,7 +497,9 @@
         "unreadable_user": "Ați marcat {{doc}} ca ilizibil"
       },
       "export_mona": "Mona a creat un fișier tabel",
-      "export_user": "Ați creat un fișier tabel"
+      "export_user": "Ați creat un fișier tabel",
+      "export_pack_mona": "Mona a pregătit un pachet pentru contabil",
+      "export_pack_user": "Ați pregătit un pachet pentru contabil"
     },
     "group": {
       "intake_batch_mona": "Mona a procesat un lot primit",

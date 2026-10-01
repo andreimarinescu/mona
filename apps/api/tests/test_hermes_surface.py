@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 import yaml
 
 from mona.mcp.server import mcp
@@ -9,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[3]
 SURFACE = json.loads((Path(__file__).parent / "fixtures" / "hermes" / "surface.json").read_text())
 CONFIG = yaml.safe_load((ROOT / "deploy" / "hermes" / "config.yaml").read_text())
 UTILITIES = {"list_resources", "read_resource", "list_prompts", "get_prompt"}
+TELEGRAM_ONLY = {"ingest_attachment"}
+PROD = yaml.safe_load((ROOT / "deploy" / "hermes" / "config.prod.yaml").read_text())
 
 
 async def test_captured_surface_is_exactly_our_tools_per_platform():
@@ -19,15 +22,18 @@ async def test_captured_surface_is_exactly_our_tools_per_platform():
         "cron": ["mona_tg"],
     }
     visible = SURFACE["model_visible_tools"]
-    assert set(visible["api_server"]) == {f"mcp__mona__{t}" for t in ours} | {"memory"}
+    assert set(visible["api_server"]) == {f"mcp__mona__{t}" for t in ours - TELEGRAM_ONLY} | {
+        "memory"
+    }
     assert set(visible["telegram"]) == {f"mcp__mona_tg__{t}" for t in ours} | {"memory"}
     assert set(visible["cron"]) == {f"mcp__mona_tg__{t}" for t in ours}
     for names in visible.values():
         assert not {n.rsplit("__", 1)[-1] for n in names} & UTILITIES
 
 
-def test_config_pins_channels_and_turns_off_mcp_extras():
-    servers = CONFIG["mcp_servers"]
+@pytest.mark.parametrize("config", [CONFIG, PROD], ids=["dev", "prod"])
+def test_config_pins_channels_and_turns_off_mcp_extras(config):
+    servers = config["mcp_servers"]
     assert {n: s["headers"]["X-Mona-Channel"] for n, s in servers.items()} == {
         "mona": "web",
         "mona_tg": "telegram",
@@ -36,7 +42,21 @@ def test_config_pins_channels_and_turns_off_mcp_extras():
         assert s["url"] == "http://api:8765/mcp"
         assert s["headers"]["Authorization"] == "Bearer ${MONA_SERVICE_KEY}"
         assert s["sampling"] == {"enabled": False}
-        assert s["tools"] == {"resources": False, "prompts": False}
+    assert servers["mona"]["tools"] == {
+        "resources": False,
+        "prompts": False,
+        "exclude": sorted(TELEGRAM_ONLY),
+    }
+    assert servers["mona_tg"]["tools"] == {"resources": False, "prompts": False}
+
+
+def test_hermes_injects_no_model_gated_tool_guidance_in_dev_and_prod():
+    for config in (CONFIG, PROD):
+        assert config["agent"]["tool_use_enforcement"] is False
+        assert config["agent"]["execution_guidance"] is False
+
+
+def test_config_pins_the_dev_model_and_providers():
     assert CONFIG["tools"]["tool_search"]["enabled"] is False
     assert CONFIG["model"]["default"] == "${MONA_CHAT_MODEL}"
     pins = CONFIG["provider_routing"]["models"]["qwen/qwen3.6-35b-a3b"]
@@ -85,8 +105,7 @@ def test_soul_steers_a_draft_to_one_search_and_draft_reply():
 
 
 def test_hermes_stops_a_turn_after_8_iterations_in_dev_and_prod():
-    prod = yaml.safe_load((ROOT / "deploy" / "hermes" / "config.prod.yaml").read_text())
-    assert CONFIG["agent"]["max_turns"] == prod["agent"]["max_turns"] == 8
+    assert CONFIG["agent"]["max_turns"] == PROD["agent"]["max_turns"] == 8
 
 
 def test_soul_lists_what_mona_can_and_cannot_do():
@@ -99,3 +118,17 @@ def test_soul_lists_what_mona_can_and_cannot_do():
     assert all(w in cannot for w in ("run programs", "browse", "send anything"))
     assert any("say so in one line and offer the nearest thing" in x for x in lines)
     assert any("budget_exhausted" in x for x in lines)
+
+
+def test_hermes_keeps_calling_mona_after_three_failed_calls():
+    """A32, captured on the pinned image with `tests/hermes_breaker.py`."""
+    calls = json.loads((Path(__file__).parent / "fixtures" / "hermes" / "breaker.json").read_text())
+    assert [c["mona_error"] for c in calls] == [
+        "invalid_argument",
+        "invalid_argument",
+        "not_found",
+        None,
+    ]
+    assert all(c["hermes_keys"] == ["result"] for c in calls)
+    assert all(c["strikes"] == 0 and not c["breaker_open"] for c in calls)
+    assert "filed" in calls[-1]["mona_keys"]

@@ -17,6 +17,7 @@ from mona.mcp.filters import (
     CounterpartyParam,
     EntityParam,
     FiscalYearParam,
+    HasDueDateParam,
     StatusParam,
     YearParam,
     document_clauses,
@@ -129,6 +130,8 @@ async def export_accountant_pack(
         get_ctx(),
         found.id,
         fiscal_year,
+        actor="mona",
+        via=via(ch),
         channel=ch,
         tool="export_accountant_pack",
     )
@@ -150,7 +153,9 @@ DocIds = Annotated[
 
 @tool(
     "Make a table file of documents (CSV, Excel or Word) from a search or a list of documents, "
-    "with the columns the person asks for. It appears as a card with a download; nothing is sent."
+    "with the columns the person asks for. It takes the search_documents filters; "
+    "has_due_date=true selects every payable (any document with a due date) in one call. It "
+    "appears as a card with a download; nothing is sent."
 )
 async def export_table(
     columns: Annotated[list[tables.Column], Field(min_length=1, max_length=10)],
@@ -166,6 +171,7 @@ async def export_table(
     date_to: date | None = None,
     amount_min: AmountParam = None,
     amount_max: AmountParam = None,
+    has_due_date: HasDueDateParam = None,
     status: StatusParam = "any",
     title: Annotated[str | None, Field(max_length=80)] = None,
     lang: Literal["en", "fr", "ro"] | None = None,
@@ -173,7 +179,7 @@ async def export_table(
     filters = dict(
         entity=entity, category=category, counterparty=counterparty, year=year,
         fiscal_year=fiscal_year, date_from=date_from, date_to=date_to, amount_min=amount_min,
-        amount_max=amount_max,
+        amount_max=amount_max, has_due_date=has_due_date,
     )  # fmt: skip
     filtered = query is not None or status != "any" or any(v is not None for v in filters.values())
     if document_ids is not None and filtered:

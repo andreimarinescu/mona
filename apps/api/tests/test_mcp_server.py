@@ -97,7 +97,7 @@ async def test_input_schemas_reject_unknown_keys_and_wrong_prefixes():
         ("get_brief", {"since": "yesterday"}),
     ]:
         res = await call(name, args)
-        assert res.is_error and res.data["error"]["code"] == "invalid_argument", name
+        assert not res.is_error and res.data["error"]["code"] == "invalid_argument", name
 
 
 async def test_descriptions_are_the_contract_text():
@@ -156,7 +156,7 @@ async def test_attribution_needs_exactly_one_live_open_web_turn(turns, channel, 
 
 async def test_not_found_uses_the_envelope():
     res = await call("get_document", {"document_id": "doc_01m3sg44rengv1yevkp7ca1xg5"})
-    assert res.is_error
+    assert not res.is_error
     assert res.data == {"error": {"code": "not_found", "message": "No document with that id."}}
 
 
@@ -166,9 +166,39 @@ async def test_unexpected_failures_are_internal_without_details(monkeypatch, cap
 
     monkeypatch.setattr(read, "scope_for", broken)
     res = await call("search_documents", {"query": "x"})
-    assert res.is_error and res.data["error"]["code"] == "internal"
+    assert not res.is_error and res.data["error"]["code"] == "internal"
     assert "secret" not in res.text and "secret" not in caplog.text
     assert "tool search_documents failed [RuntimeError]" in caplog.text
+
+
+async def test_three_failed_calls_in_a_row_are_plain_results_and_the_next_call_runs():
+    """A32: Hermes pauses the whole server after 3 `isError` results in a row."""
+    failures = [
+        ("search_documents", {"limit": 99}),
+        ("search_documents", {"category": "payable"}),
+        ("get_document", {"document_id": "doc_01m3sg44rengv1yevkp7ca1xg5"}),
+    ]
+    async with mcp_client() as c:
+        for name, args in failures:
+            res = rpc_result(await rpc(c, "tools/call", {"name": name, "arguments": args}))
+            assert res.get("isError") is not True, (name, res)
+            text = json.loads(res["content"][0]["text"])
+            assert text == res["structuredContent"]
+            assert text["error"]["code"] in {"invalid_argument", "not_found"}
+        ok = rpc_result(await rpc(c, "tools/call", {"name": "get_brief", "arguments": {}}))
+    assert ok.get("isError") is not True and "error" not in ok["structuredContent"]
+    assert "filed" in ok["structuredContent"]
+
+
+async def test_a_failure_outside_the_tool_is_an_internal_result(monkeypatch, caplog):
+    async def broken(*_):
+        raise RuntimeError("secret detail")
+
+    monkeypatch.setattr(core.turn_budget, "_count", broken)
+    res = await call("get_brief")
+    assert not res.is_error and res.data["error"]["code"] == "internal"
+    assert "secret" not in res.text
+    assert "tool call get_brief failed outside the tool" in caplog.text
 
 
 async def test_a_tool_over_its_time_budget_is_internal(monkeypatch):
@@ -181,7 +211,7 @@ async def test_a_tool_over_its_time_budget_is_internal(monkeypatch):
 
     monkeypatch.setattr(read, "scope_for", slow)
     res = await call("get_brief")
-    assert res.is_error and res.data["error"]["code"] == "internal"
+    assert not res.is_error and res.data["error"]["code"] == "internal"
 
 
 # Caps and pagination (C4 §2.3)

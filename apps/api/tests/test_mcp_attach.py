@@ -61,7 +61,7 @@ def ok(res) -> dict:
 
 
 def error(res) -> dict:
-    assert res.is_error, res.text
+    assert not res.is_error and "error" in res.data, res.text
     return res.data["error"]
 
 

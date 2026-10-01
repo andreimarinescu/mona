@@ -6,6 +6,8 @@ model:
 agent:
   reasoning_effort: "medium"
   max_turns: 8
+  tool_use_enforcement: false
+  execution_guidance: false
   disabled_toolsets:
     - terminal
     - code_execution
@@ -76,6 +78,7 @@ mcp_servers:
     tools:
       resources: false
       prompts: false
+      exclude: [ingest_attachment]
   mona_tg:
     url: "http://api:8765/mcp"
     headers:

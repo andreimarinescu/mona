@@ -52,7 +52,8 @@ export function docTitle(documents: DocRefs, id: string | undefined, t: TFunctio
 }
 
 export function entryTitle(entry: JournalEntry, documents: DocRefs, rules: Record<string, { name: string }>, t: TFunction): string {
-  return t(`activity.action.${entry.action}`, {
+  const pack = entry.action === 'export' && !isPathState(entry.after) && entry.after?.kind === 'pack';
+  return t(`activity.action.${pack ? 'export_pack' : entry.action}`, {
     context: entry.actor,
     doc: docTitle(documents, entry.documentIds[0], t),
     rule: (entry.ruleId ? rules[entry.ruleId]?.name : undefined) ?? t('activity.unknownRule'),

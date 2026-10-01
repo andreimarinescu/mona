@@ -9,7 +9,7 @@ from pathlib import Path
 from mona.demo.tools import OpsError, empty_dir, mirror
 
 ATTACHMENT_DIRS = ("cache/documents", "cache/images")
-INSTALLED = ("/config.yaml", "/.env", "/cron/")
+INSTALLED = ("/config.yaml", "/SOUL.md", "/.env", "/cron/")
 CLOUD_KEYS = ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY")
 # Written by Hermes at start or by its scheduler; excluded from the idempotency comparison.
 RUNTIME = (
@@ -26,10 +26,8 @@ RUNTIME = (
 
 
 def snapshot_part(hermes: Path, dst: Path) -> None:
-    """Copy SOUL.md, memories/, skills/ and state.db; create the two empty attachment folders."""
+    """Copy memories/, skills/ and state.db; create the two empty attachment folders (A33)."""
     dst.mkdir(parents=True, exist_ok=True)
-    if (hermes / "SOUL.md").is_file():
-        shutil.copy2(hermes / "SOUL.md", dst / "SOUL.md")
     for d in ("memories", "skills"):
         if (hermes / d).is_dir():
             mirror(hermes / d, dst / d, "*.lock", ".*.tmp")
@@ -76,15 +74,15 @@ def reset_cron(hermes: Path) -> list[str]:
 
 
 def install_config(hermes: Path, seed: Path | None, env: str, env_keys: tuple[str, ...]) -> None:
-    """§6.5: this environment's config.yaml and a `.env` holding only `env_keys`."""
+    """§6.5 and A33: this environment's config.yaml, the repo's SOUL.md, a `.env` of `env_keys`."""
     if seed is None:
         raise OpsError("MONA_HERMES_SEED is not set: no Hermes config to install")
-    src = seed / ("config.prod.yaml" if env == "prod" else "config.yaml")
-    if not src.is_file():
-        raise OpsError(f"{src.name} is missing from the Hermes seed directory")
-    target = hermes / "config.yaml"
-    shutil.copyfile(src, target)
-    os.chmod(target, 0o640)
+    config = seed / ("config.prod.yaml" if env == "prod" else "config.yaml")
+    for src, name, mode in ((config, "config.yaml", 0o640), (seed / "SOUL.md", "SOUL.md", 0o644)):
+        if not src.is_file():
+            raise OpsError(f"{src.name} is missing from the Hermes seed directory")
+        shutil.copyfile(src, hermes / name)
+        os.chmod(hermes / name, mode)
     if env == "prod" and (bad := [k for k in env_keys if k in CLOUD_KEYS]):
         raise OpsError(f"prod Hermes .env may not hold {', '.join(bad)}")
     lines = [f"{k}={os.environ[k]}\n" for k in env_keys if k in os.environ]

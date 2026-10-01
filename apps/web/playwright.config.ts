@@ -18,5 +18,6 @@ export default defineConfig({
         url: `http://localhost:${port}`,
         reuseExistingServer: false,
         timeout: 60_000,
+        env: { MONA_API_URL: process.env.E2E_MOCK_API_URL ?? 'http://127.0.0.1:9' },
       },
 });

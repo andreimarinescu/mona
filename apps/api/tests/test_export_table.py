@@ -75,6 +75,25 @@ async def test_csv_holds_the_rows_and_columns_asked_for(api, payables):
     assert [r[0] for r in table[1:]] == ["OPCO contribution", "URSSAF call", "Personal tax"]
 
 
+async def test_has_due_date_exports_every_payable_in_one_call(api, payables):
+    w = World()
+    b = w.batch()
+    w.doc("Bank statement", batch=b, status="filed", reasons=[], entity="cabinet", category="bank",
+          path="Cabinet Marchand/bank.pdf", doc_date="2026-09-30", amount=10.0)  # fmt: skip
+    w.doc("Insurance notice", batch=b, status="filed", reasons=[], entity="cabinet",
+          category="insurance", path="Cabinet Marchand/ins.pdf", doc_date="2026-09-02",
+          due_date=date(2026, 10, 20))  # fmt: skip
+    res = await call("export_table", {"has_due_date": True, "columns": ["title", "due_date"],
+                                      "format": "csv"})  # fmt: skip
+    assert not res.is_error and res.data["rows"] == 4, res.text
+    _, raw = await _file(api, res.data["export_id"])
+    titles = sorted(r[0] for r in list(csv.reader(io.StringIO(raw.decode("utf-8-sig"))))[1:])
+    assert titles == ["Insurance notice", "OPCO contribution", "Personal tax", "URSSAF call"]
+    rest = await call("export_table", {"has_due_date": False, "columns": ["title"],
+                                       "format": "csv"})  # fmt: skip
+    assert rest.data["rows"] == 1
+
+
 async def test_xlsx_has_typed_cells(api, payables):
     ids = [payables["urssaf"], payables["opco"]]
     res = await call("export_table", {"document_ids": ids, "columns": COLUMNS, "format": "xlsx",
@@ -115,7 +134,7 @@ async def test_a_hidden_personal_document_is_left_out_on_telegram(api, payables)
     by_id = await call("export_table", {"document_ids": [payables["personal"]],
                                         "columns": ["title"], "format": "csv"},
                        channel="telegram")  # fmt: skip
-    assert by_id.is_error and by_id.data["error"]["code"] == "invalid_argument"
+    assert not by_id.is_error and by_id.data["error"]["code"] == "invalid_argument"
 
 
 async def test_more_than_500_rows_is_truncated(api):
@@ -179,7 +198,7 @@ async def test_the_export_card_activity_entry_and_downloads(api, payables):
 async def test_no_matching_document_makes_no_file(payables):
     res = await call("export_table", {"query": "nothing like this", "columns": ["title"],
                                       "format": "xlsx"})  # fmt: skip
-    assert res.is_error and res.data["error"]["code"] == "invalid_argument"
+    assert not res.is_error and res.data["error"]["code"] == "invalid_argument"
     assert "list_deadlines" in res.data["error"]["hint"]
     assert rows.card_rows() == [] and rows.all_rows("SELECT id FROM exports") == []
 
@@ -187,4 +206,4 @@ async def test_no_matching_document_makes_no_file(payables):
 async def test_ids_and_filters_together_are_refused(payables):
     res = await call("export_table", {"document_ids": [payables["opco"]], "entity": "cabinet",
                                       "columns": ["title"], "format": "csv"})  # fmt: skip
-    assert res.is_error and res.data["error"]["code"] == "invalid_argument"
+    assert not res.is_error and res.data["error"]["code"] == "invalid_argument"

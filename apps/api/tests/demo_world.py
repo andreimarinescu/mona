@@ -17,6 +17,7 @@ BATCH = ["syn-urssaf-call", "syn-agipi-per", "syn-oxyleo-prep", "syn-unreadable"
 NOW = datetime(2026, 10, 1, 12, 0, tzinfo=UTC)
 DAY = date(2026, 9, 28)
 CONFIG = "model:\n  default: test\n"
+SOUL = "# Mona, as the repo has her\n"
 JOBS = {"jobs": [{"id": "job0brief", "name": "morning-brief", "schedule": {"expr": "30 7 * * *"}}]}
 
 
@@ -73,6 +74,7 @@ def build(engine: Engine, url: str, root: Path) -> Stage:
     seed = root / "seed"
     seed.mkdir()
     (seed / "config.yaml").write_text(CONFIG, encoding="utf-8")
+    (seed / "SOUL.md").write_text(SOUL, encoding="utf-8")
     env = OpsEnv(url=url, data=root / "data", hermes=make_hermes(root / "hermes"), hermes_seed=seed)
     filed = [i.document_id for i in intake.items if i.document_id]
     return Stage(env, p, engine, review.items[0].document_id, filed)  # type: ignore[arg-type]

@@ -339,3 +339,23 @@ async def test_build_zip_and_formula_safe_csv(api, pack):
     assert fresh.status_code == 201 and fresh.json()["id"] != export_id
     listed = await api.get("/api/exports")
     assert listed.json()["total"] == 2
+
+
+async def test_a_pack_writes_one_export_activity_entry_per_export(api, pack):
+    w, _ = pack
+    res = await call("export_accountant_pack", {"entity": "cabinet", "fiscal_year": 2025},
+                     channel="telegram")  # fmt: skip
+    export_id = res.data["export_id"]
+    await call("export_accountant_pack", {"entity": "cabinet", "fiscal_year": 2025})
+    exports.build_export(get_ctx(), export_id)
+    ui = await api.post("/api/exports", json={"entityId": w.ids("entities")["cabinet"],
+                                              "fiscalYear": 2025})  # fmt: skip
+    got = [(e["actor"], e["via"], e["subject_id"], e["undoable"], e["after"])
+           for e in journal("export")]  # fmt: skip
+    after = {"kind": "pack", "fiscal_year": 2025, "documents": len(INJECTIONS)}
+    assert got == [
+        ("mona", "telegram", export_id, False, after),
+        ("user", "ui", ui.json()["id"], False, after),
+    ]
+    activity = (await api.get("/api/activity", params={"kind": "export"})).json()
+    assert {i["entry"]["subjectId"] for i in activity["items"]} == {export_id, ui.json()["id"]}

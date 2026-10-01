@@ -1,0 +1,57 @@
+[
+  {
+    "tool": "search_documents",
+    "hermes_keys": [
+      "result"
+    ],
+    "mona_error": "invalid_argument",
+    "mona_keys": [
+      "error"
+    ],
+    "strikes": 0,
+    "breaker_open": false
+  },
+  {
+    "tool": "search_documents",
+    "hermes_keys": [
+      "result"
+    ],
+    "mona_error": "invalid_argument",
+    "mona_keys": [
+      "error"
+    ],
+    "strikes": 0,
+    "breaker_open": false
+  },
+  {
+    "tool": "get_document",
+    "hermes_keys": [
+      "result"
+    ],
+    "mona_error": "not_found",
+    "mona_keys": [
+      "error"
+    ],
+    "strikes": 0,
+    "breaker_open": false
+  },
+  {
+    "tool": "get_brief",
+    "hermes_keys": [
+      "result"
+    ],
+    "mona_error": null,
+    "mona_keys": [
+      "due_soon",
+      "filed",
+      "generated_at",
+      "learned",
+      "needs_review",
+      "pending_interview",
+      "reminders_today",
+      "since"
+    ],
+    "strikes": 0,
+    "breaker_open": false
+  }
+]

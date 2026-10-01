@@ -444,7 +444,7 @@
       "mark": {
         "unreadable": "Marked unreadable"
       },
-      "export": "Table files"
+      "export": "Exports"
     },
     "action": {
       "file_mona": "Mona filed {{doc}}",
@@ -484,7 +484,9 @@
         "unreadable_user": "You marked {{doc}} as unreadable"
       },
       "export_mona": "Mona made a table file",
-      "export_user": "You made a table file"
+      "export_user": "You made a table file",
+      "export_pack_mona": "Mona prepared an accountant pack",
+      "export_pack_user": "You prepared an accountant pack"
     },
     "group": {
       "intake_batch_mona": "Mona processed an intake batch",

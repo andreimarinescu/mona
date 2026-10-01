@@ -13,7 +13,7 @@ from collections.abc import Awaitable, Callable, Iterable
 from typing import Any, Literal
 
 from fastmcp import FastMCP
-from fastmcp.exceptions import ToolError, ValidationError
+from fastmcp.exceptions import FastMCPError, ValidationError
 from fastmcp.server.dependencies import get_http_headers
 from fastmcp.server.middleware import Middleware
 from fastmcp.tools import ToolResult
@@ -43,7 +43,7 @@ BUDGET_EXHAUSTED = {
 
 
 class ToolFailure(Exception):
-    """A C4 §2.4 error; its envelope is the text of the MCP error result."""
+    """A C4 §2.4 error, returned as an ordinary result carrying its envelope (A32)."""
 
     def __init__(
         self,
@@ -58,10 +58,21 @@ class ToolFailure(Exception):
         self.code, self.message = code, message
         self.extra = {"hint": hint, "field": field, "valid": valid}
 
-    def envelope(self) -> str:
+    def envelope(self) -> dict[str, Any]:
         body = {"code": self.code, "message": self.message}
         body.update({k: v for k, v in self.extra.items() if v is not None})
-        return json.dumps({"error": body}, ensure_ascii=False)
+        return {"error": body}
+
+    def result(self) -> ToolResult:
+        return plain_result(self.envelope())
+
+
+def plain_result(body: dict[str, Any]) -> ToolResult:
+    """Not `isError`: Hermes pauses the whole server after 3 error results in a row (A32)."""
+    return ToolResult(
+        content=[TextContent(type="text", text=json.dumps(body, ensure_ascii=False))],
+        structured_content=body,
+    )
 
 
 def not_found(what: str) -> ToolFailure:
@@ -72,7 +83,7 @@ INTERNAL = ToolFailure("internal", "Something went wrong on Mona's side; try aga
 
 
 class ArgumentErrors(Middleware):
-    """Schema validation failures become `invalid_argument` envelopes (C4 §4.1)."""
+    """Schema validation failures become `invalid_argument` results (C4 §4.1, A32)."""
 
     async def on_call_tool(self, context, call_next):
         try:
@@ -82,11 +93,14 @@ class ArgumentErrors(Middleware):
             errors = cause.errors() if isinstance(cause, PydanticValidationError) else []
             field = str(errors[0]["loc"][-1]) if errors and errors[0]["loc"] else None
             msg = errors[0]["msg"] if errors else "Invalid arguments."
-            raise ToolError(
-                ToolFailure(
-                    "invalid_argument", f"Invalid {field or 'argument'}: {msg}.", field=field
-                ).envelope()
-            ) from None
+            return ToolFailure(
+                "invalid_argument", f"Invalid {field or 'argument'}: {msg}.", field=field
+            ).result()
+        except FastMCPError:
+            raise
+        except Exception:
+            logger.exception("tool call %s failed outside the tool", context.message.name)
+            return INTERNAL.result()
 
 
 class TurnBudget(Middleware):
@@ -119,16 +133,12 @@ class TurnBudget(Middleware):
         n = await self._count(ch)
         if n is not None and n > get_settings().mona_turn_tool_budget:
             logger.warning("turn budget: call %d on %s refused", n, ch)
-            # Not isError: Hermes pauses the whole server after 3 error results in a row.
-            return ToolResult(
-                content=[TextContent(type="text", text=json.dumps(BUDGET_EXHAUSTED))],
-                structured_content=BUDGET_EXHAUSTED,
-            )
+            return plain_result(BUDGET_EXHAUSTED)
         return await call_next(context)
 
 
 turn_budget = TurnBudget()
-mcp = FastMCP("mona", middleware=[turn_budget, ArgumentErrors()], mask_error_details=True)
+mcp = FastMCP("mona", middleware=[ArgumentErrors(), turn_budget], mask_error_details=True)
 
 
 def channel() -> Channel:
@@ -141,18 +151,18 @@ def tool(description: str) -> Callable[[Callable[..., Awaitable[dict]]], Any]:
 
     def register(fn: Callable[..., Awaitable[dict]]) -> Any:
         @functools.wraps(fn)
-        async def run(*args: Any, **kwargs: Any) -> dict:
+        async def run(*args: Any, **kwargs: Any) -> dict | ToolResult:
             try:
                 async with asyncio.timeout(TOOL_BUDGET_S):
                     return await fn(*args, **kwargs)
             except ToolFailure as e:
-                raise ToolError(e.envelope()) from None
+                return e.result()
             except TimeoutError:
                 logger.error("tool %s exceeded its %ss budget", fn.__name__, TOOL_BUDGET_S)
-                raise ToolError(INTERNAL.envelope()) from None
+                return INTERNAL.result()
             except Exception:
                 logger.exception("tool %s failed", fn.__name__)
-                raise ToolError(INTERNAL.envelope()) from None
+                return INTERNAL.result()
 
         return mcp.tool(run, description=description)
 
