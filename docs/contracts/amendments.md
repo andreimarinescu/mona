@@ -314,7 +314,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
     - its activity entry, as A31's;
     - a `table` card (subject `{"export_id"}`).
   - **Result:** `{"export_id", "rows", "shown", "truncated", "empty_columns", "card_refs"}`, where `shown` = min(rows, 50). On Telegram, which has no cards, the result also carries `text`: a plain-text list built by the server, at most 20 rows, one line per row, with the requested columns in C8 formats and `payment_iban` masked (A30). Mona relays it as it is.
-  - **The description:** "For a table the person wants to see, use format `table`; it appears in the chat. Make a file (csv, xlsx, docx) only when the person asks for a file, Excel, Word or CSV, or when `rows` exceeds `shown`."
+  - **The description:** "For a table the person wants to see, use format `table`; it appears in the chat. Make a file (csv, xlsx, docx) only when the person asks for a file, Excel, Word or CSV, or when `rows` exceeds `shown`. On Telegram, send the result's `text` as it is." (The last sentence was added at merge, 2026-11-09, after FIX-13's report.)
   - **C1:** `exports.format` allows `'table'`; `exports.spec jsonb NULL`; `card_events.kind` allows `'table'` (migration 0010).
   - **C3:**
     - `data-table` | export id | `TableView`: `{id, title, columns: {key, label}[], rows: Record<key, string | number | null>[], rowsTotal, truncated, emptyColumns, lang}`;
@@ -356,3 +356,26 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - FIX-13's migration 0010 would have made the Oct 6 stage snapshots refuse to restore, and a rebuild means a newly approved debrief (D16).
   - Early-adopter deployments need backups that restore across upgrades (D21). Andrei's ruling, 2026-11-09.
 - **Lanes:** L5/L6 (FIX-14).
+
+## A39 · 2026-11-09 · C4 §3.17 (A36): the inline table's web result carries a note for the model
+
+- **Change:** on the web channel, the `format: "table"` result gains `note`, a fixed English string from the server: "The person sees these rows as a table card under your reply. Don't write a table, a header row or any row values yourself; answer in one line and name any blank columns." Telegram results carry `text` instead (A36) and no `note`.
+- **Why:**
+  - In FIX-13 and FIX-13b's live checks on Qwen 3.6, Mona typed a markdown table above the card in 3 of 3 runs, then about 40% after SOUL rewording. Some variants included row values the tool never returned.
+  - The same instruction placed in the tool result brought it to 1 of 12. It's a D15 control: an instruction at the point of use, not more SOUL text.
+- **Lanes:** L2/L4 (FIX-13c).
+
+## A40 · 2026-11-09 · C3 §4.3 (with A28): in a turn with a table card, the adapter drops markdown-table lines from the reply
+
+- **Change:**
+  - Once the adapter has emitted a `data-table` card in a turn, it drops from that turn's later text every line whose first non-blank character is `|`: markdown table rows, header and separator lines.
+  - **Each line is judged whole.** Text is held from the start of a line until its first non-blank character (or the newline) shows whether it is a table line. Then it is streamed on, or dropped together with its newline.
+  - The `text-start`/`text-end` pairing and ids stay valid, so an all-dropped text part is simply empty.
+  - Dropped text is never streamed and never stored in `parts` (§5.1 step 3, §7.2). Hermes' own session keeps the model's text.
+  - If the turn ends with a table card and no text left, the reply is `chat.table.intro` ("Here's the table." in the reply language) instead of A28's `chat.fallback.too_complex`.
+  - The adapter logs one line per turn with the number of dropped lines, and no content.
+  - Telegram is unaffected: it has no cards, and Mona sends A36's server-built `text`.
+- **Why:**
+  - After FIX-13b's SOUL wording and A39's note, Qwen 3.6 still typed its own table above the card in 4 of 24 live replies. One of them held dates and entity names the tool never returned.
+  - Andrei chose a deterministic guard (D15) over accepting the residual rate (2026-11-09).
+- **Lanes:** L2 (FIX-13d).
