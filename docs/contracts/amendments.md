@@ -297,3 +297,62 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
 - **Change:** the common filter parameters gain `has_due_date: boolean`, meaning documents with a non-null `due_date` (payables, demands, notices). It is accepted by `search_documents`, `sum_amounts` and `export_table`, and listed in the tools' descriptions.
 - **Why:** FIX-11's live check. "All payables" isn't a category, so the model searched category by category (5–10 calls) before exporting. One filter makes it one call.
 - **Lanes:** L2 (FIX-12).
+
+## A35 · 2026-11-09 · C4 §3.17 `export_table` (A31): the result names its empty columns
+
+- **Change:**
+  - The result gains `empty_columns`: the requested columns with no value in any row, in request order (`[]` when every column has data). It appears in the file and the inline mode (A36).
+  - The description adds: "When `empty_columns` is not empty, tell the person which columns came out blank."
+- **Why:** in FIX-12's live check, Mona said IBANs were included when the column was empty (D20, honesty).
+- **Lanes:** L2/L4 (FIX-13).
+
+## A36 · 2026-11-09 · C4 §3.17, C1 §6.3, C2 §12, C3 §3.4/§5.5/§6.2: an inline table card
+
+- **Change:**
+  - **C4:** `format` also takes `"table"`. The tool resolves the documents as it does for a file (same filters, visibility and order, ≤ 500) and writes **no file**:
+    - an `exports` row with `format = 'table'`, `status = 'ready'`, `title`, `document_count`, `truncated`, and `spec` (jsonb): `{"columns", "document_ids", "lang"}` (the ids in table order, ≤ 500);
+    - its activity entry, as A31's;
+    - a `table` card (subject `{"export_id"}`).
+  - **Result:** `{"export_id", "rows", "shown", "truncated", "empty_columns", "card_refs"}`, where `shown` = min(rows, 50). On Telegram, which has no cards, the result also carries `text`: a plain-text list built by the server, at most 20 rows, one line per row, with the requested columns in C8 formats and `payment_iban` masked (A30). Mona relays it as it is.
+  - **The description:** "For a table the person wants to see, use format `table`; it appears in the chat. Make a file (csv, xlsx, docx) only when the person asks for a file, Excel, Word or CSV, or when `rows` exceeds `shown`."
+  - **C1:** `exports.format` allows `'table'`; `exports.spec jsonb NULL`; `card_events.kind` allows `'table'` (migration 0010).
+  - **C3:**
+    - `data-table` | export id | `TableView`: `{id, title, columns: {key, label}[], rows: Record<key, string | number | null>[], rowsTotal, truncated, emptyColumns, lang}`;
+    - `rows` holds the first 50, built at emit time from current DB state for `spec.document_ids`, with the channel's visibility applied again;
+    - dates are ISO strings and amounts are numbers with `currency` alongside; the web formats both per C8;
+    - the web renders it as `TableCard` on the design system's `Table` (tabular figures, as the Archive `ResultsTable`);
+    - a document row whose subject is gone is left out.
+  - **C2:**
+    - `GET /api/exports/{id}/table` returns `TableView` (the card's refresh);
+    - `POST /api/exports/{id}/file` with `{format: 'csv' | 'xlsx' | 'docx'}` builds a file from the stored spec, using A31's builders and up to 500 rows. It returns 201 with the new `ExportPack` (with `fileUrl`) and writes the activity entry with actor `user`, via `ui` (D5);
+    - `404` for an id that isn't a table; `409 conflict` with `details.reason: "empty"` when no spec document is still visible.
+  - **C3 §6.2:** a new note kind `table.download`: `Downloaded the table "{title}" as {FORMAT} ({n} rows).`
+  - **SOUL:** "a table" means the inline card; a file only on request.
+- **Why:** "show me a table" made an Excel file 3 times out of 3 (FIX-12). Andrei wants the table in chat, built by the server so that no value is copied out by the model (D20, D18).
+- **Lanes:** L2/L4/L3 (FIX-13).
+
+## A37 · 2026-11-09 · C9 §5.3, C7 §8.4, C1 §4 (A24): purge vs a sha256 twin; a per-sha256 lock
+
+- **Change:**
+  - **C9 §5.3 step 1:** the cache unlink (`<sha>.pages.json`, `.ocr.pdf`, `.p1.png`, `.model.*.json`) is skipped while another `documents` row has the same sha256, live or deleted (an undo can restore a deleted one). The document's own file is still unlinked.
+  - **The lock:** the intake dedupe-and-insert for one file (C2 §5.1, C7 §8.4) and the A24 undo-of-delete check-and-restore both take a transaction-scoped advisory lock on the sha256 first (`pg_advisory_xact_lock` on a stable 64-bit hash of `'sha256:' || sha256`).
+    - The loser of a race sees the winner's row: intake gives `duplicate`, and undo gives A24's 409 `conflict` (`details.reason: "duplicate"`).
+    - A unique violation on the A24 index that still occurs maps to those outcomes, never a 500.
+- **Why:**
+  - FIX-6 found that purging a visitor document deletes caches a same-bytes twin still uses.
+  - An upload landing between the undo check and its write gave a 500.
+- **Lanes:** L1/L2 (FIX-14).
+
+## A38 · 2026-11-09 · C9 §6.3 step 1, §6.6: a snapshot from an older schema is restored and migrated forward
+
+- **Change:**
+  - Every snapshot verify (`demo-reset`, `demo-snapshot --refresh-textcache`, the §6.6 restore) accepts an `alembic_revision` that is the head **or an ancestor of the head** in the migration chain.
+  - The restore is otherwise unchanged. Step 3's `mona migrate` brings the database to head, and the snapshot on disk is not rewritten.
+  - The reset report names the step (`schema 0009 → 0010`).
+  - A revision outside the chain (newer than this release, or unknown) is refused: "the snapshot is from a newer or unknown schema version; update Mona or rebuild it".
+  - The §6.2 checks and the identical-twice proof hold for a migrated restore.
+  - **Test obligation:** every new migration upgrades a database restored from a snapshot one revision older.
+- **Why:**
+  - FIX-13's migration 0010 would have made the Oct 6 stage snapshots refuse to restore, and a rebuild means a newly approved debrief (D16).
+  - Early-adopter deployments need backups that restore across upgrades (D21). Andrei's ruling, 2026-11-09.
+- **Lanes:** L5/L6 (FIX-14).

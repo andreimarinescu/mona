@@ -2,6 +2,50 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D21 · 2026-11-09 · Direction for the next stage (Andrei)
+
+- **The MVP sprint is closed.** The prototype was demoed to Claudiu on Oct 6 and at the Sicily event (Oct 18–24), from the laptop dev rig, and was well received. Early-adopter deployments come next, with more demos alongside.
+- **Deployment target:** most likely Docker on a Windows host. The Mona box will be rebuilt on Windows. Spike **S8** comes first:
+  - Docker Desktop on WSL2;
+  - GPU passthrough for llama.cpp;
+  - Hermes;
+  - volumes and paths;
+  - egress control (C9);
+  - `mona doctor` and an install kit.
+
+  Until S8 reports, L6's Linux prod path is unchanged. The Linux laptop rig stays the dev and test environment.
+- **Model risk:** Qwen 3.6 works, but it is the project's biggest risk. D15 and D18 remain the default fixes. A model-eval harness, which scores any candidate model on filing, debrief questions and chat tool use and honesty, is on the backlog.
+- **The likely first project is email-in:** automatic intake from the practice's mailboxes. Andrei sets its scope.
+- **The living plan** is the vault note `mona-hq/mona-roadmap.md`. The master plan is MVP history; rulings R1–R59 still bind unless a decision here changes them.
+
+## D20 · 2026-11-09 · Andrei's rulings closing the MVP sprint
+
+- **D19 is ratified as it is:**
+  - A32, A33 and A34;
+  - Hermes `tool_use_enforcement` and `execution_guidance` off;
+  - `ingest_attachment` off the web channel;
+  - the accountant pack's `export` activity entry.
+- **Skills (S7):** B is no. C (recipes as SOUL lines) is deferred to the Hermes-skills story on the roadmap.
+- **Honesty:** a SOUL line (offer only what your tools do; never claim data your results didn't show), plus `export_table` reporting its empty columns (A35).
+- **Tables:** "show me a table" gets a table in chat, built by the server from typed rows: a `table` card (A36), with Download as CSV, Excel or Word. A file is made only when the person asks for one, or when there are more rows than chat shows. Same reasoning as D18: the model picks the documents and columns, never the values.
+- **Leftover follow-ups → FIX-14:**
+  - the C2 §5.1 per-file cap of 25 MB and the truncated-PDF check;
+  - the Intake summary counting a document once;
+  - the visitor purge vs a sha256 twin, plus a per-sha256 lock (A37);
+  - a snapshot from an older schema is restored and migrated forward (A38), so FIX-13's migration doesn't strand the Oct 6 stage snapshots and backups can be restored across upgrades;
+  - the flaky folder-tree e2e test.
+  - Everything else on the follow-up list goes to the roadmap backlog.
+- **MVP readiness items:** closed as superseded:
+  - the Mona-box integration (L6 on the box, the local model);
+  - rehearsals on the box;
+  - the box egress test.
+
+  The egress test, backup restore, Claudiu's solo runbook and an install kit move to deployment readiness (D21).
+- **Still open, for Andrei:**
+  - the payroll declarations' debit IBAN in the private seed overlay;
+  - a review of the FR/RO strings from FIX-10 to FIX-13.
+- **Sitting 6** runs after FIX-13 and FIX-14 merge: `tools/sitting.sh --from df988c5`. The 16 commits from D18 through FIX-12 reached `origin/main` unsigned.
+
 ## D19 · 2026-10-01 · Orchestrator calls under D13 after FIX-10, FIX-11 and S7 (for Andrei's review)
 
 These are defects and config with one clear answer, made while Andrei was away. Each is one commit and easy to revert if he disagrees.
