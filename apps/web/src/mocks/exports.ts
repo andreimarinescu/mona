@@ -1,4 +1,4 @@
-import type { DocumentSummary, Entity, ExportPack, ExportPreview } from '../data/dto';
+import type { DocumentSummary, Entity, ExportPack, ExportPreview, TableColumnKey, TableFileFormat, TableView } from '../data/dto';
 
 export class ExportError extends Error {
   constructor(
@@ -6,10 +6,14 @@ export class ExportError extends Error {
     readonly code: string,
     message: string,
     readonly field: string | null = null,
+    readonly details: Record<string, unknown> | null = null,
   ) {
     super(message);
   }
 }
+
+const COLUMN_LABELS: Partial<Record<TableColumnKey, string>> = { title: 'Title', entity: 'Entity', due_date: 'Due date', payment_iban: 'Payment IBAN', amount: 'Amount' };
+const SHOWN = 50;
 
 interface Job {
   pack: ExportPack;
@@ -25,10 +29,18 @@ export interface ExportsWorld {
   documents(): DocumentSummary[];
   categoryLabel(id: string): string;
   nextId(prefix: string): string;
+  note(conversationId: string | undefined, kind: string, text: string): void;
+}
+
+interface Spec {
+  title: string;
+  columns: TableColumnKey[];
+  documentIds: string[];
 }
 
 export function createExports(world: ExportsWorld) {
   const jobs = new Map<string, Job>();
+  const specs = new Map<string, Spec>();
   const control = { failNext: false };
 
   function exportable(entityId: string): Entity {
@@ -85,11 +97,52 @@ export function createExports(world: ExportsWorld) {
     return { ...pack };
   }
 
+  function cellOf(d: DocumentSummary, key: TableColumnKey): string | number | null {
+    if (key === 'title') return d.title;
+    if (key === 'entity') return d.entityName;
+    if (key === 'due_date') return d.dueDate;
+    if (key === 'payment_iban') return d.paymentIban ?? null;
+    if (key === 'amount') return d.amount?.value ?? null;
+    return null;
+  }
+
+  /** A36: a table in the chat, kept as its spec and built from the live documents when read. */
+  function inline(title: string, documentIds: string[], columns: TableColumnKey[]): TableView {
+    const id = world.nextId('exp');
+    const pack: ExportPack = {
+      id, entityId: null, entityName: null, fiscalYear: null, status: 'ready', documentCount: documentIds.length, zipUrl: null, csvUrl: null,
+      format: 'table', title, fileName: null, fileUrl: null, truncated: false,
+    };
+    jobs.set(id, { pack, readyAt: world.now(), fails: false });
+    specs.set(id, { title, columns, documentIds });
+    return tableView(id);
+  }
+
+  function tableView(id: string): TableView {
+    const spec = specs.get(id);
+    if (!spec) throw new ExportError(404, 'not_found', 'Not a table.');
+    const live = new Map(world.documents().map((d) => [d.id, d]));
+    const docs = spec.documentIds.flatMap((d) => (live.has(d) ? [live.get(d)!] : []));
+    if (docs.length === 0) throw new ExportError(409, 'conflict', 'No document of this table is still visible.', null, { reason: 'empty' });
+    const rows: TableView['rows'] = docs.map((d) => ({ ...Object.fromEntries(spec.columns.map((c) => [c, cellOf(d, c)])), currency: d.amount?.currency ?? null }));
+    return {
+      id, title: spec.title, columns: spec.columns.map((key) => ({ key, label: COLUMN_LABELS[key] ?? key })), rows: rows.slice(0, SHOWN), rowsTotal: rows.length,
+      truncated: false, emptyColumns: spec.columns.filter((c) => rows.every((r) => r[c] === null || r[c] === '')), lang: 'en',
+    };
+  }
+
+  function tableFile(id: string, format: TableFileFormat, conversationId: string | undefined): ExportPack {
+    const view = tableView(id);
+    const pack = table(format, view.title, view.rowsTotal);
+    world.note(conversationId, 'table.download', `Downloaded the table "${view.title}" as ${format.toUpperCase()} (${view.rowsTotal} rows).`);
+    return pack;
+  }
+
   function get(id: string): ExportPack {
     const job = jobs.get(id);
     if (!job) throw new ExportError(404, 'not_found', 'Unknown export.');
     return view(job);
   }
 
-  return { preview, start, table, get, control };
+  return { preview, start, table, inline, tableView, tableFile, get, control };
 }

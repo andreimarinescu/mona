@@ -83,17 +83,21 @@ export function storePreviews(qc: QueryClient, previews: RulePreview[]) {
 export function useRefreshCards() {
   const qc = useQueryClient();
   return () =>
-    Promise.all(['interview', 'rule-preview', 'draft', 'export'].map((key) => qc.invalidateQueries({ queryKey: [key] })));
+    Promise.all(['interview', 'rule-preview', 'draft', 'export', 'table'].map((key) => qc.invalidateQueries({ queryKey: [key] })));
 }
 
-export async function downloadDraft(draft: Draft, conversationId?: string): Promise<{ blob: Blob; name: string }> {
-  const url = withQuery(draft.docxUrl ?? `/api/drafts/${draft.id}/docx`, withConversation(conversationId));
+/** A file through `fetch`, so the C2 error envelope surfaces; its name from `Content-Disposition`. */
+export async function fetchFile(url: string, fallbackName: string): Promise<{ blob: Blob; name: string }> {
   const res = await fetch(url, { credentials: 'same-origin' });
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { error?: { code?: string; message?: string } } | null;
     throw new ApiError(res.status, body?.error?.code ?? 'internal', body?.error?.message ?? res.statusText);
   }
   const disposition = res.headers.get('content-disposition') ?? '';
-  const name = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1] ?? /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? `${draft.title ?? 'draft'}.docx`;
+  const name = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1] ?? /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? fallbackName;
   return { blob: await res.blob(), name: decodeURIComponent(name) };
+}
+
+export function downloadDraft(draft: Draft, conversationId?: string): Promise<{ blob: Blob; name: string }> {
+  return fetchFile(withQuery(draft.docxUrl ?? `/api/drafts/${draft.id}/docx`, withConversation(conversationId)), `${draft.title ?? 'draft'}.docx`);
 }

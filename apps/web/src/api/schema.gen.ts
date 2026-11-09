@@ -1210,6 +1210,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/exports/{export_id}/table": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Export Table */
+        get: operations["getExportTable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/exports/{export_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Export Table File */
+        post: operations["createExportTableFile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/exports/{export_id}/zip": {
         parameters: {
             query?: never;
@@ -2273,7 +2307,7 @@ export interface components {
             /** Csvurl */
             csvUrl: string | null;
             /** Format */
-            format: ("csv" | "xlsx" | "docx") | null;
+            format: ("csv" | "xlsx" | "docx" | "table") | null;
             /** Title */
             title: string | null;
             /** Filename */
@@ -3373,6 +3407,53 @@ export interface components {
             database: "ok" | "error";
             disk: components["schemas"]["Disk"];
             privacy: components["schemas"]["Privacy"];
+        };
+        /** TableColumn */
+        TableColumn: {
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "title" | "counterparty" | "entity" | "category" | "doc_date" | "due_date" | "amount" | "currency" | "payment_iban" | "reference" | "status" | "path";
+            /** Label */
+            label: string;
+        };
+        /** TableFile */
+        TableFile: {
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "csv" | "xlsx" | "docx";
+            /** Conversationid */
+            conversationId?: string | null;
+        };
+        /**
+         * TableView
+         * @description C3 `data-table` (A36): the first rows of an inline table, from current state.
+         */
+        TableView: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Columns */
+            columns: components["schemas"]["TableColumn"][];
+            /** Rows */
+            rows: {
+                [key: string]: string | number | null;
+            }[];
+            /** Rowstotal */
+            rowsTotal: number;
+            /** Truncated */
+            truncated: boolean;
+            /** Emptycolumns */
+            emptyColumns: ("title" | "counterparty" | "entity" | "category" | "doc_date" | "due_date" | "amount" | "currency" | "payment_iban" | "reference" | "status" | "path")[];
+            /**
+             * Lang
+             * @enum {string}
+             */
+            lang: "en" | "fr" | "ro";
         };
         /** TemplateError */
         TemplateError: {
@@ -9030,6 +9111,153 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    getExportTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TableView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Locked */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    createExportTableFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TableFile"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportPack"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unsupported Media Type */
+            415: {
                 headers: {
                     [name: string]: unknown;
                 };

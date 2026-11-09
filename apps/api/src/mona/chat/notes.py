@@ -50,6 +50,10 @@ def draft_download(title: str) -> str:
     return f'Downloaded the draft "{note_value(title)}".'
 
 
+def table_download(title: str, fmt: str, rows: int) -> str:
+    return f'Downloaded the table "{note_value(title)}" as {fmt.upper()} ({rows} rows).'
+
+
 async def add_note(conn: AsyncConnection, conversation_id: str, kind: str, text: str) -> str:
     note_id = new_id("not")
     await conn.execute(

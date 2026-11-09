@@ -333,6 +333,17 @@
     },
     "panel": {
       "openAsPage": "Deschideți în Conversație"
+    },
+    "table": {
+      "count_one": "{{n}} document",
+      "count_few": "{{n}} documente",
+      "count_other": "{{n}} de documente",
+      "showing": "Se afișează {{shown}} din {{total}}",
+      "truncated": "Doar primele 500 de documente sunt în acest tabel.",
+      "emptyColumns": "Necompletat la toate documentele: {{columns}}.",
+      "downloadAs": "Descărcați ca",
+      "refresh": "Reîmprospătați",
+      "emptied": "Niciunul dintre aceste documente nu mai este în arhivă."
     }
   },
   "common": {
@@ -499,7 +510,8 @@
       "export_mona": "Mona a creat un fișier tabel",
       "export_user": "Ați creat un fișier tabel",
       "export_pack_mona": "Mona a pregătit un pachet pentru contabil",
-      "export_pack_user": "Ați pregătit un pachet pentru contabil"
+      "export_pack_user": "Ați pregătit un pachet pentru contabil",
+      "export_table_mona": "Mona a afișat un tabel în conversație"
     },
     "group": {
       "intake_batch_mona": "Mona a procesat un lot primit",

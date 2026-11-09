@@ -207,3 +207,14 @@ async def test_ids_and_filters_together_are_refused(payables):
     res = await call("export_table", {"document_ids": [payables["opco"]], "entity": "cabinet",
                                       "columns": ["title"], "format": "csv"})  # fmt: skip
     assert not res.is_error and res.data["error"]["code"] == "invalid_argument"
+
+
+async def test_empty_columns_names_the_columns_no_row_fills(payables):
+    ids = [payables["opco"], payables["urssaf"]]
+    cols = ["title", "reference", "payment_iban", "counterparty"]
+    for fmt in ("csv", "table"):
+        res = await call("export_table", {"document_ids": ids, "columns": cols, "format": fmt})
+        assert not res.is_error, res.text
+        assert res.data["empty_columns"] == ["reference", "counterparty"], fmt
+    full = await call("export_table", {"document_ids": ids, "columns": ["title"], "format": "xlsx"})
+    assert full.data["empty_columns"] == []

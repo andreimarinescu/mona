@@ -58,12 +58,16 @@
         "filed": "Filed",
         "review": "In review",
         "unreadable": "Unreadable"
-      }
+      },
+      "more": "… and {{n}} more"
     }
   },
   "chat": {
     "fallback": {
       "too_complex": "That needs more steps than I can take at once. I can search and open documents, add up amounts, list what's due, draft a letter, export a table of documents, prepare the accountant pack and go through the questions about a batch. Could you ask me for one of those?"
+    },
+    "table": {
+      "intro": "Here's the table."
     }
   }
 }

@@ -8,7 +8,7 @@ from pydantic import Field
 from sqlalchemy import func, select
 
 from mona.db import get_engine
-from mona.db.models import Category, Counterparty, Deadline, Document, Entity
+from mona.db.models import Deadline, Document
 from mona.mcp.core import Scope, ToolFailure, channel, clip, document_title, scope_for, tool
 from mona.mcp.filters import (
     STATUSES,
@@ -24,7 +24,6 @@ from mona.mcp.filters import (
     ref,
     resolve_entity,
 )
-from mona.pipeline.payment_iban import mask
 from mona.text import norm
 from mona.workflow import deadlines, drafts, exports, tables
 from mona.workflow.common import get_ctx
@@ -151,11 +150,20 @@ DocIds = Annotated[
 ]
 
 
+TABLE_CARD_NOTE = (
+    "The person sees these rows as a table card under your reply. Don't write a table, a header "
+    "row or any row values yourself; answer in one line and name any blank columns."
+)
+
+
 @tool(
-    "Make a table file of documents (CSV, Excel or Word) from a search or a list of documents, "
-    "with the columns the person asks for. It takes the search_documents filters; "
-    "has_due_date=true selects every payable (any document with a due date) in one call. It "
-    "appears as a card with a download; nothing is sent."
+    "Make a table of documents from a search or a list of documents, with the columns the person "
+    "asks for. For a table the person wants to see, use format table; it appears in the chat. "
+    "Make a file (csv, xlsx, docx) only when the person asks for a file, Excel, Word or CSV, or "
+    "when rows exceeds shown. It takes the search_documents filters; has_due_date=true selects "
+    "every payable (any document with a due date) in one call. A file appears as a card with a "
+    "download; nothing is sent. When empty_columns is not empty, tell the person which columns "
+    "came out blank. On Telegram, send the result's text as it is."
 )
 async def export_table(
     columns: Annotated[list[tables.Column], Field(min_length=1, max_length=10)],
@@ -196,21 +204,42 @@ async def export_table(
     if not found:
         raise ToolFailure(
             "invalid_argument",
-            "No document matches, so no file was made.",
+            "No document matches, so no table was made.",
             hint="Loosen the filters, or pass the document_ids from search_documents or "
             "list_deadlines.",
         )
-    rows = [_table_row(r, ch) for r in found[: tables.MAX_ROWS]]
+    kept = found[: tables.MAX_ROWS]
+    rows = [tables.row_values(r, ch) for r in kept]
+    truncated = len(found) > tables.MAX_ROWS
+    if format == "table":
+        shown = await run(
+            tables.show, get_ctx(), columns=columns, document_ids=[r.id for r in kept], rows=rows,
+            truncated=truncated, title=title, lang=lang, channel=ch, via=via(ch),
+            tool="export_table",
+        )  # fmt: skip
+        out = {
+            "export_id": shown.export_id,
+            "rows": shown.rows,
+            "shown": shown.shown,
+            "truncated": shown.truncated,
+            "empty_columns": shown.empty_columns,
+            "card_refs": shown.card_refs,
+        }
+        if shown.text is not None:
+            out["text"] = shown.text
+        else:
+            out["note"] = TABLE_CARD_NOTE
+        return out
     made = await run(
-        tables.make, get_ctx(), columns=columns, rows=rows,
-        truncated=len(found) > tables.MAX_ROWS, fmt=format, title=title, lang=lang, channel=ch,
-        via=via(ch), tool="export_table",
+        tables.make, get_ctx(), columns=columns, rows=rows, truncated=truncated, fmt=format,
+        title=title, lang=lang, channel=ch, via=via(ch), tool="export_table",
     )  # fmt: skip
     return {
         "export_id": made.export_id,
         "file_name": made.file_name,
         "rows": made.rows,
         "truncated": made.truncated,
+        "empty_columns": made.empty_columns,
         "card_refs": made.card_refs,
     }
 
@@ -236,49 +265,9 @@ async def _table_rows(
             tsq = func.websearch_to_tsquery("mona", norm(query))
             clauses.append(Document.fts.op("@@")(tsq))
             order = [func.ts_rank(Document.fts, tsq).desc(), *order]
-    stmt = (
-        select(
-            Document.id,
-            func.coalesce(Document.title, Document.original_name).label("title"),
-            Counterparty.name.label("counterparty"),
-            Entity.display_name.label("entity"),
-            Category.id.label("category"),
-            Document.doc_date,
-            Document.due_date,
-            Document.amount,
-            Document.currency,
-            Document.payment_iban,
-            Document.reference,
-            Document.status,
-            Document.location,
-            Document.current_path,
-        )
-        .outerjoin(Entity, Entity.id == Document.entity_id)
-        .outerjoin(Category, Category.id == Document.category_id)
-        .outerjoin(Counterparty, Counterparty.id == Document.counterparty_id)
-        .where(*clauses)
-        .order_by(*order)
-        .limit(tables.MAX_ROWS + 1)
-    )
+    stmt = tables.row_select(*clauses).order_by(*order).limit(tables.MAX_ROWS + 1)
     rows = list((await scope.conn.execute(stmt)).all())
     if document_ids is not None:
         at = {d: i for i, d in enumerate(dict.fromkeys(document_ids))}
         rows.sort(key=lambda r: at[r.id])
     return rows
-
-
-def _table_row(r: Any, ch: str) -> dict[str, Any]:
-    return {
-        "title": r.title,
-        "counterparty": r.counterparty,
-        "entity": r.entity,
-        "category": r.category,
-        "doc_date": r.doc_date,
-        "due_date": r.due_date,
-        "amount": r.amount,
-        "currency": r.currency if r.amount is not None else None,
-        "payment_iban": mask(r.payment_iban) if ch == "telegram" else r.payment_iban,
-        "reference": r.reference,
-        "status": r.status,
-        "path": r.current_path if r.location == "archive" else None,
-    }

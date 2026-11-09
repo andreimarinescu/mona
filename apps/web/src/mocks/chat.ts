@@ -7,7 +7,7 @@ type Stored =
   | { type: 'reasoning'; text: string }
   | { type: 'text'; text: string }
   | { type: 'tool'; tool_call_id: string; tool_name: string; completed: boolean }
-  | { type: 'data'; kind: 'doc' | 'deadline' | 'interview' | 'rulePreview' | 'draft' | 'export'; id: string };
+  | { type: 'data'; kind: 'doc' | 'deadline' | 'interview' | 'rulePreview' | 'draft' | 'export' | 'table'; id: string };
 
 interface Turn {
   id: string;
@@ -103,6 +103,12 @@ export function createChat(world: World, options: { chunkDelayMs?: number; draft
         return draftView(kind.id);
       case 'export':
         return world.exports.get(kind.id);
+      case 'table':
+        try {
+          return world.exports.tableView(kind.id);
+        } catch {
+          return null;
+        }
     }
   }
 
@@ -115,12 +121,20 @@ export function createChat(world: World, options: { chunkDelayMs?: number; draft
       const cards = batch.debrief ? [{ type: 'data' as const, kind: 'interview' as const, id: batch.debrief.interviewId }] : [];
       return { reasoning: ['The person opened the debrief for this batch. I will show the existing questions.'], tools: [{ name: 'start_interview', cards }], text: `${noted}Let us go through your questions.` };
     }
-    const table = /\b(word|docx)\b/.test(m) ? 'docx' : /\b(excel|xlsx)\b/.test(m) ? 'xlsx' : /\b(table|csv|tableau)\b/.test(m) ? 'csv' : null;
-    if (table) {
+    const file = /\b(word|docx)\b/.test(m) ? 'docx' : /\b(excel|xlsx)\b/.test(m) ? 'xlsx' : /\bcsv\b/.test(m) ? 'csv' : null;
+    if (file || /\b(table|tableau)\b/.test(m)) {
       const payables = [...world.docs.values()].filter((d) => !d.deleted && d.summary.dueDate);
-      const pack = world.exports.table(table, 'Payables', payables.length);
+      if (!file) {
+        const view = world.exports.inline('Payables', payables.map((d) => d.summary.id), ['title', 'entity', 'due_date', 'payment_iban', 'amount']);
+        return {
+          reasoning: ['The person wants to see the payables. I pick the documents with a due date and the columns asked for, as a table in the chat.'],
+          tools: [{ name: 'export_table', cards: [{ type: 'data', kind: 'table', id: view.id }] }],
+          text: lang === 'fr' ? `${noted}Voici les ${payables.length} documents à payer.` : `${noted}Here are the ${payables.length} payables.`,
+        };
+      }
+      const pack = world.exports.table(file, 'Payables', payables.length);
       return {
-        reasoning: ['The person wants the payables as a table file. I pick the documents with a due date and the columns asked for.'],
+        reasoning: ['The person wants the payables as a file. I pick the documents with a due date and the columns asked for.'],
         tools: [{ name: 'export_table', cards: [{ type: 'data', kind: 'export', id: pack.id }] }],
         text: lang === 'fr' ? `${noted}Voici le fichier avec ${payables.length} documents.` : `${noted}Here is the file with ${payables.length} documents.`,
       };

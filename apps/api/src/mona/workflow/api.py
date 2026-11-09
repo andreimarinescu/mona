@@ -221,6 +221,11 @@ class ExportCreate(Dto):
     fiscal_year: int = Field(ge=2000, le=2100)
 
 
+class TableFile(Dto):
+    format: tables.FileFormat
+    conversation_id: ConversationId = None
+
+
 class ExportCategory(Dto):
     id: str
     label: str
@@ -322,6 +327,50 @@ async def create_export(body: ExportCreate, response: Response) -> dto.ExportPac
 async def get_export(export_id: str, request: Request) -> Response:
     _id(export_id, "exp", "export")
     return etagged(request, await _export(export_id))
+
+
+async def _table(export_id: str) -> dto.TableView:
+    _id(export_id, "exp", "export")
+    async with get_engine().connect() as conn:
+        found = await load.table(conn, export_id)
+    if found is None:
+        raise not_found("table")
+    if found.rows_total == 0:
+        raise RestError(
+            409, "conflict", "No document of this table is still visible.",
+            details={"reason": "empty"},
+        )  # fmt: skip
+    return found
+
+
+@router.get(
+    "/exports/{export_id}/table",
+    operation_id="getExportTable",
+    response_model=dto.TableView,
+    responses=errors(401, 404, 409, 423),
+)
+async def get_export_table(export_id: str) -> dto.TableView:
+    return await _table(export_id)
+
+
+@router.post(
+    "/exports/{export_id}/file",
+    operation_id="createExportTableFile",
+    response_model=dto.ExportPack,
+    status_code=201,
+    responses=errors(400, 401, 403, 404, 409, 415, 423),
+)
+async def create_export_table_file(export_id: str, body: TableFile) -> dto.ExportPack:
+    view = await _table(export_id)
+    async with get_engine().connect() as conn:
+        spec = (await conn.execute(select(Export.spec).where(Export.id == export_id))).scalar_one()
+        rows = await tables.spec_rows(await scope_for(conn, "web"), spec["document_ids"])
+    made = await _run(
+        tables.make, get_ctx(), columns=spec["columns"], rows=rows, truncated=view.truncated,
+        fmt=body.format, title=view.title, lang=view.lang, channel="web", via="ui",
+        actor="user", conversation_id=body.conversation_id,
+    )  # fmt: skip
+    return await _export(made.export_id)
 
 
 async def _file(export_id: str, kind: str, media: str) -> FileResponse:

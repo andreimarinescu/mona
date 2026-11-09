@@ -999,6 +999,7 @@ export function createWorld(options: WorldOptions = {}) {
     documents: liveSummaries,
     categoryLabel: (categoryId) => category(categoryId)?.labels.en ?? categoryId,
     nextId: id,
+    note,
   });
 
   function search(query: URLSearchParams) {

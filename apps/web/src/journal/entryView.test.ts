@@ -13,4 +13,9 @@ describe('the title of an export entry', () => {
     expect(entryTitle({ ...pack, actor: 'mona' }, {}, {}, i18n.getFixedT('fr'))).toBe('Mona a préparé un dossier pour le comptable');
     expect(entryTitle(table, {}, {}, t)).toBe('Mona made a table file');
   });
+
+  it('names a table shown in the chat apart from a table file (A36)', () => {
+    const shown = entry({ action: 'export', actor: 'mona', documentIds: [], after: { format: 'table', rows: 3 } });
+    expect(entryTitle(shown, {}, {}, t)).toBe('Mona showed a table in the chat');
+  });
 });

@@ -7,7 +7,7 @@ import type { World, WorldOptions } from './world';
 
 function fail(err: unknown) {
   if (err instanceof MockError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field, details: err.details } }, { status: err.status, headers: err.headers });
-  if (err instanceof ExportError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field } }, { status: err.status });
+  if (err instanceof ExportError) return HttpResponse.json({ error: { code: err.code, message: err.message, field: err.field, details: err.details } }, { status: err.status });
   if (err instanceof InterviewError) return HttpResponse.json({ error: { code: err.code, message: err.message, details: err.details } }, { status: err.status });
   if (err instanceof ChatError) return HttpResponse.json({ error: { code: err.code, message: err.message } }, { status: err.status });
   throw err;
@@ -207,6 +207,16 @@ export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDe
       }
     }),
     http.get('/api/exports/:id', ({ params }) => guard(() => world.exports.get(String(params.id)))()),
+    http.get('/api/exports/:id/table', ({ params }) => guard(() => world.exports.tableView(String(params.id)))()),
+    http.post('/api/exports/:id/file', async ({ params, request }) => {
+      const body = await bodyOf(request);
+      try {
+        const pack = world.exports.tableFile(String(params.id), body.format as 'csv' | 'xlsx' | 'docx', conversationOf(body));
+        return HttpResponse.json(pack, { status: 201 });
+      } catch (err) {
+        return fail(err);
+      }
+    }),
     http.get('/api/exports/:id/zip', ({ params }) => {
       try {
         world.exports.get(String(params.id));
@@ -218,12 +228,14 @@ export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDe
       });
     }),
     http.get('/api/exports/:id/csv', ({ params }) => {
+      let name = `export-${params.id}.csv`;
       try {
-        world.exports.get(String(params.id));
+        const pack = world.exports.get(String(params.id));
+        if (pack.format === 'csv' && pack.fileName) name = pack.fileName;
       } catch (err) {
         return fail(err);
       }
-      return new HttpResponse('date,counterparty,title,reference\n', { headers: { 'content-type': 'text/csv', 'content-disposition': `attachment; filename="export-${params.id}.csv"` } });
+      return new HttpResponse('date,counterparty,title,reference\n', { headers: { 'content-type': 'text/csv', 'content-disposition': `attachment; filename="${name}"` } });
     }),
     http.get('/api/exports/:id/:format', ({ params }) => {
       try {

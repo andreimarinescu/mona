@@ -50,6 +50,7 @@ from mona.dto.enums import (
     Reason,
     RuleSource,
     RuleState,
+    TableColumnKey,
     UndoState,
     Via,
     Visibility,
@@ -330,6 +331,24 @@ class ExportPack(Dto):
     file_name: str | None
     file_url: str | None
     truncated: bool
+
+
+class TableColumn(Dto):
+    key: TableColumnKey
+    label: str
+
+
+class TableView(Dto):
+    """C3 `data-table` (A36): the first rows of an inline table, from current state."""
+
+    id: ExportId
+    title: str
+    columns: list[TableColumn]
+    rows: list[dict[str, str | float | None]]
+    rows_total: int
+    truncated: bool
+    empty_columns: list[TableColumnKey]
+    lang: Lang
 
 
 # §11.3 (after the types it embeds)

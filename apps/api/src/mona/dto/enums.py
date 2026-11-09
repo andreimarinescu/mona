@@ -34,6 +34,10 @@ InterviewStatus = Literal["generating", "ready", "done", "failed", "cancelled"]
 QuestionStatus = Literal["open", "answered", "skipped"]
 DraftStatus = Literal["generating", "ready", "failed"]
 ExportStatus = Literal["building", "ready", "failed"]
-ExportFormat = Literal["csv", "xlsx", "docx"]
+ExportFormat = Literal["csv", "xlsx", "docx", "table"]
+TableColumnKey = Literal[
+    "title", "counterparty", "entity", "category", "doc_date", "due_date", "amount", "currency",
+    "payment_iban", "reference", "status", "path",
+]  # fmt: skip
 Visibility = Literal["practice", "personal"]
 DocSource = Literal["drop", "telegram"]

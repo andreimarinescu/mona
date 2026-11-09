@@ -114,10 +114,23 @@ def test_soul_lists_what_mona_can_and_cannot_do():
     lines = section.strip().splitlines()
     can = next(x for x in lines if x.startswith("- You can:"))
     cannot = next(x for x in lines if x.startswith("- You can't:"))
-    assert "export a table of documents (CSV, Excel, Word)" in can and "IBAN" in can
+    assert "show a table of documents in the chat, or export it (CSV, Excel, Word)" in can
+    assert "IBAN" in can
     assert all(w in cannot for w in ("run programs", "browse", "send anything"))
     assert any("say so in one line and offer the nearest thing" in x for x in lines)
     assert any("budget_exhausted" in x for x in lines)
+
+
+def test_soul_offers_only_its_tools_and_never_claims_blank_columns():
+    soul = (ROOT / "deploy" / "hermes" / "SOUL.md").read_text()
+    section = soul.split("## What you can do here, and what you can't", 1)[1].split("\n## ", 1)[0]
+    lines = section.strip().splitlines()
+    offer = next(x for x in lines if x.startswith("- Offer only what your tools do."))
+    assert "IBAN pasted in the chat" in offer
+    assert "A draft only knows what you pass it in that call" in offer
+    assert any("`empty_columns`" in x and "came out blank" in x for x in lines)
+    table = next(x for x in lines if x.startswith('- "A table" means a table in the chat'))
+    assert "Never type a table, a header row or a placeholder" in table
 
 
 def test_hermes_keeps_calling_mona_after_three_failed_calls():

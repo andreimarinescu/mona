@@ -7,6 +7,7 @@ import { toastFailure } from '../../data/journal';
 import { useLang } from '../../shell/useLang';
 import { useChatCard } from '../context';
 import { CardShell } from './CardShell';
+import { saveBlob } from './saveBlob';
 
 function Bracketed({ text }: { text: string }) {
   return (
@@ -22,17 +23,6 @@ function Bracketed({ text }: { text: string }) {
       )}
     </>
   );
-}
-
-function save(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
 /** A reply draft: Copy and Download only. It has no Send action, ever (HANDOFF §4). */
@@ -62,7 +52,7 @@ export function DraftCard({ draft: snapshot }: { draft: Draft }) {
     setDownloading(true);
     try {
       const { blob, name } = await downloadDraft(draft, card.conversationId());
-      save(blob, name);
+      saveBlob(blob, name);
     } catch (err) {
       toastFailure(err);
     } finally {

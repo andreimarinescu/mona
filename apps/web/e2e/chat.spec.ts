@@ -114,24 +114,34 @@ test.describe('the /chat page (demo 7:00)', () => {
     expect(problems).toEqual([]);
   });
 
-  test('a payables table, then Excel, then Word: an export card with its download each time (A31)', async ({ page }) => {
+  test('a payables table in the chat, then Excel, then Word: the table card, then an export card with its download each time (A36, A31)', async ({ page }) => {
     const problems = watchConsole(page);
     await page.goto('/chat');
-    const asks: [string, string][] = [
-      ['Show me a table with all payables with the destination IBAN, due date and entity', 'CSV'],
-      ['Make that an Excel file', 'Excel'],
-      ['Now a Word document', 'Word'],
+    await ask(page, page, 'Show me a table with all payables with the destination IBAN, due date and entity');
+    const table = page.locator('[data-card="table"]');
+    await expect(table.getByRole('heading', { name: 'Payables' })).toBeVisible();
+    await expect(table.getByRole('table').getByRole('columnheader')).toHaveText(['Title', 'Entity', 'Due date', 'Payment IBAN', 'Amount']);
+    await expect(table.getByTestId('table-meta')).toHaveText(/^\d+ documents?$/);
+    await expect(page.locator('[data-card="export"]')).toHaveCount(0);
+    const fromCard = page.waitForEvent('download');
+    await table.getByRole('group', { name: 'Download as' }).getByRole('button', { name: 'CSV' }).click();
+    expect((await fromCard).suggestedFilename()).toBe('Payables.csv');
+    expect(await serious(page)).toEqual([]);
+
+    const asks: [string, string, string][] = [
+      ['Make that an Excel file', 'Excel', 'xlsx'],
+      ['Now a Word document', 'Word', 'docx'],
     ];
-    for (const [n, [text, format]] of asks.entries()) {
+    for (const [n, [text, format, ext]] of asks.entries()) {
       await ask(page, page, text);
       const card = page.locator('[data-card="export"]').nth(n);
       await expect(card.getByRole('heading', { name: 'Payables' })).toBeVisible();
       await expect(card.getByTestId('export-table-meta')).toHaveText(new RegExp(`^${format} · \\d+ documents?$`));
       const download = page.waitForEvent('download');
       await card.getByRole('link', { name: `Download the ${format} file` }).click();
-      expect((await download).suggestedFilename()).toBe(`Payables.${['csv', 'xlsx', 'docx'][n]}`);
+      expect((await download).suggestedFilename()).toBe(`Payables.${ext}`);
     }
-    await expect(page.locator('[data-tool="export_table"]').first()).toContainText('Made the table file');
+    await expect(page.locator('[data-tool="export_table"]').first()).toContainText('Made the table');
     expect(problems).toEqual([]);
   });
 

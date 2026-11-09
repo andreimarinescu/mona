@@ -10,6 +10,7 @@ import { DocCard } from './cards/DocCard';
 import { DraftCard } from './cards/DraftCard';
 import { ExportCard } from './cards/ExportCard';
 import { InterviewCard } from './cards/InterviewCard';
+import { TableCard } from './cards/TableCard';
 import { ChatRulePreview } from './cards/ChatRulePreview';
 import { citedNumbers } from './citations';
 import { CitedSources, MonaText } from './MonaText';
@@ -57,6 +58,8 @@ function DataCard({ part }: { part: MonaPart }) {
       return <DraftCard draft={part.data} />;
     case 'data-export':
       return <ExportCard pack={part.data} />;
+    case 'data-table':
+      return <TableCard table={part.data} />;
     default:
       return null;
   }

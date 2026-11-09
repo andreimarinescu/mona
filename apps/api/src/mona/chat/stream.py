@@ -12,6 +12,7 @@ import httpx
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from mona.chat import cards
+from mona.chat.guard import TableLineGuard
 from mona.chat.hermes import HermesClient, HermesError
 from mona.chat.overlay import build_overlay, language_slip, reply_text
 from mona.chat.parts import PartsRecorder
@@ -101,15 +102,21 @@ async def _reconcile(engine: AsyncEngine, hermes: HermesClient, turn: Turn) -> l
 async def run_turn(
     engine: AsyncEngine, hermes: HermesClient, turn: Turn, route: str, summary: str
 ) -> AsyncIterator[str]:
-    rec, tr, parser = PartsRecorder(), Translator(), SSEParser()
-    fallback = t("chat.fallback.too_complex", turn.reply_language)
+    rec, tr, parser, guard = PartsRecorder(), Translator(), SSEParser(), TableLineGuard()
     status, error_code, release = "open", None, False
     loop_time = asyncio.get_running_loop().time
     last_touch = loop_time()
 
     def out(chunk: dict[str, Any]) -> str:
-        rec.record(chunk)
-        return sse(chunk)
+        frames = []
+        for kept in guard.feed(chunk):
+            rec.record(kept)
+            frames.append(sse(kept))
+        return "".join(frames)
+
+    def no_text_reply() -> list[dict[str, Any]]:
+        key = "chat.table.intro" if guard.active else "chat.fallback.too_complex"
+        return tr.text(t(key, turn.reply_language))
 
     def offline_tail() -> list[str]:
         return [
@@ -178,7 +185,8 @@ async def run_turn(
                         yield KEEPALIVE
                         continue
                     for chunk in tr.feed(ev):
-                        yield out(chunk)
+                        if frames := out(chunk):
+                            yield frames
                         if chunk["type"] == "tool-output-available":
                             for card in await cards.emit_pending(
                                 engine, turn.id, tr.completed_tools
@@ -190,7 +198,8 @@ async def run_turn(
             logger.warning("turn %s: unparseable upstream chunk", turn.id)
 
         for chunk in tr.close():
-            yield out(chunk)
+            if frames := out(chunk):
+                yield frames
         for card in await cards.emit_pending(engine, turn.id, tr.completed_tools):
             yield out(card)
         for card in await _reconcile(engine, hermes, turn):
@@ -211,7 +220,7 @@ async def run_turn(
         else:
             status = "closed"
             if not rec.has_text:
-                for chunk in tr.text(fallback):
+                for chunk in no_text_reply():
                     yield out(chunk)
             yield sse({"type": "finish-step"})
             yield sse(
@@ -226,14 +235,17 @@ async def run_turn(
         logger.exception("turn %s: adapter error", turn.id)
         status, error_code = "failed", "internal"
         for chunk in tr.close():
-            yield out(chunk)
+            if frames := out(chunk):
+                yield frames
         yield sse({"type": "error", "errorText": "internal"})
         yield sse({"type": "finish", "finishReason": "error"})
         yield DONE
     finally:
         if status == "open" and not rec.has_text and any(p["type"] == "tool" for p in rec.parts):
-            for chunk in tr.text(fallback):
+            for chunk in no_text_reply():
                 rec.record(chunk)
+        if guard.active:
+            logger.info("turn %s: %d table lines dropped", turn.id, guard.dropped)
         slip = language_slip(reply_text(rec.parts), turn.reply_language)
         if slip is not None:
             logger.warning("turn %s: replied in %s, not %s", turn.id, slip, turn.reply_language)

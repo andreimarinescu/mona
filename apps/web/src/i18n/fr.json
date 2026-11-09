@@ -333,6 +333,17 @@
     },
     "panel": {
       "openAsPage": "Ouvrir dans Discussion"
+    },
+    "table": {
+      "count_one": "{{n}} document",
+      "count_many": "{{n}} de documents",
+      "count_other": "{{n}} documents",
+      "showing": "{{shown}} sur {{total}} affichés",
+      "truncated": "Seuls les 500 premiers documents sont dans ce tableau.",
+      "emptyColumns": "Vide pour tous les documents : {{columns}}.",
+      "downloadAs": "Télécharger en",
+      "refresh": "Actualiser",
+      "emptied": "Aucun de ces documents n’est plus dans les archives."
     }
   },
   "common": {
@@ -499,7 +510,8 @@
       "export_mona": "Mona a créé un fichier tableau",
       "export_user": "Vous avez créé un fichier tableau",
       "export_pack_mona": "Mona a préparé un dossier pour le comptable",
-      "export_pack_user": "Vous avez préparé un dossier pour le comptable"
+      "export_pack_user": "Vous avez préparé un dossier pour le comptable",
+      "export_table_mona": "Mona a affiché un tableau dans la conversation"
     },
     "group": {
       "intake_batch_mona": "Mona a traité un lot reçu",

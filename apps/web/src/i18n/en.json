@@ -236,8 +236,8 @@
       },
       "interrupted": "interrupted",
       "export_table": {
-        "running": "Making the table file…",
-        "done": "Made the table file"
+        "running": "Making the table…",
+        "done": "Made the table"
       }
     },
     "banner": {
@@ -324,6 +324,16 @@
     },
     "panel": {
       "openAsPage": "Open in Chat"
+    },
+    "table": {
+      "count_one": "{{n}} document",
+      "count_other": "{{n}} documents",
+      "showing": "Showing {{shown}} of {{total}}",
+      "truncated": "Only the first 500 documents are in this table.",
+      "emptyColumns": "Blank for every document: {{columns}}.",
+      "downloadAs": "Download as",
+      "refresh": "Refresh",
+      "emptied": "None of these documents is in the archive any more."
     }
   },
   "common": {
@@ -486,7 +496,8 @@
       "export_mona": "Mona made a table file",
       "export_user": "You made a table file",
       "export_pack_mona": "Mona prepared an accountant pack",
-      "export_pack_user": "You prepared an accountant pack"
+      "export_pack_user": "You prepared an accountant pack",
+      "export_table_mona": "Mona showed a table in the chat"
     },
     "group": {
       "intake_batch_mona": "Mona processed an intake batch",

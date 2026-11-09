@@ -7578,6 +7578,190 @@
         }
       }
     },
+    "/api/exports/{export_id}/table": {
+      "get": {
+        "tags": [
+          "workflow"
+        ],
+        "summary": "Get Export Table",
+        "operationId": "getExportTable",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Export Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableView"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "423": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Locked"
+          }
+        }
+      }
+    },
+    "/api/exports/{export_id}/file": {
+      "post": {
+        "tags": [
+          "workflow"
+        ],
+        "summary": "Create Export Table File",
+        "operationId": "createExportTableFile",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Export Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TableFile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportPack"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Unsupported Media Type"
+          },
+          "423": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Locked"
+          }
+        }
+      }
+    },
     "/api/exports/{export_id}/zip": {
       "get": {
         "tags": [
@@ -11451,7 +11635,8 @@
                 "enum": [
                   "csv",
                   "xlsx",
-                  "docx"
+                  "docx",
+                  "table"
                 ]
               },
               {
@@ -15161,6 +15346,161 @@
           "privacy"
         ],
         "title": "SystemStatus"
+      },
+      "TableColumn": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "title",
+              "counterparty",
+              "entity",
+              "category",
+              "doc_date",
+              "due_date",
+              "amount",
+              "currency",
+              "payment_iban",
+              "reference",
+              "status",
+              "path"
+            ],
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "TableColumn"
+      },
+      "TableFile": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx",
+              "docx"
+            ],
+            "title": "Format"
+          },
+          "conversationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^cnv_[0-9a-hjkmnp-tv-z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversationid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "format"
+        ],
+        "title": "TableFile"
+      },
+      "TableView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/TableColumn"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "rowsTotal": {
+            "type": "integer",
+            "title": "Rowstotal"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "emptyColumns": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "title",
+                "counterparty",
+                "entity",
+                "category",
+                "doc_date",
+                "due_date",
+                "amount",
+                "currency",
+                "payment_iban",
+                "reference",
+                "status",
+                "path"
+              ]
+            },
+            "type": "array",
+            "title": "Emptycolumns"
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "en",
+              "fr",
+              "ro"
+            ],
+            "title": "Lang"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "columns",
+          "rows",
+          "rowsTotal",
+          "truncated",
+          "emptyColumns",
+          "lang"
+        ],
+        "title": "TableView",
+        "description": "C3 `data-table` (A36): the first rows of an inline table, from current state."
       },
       "TemplateError": {
         "properties": {

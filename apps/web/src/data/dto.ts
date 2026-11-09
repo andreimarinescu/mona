@@ -243,11 +243,38 @@ export interface ExportPack {
   documentCount: number | null;
   zipUrl: string | null;
   csvUrl: string | null;
-  format: 'csv' | 'xlsx' | 'docx' | null;
+  format: 'csv' | 'xlsx' | 'docx' | 'table' | null;
   title: string | null;
   fileName: string | null;
   fileUrl: string | null;
   truncated: boolean;
+}
+
+export type TableFileFormat = 'csv' | 'xlsx' | 'docx';
+export type TableColumnKey =
+  | 'title'
+  | 'counterparty'
+  | 'entity'
+  | 'category'
+  | 'doc_date'
+  | 'due_date'
+  | 'amount'
+  | 'currency'
+  | 'payment_iban'
+  | 'reference'
+  | 'status'
+  | 'path';
+
+/** C3 `data-table` (A36): dates are ISO strings, amounts numbers with `currency` alongside. */
+export interface TableView {
+  id: string;
+  title: string;
+  columns: { key: TableColumnKey; label: string }[];
+  rows: Partial<Record<TableColumnKey, string | number | null>>[];
+  rowsTotal: number;
+  truncated: boolean;
+  emptyColumns: TableColumnKey[];
+  lang: Lang;
 }
 
 export interface ReminderResult {

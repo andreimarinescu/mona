@@ -58,12 +58,16 @@
         "filed": "Classé",
         "review": "À vérifier",
         "unreadable": "Illisible"
-      }
+      },
+      "more": "… et {{n}} de plus"
     }
   },
   "chat": {
     "fallback": {
       "too_complex": "Cette demande nécessite plus d'étapes que je ne peux en faire en une seule fois. Je peux rechercher et ouvrir des documents, additionner des montants, lister les échéances, rédiger un courrier, exporter un tableau de documents, préparer le dossier pour l'expert-comptable et passer en revue les questions sur un lot. Pouvez-vous me confier l'une de ces tâches ?"
+    },
+    "table": {
+      "intro": "Voici le tableau."
     }
   }
 }

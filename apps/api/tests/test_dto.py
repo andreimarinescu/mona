@@ -378,6 +378,7 @@ ENUM_COLUMNS = [
     (enums.QuestionStatus, "interview_questions", "status"),
     (enums.DraftStatus, "drafts", "status"),
     (enums.ExportStatus, "exports", "status"),
+    (enums.ExportFormat, "exports", "format"),
     (enums.Visibility, "entities", "visibility"),
     (enums.Lang, "interviews", "lang"),
 ]

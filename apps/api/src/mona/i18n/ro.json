@@ -58,12 +58,16 @@
         "filed": "Arhivat",
         "review": "În verificare",
         "unreadable": "Ilizibil"
-      }
+      },
+      "more": "… și încă {{n}}"
     }
   },
   "chat": {
     "fallback": {
       "too_complex": "Această cerere are nevoie de mai mulți pași decât pot face dintr-odată. Pot căuta și deschide documente, aduna sume, enumera scadențele, redacta o scrisoare, exporta un tabel de documente, pregăti pachetul pentru contabil și trece prin întrebările despre un lot. Îmi puteți cere unul dintre aceste lucruri?"
+    },
+    "table": {
+      "intro": "Iată tabelul."
     }
   }
 }

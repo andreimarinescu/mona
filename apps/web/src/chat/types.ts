@@ -1,6 +1,6 @@
 import type { UIMessage } from 'ai';
 import type { Lang } from '@mona/ui';
-import type { Deadline, DocumentSummary, Draft, ExportPack, Interview, IntakeItem, RulePreview } from '../data/dto';
+import type { Deadline, DocumentSummary, Draft, ExportPack, Interview, IntakeItem, RulePreview, TableView } from '../data/dto';
 
 /** A file dropped on the composer: uploaded to Intake (C3 §2), shown on the message, never sent to the model. */
 export interface Attachment {
@@ -26,6 +26,7 @@ export type MonaDataParts = {
   rulePreview: RulePreview;
   draft: Draft;
   export: ExportPack;
+  table: TableView;
 };
 
 export type MonaUIMessage = UIMessage<MonaMetadata, MonaDataParts>;

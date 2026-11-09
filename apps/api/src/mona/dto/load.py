@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 from mona import clock
 from mona.db.models import (
     Account,
+    Category,
     Counterparty,
     Deadline,
     Document,
@@ -24,7 +25,10 @@ from mona.db.models import (
     Rule,
 )
 from mona.dto import models as dto
+from mona.i18n import t
 from mona.settings import get_settings
+from mona.visibility import Channel, scope_for
+from mona.workflow import tables
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +39,7 @@ SUBJECT_KEYS = {
     "rulePreview": "rule_id",
     "draft": "draft_id",
     "export": "export_id",
+    "table": "export_id",
 }
 
 
@@ -332,6 +337,28 @@ async def export(conn: AsyncConnection, export_id: str) -> dto.ExportPack | None
     )
 
 
+async def table(
+    conn: AsyncConnection, export_id: str, channel: Channel = "web"
+) -> dto.TableView | None:
+    """A36 `TableView`, or None when the id isn't a table: visible rows only, the first 50."""
+    e = (await conn.execute(select(Export).where(Export.id == export_id))).first()
+    if e is None or e.format != "table" or e.spec is None:
+        return None
+    columns, lang = e.spec["columns"], e.spec["lang"]
+    rows = await tables.spec_rows(await scope_for(conn, channel), e.spec["document_ids"])
+    labels = {r.id: r.labels for r in await conn.execute(select(Category.id, Category.labels))}
+    return dto.TableView(
+        id=e.id,
+        title=e.title or "",
+        columns=[{"key": c, "label": t(f"export.table.column.{c}", lang)} for c in columns],
+        rows=tables.view_rows(tables.labelled(rows[: tables.SHOWN], labels, lang), columns, lang),
+        rows_total=len(rows),
+        truncated=e.truncated,
+        empty_columns=tables.empty_columns(columns, rows),
+        lang=lang,
+    )
+
+
 async def card_payload(conn: AsyncConnection, kind: str, subject_id: str) -> dict | None:
     """The `data` of a `data-<kind>` part, or None when its subject is gone (C3 §5.5)."""
     found: Any
@@ -345,6 +372,8 @@ async def card_payload(conn: AsyncConnection, kind: str, subject_id: str) -> dic
         found = await draft(conn, subject_id)
     elif kind == "export":
         found = await export(conn, subject_id)
+    elif kind == "table":
+        found = await table(conn, subject_id)
     else:
         logger.warning("card kind %s has no payload builder yet", kind)
         return None

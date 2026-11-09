@@ -684,6 +684,7 @@ class Export(Base):
     title: Mapped[str | None]
     file_path: Mapped[str | None]
     truncated: Mapped[bool] = mapped_column(server_default=text("false"))
+    spec: Mapped[dict[str, Any] | None]
 
 
 # §7 Chat

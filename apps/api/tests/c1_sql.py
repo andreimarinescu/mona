@@ -169,6 +169,23 @@ def _a31_exports() -> list[str]:
     ]
 
 
+CARD_KINDS = "'doc','deadline','interview','rulePreview','draft','export'"
+
+
+def _a36_tables() -> list[str]:
+    """Amendment A36's inline table card, as migration 0010 makes it."""
+    section = _section("A36")
+    assert "`exports.spec jsonb NULL`" in section
+    assert "`card_events.kind` allows `'table'`" in section
+    return [
+        "ALTER TABLE exports DROP CONSTRAINT exports_format_check,"
+        " ADD CONSTRAINT exports_format_check CHECK (format IN ('csv','xlsx','docx','table')),"
+        " ADD COLUMN spec jsonb NULL",
+        "ALTER TABLE card_events DROP CONSTRAINT card_events_kind_check,"
+        f" ADD CONSTRAINT card_events_kind_check CHECK (kind IN ({CARD_KINDS},'table'))",
+    ]
+
+
 def contract_ddl() -> list[str]:
     creates, fks, others = [], [], []
     auth = [b for b in sql_blocks(C2.read_text()) if b.lstrip().startswith("auth_sessions")]
@@ -184,5 +201,6 @@ def contract_ddl() -> list[str]:
     indexes = [s for s in others if s not in search]
     return (
         search + creates + fks + indexes
-        + [_a9_column(), _a18_defaults(), *_a24_sha256(), *_a30_payment_iban(), *_a31_exports()]
+        + [_a9_column(), _a18_defaults(), *_a24_sha256(), *_a30_payment_iban(), *_a31_exports(),
+           *_a36_tables()]
     )  # fmt: skip
