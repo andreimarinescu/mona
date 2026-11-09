@@ -56,6 +56,11 @@ def batch() -> str:
     bid = new_id("bat")
     with connect() as conn:
         conn.execute("INSERT INTO batches (id, source, status) VALUES (%s, 'drop', 'done')", (bid,))
+        conn.execute(
+            "INSERT INTO op_groups (id, kind, actor, via, batch_id)"
+            " VALUES (%s, 'intake_batch', 'mona', 'pipeline', %s)",
+            (new_id("grp"), bid),
+        )
     return bid
 
 

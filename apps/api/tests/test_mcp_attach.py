@@ -18,7 +18,7 @@ from tests.mcp_http import call
 from tests.mcp_results import CardRef, Strict
 
 PDF = b"%PDF-1.4\n%attachment\n%%EOF\n"
-JPEG = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00telegram photo\xff\xd9"
+JPEG = b"\xff\xd8\xff\xe0\x00\x15JFIF\x00telegram photo\xff\xd9"
 NAME = "doc_0123456789ab_facture eau.pdf"
 SHA = hashlib.sha256(PDF).hexdigest()
 
@@ -138,6 +138,14 @@ async def test_unsupported_bytes_are_rejected_without_a_card(l2_world, cache):
     body = ok(await call("ingest_attachment", {"path": "documents/doc_aaaaaaaaaaaa_notes.txt"}))
     assert (body["outcome"], body["reject_reason"], body["document_id"], body["card_refs"]) == (
         "rejected", "unsupported_type", None, [],
+    )  # fmt: skip
+
+
+async def test_a_truncated_photo_is_unreadable_as_on_the_upload(l2_world, cache):
+    (cache / "images" / "img_bbbbbbbbbbbb.jpg").write_bytes(JPEG[:-2])
+    body = ok(await call("ingest_attachment", {"path": "images/img_bbbbbbbbbbbb.jpg"}))
+    assert (body["outcome"], body["reject_reason"], body["document_id"], body["card_refs"]) == (
+        "rejected", "unreadable_file", None, [],
     )  # fmt: skip
 
 

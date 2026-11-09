@@ -1,5 +1,6 @@
 """C2 §5 over HTTP: the upload's per-file results and limits (§17 item 5), and the batch reads."""
 
+import shutil
 import zlib
 
 import httpx
@@ -8,8 +9,11 @@ import pytest
 
 from mona.api import intake
 from mona.app import create_app
+from mona.mcp import attach
+from mona.pipeline import intake as pipeline_intake
 from mona.settings import get_settings
 from tests.api_client import api_client
+from tests.pipeline_world import mini_pdf
 
 PDF = b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n"
 JPEG = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9"
@@ -97,12 +101,38 @@ async def test_each_part_gets_its_result_in_part_order(l2_world, app):
     assert [i["document"] for i in got["items"][3:]] == [None, None]
 
 
-@pytest.mark.xfail(strict=True, reason="ingest_files sniffs magic bytes only (L1 change needed)")
-async def test_a_truncated_pdf_is_an_unreadable_file(l2_world, app):
+@pytest.mark.skipif(shutil.which("pdfinfo") is None, reason="poppler-utils not installed")
+async def test_truncated_files_are_unreadable_and_make_no_document(l2_world, app):
+    w = l2_world
+    before = inbox_files(w)
+    pdf = mini_pdf(["A fictional letter, page one."])
+    sent = [("cut.pdf", TRUNCATED), ("half.pdf", pdf[: len(pdf) // 2]),
+            ("cut.jpg", JPEG[:-2]), ("cut.png", PNG[:-12])]  # fmt: skip
     async with api_client(app) as c:
-        res = await c.post("/api/intake", files=files(("cut.pdf", TRUNCATED)))
-    item = res.json()["items"][0]
-    assert (item["outcome"], item["rejectReason"]) == ("rejected", "unreadable_file")
+        res = await c.post("/api/intake", files=files(*sent))
+    body = res.json()
+    assert [(i["outcome"], i["rejectReason"], i["documentId"]) for i in body["items"]] == [
+        ("rejected", "unreadable_file", None)
+    ] * 4
+    assert body["batch"]["status"] == "done" and inbox_files(w) == before
+    shas = [i["sha256"] for i in body["items"]]
+    assert sql("SELECT count(*) FROM documents WHERE sha256 = ANY(%s)", (shas,)) == [(0,)]
+
+
+@pytest.mark.skipif(shutil.which("pdfinfo") is None, reason="poppler-utils not installed")
+async def test_a_pdf_without_its_trailer_that_opens_and_a_photo_with_a_tail_are_accepted(
+    l2_world, app
+):
+    no_trailer = mini_pdf(["A fictional notice."]).replace(b"%%EOF\n", b"")
+    sent = [("open.pdf", no_trailer), ("motion.jpg", JPEG + b"ftypmp42" + b"\x00" * 64)]
+    async with api_client(app) as c:
+        res = await c.post("/api/intake", files=files(*sent))
+    assert [i["outcome"] for i in res.json()["items"]] == ["accepted", "accepted"]
+
+
+def test_every_intake_path_has_the_25_mb_cap():
+    assert intake.MAX_FILE_BYTES == pipeline_intake.MAX_BYTES == 25 * 1024 * 1024
+    assert attach.MAX_FILE_BYTES is intake.MAX_FILE_BYTES
 
 
 async def test_the_same_bytes_again_are_a_duplicate_and_the_batch_is_done(l2_world, app):

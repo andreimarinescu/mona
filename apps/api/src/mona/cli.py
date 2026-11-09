@@ -333,7 +333,7 @@ def ops_refresh_textcache(name: Annotated[str, typer.Option()]) -> None:
 @ops_app.command("verify")
 @_ops_errors
 def ops_verify(name: Annotated[str, typer.Option()]) -> None:
-    """§6.3 step 1: sha256sums and the schema head."""
+    """§6.3 step 1: sha256sums and a schema in the migration chain (A38)."""
     from mona.demo.snapshot import verify
 
     m = verify(_ops_env(), name)

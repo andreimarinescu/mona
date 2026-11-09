@@ -16,7 +16,7 @@ from mona.fileops import SimulatedCrash, sha256_file
 from mona.fileops.purge import purge_visitors
 from mona.ids import new_id
 from mona.pipeline import runtime
-from mona.services import file_document, undo
+from mona.services import delete_document, file_document, undo
 from mona.services.corrections import resolve_counterparty
 from mona.services.registry import T
 from tests.services_world import Services
@@ -274,6 +274,28 @@ def test_a_visitor_batch_of_duplicates_only_goes_too(s):
         s.batch
     ]
     assert s.row(p["id"])["location"] == "inbox"
+
+
+def test_a_deleted_twin_keeps_the_caches_and_without_one_they_go(s):
+    """A37."""
+    shared, alone = (b"%PDF-1.4 bytes " + secrets.token_bytes(32) for _ in range(2))
+    practice = s.doc(entity="cabinet", content=shared)
+    delete_document(s.ctx, practice, actor="user", via="ui")
+    vb = s.new_batch(visitor=True)
+    twin = s.doc(entity="visitors", status="processing", batch=vb, content=shared)
+    single = s.doc(entity="visitors", status="processing", batch=vb, content=alone)
+    for doc in (twin, single):
+        sha = s.row(doc)["sha256"]
+        for ext in ("ocr.pdf", "p1.png", "model.c5-v1.json"):
+            (s.ctx.textcache / sha[:2] / f"{sha}.{ext}").write_bytes(b"cache")
+    kept, gone = caches(s, twin), caches(s, single)
+    assert len(kept) == len(gone) == 4
+    out = purge_visitors(s.ctx.ops, ignore_age=True)
+    assert sorted(out.purged) == sorted([twin, single])
+    assert [p for p in kept if p.exists()] == kept
+    assert [p for p in gone if p.exists()] == []
+    assert s.row(practice)["location"] == "trash"
+    invariants(s)
 
 
 def test_the_periodic_job_runs_every_15_minutes_on_cpu():

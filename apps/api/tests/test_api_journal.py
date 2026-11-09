@@ -1,5 +1,7 @@
 """C2 §9 journal over HTTP: activity, group and entry reads, undo and redo, and the §14 notes."""
 
+from datetime import UTC, datetime
+
 import psycopg
 import pytest
 
@@ -42,6 +44,7 @@ async def test_activity_lists_groups_and_ungrouped_entries_newest_first(l2_world
     w = l2_world
     doc, group, _ = corrected(w)
     other = w.doc()
+    w.clock.now = datetime.now(UTC)
     w.ctx.ops.delete(other, actor="user", via="ui")
     async with api_client(app) as cl:
         page = (await cl.get("/api/activity")).json()

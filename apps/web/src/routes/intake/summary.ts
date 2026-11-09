@@ -7,10 +7,11 @@ export interface IntakeSummary {
   alreadyHad: number;
 }
 
+/** One bucket per document, by its status: a failed document already counts as unreadable or review. */
 export function intakeSummary(counts: BatchCounts): IntakeSummary {
   return {
     filed: counts.filed,
-    needYou: counts.review + counts.failed,
+    needYou: counts.review,
     unreadable: counts.unreadable + counts.rejected,
     alreadyHad: counts.duplicate,
   };

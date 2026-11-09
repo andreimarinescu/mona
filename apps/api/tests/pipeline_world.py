@@ -92,7 +92,7 @@ def content_for(doc_id: str) -> bytes:
     """Deterministic stand-in bytes for a synthetic document (its text is in the cache)."""
     s = SYNTHETIC[doc_id]
     if s["mime"] == "image/jpeg":
-        return b"\xff\xd8\xff\xe0" + hashlib.sha256(doc_id.encode()).digest()
+        return b"\xff\xd8\xff\xe0\x00\x22" + hashlib.sha256(doc_id.encode()).digest() + b"\xff\xd9"
     return mini_pdf(s["pages"])
 
 

@@ -24,7 +24,7 @@ from mona.demo.tools import (
     sha256_path,
 )
 from mona.fileops import Roots
-from mona.migrate import head_revision, migrate
+from mona.migrate import chain_revisions, head_revision, migrate
 
 TREES = ("inbox", "archive", "trash", "textcache", "config")
 EXCLUDE_DATA = ("--exclude-table-data=auth_sessions", "--exclude-table-data=procrastinate_*")
@@ -262,7 +262,8 @@ def read_manifest(snap: Path) -> dict[str, Any]:
 
 
 def verify(env: OpsEnv, name: str) -> dict[str, Any]:
-    """§6.3 step 1: every file matches `sha256sums` and the schema is the current head."""
+    """§6.3 step 1: every file matches `sha256sums`, and the schema is the head or an ancestor
+    of it, which the restore migrates forward (A38)."""
     snap = env.snapshot(name)
     manifest = read_manifest(snap)
     listed = {}
@@ -275,8 +276,10 @@ def verify(env: OpsEnv, name: str) -> dict[str, Any]:
     bad = [rel for rel, digest in listed.items() if sha256_path(snap / rel) != digest]
     if bad:
         raise OpsError(f"sha256 mismatch in {len(bad)} snapshot files")
-    if manifest.get("alembic_revision") != head_revision():
-        raise OpsError("the snapshot is from another schema version; rebuild it")
+    if manifest.get("alembic_revision") not in chain_revisions():
+        raise OpsError(
+            "the snapshot is from a newer or unknown schema version; update Mona or rebuild it"
+        )
     return manifest
 
 
@@ -312,6 +315,8 @@ def restore(env: OpsEnv, name: str, anchor_day: date | None, now: datetime | Non
             rep.say(f"recovered {len(done)} pending journal entries before the restore")
         engine.dispose()
         restore_db(env, snap / "db.dump")
+        if (rev := manifest["alembic_revision"]) != (head := head_revision()):
+            rep.say(f"schema {rev} → {head}")
         for tree in TREES:
             mirror(snap / "data" / tree, env.data / tree)
             chown_tree(env.data / tree, env.data_owner)

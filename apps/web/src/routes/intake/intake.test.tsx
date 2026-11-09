@@ -6,6 +6,7 @@ import i18n from '../../i18n';
 import { AppStateProvider } from '../../state/AppStateProvider';
 import { renderRoute } from '../../test/renderRoute';
 import { useAppState } from '../../state/context';
+import { BatchProgress } from './BatchProgress';
 import { BatchQuestionsBanner } from './BatchQuestionsBanner';
 import { PipelineRow } from './PipelineRow';
 import { PipelineStepHeader, PipelineStepper } from './PipelineStepper';
@@ -35,7 +36,20 @@ function docAt(stage: DocumentSummary['pipelineStage'], status: DocumentSummary[
 
 describe('summary line pieces', () => {
   it('folds the counts into "filed, need you, unreadable, already had"', () => {
-    expect(intakeSummary(counts({ filed: 4, review: 2, failed: 1, unreadable: 1, rejected: 2, duplicate: 3 }))).toEqual({ filed: 4, needYou: 3, unreadable: 3, alreadyHad: 3 });
+    expect(intakeSummary(counts({ filed: 4, review: 2, failed: 1, unreadable: 1, rejected: 2, duplicate: 3 }))).toEqual({ filed: 4, needYou: 2, unreadable: 3, alreadyHad: 3 });
+  });
+
+  it('counts each document once: a failed document is in its unreadable or review bucket only', () => {
+    const c = counts({ items: 12, accepted: 9, duplicate: 2, rejected: 1, processing: 1, filed: 4, review: 2, unreadable: 2, failed: 2 });
+    const s = intakeSummary(c);
+    expect(s).toEqual({ filed: 4, needYou: 2, unreadable: 3, alreadyHad: 2 });
+    expect(s.filed + s.needYou + s.unreadable + s.alreadyHad + c.processing).toBe(c.items);
+  });
+
+  it('the batch pills count a failed document once', () => {
+    render(<BatchProgress batch={batch({ counts: counts({ items: 3, accepted: 3, filed: 1, review: 1, unreadable: 1, failed: 2 }) })} now={Date.parse('2026-10-01T10:05:00Z')} />);
+    expect(screen.getByText('Needs review · 1')).toBeInTheDocument();
+    expect(screen.getByText('Unreadable · 1')).toBeInTheDocument();
   });
 
   it('places each pipeline stage on its step, with filing and the end states on Result', () => {

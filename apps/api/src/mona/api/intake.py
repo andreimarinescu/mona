@@ -22,7 +22,7 @@ from mona.api.errors import ApiFailure, errors
 from mona.api.models import BatchDetail, BatchPatch, BatchSummary, IntakeResult
 from mona.db import get_sync_engine
 from mona.pipeline.hooks import interview_hooks
-from mona.pipeline.intake import Intake, Upload, ingest_files
+from mona.pipeline.intake import MAX_BYTES, Intake, Upload, ingest_files
 from mona.services import Ctx, make_context, registry
 from mona.services.registry import T
 from mona.settings import get_settings
@@ -30,9 +30,8 @@ from mona.settings import get_settings
 router = APIRouter(prefix="/api", tags=["intake"])
 
 BatchId = path_id("bat", "id")
-MIB = 1024 * 1024
 MAX_FILES = 50
-MAX_FILE_BYTES = 25 * MIB
+MAX_FILE_BYTES = MAX_BYTES
 MAX_FIELD_BYTES = 1024
 MAX_TITLE = 120
 FIELDS = ("visitor", "title")

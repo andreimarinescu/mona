@@ -67,6 +67,7 @@ test.describe('unlock and Home', () => {
 
   test('the Home cards and the brief link through to their sources', async ({ page }) => {
     await msw(page);
+    await page.clock.setFixedTime(new Date('2026-10-01T08:00:00Z'));
     await page.goto('/');
     const brief = page.getByTestId('mona-brief');
     await expect(brief).toContainText('6 need your eye.');

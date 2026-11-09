@@ -1,5 +1,6 @@
 """C9 §8 test 8 (snapshot and reset) on a scratch stage: §6.1–§6.4 and the §6.2 refusals."""
 
+import hashlib
 import json
 import sqlite3
 from datetime import UTC, date, datetime, timedelta
@@ -11,8 +12,17 @@ from mona.demo import anchor, checks
 from mona.demo.anchor import timestamp_columns
 from mona.demo.fingerprint import fingerprint
 from mona.demo.hermes import job_ids
-from mona.demo.snapshot import postcheck, refresh_textcache, restore, take, verify, write_sums
-from mona.demo.tools import OpsError
+from mona.demo.snapshot import (
+    EXCLUDE_DATA,
+    postcheck,
+    refresh_textcache,
+    restore,
+    take,
+    verify,
+    write_sums,
+)
+from mona.demo.tools import OpsEnv, OpsError, pg_run
+from mona.migrate import chain_revisions
 from mona.services.corrections import correct_document
 from mona.services.undo import delete_document
 from tests.demo_world import (
@@ -28,7 +38,7 @@ from tests.demo_world import (
     shifted,
     snapshot_reference,
 )
-from tests.pg import scratch_db, sqlalchemy_url_for
+from tests.pg import alembic, scratch_db, sqlalchemy_url_for
 from tests.pipeline_world import DEMO_SEED, Pipeline
 
 ULID = "01m3tgvaan1cwn6fb6q9y56wcw"
@@ -292,8 +302,89 @@ def test_reset_refuses_a_tampered_snapshot_or_another_schema(stage):
     snap(stage)
     m = stage.env.snapshot("scratch") / "manifest.json"
     m.write_text(m.read_text().replace('"alembic_revision": "', '"alembic_revision": "x'))
-    with pytest.raises(OpsError, match="another schema version"):
+    with pytest.raises(OpsError, match="newer or unknown schema version"):
         restore(stage.env, "scratch", DAY, now=NOW)
+
+
+# --- an older snapshot (A38) ---
+
+OLD_ROWS = """
+INSERT INTO batches (id, source, status) VALUES ('bat_{u}', 'drop', 'done');
+INSERT INTO op_groups (id, kind, actor, via, batch_id)
+VALUES ('grp_{u}', 'intake_batch', 'mona', 'pipeline', 'bat_{u}');
+INSERT INTO documents (id, sha256, original_name, mime_type, size_bytes, source, batch_id,
+  arrived_at, location, current_path, status, pipeline_stage)
+VALUES ('doc_{u}', '{sha}', 'letter.pdf', 'application/pdf', {size}, 'drop', 'bat_{u}',
+  '2026-09-28 05:00:00+00', 'inbox', 'doc_{u}.pdf', 'review', 'done');
+"""
+
+
+def old_snapshot(env: OpsEnv, url: str, revision: str, pdf: bytes) -> None:
+    """A snapshot as a release at `revision` wrote it: dump, trees, sums, manifest."""
+    engine = create_engine(url)
+    try:
+        sha = hashlib.sha256(pdf).hexdigest()
+        with engine.begin() as conn:
+            conn.exec_driver_sql(OLD_ROWS.format(u=ULID, sha=sha, size=len(pdf)))
+    finally:
+        engine.dispose()
+    snap = env.snapshot("older")
+    for tree in ("inbox", "archive", "trash", "textcache", "config"):
+        (snap / "data" / tree).mkdir(parents=True)
+    (snap / "data" / "inbox" / f"doc_{ULID}.pdf").write_bytes(pdf)
+    pg_run("pg_dump", env.conninfo, "-Fc", *EXCLUDE_DATA, "-f", str(snap / "db.dump"))
+    write_sums(snap)
+    manifest = {"v": 1, "name": "older", "created_at": NOW.isoformat(),
+                "reference_instant": snapshot_reference().isoformat(),
+                "alembic_revision": revision, "prompt_versions": {"c5": None, "c6": None},
+                "mona_version": "0", "counts": {"documents": 1}}  # fmt: skip
+    (snap / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def test_a_snapshot_one_revision_old_restores_and_migrates_to_head(tmp_path):
+    head, previous = chain_revisions()[:2]
+    pdf = b"%PDF-1.4\n% a fictional letter\n%%EOF\n"
+    with scratch_db() as db:
+        url = sqlalchemy_url_for(db)
+        env = OpsEnv(url=url, data=tmp_path / "data")
+        alembic(db, "upgrade", previous)
+        old_snapshot(env, url, previous, pdf)
+        alembic(db, "upgrade", "head")
+        engine = create_engine(url)
+        try:
+            with engine.begin() as conn:
+                conn.exec_driver_sql("DELETE FROM documents; DELETE FROM op_groups;")
+            assert verify(env, "older")["alembic_revision"] == previous
+            refresh_textcache(env, "older", now=NOW)
+            rep = restore(env, "older", None, now=NOW)
+            assert rep.problems == []
+            assert f"schema {previous} → {head}" in rep.lines
+            with engine.connect() as conn:
+                assert conn.execute(text("SELECT version_num FROM alembic_version")).all() == [
+                    (head,)
+                ]
+                doc = conn.execute(
+                    text("SELECT sha256, location, current_path, batch_id FROM documents")
+                ).all()
+            assert doc == [(hashlib.sha256(pdf).hexdigest(), "inbox", f"doc_{ULID}.pdf",
+                            f"bat_{ULID}")]  # fmt: skip
+            assert (env.data / "inbox" / f"doc_{ULID}.pdf").read_bytes() == pdf
+            assert postcheck(env, "older").problems == []
+        finally:
+            engine.dispose()
+
+
+@pytest.mark.parametrize("revision", ["9999", "0000", None])
+def test_a_snapshot_from_a_newer_or_unknown_schema_is_refused(tmp_path, revision):
+    env = OpsEnv(url="postgresql+psycopg://unused/none", data=tmp_path / "data")
+    snap = env.snapshot("future")
+    (snap / "data").mkdir(parents=True)
+    write_sums(snap)
+    (snap / "manifest.json").write_text(json.dumps({"alembic_revision": revision}))
+    with pytest.raises(OpsError, match="newer or unknown schema version; update Mona or rebuild"):
+        verify(env, "future")
+    with pytest.raises(OpsError, match="newer or unknown"):
+        refresh_textcache(env, "future", now=NOW)
 
 
 # --- re-anchoring (§6.4) ---

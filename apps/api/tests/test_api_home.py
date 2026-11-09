@@ -112,8 +112,10 @@ async def test_home_brief_review_due_activity_and_ingestion(l2_world, app):
     reviews = [w.doc(arrived_at=now - timedelta(hours=10 - i)) for i in range(4)]
     soon = [rows.deadline(f"Due {i}", today + timedelta(days=i), amount=10.0) for i in range(4)]
     visitor_batch = w.new_batch(visitor=True)
+    sql("UPDATE batches SET started_at = now() WHERE id = %s", (visitor_batch,))
     visitor_doc = rows.document("A visitor's bill", entity="visitors", batch_id=visitor_batch)
     rows.deadline("Visitor bill", today, entity="visitors", document_id=visitor_doc)
+    w.clock.now = now
     w.ctx.ops.delete(reviews[3], actor="user", via="ui")
     async with api_client(app) as cl:
         body = (await cl.get("/api/home")).json()

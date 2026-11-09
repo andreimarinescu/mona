@@ -22,7 +22,7 @@ function Askers() {
 }
 
 describe('HomePage', () => {
-  const api = useMockApi();
+  const api = useMockApi({ now: () => Date.parse('2026-10-01T08:00:00Z') });
   afterEach(async () => {
     await i18n.changeLanguage('en');
   });

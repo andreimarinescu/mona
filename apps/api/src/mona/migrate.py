@@ -47,3 +47,10 @@ def head_revision() -> str:
     head = ScriptDirectory.from_config(alembic_config()).get_current_head()
     assert head is not None
     return head
+
+
+def chain_revisions() -> list[str]:
+    """The migration chain, head first, down to the base."""
+    from alembic.script import ScriptDirectory
+
+    return [r.revision for r in ScriptDirectory.from_config(alembic_config()).walk_revisions()]

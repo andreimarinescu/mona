@@ -32,6 +32,8 @@ from mona.templates.render import EXTENSIONS
 
 LOCK = text("SELECT pg_advisory_lock(hashtextextended(:k, 0))")
 UNLOCK = text("SELECT pg_advisory_unlock(hashtextextended(:k, 0))")
+SHA_LOCK = text("SELECT pg_advisory_xact_lock(hashtextextended('sha256:' || :sha, 0))")
+A24_INDEX = "documents_sha256_live"
 MAX_SUFFIX = 999
 REVIEW = ("review", "unreadable")
 KEEP: Any = object()
@@ -51,6 +53,15 @@ def error_code(err: BaseException) -> str:
 
 def utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+def lock_sha256(conn: Connection, sha256: str) -> None:
+    """A37: the per-sha256 lock, held until the caller's transaction ends."""
+    conn.execute(SHA_LOCK, {"sha": sha256})
+
+
+def is_a24_violation(err: IntegrityError) -> bool:
+    return getattr(getattr(err.orig, "diag", None), "constraint_name", None) == A24_INDEX
 
 
 def sha256_file(path: Path) -> str | None:
@@ -244,6 +255,22 @@ class FileOps:
         )
         return conn.execute(q.limit(1)).first() is not None
 
+    def _restore_guard(self, conn: Connection, doc: Mapping[str, Any]) -> None:
+        """A37: the A24 check under the sha256 lock, in the restore's step-A transaction."""
+        lock_sha256(conn, doc["sha256"])
+        if self._live_twin(conn, doc):
+            raise FileOpError("conflict", "a live document has the same bytes", hint="duplicate")
+
+    def _unrestore(self, conn: Connection, entry_id: int, src: Path, dst: Path) -> None:
+        """A restore whose step C hit the A24 index: the file goes back and the entry fails."""
+        if not os.path.lexists(src):
+            self.fs.link(dst, src)
+            self.fs.fsync_dir(src.parent)
+        self.fs.unlink(dst)
+        self.fs.fsync_dir(dst.parent)
+        with tx(conn):
+            self._mark_failed(conn, entry(conn, entry_id), "duplicate")
+
     def _src(self, state: Mapping[str, Any]) -> tuple[Path, str]:
         if state.get("adopted"):
             return self.roots.trash, state["trash_copy"]
@@ -355,9 +382,12 @@ class FileOps:
         if plan.after.get("status") == "processing":
             target["status"] = "review"
             target["reasons"] = target["reasons"] or ["low"]
+        restoring = doc["deleted_at"] is not None and target["location"] != "trash"
         f = T["file_ops"]
         try:
             with tx(conn):
+                if restoring:
+                    self._restore_guard(conn, doc)
                 entry_id = conn.execute(
                     insert(f)
                     .values(
@@ -402,7 +432,14 @@ class FileOps:
                 raise
             raise FileOpError("conflict", f"filesystem error {code}", hint=code) from None
         # C. commit
-        self._commit(conn, entry_id, plan.resolution)
+        try:
+            self._commit(conn, entry_id, plan.resolution)
+        except IntegrityError as err:
+            if not (restoring and is_a24_violation(err)):
+                raise
+            self._unrestore(conn, entry_id, src, dst)
+            raise FileOpError("conflict", "a live document has the same bytes",
+                              hint="duplicate") from None  # fmt: skip
         # D. tidy
         if plan.before["location"] == "archive" and not plan.before.get("adopted"):
             self._tidy(self.roots.archive, src.parent)
@@ -784,7 +821,9 @@ __all__ = [
     "UndoResult",
     "inbox_name",
     "is_suffix_of",
+    "is_a24_violation",
     "keep_review",
+    "lock_sha256",
     "sha256_file",
     "suffixed",
     "utcnow",

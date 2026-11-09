@@ -2,12 +2,13 @@ import { Progress, StatusPill, format } from '@mona/ui';
 import { useTranslation } from 'react-i18next';
 import type { BatchSummary } from '../../data/dto';
 import { useLang } from '../../shell/useLang';
-import { timeLeftMs } from './summary';
+import { intakeSummary, timeLeftMs } from './summary';
 
 export function BatchProgress({ batch, now }: { batch: BatchSummary; now: number }) {
   const { t } = useTranslation();
   const lang = useLang();
   const { counts } = batch;
+  const summary = intakeSummary(counts);
   const total = counts.accepted;
   const done = total - counts.processing;
   const left = batch.status === 'running' ? timeLeftMs(batch.startedAt, now, done, total) : null;
@@ -29,9 +30,9 @@ export function BatchProgress({ batch, now }: { batch: BatchSummary; now: number
         <Progress value={done} max={Math.max(total, 1)} label={valueText} valueText={total === 0 ? undefined : format.percent(done / total, lang)} lang={lang} size="sm" />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {pill('filed', counts.filed, t('intake.counts.filed'))}
-        {pill('review', counts.review + counts.failed, t('intake.counts.review'))}
-        {pill('unreadable', counts.unreadable + counts.rejected, t('intake.counts.unreadable'))}
+        {pill('filed', summary.filed, t('intake.counts.filed'))}
+        {pill('review', summary.needYou, t('intake.counts.review'))}
+        {pill('unreadable', summary.unreadable, t('intake.counts.unreadable'))}
         {pill('processing', counts.processing, t('intake.counts.processing'))}
       </div>
     </div>

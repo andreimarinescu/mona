@@ -10,7 +10,7 @@ from typing import Any
 from sqlalchemy import Connection, delete, exists, func, select, text, update
 from sqlalchemy.exc import DBAPIError
 
-from mona.fileops.ops import FileOps, tx
+from mona.fileops.ops import FileOps, lock_sha256, tx
 from mona.fileops.roots import resolve_inside
 from mona.fileops.state import T
 
@@ -58,7 +58,8 @@ def _unlink(root: Path, rel: str) -> Path:
 
 
 def _files(ops: FileOps, conn: Connection, doc: Mapping[str, Any]) -> None:
-    """§5.3 step 1: the document's file, a live adoption's trash copy, its caches."""
+    """§5.3 step 1: the document's file, a live adoption's trash copy, and its caches unless
+    another row, live or deleted, has the same sha256 (A37)."""
     roots = ops.roots
     path = _unlink(roots.root(doc["location"]), doc["current_path"])
     if doc["location"] in ("archive", "trash"):
@@ -70,9 +71,13 @@ def _files(ops: FileOps, conn: Connection, doc: Mapping[str, Any]) -> None:
     for rel in sorted(copies):
         if rel.startswith(f"{doc['id']}/"):
             ops._tidy(roots.trash, _unlink(roots.trash, rel).parent)
-    sha = doc["sha256"]
-    for cached in (roots.data / "textcache" / sha[:2]).glob(f"{sha}.*"):
-        cached.unlink(missing_ok=True)
+    sha, d = doc["sha256"], T["documents"]
+    with tx(conn):
+        lock_sha256(conn, sha)
+        twin = select(d.c.id).where(d.c.sha256 == sha, d.c.id != doc["id"]).limit(1)
+        if conn.execute(twin).first() is None:
+            for cached in (roots.data / "textcache" / sha[:2]).glob(f"{sha}.*"):
+                cached.unlink(missing_ok=True)
 
 
 def _group_tree(conn: Connection, roots: set[str]) -> dict[str, list[str]]:

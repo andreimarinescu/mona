@@ -579,7 +579,7 @@ def _pending(w: World, doc: str, before: dict, after: dict) -> int:
             insert(f)
             .values(actor="mona", via="chat", action="move", document_id=doc,
                     sha256=w.doc(doc)["sha256"], before=before, after=after,
-                    fs_state="pending", undoable=True)
+                    fs_state="pending", undoable=True, at=w.clock())
             .returning(f.c.id)
         ).scalar_one()  # fmt: skip
 
