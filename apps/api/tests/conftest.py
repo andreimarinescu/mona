@@ -2,6 +2,9 @@ import os
 import tempfile
 
 os.environ["MONA_ENV"] = "dev"
+# typer forces ANSI into CliRunner output when any of these is set (GitHub Actions sets the first)
+for _var in ("GITHUB_ACTIONS", "FORCE_COLOR", "PY_COLORS"):
+    os.environ.pop(_var, None)
 
 from pathlib import Path
 
