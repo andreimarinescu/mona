@@ -13,7 +13,15 @@ from mona.pipeline import cache, extract
 from mona.pipeline import prompt as prompts
 from mona.pipeline.evidence import check, field_confidence
 from mona.pipeline.findquery import find_query
-from mona.pipeline.model import D4_PIN, QWEN36, LlmClient, SchemaInvalid, extra_body
+from mona.pipeline.model import (
+    D4_PIN,
+    QWEN36,
+    SCHEMA_GUIDE,
+    LlmClient,
+    SchemaInvalid,
+    extra_body,
+    wire_schema,
+)
 from mona.pipeline.schema import Field, build, clean, errors, strings_bounded
 from tests.pipeline_world import RECORDED, SYNTHETIC, Tools, mini_pdf
 
@@ -313,7 +321,36 @@ def test_request_shape_per_backend(model, backend, knobs):
     assert {k: body[k] for k in knobs} == knobs
     other = {"reasoning", "provider", "chat_template_kwargs"} - set(knobs)
     assert not other & set(body)
-    assert body["messages"][0] == {"role": "system", "content": "SYSTEM"}
+    system = body["messages"][0]["content"]
+    if backend == "llama-server":
+        assert system == f"SYSTEM\n\n{SCHEMA_GUIDE}\n{json.dumps(SCHEMA, ensure_ascii=False)}"
+    else:
+        assert system == "SYSTEM"
+
+
+def test_wire_schema_drops_long_max_length_for_llama_server_only():
+    # A42: llama.cpp refused the 6000-character draft body with "failed to parse grammar"
+    long = {"type": "object", "properties": {"t": {"type": "string", "maxLength": 120},
+            "b": {"type": "string", "maxLength": 6000}}}  # fmt: skip
+    sent = wire_schema("llama-server", long)
+    assert sent["properties"]["t"] == {"type": "string", "maxLength": 120}
+    assert sent["properties"]["b"] == {"type": "string"}
+    assert wire_schema("openrouter", long) is long
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_complete_json_sends_the_wire_schema_and_validates_nothing_more():
+    reply = {"title": "T", "body": "B"}
+    long = {"type": "object", "properties": {"title": {"type": "string", "maxLength": 120},
+            "body": {"type": "string", "maxLength": 6000}},
+            "required": ["title", "body"], "additionalProperties": False}  # fmt: skip
+    client, sent = _mock_client(QWEN36, "llama-server", reply)
+    out = client.complete_json("S", "U", long, name="draft", temperature=0.3, max_tokens=50,
+                               timeout_s=5)  # fmt: skip
+    assert out == reply
+    props = sent[0]["response_format"]["json_schema"]["schema"]["properties"]
+    assert "maxLength" not in props["body"] and props["title"]["maxLength"] == 120
+    assert sent[0]["messages"][0]["content"] == "S"
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")

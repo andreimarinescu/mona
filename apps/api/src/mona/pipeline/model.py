@@ -1,6 +1,7 @@
 """C5 §5.1 model client: strict json_schema through pydantic-ai `NativeOutput`, thinking off."""
 
 import asyncio
+import json
 import os
 import threading
 import time
@@ -34,6 +35,8 @@ TEMPERATURE = 0
 MAX_TOKENS = 2000
 TIMEOUT_S = 90
 SCHEMA_NAME = "mona_extraction"
+GRAMMAR_MAX_LENGTH = 1000
+SCHEMA_GUIDE = "Answer with one JSON object that follows this JSON Schema exactly:"
 
 
 class TransportError(Exception):
@@ -76,6 +79,28 @@ def thinking_body(backend: str, model: str) -> dict[str, Any]:
     if backend == "llama-server":
         return {"chat_template_kwargs": {"enable_thinking": True}}
     return {**extra_body(backend, model), "reasoning": {"enabled": True}}
+
+
+def wire_schema(backend: str, schema: Any) -> Any:
+    """A42: llama.cpp can't build a grammar over a long maxLength; the caller still validates it."""
+    if backend != "llama-server":
+        return schema
+    if isinstance(schema, dict):
+        return {
+            k: wire_schema(backend, v)
+            for k, v in schema.items()
+            if not (k == "maxLength" and isinstance(v, int) and v > GRAMMAR_MAX_LENGTH)
+        }
+    if isinstance(schema, list):
+        return [wire_schema(backend, v) for v in schema]
+    return schema
+
+
+def with_schema_guide(backend: str, system: str, schema: dict[str, Any]) -> str:
+    """A42: llama-server enforces the schema without showing it to the model."""
+    if backend != "llama-server":
+        return system
+    return f"{system}\n\n{SCHEMA_GUIDE}\n{json.dumps(schema, ensure_ascii=False)}"
 
 
 def _delta_text(delta: Any, *names: str) -> str:
@@ -144,8 +169,10 @@ class LlmClient:
     async def _complete(self, system: str, user: str, schema: dict[str, Any]) -> ModelResult:
         agent = Agent(
             self._chat,
-            output_type=NativeOutput(StructuredDict(schema, name=SCHEMA_NAME), strict=True),
-            instructions=system,
+            output_type=NativeOutput(
+                StructuredDict(wire_schema(self.backend, schema), name=SCHEMA_NAME), strict=True
+            ),
+            instructions=with_schema_guide(self.backend, system, schema),
             retries=0,
         )
         start = time.monotonic()
@@ -225,7 +252,9 @@ class LlmClient:
         }
         agent = Agent(
             self._chat,
-            output_type=NativeOutput(StructuredDict(schema, name=name), strict=True),
+            output_type=NativeOutput(
+                StructuredDict(wire_schema(self.backend, schema), name=name), strict=True
+            ),
             instructions=system,
             retries=0,
         )

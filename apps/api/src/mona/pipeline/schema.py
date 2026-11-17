@@ -12,7 +12,7 @@ FIELD_KEYS = ("entity", "counterparty", "issuer", "reference", "doc_type", "doc_
               "period_start", "period_end", "amount", "due_date", "addressee")  # fmt: skip
 DATE_FIELDS = ("doc_date", "period_start", "period_end", "due_date")
 TEXT_MAX = {"counterparty": 160, "issuer": 160, "reference": 60, "doc_type": 80, "addressee": 160}
-DATE = {"type": "string", "pattern": r"^\d{4}-\d{2}-\d{2}$", "maxLength": 10}
+DATE = {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "maxLength": 10}
 _WS = re.compile(r"\s+")
 
 

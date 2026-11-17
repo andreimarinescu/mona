@@ -379,3 +379,22 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - After FIX-13b's SOUL wording and A39's note, Qwen 3.6 still typed its own table above the card in 4 of 24 live replies. One of them held dates and entity names the tool never returned.
   - Andrei chose a deterministic guard (D15) over accepting the residual rate (2026-11-09).
 - **Lanes:** L2 (FIX-13d).
+
+## A41 · 2026-11-17 · C5 §5.2 output schema: the `date` pattern spells digits as `[0-9]`
+
+- **Change:** `date` = `{"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "maxLength": 10}`. The language is unchanged; only the spelling of the digit class differs. Model-facing schema patterns avoid `\d` and the other shorthand classes.
+- **Why:**
+  - On the Windows Mona box (2026-11-17), llama-server (llama.cpp b10092) answered every `classify_document` request with HTTP 400 "failed to parse grammar": its JSON-schema-to-grammar step rejects `\d`. All 18 documents of the live batch went to review as `failed`.
+  - OpenRouter never showed it, so the MVP never exercised the local structured-output path.
+- **Lanes:** FIX-15.
+
+## A42 · 2026-11-17 · C5 §5.1 request: llama-server sees the schema, and its grammar skips long maxLength
+
+- **Change:** for `MONA_LLM_BACKEND=llama-server` only:
+  - `classify_document`'s system prompt ends with "Answer with one JSON object that follows this JSON Schema exactly:" and the request schema as JSON.
+  - The schema sent in `response_format` (every strict call: classification, drafts, interview pass 2) drops each `maxLength` above 1000. The caller still validates the answer against the full schema, so C4's 6000-character draft body still holds.
+  - OpenRouter requests are unchanged.
+- **Why:**
+  - llama.cpp enforces the schema as a grammar without showing it to the model. Mona's classification prompt never describes the answer format. Forced to emit `title`, `category` and `subcategory` first, Qwen 3.6 Q4 often answered every evidence field with `null` and confidence 0. That was 4 of 13 live-batch documents on the Windows box, where the OpenRouter run of the same prompt had filled them. With the schema in the prompt, all of them filled (5–8 fields, confidence 0.9–1.0, no schema errors).
+  - llama.cpp refuses repetitions above about 2000 ("failed to parse grammar"), so every draft failed with `ModelError`.
+- **Lanes:** FIX-15.
