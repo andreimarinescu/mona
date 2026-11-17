@@ -8,7 +8,7 @@ POSTGRES_PORT ?= 55432
 DATABASE_URL ?= postgresql+psycopg://mona:$(POSTGRES_PASSWORD)@localhost:$(POSTGRES_PORT)/mona_test
 export DATABASE_URL
 
-.PHONY: up down logs db check web-check py-check api-client e2e
+.PHONY: up down logs db check web-check py-check ci-py api-client e2e
 
 up: node_modules apps/web/node_modules data
 	$(COMPOSE) up -d --build
@@ -56,6 +56,16 @@ py-check:
 	cd apps/api && uv run --frozen ruff check .
 	cd apps/api && uv run --frozen ruff format --check .
 	cd apps/api && uv run --frozen pytest
+
+ci-py:
+	@name=mona-ci-py-$$$$; \
+	docker run -d --rm --name $$name -e POSTGRES_USER=mona -e POSTGRES_PASSWORD=mona \
+		-e POSTGRES_DB=mona_test -p 127.0.0.1::5432 postgres:17 >/dev/null || exit 1; \
+	trap "docker rm -f $$name >/dev/null" EXIT; \
+	for _ in $$(seq 60); do docker exec $$name pg_isready -q -h 127.0.0.1 -U mona && break; sleep 1; done; \
+	port=$$(docker port $$name 5432/tcp | head -1 | sed 's/.*://'); \
+	CI=true GITHUB_ACTIONS=true MONA_SEED_OVERLAY=/nonexistent $(MAKE) --no-print-directory py-check \
+		DATABASE_URL=postgresql+psycopg://mona:mona@localhost:$$port/mona_test
 
 e2e:
 	$(WEB) e2e -- --workers=2

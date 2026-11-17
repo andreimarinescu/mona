@@ -45,8 +45,10 @@ jobs:
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-17
           echo "PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump" >> "$GITHUB_ENV"
-      - name: poppler-utils (pdftotext for the extraction tests)
-        run: sudo apt-get install -y poppler-utils
+      - name: poppler-utils and the image's OCR tools (the extraction tests)
+        run: >-
+          sudo apt-get install -y --no-install-recommends poppler-utils img2pdf ocrmypdf
+          tesseract-ocr tesseract-ocr-fra tesseract-ocr-eng tesseract-ocr-ron
       - name: An empty .env (docker compose config for the prod compose tests)
         run: touch .env
       - run: make py-check
