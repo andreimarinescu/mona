@@ -51,6 +51,24 @@ def test_a_literal_10_and_a_two_character_reference_stay_literals():
     assert infer("2026-10_2025-A-118", v).pattern == "{date:YYYY-MM}_{reference}"
 
 
+REF = {"reference": "25-A-118"}
+HABITAT = {"counterparty": "13 Habitat"}
+
+
+@pytest.mark.parametrize(
+    ("example", "d", "kw", "pattern"),
+    [
+        ("2026-10_25-A-118", date(2026, 10, 5), REF, "{date:YYYY-MM}_{reference}"),
+        ("2026-10-05_25-A-118", date(2026, 10, 5), REF, "{date:YYYY-MM-DD}_{reference}"),
+        ("2026-01_13-Habitat", date(2026, 1, 16), HABITAT, "{date:YYYY-MM}_{counterparty}"),
+        ("2026-01-16_13-Habitat", date(2026, 1, 16), HABITAT, "{date:YYYY-MM-DD}_{counterparty}"),
+        ("2026-01-16_01_x", date(2026, 1, 16), {}, "{date:YYYY-MM-DD}_01_x"),
+    ],
+)
+def test_a_complete_leading_date_or_an_inferred_token_is_no_wrong_date(example, d, kw, pattern):
+    assert infer(example, statement(d, **kw)).pattern == pattern
+
+
 def test_marchand_is_no_month():
     v = statement(date(2026, 3, 5))
     assert infer("2026-03-Marchand", v).pattern == "{date:YYYY-MM}-Marchand"
@@ -89,6 +107,11 @@ def test_the_name_must_start_with_the_document_date(example, d):
     with pytest.raises(InferError) as e:
         infer(example, statement(d))
     assert d.isoformat() in e.value.message
+
+
+def test_a_reference_too_short_to_infer_does_not_excuse_a_wrong_date():
+    with pytest.raises(InferError):
+        infer("2026-01-02_HB", statement(reference="02"))
 
 
 def test_the_date_is_the_arrival_date_without_a_doc_date():

@@ -71,12 +71,12 @@ def _leading_dates(stem: str, d: date, lang: str) -> Iterator[tuple[int, str, tu
     yield from walk(0, "", ())
 
 
-def _leading_date(stem: str, d: date, lang: str) -> tuple[int, str] | None:
+def _leading_date(stem: str, d: date, lang: str) -> tuple[int, str, tuple[str, ...]] | None:
     def rank(m: tuple[int, str, tuple[str, ...]]):
         return (-m[0], ORDERS.index(m[2]) if m[2] in ORDERS else len(ORDERS), m[1])
 
     found = sorted(set(_leading_dates(stem, d, lang)), key=rank)
-    return (found[0][0], found[0][1]) if found else None
+    return found[0] if found else None
 
 
 def _token_text(t: Token) -> str:
@@ -103,31 +103,41 @@ def check_literals(parts: list[Part], d: date) -> None:
                 )
 
 
+def _hits(stem: str, pos: int, candidates: list[tuple[Token, str]]) -> list[tuple[Token, str]]:
+    return [
+        (t, value) for t, value in candidates
+        if stem.startswith(value, pos) and _ends_at_boundary(stem, pos + len(value))
+    ]  # fmt: skip
+
+
 def infer(example: str, v: RenderValues) -> Inferred:
     """Longest match, left to right, from token boundaries; ties go date > counterparty >
     entity > sub > reference; everything else is literal. Raises InferError."""
     stem = normalise(example)
     d, lang = file_date(v), filing_language(v)
+    tokens: list[tuple[Token, str]] = []
+    for name in ("counterparty", "entity", "sub", "reference"):
+        value = slug(token_value(v, name))
+        if value and (name != "reference" or len(value) >= MIN_REFERENCE):
+            tokens.append((Token(name, None, 0), value))
     lead = _leading_date(stem, d, lang)
-    if lead is None or LEFTOVER_DATE.match(stem, lead[0]):
+    if lead is None or (
+        len(lead[2]) < 3
+        and LEFTOVER_DATE.match(stem, lead[0])
+        and not _hits(stem, lead[0] + 1, tokens)
+    ):
         raise InferError(f"The name must start with this document's date, {d.isoformat()}.")
-    pos, fmt = lead
+    pos, fmt, _ = lead
     parts: list[Part] = [Token("date", fmt, 0)]
     candidates: list[tuple[Token, str]] = [
         (Token("date", "YYYY", 0), slug(format_date(d, "YYYY", lang))),
         (Token("date", "MMMM", 0), slug(format_date(d, "MMMM", lang))),
+        *tokens,
     ]
-    for name in ("counterparty", "entity", "sub", "reference"):
-        value = slug(token_value(v, name))
-        if value and (name != "reference" or len(value) >= MIN_REFERENCE):
-            candidates.append((Token(name, None, 0), value))
     text = ""
     while pos < len(stem):
         if stem[pos - 1] in SEPARATORS:
-            hits = [
-                (t, value) for t, value in candidates
-                if stem.startswith(value, pos) and _ends_at_boundary(stem, pos + len(value))
-            ]  # fmt: skip
+            hits = _hits(stem, pos, candidates)
             if hits:
                 t, value = max(hits, key=lambda h: len(h[1]))
                 if text:
