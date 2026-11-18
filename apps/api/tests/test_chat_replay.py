@@ -729,6 +729,7 @@ def test_reasoning_effort_comes_from_the_config_even_with_no_extra(tmp_path, mon
         assert res.exit_code == 0, res.output
         body = json.loads([r for r in seen if r.url.path.endswith("completions")][0].content)
         settings_ = json.loads((out / "summary.json").read_text())["settings"]
+        assert settings_["reasoning_effort"] == body["reasoning_effort"]
         return body["reasoning_effort"], settings_["reasoning_effort_source"]
 
     assert sent("--no-extra") == ("medium", "default")
@@ -756,6 +757,12 @@ def test_reasoning_effort_comes_from_the_config_even_with_no_extra(tmp_path, mon
         "inline",
     )
     assert sent("--extra-from", str(other), "--extra", '{"top_k": 1}') == ("low", "config")
+    entry["extra_body"]["reasoning_effort"] = "high"
+    other.write_text(
+        yaml.safe_dump({"model": {"base_url": BASE}, "custom_providers": [entry],
+                        "agent": {"reasoning_effort": "low"}})
+    )  # fmt: skip
+    assert sent("--extra-from", str(other)) == ("high", "config")
     assert cr.config_effort(None) == ("medium", "default")
 
 
