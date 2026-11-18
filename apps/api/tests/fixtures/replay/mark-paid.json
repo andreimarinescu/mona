@@ -1,0 +1,39 @@
+{
+  "v": 1,
+  "system": {
+    "soul": true
+  },
+  "overlay": {
+    "language": "en"
+  },
+  "history": [
+    {
+      "role": "user",
+      "content": "What is due this month?"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "call_1",
+          "type": "function",
+          "function": {
+            "name": "mcp__mona__list_deadlines",
+            "arguments": "{\"within_days\": 30}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "{\"total\": 1, \"next_cursor\": null, \"items\": [{\"deadline_id\": \"ddl_aa11\", \"document_id\": \"doc_bb22\", \"label\": \"Payment demand\", \"entity\": {\"key\": \"harbor-works\", \"name\": \"Harbor Works\"}, \"due_date\": \"2026-11-28\", \"days_left\": 10, \"amount\": 212.4, \"currency\": \"EUR\", \"payment_iban\": null, \"status\": \"open\", \"reminder_on\": null}], \"card_refs\": [\"crd_cc33\"]}"
+    },
+    {
+      "role": "assistant",
+      "content": "One payment is due this month: the Brightwater Energy demand for €212.40, due 28 November."
+    }
+  ],
+  "user": "Mark it paid."
+}

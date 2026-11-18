@@ -1,0 +1,39 @@
+{
+  "v": 1,
+  "system": {
+    "soul": true
+  },
+  "overlay": {
+    "language": "en"
+  },
+  "history": [
+    {
+      "role": "user",
+      "content": "File the Lumina Telecom letters under Utilities from now on."
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "call_4",
+          "type": "function",
+          "function": {
+            "name": "mcp__mona__preview_rule",
+            "arguments": "{\"rule_id\": \"rul_ee55\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_4",
+      "content": "{\"rule_id\": \"rul_ee55\", \"would_move\": 4, \"already_matching\": 1, \"examples\": [{\"from\": \"Inbox/letter-0412.pdf\", \"to\": \"Harbor Works/2026/Utilities/Lumina Telecom letter.pdf\"}], \"card_refs\": [\"crd_ff66\"]}"
+    },
+    {
+      "role": "assistant",
+      "content": "This rule would move 4 letters into Utilities. Shall I apply it?"
+    }
+  ],
+  "user": "confirm"
+}

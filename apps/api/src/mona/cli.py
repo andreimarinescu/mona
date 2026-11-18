@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 
@@ -256,6 +256,146 @@ def pipeline_backfill_iban() -> None:
     typer.echo(
         f"{out.checked} documents checked, {out.changed} updated, {out.no_text} without text"
     )
+
+
+replay_app = typer.Typer(
+    no_args_is_help=True,
+    help="Replay recorded chat turns straight at the model endpoint and count how often it "
+    "acts and how long it thinks (D23). It never runs a tool and writes only under --out; "
+    "Hermes' own `memory` tool is not part of the replayed tool list.",
+)
+app.add_typer(replay_app, name="chat-replay")
+
+
+def _replay_errors(fn):
+    import functools
+
+    @functools.wraps(fn)
+    def run(*args, **kwargs):
+        from mona.chat_replay import ReplayError
+
+        try:
+            return fn(*args, **kwargs)
+        except ReplayError as e:
+            typer.echo(f"error: {e}", err=True)
+            raise typer.Exit(2) from None
+
+    return run
+
+
+@replay_app.command("build")
+@_replay_errors
+def replay_build(
+    session: Annotated[str, typer.Option(help="The Hermes session id (the conversation id).")],
+    turn: Annotated[
+        list[int], typer.Option(help="A user message to replay, counted from 1; repeatable.")
+    ],
+    out: Annotated[Path, typer.Option(help="Where the scenarios go: outside the repo.")],
+    hermes_db: Annotated[Path, typer.Option(help="Hermes' state.db, opened read-only.")] = Path(
+        "/hermes/state.db"
+    ),
+) -> None:
+    """One scenario file per selected turn; the files hold practice data."""
+    import asyncio
+
+    from mona import chat_replay as cr
+
+    target = cr.private_out(out)
+    scenarios = cr.build_scenarios(hermes_db, session, turn, asyncio.run(cr.mona_tools()))
+    for name, scenario in scenarios.items():
+        cr.write_private(
+            target / f"{cr.safe_name(name)}.json",
+            json.dumps(scenario, indent=2, ensure_ascii=False) + "\n",
+        )
+        typer.echo(f"{name}: {len(scenario['history'])} earlier messages")
+    typer.echo(f"wrote {len(scenarios)} scenarios to {target}")
+
+
+@replay_app.command("run")
+@_replay_errors
+def replay_run(
+    scenarios: Annotated[Path, typer.Option(help="A directory of scenario .json files.")],
+    runs: Annotated[int, typer.Option(min=1, help="Runs per scenario, one after another.")] = 5,
+    extra_from: Annotated[
+        Path | None,
+        typer.Option(help="Hermes config whose custom_providers extra_body is sent."),
+    ] = None,
+    extra: Annotated[
+        str | None, typer.Option(help="JSON object merged over the extra body.")
+    ] = None,
+    no_extra: Annotated[
+        bool, typer.Option("--no-extra", help="Send no extra body (the baseline).")
+    ] = False,
+    cut: Annotated[
+        Path | None, typer.Option(help="A cut.py with cut_system_prompt(text) -> (text, removed).")
+    ] = None,
+    system: Annotated[
+        Path | None, typer.Option(help="A system prompt file replacing the stored prompt.")
+    ] = None,
+    soul: Annotated[
+        Path | None, typer.Option(help="SOUL.md for soul scenarios; default: the seed's copy.")
+    ] = None,
+    max_seconds: Annotated[float, typer.Option(help="Close a run's stream after this long.")] = 150,
+    out: Annotated[
+        Path | None, typer.Option(help="Write summary.json and summary.md here: outside the repo.")
+    ] = None,
+    keep_text: Annotated[
+        bool, typer.Option("--keep-text", help="Also write the texts of each run to <out>/texts/.")
+    ] = False,
+) -> None:
+    """Replays through mona.llm's endpoint and model; the summary holds counts, never text."""
+    import asyncio
+
+    from mona import chat_replay as cr
+    from mona.settings import get_settings
+
+    if no_extra and (extra or extra_from):
+        raise typer.BadParameter("--no-extra excludes --extra and --extra-from")
+    if keep_text and out is None:
+        raise typer.BadParameter("--keep-text needs --out", param_hint="--keep-text")
+    try:
+        inline = json.loads(extra) if extra else None
+    except ValueError:
+        raise typer.BadParameter("not valid JSON", param_hint="--extra") from None
+    if inline is not None and not isinstance(inline, dict):
+        raise typer.BadParameter("not a JSON object", param_hint="--extra")
+    target = cr.private_out(out) if out else None
+    config = extra_from
+    if config is None and not no_extra and (inline is None or cr.DEFAULT_CONFIG.is_file()):
+        config = cr.DEFAULT_CONFIG
+    body, source = cr.merge_extra(config, inline, none=no_extra)
+    texts: dict[str, Any] = {}
+    summary = asyncio.run(
+        cr.run_replay(
+            get_settings(),
+            cr.load_scenarios(scenarios),
+            runs=runs,
+            extra=body,
+            extra_source=source,
+            system=system.read_text(encoding="utf-8") if system else None,
+            soul=soul,
+            cut=cr.load_cut(cut) if cut else None,
+            max_seconds=max_seconds,
+            on_run=lambda name, i, rec: typer.echo(
+                f"{name} #{i + 1}: acted={rec['acted']} runaway={rec['runaway']} "
+                f"{rec['total_s']} s",
+                err=True,
+            ),
+            keep_text=(lambda name, i, t: texts.__setitem__(f"{name}-{i + 1}", t))
+            if keep_text
+            else None,
+        )
+    )
+    report = cr.markdown(summary)
+    if target is not None:
+        cr.write_private(target / "summary.json", json.dumps(summary, indent=2) + "\n")
+        cr.write_private(target / "summary.md", report)
+        for name, t in texts.items():
+            cr.write_private(
+                target / "texts" / f"{cr.safe_name(name)}.json",
+                json.dumps(t, indent=2, ensure_ascii=False) + "\n",
+            )
+    typer.echo(report)
 
 
 ops_app = typer.Typer(

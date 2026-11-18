@@ -1,0 +1,39 @@
+{
+  "v": 1,
+  "system": {
+    "soul": true
+  },
+  "overlay": {
+    "language": "en"
+  },
+  "history": [
+    {
+      "role": "user",
+      "content": "Remind me about the Brightwater Energy demand on the 25th."
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "call_2",
+          "type": "function",
+          "function": {
+            "name": "mcp__mona__schedule_reminder",
+            "arguments": "{\"deadline_id\": \"ddl_aa11\", \"remind_on\": \"2026-11-25\"}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_2",
+      "content": "{\"reminder_id\": \"rem_dd44\", \"remind_on\": \"2026-11-25\", \"status\": \"scheduled\"}"
+    },
+    {
+      "role": "assistant",
+      "content": "Done. I'll remind you on 25 November in the app."
+    }
+  ],
+  "user": "What app?"
+}

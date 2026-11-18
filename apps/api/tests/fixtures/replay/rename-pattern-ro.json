@@ -1,0 +1,39 @@
+{
+  "v": 1,
+  "system": {
+    "soul": true
+  },
+  "overlay": {
+    "language": "ro"
+  },
+  "history": [
+    {
+      "role": "user",
+      "content": "Ce extrase de cont avem din 2026?"
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "tool_calls": [
+        {
+          "id": "call_3",
+          "type": "function",
+          "function": {
+            "name": "mcp__mona__search_documents",
+            "arguments": "{\"query\": \"extras de cont\", \"year\": 2026}"
+          }
+        }
+      ]
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_3",
+      "content": "{\"total\": 3, \"next_cursor\": null, \"results\": [{\"id\": \"doc_s001\", \"title\": \"Extras de cont Banca Lumina ianuarie 2026\", \"date\": \"2026-01-31\"}, {\"id\": \"doc_s002\", \"title\": \"Extras de cont Banca Lumina februarie 2026\", \"date\": \"2026-02-28\"}, {\"id\": \"doc_s003\", \"title\": \"Extras de cont Banca Lumina martie 2026\", \"date\": \"2026-03-31\"}], \"card_refs\": []}"
+    },
+    {
+      "role": "assistant",
+      "content": "Avem trei extrase Banca Lumina din 2026: ianuarie, februarie și martie."
+    }
+  ],
+  "user": "Redenumește-le pe toate după modelul „AAAA-LL Banca extras”, cu luna scrisă cu litere."
+}

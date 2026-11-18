@@ -14,6 +14,7 @@
 #   mona doctor [--privacy] [--json]           (host checks: GPU, published ports, cloud-key names)
 #   mona perf [--dry-run] [--batch <dir>] [--order <file>] [--beats <file>] [--cold|--no-cold]
 #                                              (report in <data>/perf; VRAM sampled on the host)
+#   mona chat-replay build|run …               (host paths are mounted; --out must be outside the repo)
 #   mona <anything else>                       (e.g. seed load /seed, hermes-memory)
 #
 # Environment: MONA_COMPOSE (default "docker compose", or the prod overlay once deploy/bin/deploy has
@@ -229,6 +230,34 @@ perf() {
   ops_run mona perf "${args[@]}"
 }
 
+chat_replay() {
+  local args=("$1") opt host; shift
+  OPS_EXTRA+=(--user "${MONA_UID:-1000}:${MONA_GID:-1000}")
+  while (($#)); do
+    opt=$1
+    case "$opt" in
+      --out)
+        mkdir -p "$2"; host=$(readlink -f "$2")
+        [[ "$host/" != "$ROOT/"* ]] || die "chat-replay: --out $host is inside the repo"
+        OPS_EXTRA+=(-v "$host:/replay/out"); args+=(--out /replay/out); shift 2 ;;
+      --scenarios)
+        OPS_EXTRA+=(-v "$(readlink -f "$2"):/replay/scenarios:ro"); args+=(--scenarios /replay/scenarios)
+        shift 2 ;;
+      --system|--cut|--soul|--extra-from)
+        if [[ -f "$2" ]]; then
+          host=$(readlink -f "$2")
+          OPS_EXTRA+=(-v "$host:/replay/${opt#--}/$(basename "$host"):ro")
+          args+=("$opt" "/replay/${opt#--}/$(basename "$host")")
+        else
+          args+=("$opt" "$2")
+        fi
+        shift 2 ;;
+      *) args+=("$opt"); shift ;;
+    esac
+  done
+  ops_run mona chat-replay "${args[@]}"
+}
+
 backup() {
   local name="" to="${HOME}/DevFiles/mona-hq/demo-data/snapshots"
   while (($#)); do
@@ -284,5 +313,6 @@ case "$cmd" in
   status) compose ps ;;
   doctor) doctor "$@" ;;
   perf) perf "$@" ;;
+  chat-replay) chat_replay "$@" ;;
   *) ops "$cmd" "$@" ;;
 esac
