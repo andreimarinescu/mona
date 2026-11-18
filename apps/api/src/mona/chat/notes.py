@@ -46,6 +46,15 @@ def reminder_add(label: str, on: date) -> str:
     return f'Set a reminder for "{note_value(label)}" on {on.isoformat()}.'
 
 
+def deadline_status(label: str, status: str) -> str:
+    label = note_value(label)
+    if status == "done":
+        return f'Marked the deadline "{label}" as done.'
+    if status == "open":
+        return f'Reopened the deadline "{label}".'
+    return f'Dismissed the deadline "{label}".'
+
+
 def draft_download(title: str) -> str:
     return f'Downloaded the draft "{note_value(title)}".'
 

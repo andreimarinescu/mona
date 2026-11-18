@@ -186,6 +186,17 @@ def _a36_tables() -> list[str]:
     ]
 
 
+def _a60_deadline_status() -> list[str]:
+    """Amendment A60's `deadline.status` journal action, as migration 0011 makes it."""
+    section = _section("A60")
+    assert "`deadline.status`" in section and "`file_ops.action` CHECK" in section
+    return [
+        "ALTER TABLE file_ops DROP CONSTRAINT file_ops_action_check,"
+        f" ADD CONSTRAINT file_ops_action_check CHECK (action IN ({JOURNAL_ACTIONS},'export',"
+        "'deadline.status'))"
+    ]
+
+
 def contract_ddl() -> list[str]:
     creates, fks, others = [], [], []
     auth = [b for b in sql_blocks(C2.read_text()) if b.lstrip().startswith("auth_sessions")]
@@ -202,5 +213,5 @@ def contract_ddl() -> list[str]:
     return (
         search + creates + fks + indexes
         + [_a9_column(), _a18_defaults(), *_a24_sha256(), *_a30_payment_iban(), *_a31_exports(),
-           *_a36_tables()]
+           *_a36_tables(), *_a60_deadline_status()]
     )  # fmt: skip

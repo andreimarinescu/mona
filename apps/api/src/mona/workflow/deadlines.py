@@ -7,7 +7,7 @@ from sqlalchemy import Connection, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from mona import clock
-from mona.chat.notes import reminder_add
+from mona.chat.notes import deadline_status, reminder_add
 from mona.db.models import Base
 from mona.ids import new_id
 from mona.services import Ctx, ServiceError
@@ -17,15 +17,36 @@ T = Base.metadata.tables
 DEADLINE_STATUSES = ("open", "done", "dismissed")
 
 
-def set_status(ctx: Ctx, deadline_id: str, status: str) -> None:
-    """C2 §10 "Done"/Dismiss/Reopen; not journaled, and the same PATCH reverses it."""
+def set_status(ctx: Ctx, deadline_id: str, status: str, conversation_id: str | None = None) -> None:
+    """C2 §10 / A60: a change writes a `deadline.status` entry and a note; no change, nothing."""
     d = T["deadlines"]
     with ctx.engine.begin() as conn:
-        n = conn.execute(
+        row = conn.execute(
+            select(d.c.status, d.c.label, d.c.document_id)
+            .where(d.c.id == deadline_id)
+            .with_for_update()
+        ).first()
+        if row is None:
+            raise ServiceError("not_found", "No deadline with that id.")
+        if row.status == status:
+            return
+        conn.execute(
             update(d).where(d.c.id == deadline_id).values(status=status, updated_at=ctx.clock())
-        ).rowcount
-    if n == 0:
-        raise ServiceError("not_found", "No deadline with that id.")
+        )
+        conn.execute(
+            insert(T["file_ops"]).values(
+                at=ctx.clock(),
+                actor="user",
+                via="ui",
+                action="deadline.status",
+                document_id=row.document_id,
+                subject_id=deadline_id,
+                undoable=False,
+                before={"status": row.status},
+                after={"status": status},
+            )
+        )
+        add_note(conn, conversation_id, "deadline.status", deadline_status(row.label, status))
 
 
 @dataclass

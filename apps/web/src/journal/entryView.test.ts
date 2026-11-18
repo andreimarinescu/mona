@@ -3,6 +3,15 @@ import i18n from '../i18n';
 import { entry } from '../test/fixtures';
 import { entryTitle } from './entryView';
 
+describe('the title of a deadline status entry (A60)', () => {
+  it('names the status in each language', () => {
+    const done = entry({ action: 'deadline.status', actor: 'user', after: { status: 'done' } });
+    expect(entryTitle(done, {}, {}, i18n.getFixedT('en'))).toBe('You marked a deadline done');
+    expect(entryTitle({ ...done, after: { status: 'open' } }, {}, {}, i18n.getFixedT('fr'))).toBe('Vous avez rouvert une échéance');
+    expect(entryTitle({ ...done, after: { status: 'dismissed' } }, {}, {}, i18n.getFixedT('ro'))).toBe('Ați ignorat o scadență');
+  });
+});
+
 describe('the title of an export entry', () => {
   const t = i18n.getFixedT('en');
 

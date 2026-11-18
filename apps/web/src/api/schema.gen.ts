@@ -1772,6 +1772,8 @@ export interface components {
              * @enum {string}
              */
             status: "open" | "done" | "dismissed";
+            /** Conversationid */
+            conversationId?: string | null;
         };
         /** DeadlineReminder */
         DeadlineReminder: {
@@ -2689,7 +2691,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "file" | "move" | "rename" | "unfile" | "delete" | "undo" | "redo" | "doc.update" | "rule.create" | "rule.change" | "deadline.add" | "reminder.add" | "mark.unreadable" | "export";
+            action: "file" | "move" | "rename" | "unfile" | "delete" | "undo" | "redo" | "doc.update" | "rule.create" | "rule.change" | "deadline.add" | "reminder.add" | "mark.unreadable" | "export" | "deadline.status";
             /** Documentids */
             documentIds: string[];
             /** Subjectid */

@@ -9513,6 +9513,18 @@
               "dismissed"
             ],
             "title": "Status"
+          },
+          "conversationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^cnv_[0-9a-hjkmnp-tv-z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversationid"
           }
         },
         "additionalProperties": false,
@@ -12942,7 +12954,8 @@
               "deadline.add",
               "reminder.add",
               "mark.unreadable",
-              "export"
+              "export",
+              "deadline.status"
             ],
             "title": "Action"
           },

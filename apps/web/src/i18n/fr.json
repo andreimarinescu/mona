@@ -462,7 +462,8 @@
         "change": "Règles modifiées"
       },
       "deadline": {
-        "add": "Échéances ajoutées"
+        "add": "Échéances ajoutées",
+        "status": "Statut des échéances"
       },
       "reminder": {
         "add": "Rappels programmés"
@@ -499,7 +500,10 @@
       },
       "deadline": {
         "add_mona": "Mona a ajouté une échéance",
-        "add_user": "Vous avez ajouté une échéance"
+        "add_user": "Vous avez ajouté une échéance",
+        "status_done_user": "Vous avez marqué une échéance comme faite",
+        "status_open_user": "Vous avez rouvert une échéance",
+        "status_dismissed_user": "Vous avez écarté une échéance"
       },
       "reminder": {
         "add_mona": "Mona a programmé un rappel",

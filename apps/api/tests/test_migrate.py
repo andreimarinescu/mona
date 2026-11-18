@@ -1,4 +1,5 @@
 import psycopg
+import pytest
 from psycopg.types.json import Jsonb
 
 from mona.migrate import apply_jobs_schema, migrate
@@ -78,3 +79,24 @@ def test_0010_upgrades_a_0009_database_with_exports_and_cards_and_downgrades():
             cards = [r[0] for r in conn.execute("SELECT id FROM card_events")]
     assert sorted(kept) == sorted([(pack, None, None), (file, "xlsx", None)])
     assert (left, cards) == ({pack, file}, [old_card])
+
+
+def test_0011_adds_the_deadline_status_action_and_downgrade_removes_its_entries():
+    from tests.pg import alembic, conninfo_for, scratch_db
+
+    insert = "INSERT INTO file_ops (actor, via, action, undoable) VALUES ('user', 'ui', %s, false)"
+    with scratch_db() as db:
+        alembic(db, "upgrade", "0010")
+        with psycopg.connect(conninfo_for(db)) as conn:
+            with pytest.raises(psycopg.errors.CheckViolation):
+                conn.execute(insert, ("deadline.status",))
+        alembic(db, "upgrade", "0011_deadline_status")
+        with psycopg.connect(conninfo_for(db)) as conn:
+            conn.execute(insert, ("deadline.status",))
+            conn.execute(insert, ("deadline.add",))
+        alembic(db, "downgrade", "0010")
+        with psycopg.connect(conninfo_for(db)) as conn:
+            left = [r[0] for r in conn.execute("SELECT action FROM file_ops")]
+            with pytest.raises(psycopg.errors.CheckViolation):
+                conn.execute(insert, ("deadline.status",))
+    assert left == ["deadline.add"]

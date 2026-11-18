@@ -245,6 +245,15 @@ describe('DeadlineCard and DraftCard actions', () => {
     expect(world.allDeadlines().find((d) => d.id === deadline.id)!.status).toBe('done');
   });
 
+  it('Mark as done sends the conversation id, which becomes a deadline.status note', async () => {
+    const world = api.world();
+    const deadline = world.allDeadlines()[0]!;
+    await renderInApp(<DeadlineCard deadline={deadline} />, { conversationId: CNV });
+    await userEvent.click(screen.getByRole('button', { name: 'Mark as done' }));
+    expect(await screen.findByText('Marked as done')).toBeInTheDocument();
+    expect(world.notes).toEqual([expect.objectContaining({ conversationId: CNV, kind: 'deadline.status', text: `Marked the deadline "${deadline.label}" as done.` })]);
+  });
+
   it('a generating draft polls until ready; Download fetches the .docx with the conversation (draft.download note); Copy copies the body', async () => {
     const world = api.world();
     const draft = api.chat().startDraft([...world.docs.values()][0]!.summary.id, 'fr');

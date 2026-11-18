@@ -10,6 +10,7 @@ function keys(): string[] {
   return [
     ...KINDS.map((k) => `activity.kind.${k}`),
     ...ACTIONS.flatMap((a) => ['mona', 'user'].map((who) => `activity.action.${a}_${who}`)),
+    ...['done', 'open', 'dismissed'].map((s) => `activity.action.deadline.status_${s}_user`),
     ...GROUP_KINDS.flatMap((g) => ['mona', 'user'].map((who) => `activity.group.${g}_${who}`)),
     ...['undoable', 'undone', 'superseded', 'not_undoable'].map((s) => `activity.undoState.${s}`),
     ...FIELDS.map((f) => `review.field.${f}`),

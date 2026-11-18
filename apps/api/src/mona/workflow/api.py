@@ -46,6 +46,7 @@ async def _run(fn: Any, *args: Any, **kwargs: Any) -> Any:
 
 class DeadlinePatch(Dto):
     status: dto.DeadlineStatus
+    conversation_id: ConversationId = None
 
 
 class ReminderCreate(Dto):
@@ -122,7 +123,7 @@ async def _deadline(deadline_id: str) -> dto.Deadline:
 )
 async def update_deadline(deadline_id: str, body: DeadlinePatch) -> dto.Deadline:
     _id(deadline_id, "ddl", "deadline")
-    await _run(deadlines.set_status, get_ctx(), deadline_id, body.status)
+    await _run(deadlines.set_status, get_ctx(), deadline_id, body.status, body.conversation_id)
     return await _deadline(deadline_id)
 
 

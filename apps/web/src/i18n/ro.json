@@ -462,7 +462,8 @@
         "change": "Reguli modificate"
       },
       "deadline": {
-        "add": "Termene adăugate"
+        "add": "Termene adăugate",
+        "status": "Starea scadențelor"
       },
       "reminder": {
         "add": "Memento-uri programate"
@@ -499,7 +500,10 @@
       },
       "deadline": {
         "add_mona": "Mona a adăugat un termen",
-        "add_user": "Ați adăugat un termen"
+        "add_user": "Ați adăugat un termen",
+        "status_done_user": "Ați marcat o scadență ca rezolvată",
+        "status_open_user": "Ați redeschis o scadență",
+        "status_dismissed_user": "Ați ignorat o scadență"
       },
       "reminder": {
         "add_mona": "Mona a programat un memento",

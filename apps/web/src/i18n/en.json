@@ -448,7 +448,8 @@
         "change": "Rules changed"
       },
       "deadline": {
-        "add": "Deadlines added"
+        "add": "Deadlines added",
+        "status": "Deadline status"
       },
       "reminder": {
         "add": "Reminders set"
@@ -485,7 +486,10 @@
       },
       "deadline": {
         "add_mona": "Mona added a deadline",
-        "add_user": "You added a deadline"
+        "add_user": "You added a deadline",
+        "status_done_user": "You marked a deadline done",
+        "status_open_user": "You reopened a deadline",
+        "status_dismissed_user": "You dismissed a deadline"
       },
       "reminder": {
         "add_mona": "Mona set a reminder",

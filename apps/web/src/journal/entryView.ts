@@ -53,7 +53,14 @@ export function docTitle(documents: DocRefs, id: string | undefined, t: TFunctio
 
 export function entryTitle(entry: JournalEntry, documents: DocRefs, rules: Record<string, { name: string }>, t: TFunction): string {
   const after = entry.action === 'export' && !isPathState(entry.after) ? entry.after : null;
-  const kind = after?.kind === 'pack' ? 'export_pack' : after?.format === 'table' ? 'export_table' : entry.action;
+  const status = entry.action === 'deadline.status' ? entry.after?.status : null;
+  const kind = status
+    ? `deadline.status_${status}`
+    : after?.kind === 'pack'
+      ? 'export_pack'
+      : after?.format === 'table'
+        ? 'export_table'
+        : entry.action;
   return t(`activity.action.${kind}`, {
     context: entry.actor,
     doc: docTitle(documents, entry.documentIds[0], t),

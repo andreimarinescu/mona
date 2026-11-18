@@ -135,6 +135,39 @@ async def test_deadline_done_and_reopen(api, due):
     assert missing.status_code == 404
 
 
+async def test_deadline_status_is_journaled_and_noted_once(api, due):
+    cnv = rows.conversation()
+    url = f"/api/deadlines/{due['soon']}"
+    res = await api.patch(url, json={"status": "done", "conversationId": cnv})
+    assert res.status_code == 200 and res.json()["status"] == "done"
+    [entry] = journal("deadline.status")
+    assert (entry["actor"], entry["via"], entry["subject_id"]) == ("user", "ui", due["soon"])
+    assert (entry["before"], entry["after"]) == ({"status": "open"}, {"status": "done"})
+    assert entry["document_id"] is not None and entry["undoable"] is False
+    assert [n.text for n in rows.notes_of(cnv)] == ['Marked the deadline "URSSAF" as done.']
+    await api.patch(url, json={"status": "done", "conversationId": cnv})
+    assert len(journal("deadline.status")) == 1 and len(rows.notes_of(cnv)) == 1
+    await api.patch(url, json={"status": "open", "conversationId": cnv})
+    await api.patch(url, json={"status": "dismissed", "conversationId": cnv})
+    assert [n.text for n in rows.notes_of(cnv)] == [
+        'Marked the deadline "URSSAF" as done.',
+        'Reopened the deadline "URSSAF".',
+        'Dismissed the deadline "URSSAF".',
+    ]
+    assert [e["after"]["status"] for e in journal("deadline.status")] == [
+        "done", "open", "dismissed"
+    ]  # fmt: skip
+
+
+async def test_deadline_status_without_a_conversation_writes_no_note(api, due):
+    res = await api.patch(f"/api/deadlines/{due['soon']}", json={"status": "done"})
+    assert res.status_code == 200
+    assert len(journal("deadline.status")) == 1
+    f = T["card_action_notes"]
+    with get_ctx().engine.connect() as conn:
+        assert conn.execute(select(f)).first() is None
+
+
 # --- §10 / C4 §3.11 reminders ---
 
 

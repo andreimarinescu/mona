@@ -22,6 +22,7 @@ PathLocation = Literal["inbox", "archive", "trash"]
 JournalAction = Literal[
     "file", "move", "rename", "unfile", "delete", "undo", "redo", "doc.update", "rule.create",
     "rule.change", "deadline.add", "reminder.add", "mark.unreadable", "export",
+    "deadline.status",
 ]  # fmt: skip
 UndoState = Literal["undoable", "undone", "superseded", "not_undoable"]
 GroupUndoState = Literal["undoable", "partial", "undone", "not_undoable"]

@@ -268,8 +268,8 @@ export function createHandlers(world: World, options: Pick<WorldOptions, 'chatDe
     }),
 
     http.patch('/api/deadlines/:id', async ({ params, request }) => {
-      const body = (await bodyOf(request)) as { status: 'open' | 'done' | 'dismissed' };
-      return guard(() => world.markDeadline(String(params.id), body.status))();
+      const body = (await bodyOf(request)) as { status: 'open' | 'done' | 'dismissed'; conversationId?: string };
+      return guard(() => world.markDeadline(String(params.id), body.status, body.conversationId))();
     }),
 
     http.get('/api/interviews/:id', ({ params }) => guard(() => world.interviews.get(String(params.id)))()),

@@ -139,6 +139,7 @@ export type JournalAction =
   | 'rule.create'
   | 'rule.change'
   | 'deadline.add'
+  | 'deadline.status'
   | 'reminder.add'
   | 'mark.unreadable'
   | 'export';

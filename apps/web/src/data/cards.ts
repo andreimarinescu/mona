@@ -64,7 +64,8 @@ export const skipQuestion = (interviewId: string, questionId: string, conversati
 export const applyAll = (interviewId: string, questionId: string, conversationId?: string) =>
   post<ApplyAllResult>(`/api/interviews/${interviewId}/questions/${questionId}/apply`, withConversation(conversationId));
 
-export const markDeadline = (id: string, status: Deadline['status']) => request<Deadline>('PATCH', `/api/deadlines/${id}`, { json: { status } });
+export const markDeadline = (id: string, status: Deadline['status'], conversationId?: string) =>
+  request<Deadline>('PATCH', `/api/deadlines/${id}`, { json: { status, ...withConversation(conversationId) } });
 
 /** Puts an answered or skipped question into the cached interview, the way the server now has it. */
 export function storeQuestion(qc: QueryClient, interviewId: string, question: InterviewQuestion, status?: Interview['status']) {

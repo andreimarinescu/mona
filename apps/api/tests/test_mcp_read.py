@@ -405,6 +405,50 @@ async def test_deadlines_window_overdue_entity_and_reminders(archive):
     assert [i["deadline_id"] for i in studio.data["items"]] == [later]
 
 
+async def test_list_deadlines_by_document_returns_any_status_ignoring_the_window(archive):
+    doc = archive["agipi_2025a"]
+    far = rows.deadline("Far open", TODAY + timedelta(days=200), document_id=doc, entity="personal")
+    paid = rows.deadline("Paid", TODAY - timedelta(days=9), document_id=doc, status="done",
+                         entity="personal")  # fmt: skip
+    gone = rows.deadline("Dropped", TODAY + timedelta(days=1), document_id=doc,
+                         status="dismissed", entity="personal")  # fmt: skip
+    rows.deadline("Other document", TODAY + timedelta(days=2), document_id=archive["agipi_2024"])
+    narrow = {"document_id": doc, "within_days": 0, "include_overdue": False}
+    res = await call("list_deadlines", narrow)
+    assert [i["deadline_id"] for i in res.data["items"]] == [paid, gone, far]
+    assert [i["status"] for i in res.data["items"]] == ["done", "dismissed", "open"]
+    assert res.data["card_refs"] and len(res.data["card_refs"]) == 3
+    assert [i["deadline_id"] for i in (await call("list_deadlines")).data["items"]] == [
+        i["deadline_id"] for i in (await call("list_deadlines", {"within_days": 30})).data["items"]
+    ]
+    assert paid not in [i["deadline_id"] for i in (await call("list_deadlines")).data["items"]]
+
+
+async def test_list_deadlines_by_document_stays_visible_filtered(archive):
+    doc = archive["agipi_2025a"]
+    rows.deadline("Personal", TODAY + timedelta(days=3), document_id=doc, entity="personal")
+    assert (await call("list_deadlines", {"document_id": doc})).data["total"] == 1
+    tg = await call("list_deadlines", {"document_id": doc}, channel="telegram")
+    assert tg.data["total"] == 0 and tg.data["card_refs"] == []
+    gone = await call("list_deadlines", {"document_id": archive["deleted"]})
+    assert gone.data["total"] == 0
+
+
+async def test_list_deadlines_cursor_covers_document_id(archive):
+    doc = archive["agipi_2025a"]
+    for i in range(2):
+        rows.deadline(f"D{i}", TODAY + timedelta(days=i), document_id=doc, entity="personal")
+    first = await call("list_deadlines", {"document_id": doc, "limit": 1})
+    cursor = first.data["next_cursor"]
+    assert cursor is not None
+    again = await call("list_deadlines", {"document_id": doc, "limit": 1, "cursor": cursor})
+    assert [i["label"] for i in again.data["items"]] == ["D1"]
+    other = await call(
+        "list_deadlines", {"document_id": archive["agipi_2024"], "limit": 1, "cursor": cursor}
+    )
+    assert other.data["error"]["field"] == "cursor"
+
+
 # get_brief (C4 §3.15, §5.14)
 
 

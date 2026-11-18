@@ -1031,9 +1031,12 @@ export function createWorld(options: WorldOptions = {}) {
     return [...docs.values()].filter((d) => !d.deleted).flatMap(deadlinesOf);
   }
 
-  function markDeadline(deadlineId: string, status: Deadline['status']): Deadline {
+  const DEADLINE_NOTES = { done: 'Marked the deadline "{}" as done.', open: 'Reopened the deadline "{}".', dismissed: 'Dismissed the deadline "{}".' };
+
+  function markDeadline(deadlineId: string, status: Deadline['status'], conversationId?: string): Deadline {
     const found = allDeadlines().find((d) => d.id === deadlineId);
     if (!found) throw new MockError(404, 'not_found', 'Unknown deadline.');
+    if (found.status !== status) note(conversationId, 'deadline.status', DEADLINE_NOTES[status].replace('{}', found.label));
     deadlineStatus.set(deadlineId, status);
     return { ...found, status };
   }

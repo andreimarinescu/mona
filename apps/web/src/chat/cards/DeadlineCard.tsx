@@ -70,7 +70,7 @@ export function DeadlineCard({ deadline: snapshot }: { deadline: Deadline }) {
   async function done() {
     setBusy('done');
     try {
-      setDeadline(await markDeadline(deadline.id, 'done'));
+      setDeadline(await markDeadline(deadline.id, 'done', card.conversationId()));
     } catch (err) {
       toastFailure(err);
     } finally {

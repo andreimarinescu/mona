@@ -524,13 +524,14 @@ async def list_review_queue(
         return result
 
 
-def _deadline_query(scope: Scope, *clauses: Any) -> Any:
-    return brief.deadline_query(scope, *clauses)
+def _deadline_query(scope: Scope, *clauses: Any, **kw: Any) -> Any:
+    return brief.deadline_query(scope, *clauses, **kw)
 
 
 @tool(
     "List upcoming payment and reply deadlines with amount, entity and days left, including "
-    "overdue ones. Use it for 'what's due'. Up to five are shown as cards."
+    "overdue ones. Use it for 'what's due'. Up to five are shown as cards. With document_id, "
+    "that document's deadlines, any status."
 )
 async def list_deadlines(
     within_days: Annotated[int, Field(ge=0, le=366)] = 30,
@@ -538,18 +539,30 @@ async def list_deadlines(
     include_overdue: bool = True,
     limit: LimitParam = DEFAULT_LIMIT,
     cursor: CursorParam = None,
+    document_id: DocIdParam | None = None,
 ) -> dict:
-    params = {"within_days": within_days, "entity": entity, "include_overdue": include_overdue}
+    params = {
+        "within_days": within_days,
+        "entity": entity,
+        "include_overdue": include_overdue,
+        "document_id": document_id,
+    }
     today = clock.paris_today()
     async with get_engine().begin() as conn:
         scope = await scope_for(conn, channel())
         offset = decode_cursor(cursor, params)
-        clauses: list[Any] = [Deadline.due_date <= today + timedelta(days=within_days)]
-        if not include_overdue:
-            clauses.append(Deadline.due_date >= today)
+        clauses: list[Any] = []
+        statuses: tuple[str, ...] = ("open",)
+        if document_id is not None:
+            clauses.append(Deadline.document_id == document_id)
+            statuses = ("open", "done", "dismissed")
+        else:
+            clauses.append(Deadline.due_date <= today + timedelta(days=within_days))
+            if not include_overdue:
+                clauses.append(Deadline.due_date >= today)
         if entity is not None:
             clauses.append(Deadline.entity_id == (await resolve_entity(scope, entity)).id)
-        query = _deadline_query(scope, *clauses)
+        query = _deadline_query(scope, *clauses, statuses=statuses)
         total = (
             await conn.execute(select(func.count()).select_from(query.subquery()))
         ).scalar_one()
