@@ -442,12 +442,13 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
      - It reads the prompt of the newest web session through `sessions.system_prompt_hash` → `system_prompts`, read-only. `system_prompts` has no timestamp and also stores tool lists.
      - **Where it runs:**
        - In the test suite, the pinned image renders the system prompt for both configs with no turn, and the check runs on each. A one-turn capture test with the prod config also checks the upstream request.
-       - In `mona doctor`. With no web session since the installed config's mtime, it warns "no conversation since the release" and still runs the plugin check.
+       - In `mona doctor`. With no web session since the running gateway started (the start time the plugin line uses), it warns "no conversation since the release" and still runs the plugin check. The installed config's mtime is never the anchor: every seed run and every Hermes boot rewrites it.
      - Its output names markers and sections only, never prompt text (C9 §7).
   5. **Seeding (extends A33):**
      - Both `hermes-seed` services install `SOUL.md`, the config and the plugin directory on every start, not only when missing. SOUL, config and plugin are code, versioned with the release.
      - Hermes loads plugins once per process, so **Hermes restarts whenever its seed is recreated**: compose `restart: true` on `hermes.depends_on.hermes-seed`.
-     - The doctor's plugin line goes red when the running gateway started before the installed plugin files.
+     - The seed replaces the plugin files only when their content, owner or mode differ, so a no-op `mona up` leaves their mtimes alone.
+     - The doctor's plugin line goes red when the running gateway started before the installed plugin files (the gateway's start is the `gateway.pid` mtime while that PID is alive), or when either time can't be read. Its message names the fix: `mona restart hermes`, a wrapper command that restarts Hermes with the stack's own compose files (on the box, the prod overlay and `MONA_TAG`).
      - `demo-reset` installs the plugin as it does SOUL and config, and its restore never deletes it.
      - The plugin is installed read-only, so no bytecode lands next to it and the Hermes fingerprint doesn't drift.
      - Memories and sessions are never touched.
@@ -479,6 +480,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
      - A reasoning part shows as live only while its message is the one streaming.
      - While live, the label counts seconds (`chat.thinking.live_seconds`).
      - A turn the person stopped shows the `chat.stopped` line and a Retry that regenerates it.
+     - Once the chat is no longer streaming, nothing in a stopped turn stays live: no text caret, and a tool chip that was still running shows as interrupted, as it does after a reload, with no spinner.
      - `useChat` throttles updates to about 50 ms.
      - A page's queued chat message waits while the chat is `submitted` or `streaming`. After a failed turn it still sends.
   5. **C8 §5.2 keys** (EN source; the lane adds FR and RO, and the i18n check stays green):
@@ -569,7 +571,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
        1. **Derives the pattern from `example`.**
           - It first normalises the example as a C5 §8.4 file name (NFKD fold, then steps 2–3), and works on that. The result shows the normalised name.
           - It scans left to right. A match starts and ends at the stem's ends or at a `-`, `_` or `.`, and a date format starts and ends with a unit.
-          - The stem must begin with this document's date in some C5 date format. The whole leading date counts: if a one- or two-digit run follows the matched date (`2026-02-16` against a document dated 2026-01-16 matches only `2026`), it is the first error, not a literal. After that leading date, only the `YYYY` and `MMMM` units (`MMMM` in the filing language) are inferred, along with `{counterparty}`, `{entity}`, `{sub}`, and `{reference}` when its value has at least 4 characters. Shorter runs stay literals.
+          - The stem must begin with this document's date in some C5 date format. The whole leading date counts: if a one- or two-digit run follows the matched date (`2026-02-16` against a document dated 2026-01-16 matches only `2026`), it is the first error, not a literal. Two exceptions: a leading date that has year, month and day is complete, so what follows it is never this error (`2026-01-16_01_x` keeps `01` as a literal); and the run is not the error when an inferred token (`{counterparty}`, `{entity}`, `{sub}`, `{reference}`) starts there (`2026-10_25-A-118` with reference `25-A-118`). After that leading date, only the `YYYY` and `MMMM` units (`MMMM` in the filing language) are inferred, along with `{counterparty}`, `{entity}`, `{sub}`, and `{reference}` when its value has at least 4 characters. Shorter runs stay literals.
           - Ties go date > counterparty > entity > sub > reference.
           - Everything else becomes a literal. The pattern must render this document to exactly the normalised stem.
        2. **Builds a draft rule** (`source='correction'`, `origin_document_id` = this document, journaled `rule.create` as C4 §3.5.4 does; no migration):
@@ -586,7 +588,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
      - Calling it again with the same input returns the same draft (`rule_id`).
      - **Errors** (`invalid_argument` with `field`):
        - the example doesn't start with this document's date;
-       - a literal holds a month name (EN/FR/RO) or this document's year (they would repeat in every name; the error names the token to use);
+       - a literal holds a month name (EN/FR/RO) or this document's year (they would repeat in every name; the error names the token to use). A month name is a whole literal segment (between separators) equal, case- and accent-insensitively, to a `MONTHS` name or one of these abbreviations: `jan`, `janv`, `ian`, `feb`, `fev`, `fevr`, `mar`, `apr`, `avr`, `jun`, `iun`, `jul`, `juil`, `iul`, `aug`, `sep`, `sept`, `oct`, `nov`, `noi`, `dec`. So `2026-janv-16` is refused rather than writing `janv-16` into every name;
        - the derived pattern doesn't round-trip (`hint`: the name it would give);
        - a C5 §8.1 grammar error (`valid`, and the character offset in `hint`, since C4 §2.4's envelope has no `offset` key);
        - the document has no counterparty.
