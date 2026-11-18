@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -318,13 +319,21 @@ def replay_run(
     runs: Annotated[int, typer.Option(min=1, help="Runs per scenario, one after another.")] = 5,
     extra_from: Annotated[
         Path | None,
-        typer.Option(help="Hermes config whose custom_providers extra_body is sent."),
+        typer.Option(
+            help="Hermes config whose provider extra_body and agent.reasoning_effort are sent "
+            "(default: /hermes/config.yaml). If that file is not readable by this user, pass the "
+            "checkout's deploy/hermes/config.prod.yaml: its extra body is the same."
+        ),
     ] = None,
     extra: Annotated[
         str | None, typer.Option(help="JSON object merged over the extra body.")
     ] = None,
     no_extra: Annotated[
-        bool, typer.Option("--no-extra", help="Send no extra body (the baseline).")
+        bool,
+        typer.Option(
+            "--no-extra",
+            help="Send no extra body (the baseline); reasoning_effort is still sent.",
+        ),
     ] = False,
     cut: Annotated[
         Path | None, typer.Option(help="A cut.py with cut_system_prompt(text) -> (text, removed).")
@@ -364,6 +373,8 @@ def replay_run(
     if config is None and not no_extra and (inline is None or cr.DEFAULT_CONFIG.is_file()):
         config = cr.DEFAULT_CONFIG
     body, source = cr.merge_extra(config, inline, none=no_extra)
+    readable = os.access(cr.DEFAULT_CONFIG, os.R_OK) and cr.DEFAULT_CONFIG.is_file()
+    effort, effort_source = cr.config_effort(config or (cr.DEFAULT_CONFIG if readable else None))
     texts: dict[str, Any] = {}
     summary = asyncio.run(
         cr.run_replay(
@@ -372,6 +383,8 @@ def replay_run(
             runs=runs,
             extra=body,
             extra_source=source,
+            reasoning_effort=effort,
+            effort_source=effort_source,
             system=system.read_text(encoding="utf-8") if system else None,
             soul=soul,
             cut=cr.load_cut(cut) if cut else None,

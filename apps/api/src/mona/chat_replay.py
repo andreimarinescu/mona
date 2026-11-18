@@ -11,7 +11,7 @@ import sqlite3
 import sys
 import time
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,19 +21,21 @@ from urllib.parse import urlsplit
 import httpx
 import yaml
 
-from mona import llm
+from mona import llm, privacy
 from mona.chat.overlay import build_overlay
+from mona.chat.watchdog import MIN_LINE, REPEATS, line_key
+from mona.hermes_schema import openai_tool
 from mona.i18n import detect_language
 from mona.perf import percentile
 from mona.settings import Settings
 
-HERMES_PREFIX = "mcp__mona__"
+HERMES_SERVER = "mona"
 WEB_EXCLUDED = {"ingest_attachment"}
 PRIVATE_ROOTS = (Path("/app"), Path("/hermes-seed"), Path("/seed"))
 DEFAULT_HERMES_DB = Path("/hermes/state.db")
 DEFAULT_CONFIG = Path("/hermes/config.yaml")
 SOUL_NAME = "SOUL.md"
-REPEAT_MIN_CHARS, REPEAT_TIMES = 40, 5
+DEFAULT_EFFORT = "medium"
 USAGE_OPTIONS = {"stream_options": {"include_usage": True}}
 PROPS_TIMEOUT_S = 5.0
 
@@ -79,21 +81,16 @@ def soul_path(explicit: Path | None = None) -> Path:
 
 
 async def mona_tools() -> list[dict[str, Any]]:
-    """Mona's MCP tools as Hermes' web chat sends them (`ingest_attachment` is Telegram's)."""
+    """Mona's MCP tools as Hermes' web chat sends them: normalised, sorted by name, without
+    `ingest_attachment` (Telegram's)."""
     from mona.mcp.server import mcp
 
-    return [
-        {
-            "type": "function",
-            "function": {
-                "name": f"{HERMES_PREFIX}{t.name}",
-                "description": t.description or "",
-                "parameters": t.parameters,
-            },
-        }
+    tools = [
+        openai_tool(HERMES_SERVER, t.name, t.description, t.parameters)
         for t in await mcp.list_tools()
         if t.name not in WEB_EXCLUDED
     ]
+    return sorted(tools, key=lambda t: t["function"]["name"])
 
 
 def load_cut(path: Path) -> Callable[[str], tuple[str, list[str]]]:
@@ -210,19 +207,43 @@ def build_scenarios(
 # --- run ---
 
 
+def _scenario_problem(spec: Any) -> str | None:
+    if not isinstance(spec, dict):
+        return "not a JSON object"
+    if not isinstance(spec.get("user"), str) or not spec["user"]:
+        return "no user message"
+    overlay = spec.get("overlay")
+    if not isinstance(overlay, dict) or not isinstance(overlay.get("language"), str):
+        return "no overlay.language"
+    system = spec.get("system")
+    if not isinstance(system, dict) or not (
+        isinstance(system.get("prompt"), str) or system.get("soul") is True
+    ):
+        return "no system.prompt or system.soul"
+    if not isinstance(spec.get("history", []), list) or not isinstance(spec.get("tools", []), list):
+        return "history or tools is not a list"
+    return None
+
+
 def load_scenarios(directory: Path) -> dict[str, dict[str, Any]]:
+    """Every `*.json` in the directory, each checked before any run starts."""
     files = sorted(directory.glob("*.json"))
     if not files:
         raise ReplayError(f"--scenarios {directory}: no .json scenarios")
-    return {f.stem: json.loads(f.read_text(encoding="utf-8")) for f in files}
-
-
-def _normal_line(line: str) -> str:
-    return " ".join(line.lower().split())
+    out = {}
+    for f in files:
+        try:
+            spec = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            raise ReplayError(f"--scenarios {f.name}: not readable JSON") from None
+        if problem := _scenario_problem(spec):
+            raise ReplayError(f"--scenarios {f.name}: not a scenario ({problem})")
+        out[f.stem] = spec
+    return out
 
 
 class RepeatWatch:
-    """A58 (b): one normalised line of REPEAT_MIN_CHARS or more seen REPEAT_TIMES times."""
+    """A58 (b) with the adapter's line rule: one line of MIN_LINE or more seen REPEATS times."""
 
     def __init__(self) -> None:
         self.reset()
@@ -232,11 +253,11 @@ class RepeatWatch:
         self._seen: Counter[str] = Counter()
 
     def _count(self, line: str) -> bool:
-        line = _normal_line(line)
-        if len(line) < REPEAT_MIN_CHARS:
+        line = line_key(line)
+        if len(line) < MIN_LINE:
             return False
         self._seen[line] += 1
-        return self._seen[line] >= REPEAT_TIMES
+        return self._seen[line] >= REPEATS
 
     def feed(self, text: str) -> bool:
         *whole, self._partial = (self._partial + text).split("\n")
@@ -247,34 +268,41 @@ class RepeatWatch:
         return self._count(line)
 
 
+def load_config(path: Path) -> Mapping[str, Any]:
+    try:
+        cfg = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except OSError as e:
+        raise ReplayError(f"--extra-from {path}: {e.strerror}") from None
+    except yaml.YAMLError:
+        raise ReplayError(f"--extra-from {path}: not YAML") from None
+    if not isinstance(cfg, Mapping):
+        raise ReplayError(f"--extra-from {path}: not a YAML mapping")
+    return cfg
+
+
 def merge_extra(
     config: Path | None, extra: dict[str, Any] | None, *, none: bool
 ) -> tuple[dict[str, Any], str]:
-    """The request's extra body: the config's `custom_providers` entry, then `--extra` on top."""
+    """The request's extra body: the config's provider `extra_body` (A57), then `--extra` on top."""
     if none:
         return {}, "none"
     body: dict[str, Any] = {}
     source = "inline" if extra else "none"
     if config is not None:
-        try:
-            cfg = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
-        except OSError as e:
-            raise ReplayError(f"--extra-from {config}: {e.strerror}") from None
-        body = dict(_provider_extra(cfg))
+        body = privacy.provider_extra_body(load_config(config), os.environ)
         source = "config+inline" if extra else "config"
     body.update(extra or {})
     return body, source
 
 
-def _provider_extra(cfg: dict[str, Any]) -> dict[str, Any]:
-    target = str((cfg.get("model") or {}).get("base_url") or "").rstrip("/")
-    for entry in cfg.get("custom_providers") or []:
-        extra = entry.get("extra_body") if isinstance(entry, dict) else None
-        if not isinstance(extra, dict) or not extra:
-            continue
-        if not target or str(entry.get("base_url") or "").rstrip("/") == target:
-            return extra
-    return {}
+def config_effort(config: Path | None) -> tuple[str, str]:
+    """(`agent.reasoning_effort` as Hermes sends it, "config" or "default"); unset is medium."""
+    if config is None:
+        return DEFAULT_EFFORT, "default"
+    agent = load_config(config).get("agent")
+    value = agent.get("reasoning_effort") if isinstance(agent, Mapping) else None
+    effort = str(value or "").strip().lower()
+    return (effort, "config") if effort else (DEFAULT_EFFORT, "default")
 
 
 def _new_record() -> dict[str, Any]:
@@ -330,7 +358,8 @@ async def replay_once(
                     usage = chunk.get("usage")
                     if isinstance(usage, dict):
                         details = usage.get("completion_tokens_details") or {}
-                        rec["reasoning_tokens"] = details.get("reasoning_tokens") or None
+                        tokens = details.get("reasoning_tokens")
+                        rec["reasoning_tokens"] = tokens if isinstance(tokens, int) else None
                     delta = ((chunk.get("choices") or [{}])[0]).get("delta") or {}
                     text = delta.get("reasoning_content") or delta.get("reasoning")
                     if text:
@@ -417,6 +446,7 @@ def request_body(
     system_text: str,
     tools: list[dict[str, Any]],
     extra: dict[str, Any],
+    reasoning_effort: str = DEFAULT_EFFORT,
 ) -> dict[str, Any]:
     messages = [
         {"role": "system", "content": system_text},
@@ -426,7 +456,7 @@ def request_body(
     body: dict[str, Any] = {"model": model, "stream": True, "messages": messages, **USAGE_OPTIONS}
     if tools:
         body["tools"] = tools
-    return {**body, **extra}
+    return {**body, "reasoning_effort": reasoning_effort, **extra}
 
 
 def stats(values: list[float | int]) -> dict[str, Any]:
@@ -480,6 +510,8 @@ async def run_replay(
     runs: int,
     extra: dict[str, Any],
     extra_source: str,
+    reasoning_effort: str = DEFAULT_EFFORT,
+    effort_source: str = "default",
     system: str | None = None,
     soul: Path | None = None,
     cut: Callable[[str], tuple[str, list[str]]] | None = None,
@@ -514,6 +546,7 @@ async def run_replay(
                 text,
                 scenario["tools"] if "tools" in scenario else registry,
                 extra,
+                reasoning_effort,
             )
             records = per.setdefault(name, [])
             for i in range(runs):
@@ -538,6 +571,8 @@ async def run_replay(
             "max_seconds": max_seconds,
             "extra_body": extra,
             "extra_source": extra_source,
+            "reasoning_effort": reasoning_effort,
+            "reasoning_effort_source": effort_source,
             "cut": cut is not None,
             "cut_removed": dict(removed),
             "system_override": system is not None,
@@ -550,10 +585,10 @@ async def run_replay(
 # --- report ---
 
 
-def _triple(s: dict[str, Any]) -> str:
+def _triple(s: dict[str, Any], *, with_n: bool = False) -> str:
     if not s["n"]:
         return "-"
-    return f"{s['p50']} / {s['p95']} / {s['max']}"
+    return f"{s['p50']} / {s['p95']} / {s['max']}" + (f" (n={s['n']})" if with_n else "")
 
 
 def markdown(summary: dict[str, Any]) -> str:
@@ -567,6 +602,7 @@ def markdown(summary: dict[str, Any]) -> str:
         + (f", llama-server `{server}`." if server else "."),
         f"{cfg['runs']} runs per scenario, cut at {cfg['max_seconds']} s. "
         f"Extra body ({cfg['extra_source']}): `{extra_body}`. "
+        f"Reasoning effort: `{cfg['reasoning_effort']}` ({cfg['reasoning_effort_source']}). "
         f"Prompt cut: {'yes' if cfg['cut'] else 'no'}"
         + (f" ({json.dumps(cfg['cut_removed'])})" if cfg["cut_removed"] else "")
         + f"; stored prompt replaced: {'yes' if cfg['system_override'] else 'no'}.",
@@ -581,9 +617,9 @@ def markdown(summary: dict[str, Any]) -> str:
         langs = ", ".join(f"{k} x{v}" for k, v in sorted(s["languages"].items()))
         lines.append(
             f"| {name} | {s['n']} | {s['acted']} | {s['runaway']} | {s['errors']} "
-            f"| {s['budget_hit']} | {_triple(s['reasoning_tokens'])} "
+            f"| {s['budget_hit']} | {_triple(s['reasoning_tokens'], with_n=True)} "
             f"| {_triple(s['reasoning_chars'])} | {_triple(s['reasoning_s'])} "
-            f"| {_triple(s['act_s'])} | {tools} | {langs} |"
+            f"| {_triple(s['act_s'], with_n=True)} | {tools} | {langs} |"
         )
     return "\n".join(lines) + "\n"
 

@@ -231,16 +231,23 @@ perf() {
 }
 
 chat_replay() {
-  local args=("$1") opt host; shift
+  (($#)) || set -- --help
+  local args=("$1") opt host root; shift
+  root=$(readlink -f "$ROOT")
   OPS_EXTRA+=(--user "${MONA_UID:-1000}:${MONA_GID:-1000}")
   while (($#)); do
     opt=$1
     case "$opt" in
+      --*=*) die "chat-replay: write ${opt%%=*} <value>, not ${opt%%=*}=<value>" ;;
+      --out|--scenarios|--system|--cut|--soul|--extra-from)
+        (($# >= 2)) || die "chat-replay: $opt needs a value" ;;&
       --out)
-        mkdir -p "$2"; host=$(readlink -f "$2")
-        [[ "$host/" != "$ROOT/"* ]] || die "chat-replay: --out $host is inside the repo"
+        host=$(readlink -m "$2")
+        [[ "$host/" != "$root/"* ]] || die "chat-replay: --out $host is inside the repo"
+        mkdir -p "$host"
         OPS_EXTRA+=(-v "$host:/replay/out"); args+=(--out /replay/out); shift 2 ;;
       --scenarios)
+        [[ -d "$2" ]] || die "chat-replay: --scenarios $2 is not a directory"
         OPS_EXTRA+=(-v "$(readlink -f "$2"):/replay/scenarios:ro"); args+=(--scenarios /replay/scenarios)
         shift 2 ;;
       --system|--cut|--soul|--extra-from)

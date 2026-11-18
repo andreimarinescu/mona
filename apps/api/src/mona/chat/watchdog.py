@@ -12,6 +12,11 @@ MIN_LINE = 40
 _SPACE = re.compile(r"\s+")
 
 
+def line_key(line: str) -> str:
+    """A58 (b)'s line rule: trimmed, lower-cased, whitespace collapsed."""
+    return _SPACE.sub(" ", line).strip().lower()
+
+
 @dataclass(frozen=True)
 class Trip:
     reason: str
@@ -47,7 +52,7 @@ class ReasoningWatchdog:
         if end <= self._read:
             return False
         for line in text[self._read : end].splitlines():
-            key = _SPACE.sub(" ", line).strip().lower()
+            key = line_key(line)
             if len(key) >= MIN_LINE:
                 self._lines[key] += 1
                 if self._lines[key] >= REPEATS:

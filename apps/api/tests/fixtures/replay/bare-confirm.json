@@ -20,7 +20,7 @@
           "type": "function",
           "function": {
             "name": "mcp__mona__preview_rule",
-            "arguments": "{\"rule_id\": \"rul_ee55\"}"
+            "arguments": "{\"rule_id\": \"rul_01jdan0bp1cq2dr3es4ft5gv6h\"}"
           }
         }
       ]
@@ -28,11 +28,11 @@
     {
       "role": "tool",
       "tool_call_id": "call_4",
-      "content": "{\"rule_id\": \"rul_ee55\", \"would_move\": 4, \"already_matching\": 1, \"examples\": [{\"from\": \"Inbox/letter-0412.pdf\", \"to\": \"Harbor Works/2026/Utilities/Lumina Telecom letter.pdf\"}], \"card_refs\": [\"crd_ff66\"]}"
+      "content": "{\"rule_id\": \"rul_01jdan0bp1cq2dr3es4ft5gv6h\", \"name\": \"Lumina Telecom letters to Utilities\", \"state\": \"draft\", \"condition_text\": \"When the counterparty is Lumina Telecom\", \"moves_total\": 4, \"stays_total\": 1, \"moves\": [{\"document_id\": \"doc_01jdr3es4ft5gv6hw7jx8ky9mz\", \"title\": \"Lumina Telecom letter, October 2026\", \"from\": \"Inbox/letter-0412.pdf\", \"to\": \"Harbor Works/Utilities/Lumina Telecom/2026/2026-10 Lumina Telecom letter.pdf\"}, {\"document_id\": \"doc_01jdzan0bp1cq2dr3es4ft5gv6\", \"title\": \"Lumina Telecom letter, September 2026\", \"from\": \"Inbox/letter-0388.pdf\", \"to\": \"Harbor Works/Utilities/Lumina Telecom/2026/2026-09 Lumina Telecom letter.pdf\"}], \"card_refs\": [\"crd_01jdhw7jx8ky9mzan0bp1cq2dr\"]}"
     },
     {
       "role": "assistant",
-      "content": "This rule would move 4 letters into Utilities. Shall I apply it?"
+      "content": "This rule would move 4 Lumina Telecom letters into Utilities; 1 is already there. Shall I apply it?"
     }
   ],
   "user": "confirm"

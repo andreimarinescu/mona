@@ -20,7 +20,7 @@
           "type": "function",
           "function": {
             "name": "mcp__mona__schedule_reminder",
-            "arguments": "{\"deadline_id\": \"ddl_aa11\", \"remind_on\": \"2026-11-25\"}"
+            "arguments": "{\"deadline_id\": \"ddl_01jd7jx8ky9mzan0bp1cq2dr3e\", \"remind_on\": \"2026-11-25\"}"
           }
         }
       ]
@@ -28,7 +28,7 @@
     {
       "role": "tool",
       "tool_call_id": "call_2",
-      "content": "{\"reminder_id\": \"rem_dd44\", \"remind_on\": \"2026-11-25\", \"status\": \"scheduled\"}"
+      "content": "{\"reminder_id\": \"rem_01jdw7jx8ky9mzan0bp1cq2dr3\", \"remind_on\": \"2026-11-25\", \"label\": \"Brightwater Energy payment demand\", \"deadline_id\": \"ddl_01jd7jx8ky9mzan0bp1cq2dr3e\", \"document_id\": null, \"created\": true, \"card_refs\": [\"crd_01jd3es4ft5gv6hw7jx8ky9mza\"]}"
     },
     {
       "role": "assistant",

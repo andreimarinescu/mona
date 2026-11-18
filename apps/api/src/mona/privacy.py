@@ -242,23 +242,33 @@ def _custom_providers(cfg: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     return out
 
 
-def _llm_extra_body_problems(cfg: Mapping[str, Any], env: Mapping[str, str]) -> list[str]:
+def _provider_entries(cfg: Mapping[str, Any], env: Mapping[str, str]) -> list[Mapping[str, Any]]:
     """A57: Hermes sends `extra_body` only when an entry's normalised `base_url` is the model's."""
 
     def norm(value: Any) -> str:
         return str(_expand(value, env) or "").strip().rstrip("/") if value is not _MISSING else ""
 
     target = norm(_get(cfg, "model.base_url"))
-    entry = next(
-        (e for e in _custom_providers(cfg) if target and norm(e.get("base_url")) == target), None
-    )
-    if entry is None:
+    return [e for e in _custom_providers(cfg) if target and norm(e.get("base_url")) == target]
+
+
+def provider_extra_body(cfg: Mapping[str, Any], env: Mapping[str, str]) -> dict[str, Any]:
+    """The `extra_body` Hermes merges into chat requests, in either config form (A57)."""
+    for entry in _provider_entries(cfg, env):
+        extra = entry.get("extra_body")
+        if isinstance(extra, Mapping) and extra:
+            return dict(extra)
+    return {}
+
+
+def _llm_extra_body_problems(cfg: Mapping[str, Any], env: Mapping[str, str]) -> list[str]:
+    entries = _provider_entries(cfg, env)
+    if not entries:
         return ["custom_providers has no entry whose base_url is model.base_url"]
     out = []
-    if entry.get("model"):
+    if any(e.get("model") for e in entries):
         out.append("custom_providers entry for model.base_url names a model")
-    extra = entry.get("extra_body")
-    extra = extra if isinstance(extra, Mapping) else {}
+    extra = provider_extra_body(cfg, env)
     for key, wanted in LLM_EXTRA_BODY.items():
         if extra.get(key) != wanted:
             out.append(f"custom_providers extra_body.{key} is not {wanted!r}")

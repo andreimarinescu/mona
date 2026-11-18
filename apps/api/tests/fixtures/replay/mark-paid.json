@@ -9,7 +9,7 @@
   "history": [
     {
       "role": "user",
-      "content": "What is due this month?"
+      "content": "What's in my brief this morning?"
     },
     {
       "role": "assistant",
@@ -19,8 +19,8 @@
           "id": "call_1",
           "type": "function",
           "function": {
-            "name": "mcp__mona__list_deadlines",
-            "arguments": "{\"within_days\": 30}"
+            "name": "mcp__mona__get_brief",
+            "arguments": "{}"
           }
         }
       ]
@@ -28,11 +28,11 @@
     {
       "role": "tool",
       "tool_call_id": "call_1",
-      "content": "{\"total\": 1, \"next_cursor\": null, \"items\": [{\"deadline_id\": \"ddl_aa11\", \"document_id\": \"doc_bb22\", \"label\": \"Payment demand\", \"entity\": {\"key\": \"harbor-works\", \"name\": \"Harbor Works\"}, \"due_date\": \"2026-11-28\", \"days_left\": 10, \"amount\": 212.4, \"currency\": \"EUR\", \"payment_iban\": null, \"status\": \"open\", \"reminder_on\": null}], \"card_refs\": [\"crd_cc33\"]}"
+      "content": "{\"generated_at\": \"2026-11-18T07:30:00+00:00\", \"since\": \"2026-11-17T07:30:00+00:00\", \"filed\": {\"count\": 2, \"by_entity\": [{\"key\": \"harbor-works\", \"name\": \"Harbor Works\", \"count\": 2}]}, \"needs_review\": {\"count\": 0, \"by_reason\": {}}, \"due_soon\": [{\"deadline_id\": \"ddl_01jd7jx8ky9mzan0bp1cq2dr3e\", \"label\": \"Brightwater Energy payment demand\", \"entity\": {\"key\": \"harbor-works\", \"name\": \"Harbor Works\"}, \"due_date\": \"2026-11-23\", \"days_left\": 5, \"amount\": 212.4, \"currency\": \"EUR\"}], \"reminders_today\": [], \"learned\": [], \"pending_interview\": null}"
     },
     {
       "role": "assistant",
-      "content": "One payment is due this month: the Brightwater Energy demand for €212.40, due 28 November."
+      "content": "Two Harbor Works documents were filed since yesterday, nothing needs review. One payment is due soon: the Brightwater Energy demand for €212.40, due 23 November."
     }
   ],
   "user": "Mark it paid."

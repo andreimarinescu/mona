@@ -15,6 +15,8 @@ import yaml
 from typer.testing import CliRunner
 
 from mona import chat_replay as cr
+from mona import hermes_schema as hs
+from mona.chat import watchdog
 from mona.cli import app
 from mona.settings import Settings
 from tests import rows
@@ -191,6 +193,32 @@ def test_build_falls_back_to_the_detected_language_without_a_recorded_turn(tmp_p
     assert made["cnv_t-t2"]["overlay"]["language"] == "fr"
 
 
+def test_a_repeated_user_text_takes_the_language_recorded_for_that_occurrence(tmp_path):
+    db = state_db(tmp_path / "state.db")
+    conn = sqlite3.connect(db)
+    conn.execute("UPDATE messages SET content = 'What is due?' WHERE content LIKE 'Marchez%'")
+    conn.commit()
+    conn.close()
+    recorded = [("What is due?", "en"), ("What is due?", "ro")]
+    made = cr.build_scenarios(db, "cnv_t", [1, 2], [], languages=lambda _: recorded)
+    assert made["cnv_t-t1"]["overlay"]["language"] == "en"
+    assert made["cnv_t-t2"]["overlay"]["language"] == "ro"
+
+
+def test_the_ops_container_layout_has_no_repo_root_and_still_guards_and_finds_soul(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(cr, "__file__", "/app/src/mona/chat_replay.py")
+    assert cr.repo_root() is None
+    with pytest.raises(cr.ReplayError, match="inside /app"):
+        cr.private_out(Path("/app/out"))
+    assert cr.private_out(tmp_path / "ok") == (tmp_path / "ok").resolve()
+    (tmp_path / "seed").mkdir()
+    (tmp_path / "seed" / "SOUL.md").write_text("# Mona\n")
+    monkeypatch.setenv("MONA_HERMES_SEED", str(tmp_path / "seed"))
+    assert cr.soul_path() == tmp_path / "seed" / "SOUL.md"
+
+
 def test_build_refuses_a_missing_turn_session_or_prompt(tmp_path):
     db = state_db(tmp_path / "state.db")
     with pytest.raises(cr.ReplayError, match="2 user messages"):
@@ -270,7 +298,8 @@ def test_the_request_has_one_system_message_the_history_the_user_and_the_extra_b
     body = json.loads(req.content)
     assert str(req.url) == f"{BASE}/chat/completions"
     assert body["model"] == "qwen-test" and body["stream"] is True
-    assert body["presence_penalty"] == 1.5
+    assert body["presence_penalty"] == 1.5 and body["reasoning_effort"] == "medium"
+    assert body["stream_options"] == {"include_usage": True}
     roles = [m["role"] for m in body["messages"]]
     assert roles == ["system", "user", "user"]
     system = body["messages"][0]["content"]
@@ -328,6 +357,57 @@ def test_openrouter_gets_its_key_and_a_local_endpoint_does_not():
     replay(sse({"content": "x"}), seen=seen, cfg=cfg)
     (req,) = seen
     assert req.url.host == "openrouter.ai" and req.headers["authorization"] == "Bearer sk-test-key"
+    local: list[httpx.Request] = []
+    replay(sse({"content": "x"}), seen=local, cfg=settings(openrouter_api_key="sk-test-key"))
+    assert local and all("authorization" not in r.headers for r in local)
+
+
+# --- the tools as Hermes registers them ---
+
+
+def test_a_tool_schema_is_normalised_as_hermes_registers_it():
+    schema = {
+        "type": "object",
+        "properties": {
+            "entity": {"anyOf": [{"type": "string", "maxLength": 9}, {"type": "null"}],
+                       "default": None, "description": "Entity key."},
+            "kind": {"anyOf": [{"const": "a"}, {"const": "b"}, {"type": "null"}]},
+            "where": {"$ref": "#/definitions/Where"},
+            "opts": {"type": "object"},
+        },
+        "required": ["kind", "ghost"],
+        "definitions": {"Where": {"properties": {"path": {"type": "string"}}, "required": ["x"]}},
+    }  # fmt: skip
+    tool = hs.openai_tool("mona", "find", "Find things.", schema)
+    assert tool["function"]["name"] == "mcp__mona__find"
+    assert json.dumps(tool["function"]["parameters"]) == json.dumps({
+        "type": "object",
+        "properties": {
+            "entity": {"type": "string", "maxLength": 9, "nullable": True,
+                       "description": "Entity key.", "default": None},
+            "kind": {"type": "string", "enum": ["a", "b"], "nullable": True},
+            "where": {"$ref": "#/$defs/Where"},
+            "opts": {"type": "object", "properties": {}, "required": []},
+        },
+        "required": ["kind"],
+        "$defs": {"Where": {"properties": {"path": {"type": "string"}}, "required": [],
+                            "type": "object"}},
+    })  # fmt: skip
+    empty = hs.openai_tool("mona", "ping", None, None)["function"]
+    assert empty["parameters"] == {"type": "object", "properties": {}}
+    assert empty["description"] == "MCP tool ping from mona"
+    assert hs.tool_name("mona", "a-b.c") == "mcp__mona__a_b_c"
+    long = hs.tool_name("mona", "x" * 80)
+    assert len(long) == 64 and long == hs.tool_name("mona", "x" * 80)
+
+
+async def test_the_registry_tools_are_sorted_normalised_and_without_ingest_attachment():
+    tools = await cr.mona_tools()
+    names = [t["function"]["name"] for t in tools]
+    assert names == sorted(names) and "mcp__mona__ingest_attachment" not in names
+    text = json.dumps(tools)
+    assert '"anyOf"' not in text and '"nullable": true' in text
+    assert all(isinstance(t["function"]["parameters"]["required"], list) for t in tools)
 
 
 # --- the stream, per run ---
@@ -346,6 +426,35 @@ def test_a_reasoning_only_stream_is_cut_at_max_seconds_and_counts_as_a_runaway()
     assert rec["reasoning_chars"] > 100 and rec["first_act_s"] is None
     assert 0.25 <= rec["total_s"] < 2 and rec["reasoning_s"] > 0.1
     assert out["scenarios"]["s"]["runaway"] == 1
+
+
+def test_a_run_that_acted_and_then_ran_past_max_seconds_is_not_a_runaway():
+    def acted_then_endless():
+        yield sse({"content": "Here is the answer."})[0]
+        n = 0
+        while True:
+            n += 1
+            yield sse({"reasoning_content": f"more {n}\n"})[0]
+
+    rec = only(replay(acted_then_endless, delay=0.02, max_seconds=0.3))
+    assert rec["acted"] and not rec["runaway"] and rec["runaway_reason"] is None
+    assert rec["total_s"] >= 0.25
+
+
+def test_an_act_resets_the_repeat_count():
+    four = [sse({"reasoning_content": LONG_LINE + "\n"})[0]] * 4
+    chunks = [*four, sse({"content": "Checking."})[0], *four, *sse({"content": "Done."})]
+    rec = only(replay(chunks))
+    assert rec["acted"] and not rec["runaway"]
+
+
+def test_the_repeat_rule_is_the_adapters():
+    assert cr.line_key is watchdog.line_key
+    assert (cr.MIN_LINE, cr.REPEATS) == (watchdog.MIN_LINE, watchdog.REPEATS) == (40, 5)
+    variants = [LONG_LINE, LONG_LINE.upper(), "\t" + LONG_LINE.title(),
+                LONG_LINE.replace(" ", "  "), f" {LONG_LINE} "]  # fmt: skip
+    watch = cr.RepeatWatch()
+    assert [watch.feed(v + "\n") for v in variants] == [False, False, False, False, True]
 
 
 def test_one_long_line_repeated_five_times_is_a_runaway_and_stops_the_read():
@@ -416,6 +525,21 @@ def test_content_is_an_act_blank_content_is_not_and_the_reply_language_is_detect
     assert rec["reasoning_tokens"] == 12 and rec["reasoning_chars"] == 5
 
 
+def test_a_reported_zero_reasoning_tokens_is_kept_and_the_table_shows_n():
+    usage = {"completion_tokens_details": {"reasoning_tokens": 0}}
+    out = replay(sse({"content": "Answer."}, usage=usage), runs=2)
+    assert only(out)["reasoning_tokens"] == 0
+    s = out["scenarios"]["s"]
+    assert s["reasoning_tokens"] == {"n": 2, "p50": 0, "p95": 0, "max": 0}
+    md = cr.markdown(out)
+    assert "| 0 / 0 / 0 (n=2) |" in md and f"| {_triple_of(s['act_s'])} (n=2) |" in md
+    assert "Reasoning effort: `medium` (default)" in md
+
+
+def _triple_of(s: dict) -> str:
+    return f"{s['p50']} / {s['p95']} / {s['max']}"
+
+
 def test_reasoning_ending_with_the_budget_message_is_flagged():
     extra = {"reasoning_budget_message": BUDGET}
     ended = sse(
@@ -462,6 +586,29 @@ def test_the_summary_has_percentiles_histograms_runs_and_the_server_build():
     assert out["endpoint"] == "local"
     md = cr.markdown(out)
     assert "| s | 3 | 3 | 0 |" in md and "b-test" in md
+
+
+def test_a_file_that_is_not_a_scenario_is_refused_before_any_run(tmp_path, monkeypatch):
+    scen = write_scenarios(tmp_path / "scen")
+    (scen / "summary.json").write_text(json.dumps({"v": 1, "scenarios": {}}))
+    with pytest.raises(cr.ReplayError, match=r"summary\.json: not a scenario"):
+        cr.load_scenarios(scen)
+    seen: list[httpx.Request] = []
+    res = run_cli(tmp_path, monkeypatch, "--scenarios", str(scen), "--no-extra", seen=seen)
+    assert res.exit_code == 2 and "summary.json" in res.output and seen == []
+    bad = {
+        "user": scenario(user=""),
+        "overlay": scenario(overlay={}),
+        "system": scenario(system={"soul": False}),
+        "history": scenario(history="x"),
+    }
+    for key, spec in bad.items():
+        (scen / "summary.json").write_text(json.dumps(spec))
+        with pytest.raises(cr.ReplayError, match=rf"not a scenario \(.*{key}"):
+            cr.load_scenarios(scen)
+    (scen / "summary.json").write_text("{")
+    with pytest.raises(cr.ReplayError, match="not readable JSON"):
+        cr.load_scenarios(scen)
 
 
 # --- the extra body ---
@@ -538,6 +685,38 @@ def test_run_command_sends_the_config_extra_over_which_extra_wins_and_no_extra_s
     assert "presence_penalty" not in body_of("--no-extra")
     res = run_cli(tmp_path, monkeypatch, "--scenarios", str(scen), "--no-extra", "--extra", "{}")
     assert res.exit_code != 0
+
+
+def test_reasoning_effort_comes_from_the_config_even_with_no_extra(tmp_path, monkeypatch):
+    scen = write_scenarios(tmp_path / "scen")
+    default = tmp_path / "default.yaml"
+    monkeypatch.setattr(cr, "DEFAULT_CONFIG", default)
+
+    def sent(*flags):
+        seen: list[httpx.Request] = []
+        out = tmp_path / f"out{len(list(tmp_path.glob('out*')))}"
+        res = run_cli(tmp_path, monkeypatch, "--scenarios", str(scen), "--runs", "1",
+                      "--out", str(out), *flags, seen=seen)  # fmt: skip
+        assert res.exit_code == 0, res.output
+        body = json.loads([r for r in seen if r.url.path.endswith("completions")][0].content)
+        settings_ = json.loads((out / "summary.json").read_text())["settings"]
+        return body["reasoning_effort"], settings_["reasoning_effort_source"]
+
+    assert sent("--no-extra") == ("medium", "default")
+    default.write_text(yaml.safe_dump({"agent": {"reasoning_effort": " High "}}))
+    assert sent("--no-extra") == ("high", "config")
+    default.chmod(0)
+    try:
+        assert sent("--no-extra") == ("medium", "default")
+    finally:
+        default.chmod(0o600)
+    other = tmp_path / "other.yaml"
+    other.write_text(
+        yaml.safe_dump({"model": {"base_url": BASE}, "agent": {"reasoning_effort": "low"}})
+    )
+    assert sent("--extra-from", str(other)) == ("low", "config")
+    assert sent("--extra-from", str(other), "--extra", '{"reasoning_effort": "none"}')[0] == "none"
+    assert cr.config_effort(None) == ("medium", "default")
 
 
 def test_the_summary_files_hold_none_of_the_texts_and_texts_go_only_where_asked(
@@ -624,21 +803,52 @@ def test_the_synthetic_scenarios_are_six_soul_scenarios_without_tools():
     assert cr.load_scenarios(FIXTURES).keys() == {f.stem for f in files}
 
 
+def _tool_results(spec: dict) -> dict[str, dict]:
+    names = {
+        c["id"]: c["function"]["name"].removeprefix("mcp__mona__")
+        for m in spec["history"]
+        for c in m.get("tool_calls") or []
+    }
+    return {names[m["tool_call_id"]]: json.loads(m["content"]) for m in spec["history"]
+            if m["role"] == "tool"}  # fmt: skip
+
+
+def test_the_synthetic_tool_results_have_c4_shapes():
+    load = functools.partial(lambda n: json.loads((FIXTURES / f"{n}.json").read_text()))
+    brief = _tool_results(load("mark-paid"))["get_brief"]
+    assert set(brief) == {"generated_at", "since", "filed", "needs_review", "due_soon",
+                          "reminders_today", "learned", "pending_interview"}  # fmt: skip
+    (due,) = brief["due_soon"]
+    assert set(due) == {"deadline_id", "label", "entity", "due_date", "days_left", "amount",
+                        "currency"}  # fmt: skip
+    reply = load("mark-paid")["history"][-1]["content"]
+    assert due["label"].removesuffix(" payment demand") in reply and "€212.40" in reply
+    reminder = _tool_results(load("what-app"))["schedule_reminder"]
+    assert set(reminder) == {"reminder_id", "remind_on", "label", "deadline_id", "document_id",
+                             "created", "card_refs"}  # fmt: skip
+    preview = _tool_results(load("bare-confirm"))["preview_rule"]
+    assert set(preview) == {"rule_id", "name", "state", "condition_text", "moves_total",
+                            "stays_total", "moves", "card_refs"}  # fmt: skip
+    assert {"document_id", "title", "from", "to"} == set(preview["moves"][0])
+    ids = [v for r in (brief, reminder, preview) for v in json.dumps(r).split('"')
+           if v[:4] in ("ddl_", "doc_", "rem_", "rul_", "crd_")]  # fmt: skip
+    assert ids and all(len(v) == 30 for v in ids)
+
+
 # --- the host wrapper ---
 
 
-def wrapper(tmp_path: Path, *args: str) -> subprocess.CompletedProcess:
+def wrapper(tmp_path: Path, *args: str, root: Path | None = None) -> subprocess.CompletedProcess:
     bindir = tmp_path / "bin"
     bindir.mkdir(exist_ok=True)
     docker = bindir / "docker"
     docker.write_text(f'#!/bin/sh\necho "$*" >> {tmp_path}/calls\n')
     docker.chmod(docker.stat().st_mode | stat.S_IEXEC)
-    root = tmp_path / "repo"
-    root.mkdir(exist_ok=True)
+    (tmp_path / "repo").mkdir(exist_ok=True)
     env = {
         "PATH": f"{bindir}:/usr/bin:/bin",
         "HOME": str(tmp_path),
-        "MONA_ROOT": str(root),
+        "MONA_ROOT": str(root or tmp_path / "repo"),
         "MONA_COMPOSE": "docker compose -p t",
         "MONA_UID": "1234",
         "MONA_GID": "1234",
@@ -686,3 +896,28 @@ def test_wrapper_mounts_host_paths_and_refuses_an_out_inside_the_repo(tmp_path):
         str(tmp_path / "repo" / "scen"),
     )
     assert res.returncode != 0 and "inside the repo" in res.stderr
+    assert not (tmp_path / "repo" / "scen").exists()
+
+
+def test_wrapper_edge_cases(tmp_path):
+    res = wrapper(tmp_path)
+    assert res.returncode == 0, res.stderr
+    assert (tmp_path / "calls").read_text().strip().endswith("ops mona chat-replay --help")
+    (tmp_path / "calls").unlink()
+
+    for arg in (f"--out={tmp_path}/o", f"--scenarios={tmp_path}"):
+        res = wrapper(tmp_path, "run", arg)
+        assert res.returncode != 0 and "not --" in res.stderr
+    res = wrapper(tmp_path, "run", "--scenarios", str(tmp_path / "missing"))
+    assert res.returncode != 0 and "not a directory" in res.stderr
+    assert not (tmp_path / "missing").exists()
+    res = wrapper(tmp_path, "run", "--out")
+    assert res.returncode != 0 and "needs a value" in res.stderr
+    assert not (tmp_path / "calls").exists()
+
+    (tmp_path / "repo").mkdir(exist_ok=True)
+    link = tmp_path / "link"
+    link.symlink_to(tmp_path / "repo")
+    res = wrapper(tmp_path, "build", "--out", str(link / "inside"), root=link)
+    assert res.returncode != 0 and "inside the repo" in res.stderr
+    assert not (tmp_path / "repo" / "inside").exists()
