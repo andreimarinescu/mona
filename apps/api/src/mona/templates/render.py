@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from zoneinfo import ZoneInfo
 
+from mona.i18n import MONTHS
 from mona.templates.grammar import DATE_UNITS, Part, Token, parse
 
 PARIS = ZoneInfo("Europe/Paris")
@@ -86,9 +87,11 @@ def fiscal_year(d: date, fy_end_month: int, fy_end_day: int) -> int:
     return d.year if (d.month, d.day) <= (fy_end_month, fy_end_day) else d.year + 1
 
 
-def format_date(d: date, fmt: str) -> str:
+def format_date(d: date, fmt: str, lang: str = "fr") -> str:
+    """C5 §8.2 `{date:FMT}`; `MMMM` is the month's name in `lang`, capitalised (A61)."""
+    month = MONTHS[lang][d.month - 1]
     units = {"YYYY": f"{d.year:04d}", "YY": f"{d.year % 100:02d}", "MM": f"{d.month:02d}"}
-    units["DD"] = f"{d.day:02d}"
+    units |= {"DD": f"{d.day:02d}", "MMMM": month[0].upper() + month[1:]}
     out, i = [], 0
     while i < len(fmt):
         unit = next((u for u in DATE_UNITS if fmt.startswith(u, i)), None)
@@ -108,11 +111,20 @@ def folder_segment(value: str) -> str:
     return s.strip(" .")
 
 
+def fold(value: str) -> str:
+    """NFKD with the combining marks dropped (ș→s, é→e)."""
+    s = unicodedata.normalize("NFKD", value)
+    return "".join(c for c in s if unicodedata.category(c) != "Mn")
+
+
+def literal(value: str) -> str:
+    """C5 §8.4.2 (A61): a file-template literal, folded, then unsafe characters to `-`."""
+    return _LITERAL_CHAR.sub("-", fold(value))
+
+
 def slug(value: str) -> str:
     """C5 §8.4.1: a token value for a file name, diacritics dropped."""
-    s = unicodedata.normalize("NFKD", value)
-    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    s = _SLUG_RUN.sub("-", s)
+    s = _SLUG_RUN.sub("-", fold(value))
     return re.sub(r"-+", "-", s).strip("-.")
 
 
@@ -188,7 +200,7 @@ class _Values:
                 if d is None:
                     self.fallbacks["date"] = FALLBACK_FAR
                     d = self.arrived
-                return format_date(d, t.format or "YYYY-MM-DD")
+                return format_date(d, t.format or "YYYY-MM-DD", self.lang)
         raise AssertionError(t.name)
 
     def document_fiscal_year(self) -> int:
@@ -222,7 +234,7 @@ def render(path_template: str, file_template: str, v: RenderValues) -> Rendered:
     if not folders:
         raise NotRenderable("the path renders no segment")
     pieces = [
-        _LITERAL_CHAR.sub("-", p) if isinstance(p, str) else slug(values.value(p))
+        literal(p) if isinstance(p, str) else slug(values.value(p))
         for p in parse(file_template, "file")
     ]
     stem = file_stem("".join(pieces))

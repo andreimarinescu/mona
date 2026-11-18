@@ -6,7 +6,7 @@ from typing import Literal
 TOKENS = frozenset(
     {"entity", "year", "fy", "category", "sub", "counterparty", "issuer", "reference", "date"}
 )
-DATE_UNITS = ("YYYY", "YY", "MM", "DD")
+DATE_UNITS = ("YYYY", "YY", "MMMM", "MM", "DD")
 DATE_SEPARATORS = "-_."
 
 

@@ -1,18 +1,26 @@
+from dataclasses import replace
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 import pytest
+import yaml
 
 from mona.templates import (
     EntityInfo,
     NotRenderable,
     RenderValues,
+    TemplateError,
+    Token,
     document_fiscal_year,
     file_stem,
     fiscal_year,
     folder_segment,
+    literal,
+    parse,
     render,
     slug,
 )
+from mona.templates.render import _LITERAL_CHAR
 from tests.c5_registry import CATEGORIES, TEMPLATES, values
 
 CASES = [
@@ -156,7 +164,7 @@ def test_slug_and_literal_rules():
     assert slug("...a.b..") == "a.b"
     v = values("cabinet", "tax", counterparty="X", doc_date=date(2025, 1, 2))
     out = render("{entity}", "{date:YYYY}_Déclaration {counterparty}", v)
-    assert out.file_name == "2025_D-claration-X.pdf"
+    assert out.file_name == "2025_Declaration-X.pdf"
 
 
 def test_separator_runs_fold():
@@ -293,3 +301,88 @@ def test_document_fiscal_year_chain():
     assert document_fiscal_year(studio, None, date(2025, 10, 1), arrived) == 2026
     assert document_fiscal_year(studio, None, None, arrived) == 2027
     assert document_fiscal_year(None, date(2025, 9, 30), None, arrived) is None
+
+
+def test_case_10_month_name_in_a_rule_filename():
+    v = values(
+        "studio", "bank", subcategory="releve", counterparty="Hello bank",
+        doc_date=date(2026, 2, 5),
+    )  # fmt: skip
+    out = render("{entity}/Banque/{fy}", "{date:YYYY-MM}-HB-Studio-{date:MMMM}", v)
+    assert out.file_name == "2026-02-HB-Studio-Fevrier.pdf"
+
+
+@pytest.mark.parametrize(
+    ("lang", "d", "stem", "folder"),
+    [
+        ("fr", date(2026, 10, 3), "Octobre", "Octobre"),
+        ("fr", date(2026, 8, 3), "Aout", "Août"),
+        ("fr", date(2026, 12, 3), "Decembre", "Décembre"),
+        ("ro", date(2026, 1, 3), "Ianuarie", "Ianuarie"),
+        ("ro", date(2026, 10, 3), "Octombrie", "Octombrie"),
+        ("en", date(2026, 10, 3), "October", "October"),
+    ],
+)
+def test_mmmm_is_the_month_name_in_the_filing_language(lang, d, stem, folder):
+    v = replace(values("cabinet", "tax", doc_date=d), language=lang)
+    out = render("{entity}/{date:MMMM}", "{date:MMMM}", v)
+    assert out.file_name == f"{stem}.pdf"
+    assert out.folders == ("Cabinet Marchand", folder)
+
+
+def test_mmmm_is_matched_before_mm():
+    v = values("cabinet", "tax", doc_date=date(2026, 10, 3))
+    out = render("{entity}", "{date:YYYY-MM}_{date:MMMM}_{date:MM}", v)
+    assert out.file_name == "2026-10_Octobre_10.pdf"
+    assert [p.format for p in parse("{date:MMMM-YYYY}", "file") if isinstance(p, Token)] == [
+        "MMMM-YYYY"
+    ]
+    with pytest.raises(TemplateError):
+        parse("{date:MMM}", "file")
+
+
+def test_mmmm_takes_the_arrival_date_fallback():
+    v = values("cabinet", "tax", arrived_at=datetime(2026, 3, 9, tzinfo=UTC))
+    out = render("{entity}", "{date:MMMM}", v)
+    assert out.file_name == "Mars.pdf" and dict(out.fallbacks) == {"date": 20}
+
+
+def test_accents_drop_in_file_values_and_literals_and_stay_in_folders():
+    v = values("studio", "tax", counterparty="Société Générale", doc_date=date(2026, 2, 5))
+    out = render("{entity}/Relevés {counterparty}", "{date:YYYY}_Relevé Médical_{counterparty}", v)
+    assert out.file_name == "2026_Releve-Medical_Societe-Generale.pdf"
+    assert out.folders == ("Studio Numérique", "Relevés Société Générale")
+    assert literal("Médical œ/ș") == "Medical---s"
+
+
+ROOT = Path(__file__).resolve().parents[3]
+SEED_FILES = [
+    *sorted((ROOT / "demo" / "seed").glob("*.yaml")),
+    *sorted((Path(__file__).parent / "fixtures" / "seed").glob("*.yaml")),
+    ROOT / "demo" / "tests" / "c5_examples.yaml",
+]
+
+
+def _templates(data: dict) -> list[tuple[str, str]]:
+    out = []
+    for t in data.get("templates") or []:
+        out += [(t["path_template"], "path"), (t["file_template"], "file")]
+    for r in data.get("rules") or []:
+        action = r.get("action") or {}
+        out += [
+            (action[k], kind) for k, kind in (("path", "path"), ("filename", "file")) if k in action
+        ]
+    return out
+
+
+def test_no_seeded_template_uses_mmmm_or_a_literal_that_folding_would_rename():
+    seen = 0
+    for f in SEED_FILES:
+        for template, kind in _templates(yaml.safe_load(f.read_text(encoding="utf-8")) or {}):
+            seen += 1
+            assert "MMMM" not in template, (f.name, template)
+            if kind == "file":
+                for p in parse(template, "file"):
+                    if isinstance(p, str):
+                        assert literal(p) == _LITERAL_CHAR.sub("-", p), (f.name, template)
+    assert seen >= 20
