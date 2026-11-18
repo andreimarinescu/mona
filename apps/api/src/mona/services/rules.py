@@ -140,10 +140,12 @@ def preview_rule(
         cands = _candidates(ctx, conn, snap, rule_id, visible)
         applied = _applied_group(conn, rule_id)
         if applied is None:
+            pending = [c for c in cands if not _stays(c)]
+            targets = ctx.ops.predict_names([(c.doc, c.placement.path) for c in pending])
             moves = [
                 _move(c.doc, {"location": c.doc["location"], "path": c.doc["current_path"]},
-                      {"location": "archive", "path": c.placement.path})
-                for c in cands if not _stays(c)
+                      {"location": "archive", "path": to})
+                for c, to in zip(pending, targets, strict=True)
             ]  # fmt: skip
             stays = [c.doc["id"] for c in cands if _stays(c)]
         else:

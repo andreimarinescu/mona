@@ -2,7 +2,7 @@
 
 import errno
 import threading
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from sqlalchemy import insert, select, update
@@ -22,7 +22,7 @@ from mona.services import (
 )
 from mona.services.registry import T
 from mona.text import norm
-from tests.services_world import IBAN_SPACED, Services
+from tests.services_world import ARRIVED, IBAN_SPACED, Services
 
 OPCO_PATH = (
     "Cabinet Marchand/Appels de paiement/2025/2026-02-27_OPCO-EP_Contribution-OPCO_2025-A-118.pdf"
@@ -403,6 +403,39 @@ def test_conflicting_rules_are_not_candidates(s):
     p = preview_rule(s.ctx, s.rule_id("opco-cabinet"))
     assert (p.moves_total, p.stays_total) == (0, 0)
     assert s.row(doc)["location"] == "inbox"
+
+
+def test_preview_predicts_the_collision_suffixes_the_apply_produces(s):
+    folder = "Cabinet Marchand/Appels de paiement/2025"
+    x, y = (f"{folder}/2026-0{m}-27_OPCO-EP_Contribution-OPCO" for m in (2, 3))
+    at = [ARRIVED + timedelta(minutes=i) for i in range(4)]
+    a = opco_doc(s, status="review", arrived_at=at[0])
+    b = opco_doc(s, arrived_at=at[1], doc_date=date(2026, 3, 27), reference="2025-B")
+    classify(s, b, f"{x}.pdf")
+    file_document(s.ctx, b)
+    c, d = (opco_doc(s, status="review", arrived_at=t, reference=f"R-{t.minute}") for t in at[2:])
+    (s.ctx.ops.roots.archive / f"{y}.pdf").write_bytes(b"someone else's file")
+    rid = new_id("rul")
+    with s.engine.begin() as conn:
+        conn.execute(
+            insert(T["rules"]).values(
+                id=rid, key="opco-names", name="names", state="draft", source="correction",
+                priority=20,
+                conditions=[{"field": "counterparty", "op": "equals", "value": "OPCO"}],
+                action={"entity": "cabinet", "category": "payment_calls",
+                        "subcategory": "contribution_opco",
+                        "filename": "{date:YYYY-MM-DD}_{counterparty}_{sub}"},
+                condition_text={"en": "-", "fr": "-", "ro": "-"},
+            )
+        )  # fmt: skip
+    expected = {a: f"{x}-2.pdf", b: f"{y}-2.pdf", c: f"{x}.pdf", d: f"{x}-3.pdf"}
+    p = preview_rule(s.ctx, rid)
+    predicted = {m.document_id: "/".join([*m.to, m.to_file_name]) for m in p.moves}
+    assert [m.document_id for m in p.moves] == [a, b, c, d]
+    assert predicted == expected
+    out = apply_rule(s.ctx, rid, actor="mona", via="chat")
+    assert (out.moved, out.failed) == (4, [])
+    assert {doc: s.row(doc)["current_path"] for doc in expected} == expected
 
 
 def test_rule_dto_destination(s):

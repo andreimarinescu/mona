@@ -4,7 +4,7 @@ import errno
 import hashlib
 import os
 import re
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -309,6 +309,36 @@ class FileOps:
                 return cand, False
             if location == "archive" and sha256_file(path) == doc["sha256"]:
                 return cand, True
+        raise FileOpError("conflict", "no free name after -999", hint="collision_exhausted")
+
+    def predict_names(self, moves: Sequence[tuple[Mapping[str, Any], str]]) -> list[str]:
+        """A62: the archive paths that moving each (document, target) in order will produce,
+        §8.1 suffixes included; an earlier move frees its old name and takes its new one."""
+        assigned: set[str] = set()
+        vacated: set[str] = set()
+        out = []
+        for doc, base in moves:
+            name = self._predict(doc, base, assigned, vacated)
+            assigned.add(name)
+            if doc["location"] == "archive" and doc["current_path"] != name:
+                vacated.add(doc["current_path"])
+            out.append(name)
+        return out
+
+    def _predict(
+        self, doc: Mapping[str, Any], base: str, assigned: set[str], vacated: set[str]
+    ) -> str:
+        for n in range(1, MAX_SUFFIX + 1):
+            cand = base if n == 1 else suffixed(base, n)
+            if (doc["location"], doc["current_path"]) == ("archive", cand):
+                return cand
+            if cand in assigned:
+                continue
+            if cand in vacated:
+                return cand
+            path = resolve_inside(self.roots.archive, cand, taken_ok=True)
+            if not os.path.lexists(path) or sha256_file(path) == doc["sha256"]:
+                return cand
         raise FileOpError("conflict", "no free name after -999", hint="collision_exhausted")
 
     def _suffix_number(self, rel: str, base: str) -> int:
