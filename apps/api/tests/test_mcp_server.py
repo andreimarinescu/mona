@@ -23,7 +23,14 @@ READ_TOOLS = {
     "list_deadlines",
     "get_brief",
 }
-WRITE_TOOLS = {"correct_document", "preview_rule", "apply_rule", "undo", "ingest_attachment"}
+WRITE_TOOLS = {
+    "correct_document",
+    "preview_rule",
+    "apply_rule",
+    "rename_documents",
+    "undo",
+    "ingest_attachment",
+}
 L4_TOOLS = {
     "start_interview",
     "answer_question",
@@ -104,6 +111,11 @@ async def test_descriptions_are_the_contract_text():
     by_name = {t["name"]: t["description"] for t in await list_tools()}
     assert by_name["sum_amounts"].startswith("Add up document amounts, either for a list")
     assert by_name["get_brief"].endswith("amounts and due dates first, one short paragraph.")
+    assert by_name["rename_documents"] == (
+        "Rename a document and the others like it to the name the person gave. Pass the name for "
+        "this document exactly as the person wrote it. Prepares a draft rule and shows the old "
+        "and new names; nothing moves until it is applied."
+    )
     assert by_name["ingest_attachment"] == (
         "Add a file the person sent you on Telegram to Mona's intake, using the exact path the "
         "attachment was saved to. Set for_visitor when the person says the document belongs to a "

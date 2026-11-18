@@ -1,4 +1,4 @@
-"""The write tools (C4 §3.5, §3.8, §3.9, §3.16): thin wrappers over `mona.services`.
+"""The write tools (C4 §3.5, §3.8, §3.9, §3.16, §3.18): thin wrappers over `mona.services`.
 
 The actor is always `mona` (D5); `via` follows the channel."""
 
@@ -20,6 +20,7 @@ from mona.mcp.core import (
     channel,
     clip,
     document_title,
+    fit,
     not_found,
     scope_for,
     tool,
@@ -30,6 +31,7 @@ from mona.mcp.read import DocIdParam
 from mona.services import apply_rule as apply_service
 from mona.services import correct_document as correct_service
 from mona.services import preview_rule as preview_service
+from mona.services import rename_documents as rename_service
 from mona.services import undo as undo_service
 from mona.services.rules import Visible
 from mona.visibility import rule_visibility
@@ -37,7 +39,9 @@ from mona.visibility import rule_visibility
 RuleIdParam = Annotated[str, Field(pattern=r"^rul_[0-9a-hjkmnp-tv-z]{26}$")]
 GroupIdParam = Annotated[str, Field(pattern=r"^grp_[0-9a-hjkmnp-tv-z]{26}$")]
 Name = Annotated[str, Field(min_length=1, max_length=160)]
+FileName = Annotated[str | None, Field(min_length=1, max_length=200)]
 TOOL_MOVES = 5
+TOOL_COLLISIONS = 10
 CODES = ("invalid_argument", "not_found", "forbidden_path", "not_allowed", "conflict")
 SKIP_STATES = {"undone": "already_undone"}
 
@@ -234,6 +238,46 @@ async def apply_rule(rule_id: RuleIdParam) -> dict:
         "failed": [{"document_id": f["document_id"], "code": f["code"]} for f in applied.failed],
         "card_refs": refs,
     }
+
+
+@tool(
+    "Rename a document and the others like it to the name the person gave. Pass the name for "
+    "this document exactly as the person wrote it. Prepares a draft rule and shows the old and "
+    "new names; nothing moves until it is applied."
+)
+async def rename_documents(
+    document_id: DocIdParam, example: FileName = None, pattern: FileName = None
+) -> dict:
+    async with get_engine().begin() as conn:
+        s = await scope_for(conn, channel())
+        await visible_document(s, document_id)
+    r = await call_service(
+        rename_service, get_ctx(), document_id, actor="mona", via=via(s), example=example,
+        pattern=pattern, visible=candidate_filter(s),
+    )  # fmt: skip
+    out: dict[str, Any] = {
+        "rule_id": r.rule_id,
+        "pattern": r.pattern,
+        "renames_total": r.renames_total,
+        "renames": [
+            {
+                "document_id": x["document_id"],
+                "title": clip(x["title"]),
+                "from_name": clip(x["from_name"], 200),
+                "to_name": clip(x["to_name"], 200),
+            }
+            for x in r.renames[:TOOL_MOVES]
+        ],
+        "collisions": r.collisions[:TOOL_COLLISIONS],
+        "not_covered": r.not_covered,
+        "date_fallbacks": r.date_fallbacks,
+    }
+    async with get_engine().begin() as conn:
+        s = await scope_for(conn, channel())
+        out["card_refs"] = await write_cards(
+            s, "rename_documents", [("rulePreview", {"rule_id": r.rule_id})]
+        )
+    return fit(out, "renames")
 
 
 @tool(

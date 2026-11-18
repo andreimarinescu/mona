@@ -210,6 +210,10 @@
         "running": "Applying the rule…",
         "done": "Applied the rule"
       },
+      "rename_documents": {
+        "running": "Pregătesc noile nume…",
+        "done": "Noile nume sunt pregătite"
+      },
       "list_deadlines": {
         "running": "Checking deadlines…",
         "done": "Checked deadlines"

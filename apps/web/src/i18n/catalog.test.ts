@@ -36,6 +36,13 @@ describe('the keys built from closed enums exist in every language', () => {
     }
   });
 
+  it('labels the rename_documents chip in every language (A62)', () => {
+    const labels = (lng: string) => ['running', 'done'].map((s) => i18n.getFixedT(lng)(`chat.tool.rename_documents.${s}`));
+    expect(labels('en')).toEqual(['Preparing the new names…', 'Prepared the new names']);
+    expect(labels('fr')).toEqual(['Préparation des nouveaux noms…', 'Nouveaux noms prêts']);
+    expect(labels('ro')).toEqual(['Pregătesc noile nume…', 'Noile nume sunt pregătite']);
+  });
+
   it('formats Romanian plurals with "de" from 20 and French with "de" from a million', () => {
     expect(i18n.getFixedT('ro')('toast.undone', { count: 3, n: 3 })).toBe('Am anulat 3 modificări');
     expect(i18n.getFixedT('ro')('toast.undone', { count: 20, n: 20 })).toBe('Am anulat 20 de modificări');

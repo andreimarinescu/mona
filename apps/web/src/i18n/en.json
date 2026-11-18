@@ -202,6 +202,10 @@
         "running": "Applying the rule…",
         "done": "Applied the rule"
       },
+      "rename_documents": {
+        "running": "Preparing the new names…",
+        "done": "Prepared the new names"
+      },
       "list_deadlines": {
         "running": "Checking deadlines…",
         "done": "Checked deadlines"

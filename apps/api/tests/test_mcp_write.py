@@ -10,11 +10,12 @@ from pydantic import Field
 
 from mona.chat.cards import card_chunk
 from mona.db import get_engine
-from mona.services import correct_document
+from mona.services import correct_document, file_document
 from mona.settings import get_settings
 from tests import rows
 from tests.mcp_http import call
 from tests.mcp_results import CardRef, Strict
+from tests.test_services import classify
 
 DOC = Field(pattern=r"^doc_[0-9a-hjkmnp-tv-z]{26}$")
 
@@ -289,6 +290,109 @@ async def test_telegram_rule_candidates_leave_out_hidden_documents(l2_world):
     )  # fmt: skip
     assert [m["document_id"] for m in fixed["preview"]["moves"]] == [practice]
     assert fixed["preview"]["moves_total"] == 1
+
+
+# --- rename_documents (C4 §3.18, A62) ---
+
+
+class Renamed(Strict):
+    document_id: str = DOC
+    title: str
+    from_name: str
+    to_name: str
+
+
+class Collision(Strict):
+    to_name: str
+    count: int
+
+
+class RenameResult(Strict):
+    rule_id: str
+    pattern: str
+    renames_total: int
+    renames: list[Renamed] = Field(max_length=5)
+    collisions: list[Collision]
+    not_covered: int
+    date_fallbacks: int
+    card_refs: list[CardRef]
+
+
+def unim_filed(w, month: int, entity: str = "cabinet") -> str:
+    doc = w.doc(counterparty="unim", category="insurance", subcategory="prevoyance",
+                entity=entity, doc_date=date(2025, month, 3), status="processing")  # fmt: skip
+    folder = "Cabinet Marchand" if entity == "cabinet" else "Personnel"
+    classify(w, doc, f"{folder}/Assurances/UNIM/Prévoyance/2025/2025-{month:02d}-03_UNIM.pdf")
+    file_document(w.ctx, doc)
+    return doc
+
+
+async def test_rename_prepares_a_draft_with_a_rule_preview_card(l2_world):
+    w = l2_world
+    docs = [unim_filed(w, m) for m in (1, 2, 3, 4, 5, 6, 7)]
+    args = {"document_id": docs[6], "example": "2025-07 UNIM Contrat Prévoyance.pdf"}
+    body = ok(await call("rename_documents", args), RenameResult)
+    assert body["pattern"] == "{date:YYYY-MM}-{counterparty}-Contrat-{sub}"
+    assert body["renames_total"] == 7 and len(body["renames"]) == 5
+    assert body["renames"][0] == {
+        "document_id": docs[6], "title": w.row(docs[6])["original_name"],
+        "from_name": "2025-07-03_UNIM.pdf", "to_name": "2025-07-UNIM-Contrat-Prevoyance.pdf",
+    }  # fmt: skip
+    assert (body["collisions"], body["not_covered"], body["date_fallbacks"]) == ([], 0, 0)
+    [card] = rows.card_rows()
+    assert (card.tool, card.kind, card.subject) == (
+        "rename_documents", "rulePreview", {"rule_id": body["rule_id"]}
+    )  # fmt: skip
+    data = await rule_card(body["rule_id"])
+    assert data["movesTotal"] == 7 and data["applied"] is False
+    assert [(m["fromFileName"], m["toFileName"]) for m in data["moves"]][:1] == [
+        ("2025-01-03_UNIM.pdf", "2025-01-UNIM-Contrat-Prevoyance.pdf")
+    ]
+    again = ok(await call("rename_documents", args), RenameResult)
+    assert again["rule_id"] == body["rule_id"]
+    created = sql(
+        "SELECT state, source, actor, via FROM rules r JOIN file_ops f ON f.rule_id = r.id"
+        " WHERE f.action = 'rule.create'"
+    )
+    assert created == [("draft", "correction", "mona", "chat")]
+    applied = ok(await call("apply_rule", {"rule_id": body["rule_id"]}), ApplyResult)
+    assert applied["moved"] == 7
+    assert w.row(docs[0])["current_path"].endswith("/2025-01-UNIM-Contrat-Prevoyance.pdf")
+    ok(await call("undo", {"group_id": applied["group_id"]}), UndoResult)
+    assert w.row(docs[0])["current_path"].endswith("/2025-01-03_UNIM.pdf")
+    assert sql("SELECT state FROM rules WHERE id = %s", (body["rule_id"],)) == [("draft",)]
+
+
+async def test_rename_errors_are_results_and_write_nothing(l2_world):
+    w = l2_world
+    doc = unim_filed(w, 3)
+    month = error(await call("rename_documents", {"document_id": doc, "example": "2025-03_Juin"}))
+    late = error(await call("rename_documents", {"document_id": doc, "example": "UNIM 2025"}))
+    bad = error(await call("rename_documents", {"document_id": doc, "pattern": "{date:YYYY}_{x}"}))
+    neither = error(await call("rename_documents", {"document_id": doc}))
+    long = error(await call("rename_documents", {"document_id": doc, "example": "2" * 201}))
+    assert (month["code"], month["field"], month["hint"]) == (
+        "invalid_argument", "example", "{date:MMMM}"
+    )  # fmt: skip
+    assert (late["code"], late["field"]) == ("invalid_argument", "example")
+    assert (bad["field"], bad["hint"]) == ("pattern", "offset 12") and bad["valid"]
+    assert neither["code"] == long["code"] == "invalid_argument"
+    assert sql("SELECT count(*) FROM file_ops WHERE action = 'rule.create'") == [(0,)]
+
+
+async def test_rename_on_telegram_hides_personal_documents(l2_world):
+    w = l2_world
+    personal = unim_filed(w, 3, entity="personal")
+    hidden = error(
+        await call("rename_documents", {"document_id": personal, "example": "2025-03_UNIM"},
+                   channel="telegram")
+    )  # fmt: skip
+    assert hidden["code"] == "not_found"
+    shown = ok(
+        await call("rename_documents", {"document_id": personal, "example": "2025-03_UNIM"}),
+        RenameResult,
+    )
+    assert shown["renames_total"] == 1
 
 
 # --- undo ---
