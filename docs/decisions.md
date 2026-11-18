@@ -2,6 +2,29 @@
 
 Newest first. Lanes re-read this file at every commit boundary; an entry binds even if you never saw the message that announced it.
 
+## D23 · 2026-11-18 · FIX-16: chat turns that think forever (Andrei)
+
+- **Evidence.** On Claudiu's Windows box (2026-11-17), 5 of 11 chat turns streamed reasoning for 30–132 s and never replied; each ended when the person stopped it. One earlier reply offered a rename no tool could make. Root causes:
+  - unbounded, repetitive reasoning on the local path (llama.cpp, Qwen 3.6 Q4, no presence penalty, no thinking budget);
+  - Hermes prompt sections that contradict SOUL (a docker terminal with file tools, the WSL `/mnt/c` hint, "Finishing the job", "No markdown");
+  - capabilities SOUL never states;
+  - a reply-language misfire on filenames;
+  - a web UI that leaves a stopped turn spinning.
+- **Rulings:**
+  - **Thinking stays on for chat**, with Qwen's `presence_penalty` 1.5 and a per-request thinking budget sent only on Hermes' chat requests (A57). Never a server-wide `--reasoning-budget`: the interview generator thinks long on purpose. The impact is re-measured on every release with the replay probe.
+  - **Hermes' foreign prompt sections go:** config switches where Hermes has them, and a Mona Hermes plugin (an `llm_request` middleware) for the rest (A57). Evaluating a replacement for Hermes goes to the roadmap backlog.
+  - **The adapter cuts a runaway reasoning** and replies honestly (A58).
+  - **"Mark as paid":** Mona shows the deadline card. Its "Mark as done" is journaled (not undoable, like other non-file entries) and noted for Mona (A60). Mona still never changes a deadline's status (C2 §10).
+  - **Custom naming is a full feature now:** a month-name token, a draft rule carrying the file name, preview → apply → undo for already-filed documents, and the `rename_documents` tool (A61, A62).
+  - **The watched network folder** stays in the backlog (Claudiu asked for it); SOUL says plainly that it doesn't exist yet (A59).
+  - **Release:** one signed sitting to main, then a box release. The replay probe runs on the box; only counts leave it.
+    - The baseline replays the recorded turns as they were: stored prompt, no sampling extras, no cut, run right after the deploy.
+    - The after-run uses the release's prompt (`--system`), the config's `extra_body` and the cut.
+    - Hermes keeps each conversation's stored prompt, so SOUL changes reach conversations started after the release. The plugin's cut reaches them all.
+  - **The email connector merges after FIX-16:**
+    - `0011_email_sources` becomes `0012` (down_revision `0011_deadline_status`);
+    - A59's SOUL line "no … email intake yet" is updated in the same change.
+
 ## D21 · 2026-11-09 · Direction for the next stage (Andrei)
 
 - **The MVP sprint is closed.** The prototype was demoed to Claudiu on Oct 6 and at the Sicily event (Oct 18–24), from the laptop dev rig, and was well received. Early-adopter deployments come next, with more demos alongside.

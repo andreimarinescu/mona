@@ -398,3 +398,203 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - llama.cpp enforces the schema as a grammar without showing it to the model. Mona's classification prompt never describes the answer format. Forced to emit `title`, `category` and `subcategory` first, Qwen 3.6 Q4 often answered every evidence field with `null` and confidence 0. That was 4 of 13 live-batch documents on the Windows box, where the OpenRouter run of the same prompt had filled them. With the schema in the prompt, all of them filled (5–8 fields, confidence 0.9–1.0, no schema errors).
   - llama.cpp refuses repetitions above about 2000 ("failed to parse grammar"), so every draft failed with `ModelError`.
 - **Lanes:** FIX-15.
+
+## A57 · 2026-11-18 · C9 §4.1, C4 §1.3, A33: chat requests carry sampling and a thinking budget; Hermes' foreign prompt sections are switched off or cut; the seed always installs SOUL
+
+- **Change:**
+  1. **Chat sampling and thinking budget** (prod only).
+     - `config.prod.yaml` gains a `custom_providers` entry whose `base_url` is `${MONA_LLM_BASE_URL}`, with `extra_body`:
+       - `presence_penalty: 1.5`;
+       - `reasoning_budget_tokens: 1024`;
+       - `reasoning_budget_message`: a short sentence that closes the thought and turns to the answer (starting value `"\n\nI have enough to answer now.\n"`; the orchestrator tunes it with the replay probe).
+     - Hermes merges `extra_body` into every request it sends to that provider, so only chat (web, Telegram, cron) gets it. Filing, drafts and interviews call llama-server directly and are unchanged.
+     - Never `--reasoning-budget` on llama-server: it would cut the interview generator's pass 1.
+     - Verified 2026-11-18 on llama.cpp b10092: `reasoning_budget_tokens` and `thinking_budget_tokens` both cut the thinking at the budget and inject the message.
+     - The dev config (OpenRouter) gets no sampling extras.
+  2. **Hermes switches** (dev and prod configs):
+     - `agent.task_completion_guidance: false`;
+     - `agent.parallel_tool_call_guidance: false`;
+     - `agent.environment_probe: false`;
+     - `platform_hints.api_server.replace`: "You're replying in the Mona web app's chat, which renders Markdown. Keep replies short."
+  3. **`mona_prompt` Hermes plugin** (`deploy/hermes/plugins/mona_prompt/`).
+     - Enabled in both configs (`plugins.enabled`).
+     - It registers an `llm_request` middleware that removes these from the system message of every LLM request:
+       - the `# Hermes runtime environment` block through `<!-- End Hermes runtime environment -->`;
+       - the "You run on Hermes Agent (by Nous Research)…" paragraph;
+       - the "Active Hermes profile: …" paragraph;
+       - the "## Mid-turn user steering" section;
+       - the `# Finishing the job` and `# Parallel tool calls` sections;
+       - Hermes' default api_server hint paragraph ("You're responding through an API server. The rendering layer is unknown — assume plain text. No markdown …").
+     - Hermes keeps each conversation's stored prompt, so this reaches conversations started before the release too; item 2 covers only new ones.
+     - Every cut is anchored on Hermes' own text for the pinned image. A shape it doesn't recognize is left whole, and one warning is logged per process.
+     - The cut lives in `cut.py`, a pure function with no Hermes or Mona imports, which the checks and `mona chat-replay` load by path.
+  4. **Checks.**
+     - C9 §4.1's check A5 (`hermes_config_problems`) also expects items 1–3:
+       - the `extra_body` keys and values;
+       - a `custom_providers` entry whose `base_url` equals `model.base_url` and which has no `model` key (Hermes matches on the normalised `base_url`; a mismatch silently drops the budget);
+       - the three `agent.*` switches, the platform hint, and `mona_prompt` in `plugins.enabled`.
+     - A **prompt check** applies the plugin's cut to a stored prompt and fails if any of these markers, Hermes' exact strings, survives:
+       - `# Hermes runtime environment`, `Terminal backend: `, `/mnt/c/`;
+       - `# Finishing the job`, `# Parallel tool calls`, `[OUT-OF-BAND USER MESSAGE`;
+       - `hermes-agent.nousresearch.com`;
+       - `The rendering layer is unknown — assume plain text. No markdown`.
+     - It also fails unless Hermes reports the plugin as loaded.
+     - It reads the prompt of the newest web session through `sessions.system_prompt_hash` → `system_prompts`, read-only. `system_prompts` has no timestamp and also stores tool lists.
+     - **Where it runs:**
+       - In the test suite, the pinned image renders the system prompt for both configs with no turn, and the check runs on each. A one-turn capture test with the prod config also checks the upstream request.
+       - In `mona doctor`. With no web session since the installed config's mtime, it warns "no conversation since the release" and still runs the plugin check.
+     - Its output names markers and sections only, never prompt text (C9 §7).
+  5. **Seeding (extends A33):**
+     - Both `hermes-seed` services install `SOUL.md`, the config and the plugin directory on every start, not only when missing. SOUL, config and plugin are code, versioned with the release.
+     - `demo-reset` installs the plugin as it does SOUL and config, and its restore never deletes it.
+     - The plugin is installed read-only, so no bytecode lands next to it and the Hermes fingerprint doesn't drift.
+     - Memories and sessions are never touched.
+- **Why:** D23.
+  - The box's Hermes prompt told the model it had a docker terminal with `read_file`/`write_file`/`search_files`, and, from the WSL2 kernel, that the person's files are under `/mnt/c/Users`. The model listed those phantom tools in its loops.
+  - Hermes has no switch for that block.
+  - The Qwen3.6 card recommends `presence_penalty` 1.5 for thinking on general tasks against endless repetition.
+  - The prod seed never updated an existing SOUL, so SOUL changes would not have reached the box.
+- **Lanes:** FIX-16 H.
+
+## A58 · 2026-11-18 · C3 §3.4, §4.3, §4.4, C8 §5.2: the adapter cuts a runaway reasoning; a stopped turn ends cleanly in the web
+
+- **Change:**
+  1. **Watchdog.** In `run_turn`, every reasoning delta feeds a watchdog on the current reasoning part. It trips when one of these holds:
+     - (a) the part exceeds `MONA_CHAT_REASONING_MAX_CHARS` (default 12000);
+     - (b) one line repeats 5 times in the part (the line trimmed, lower-cased, whitespace collapsed, at least 40 characters, so that per-item field lines such as "status: open" never count);
+     - (c) the part has been open `MONA_CHAT_REASONING_MAX_S` seconds (default 120).
+     - Both settings pass through the prod env with their defaults, so they can be tuned on the box without a release.
+  2. **On a trip** the adapter:
+     - stops reading upstream and closes the Hermes request;
+     - closes the open parts;
+     - if the turn has no text yet, emits the text `chat.fallback.stuck` in the reply language;
+     - ends the stream with `finish-step` and `finish` (`finishReason` `other`).
+     - The turn is `closed` with `error_code = 'reasoning_cap'`. One log line carries the trip reason and the part's character count, nothing else.
+  3. **Bookkeeping.**
+     - An aborted turn closes its translator before it is stored, so `reasoning_ms` is kept.
+     - The translator also accepts `delta.reasoning` as reasoning text, only when `reasoning_content` is absent, so text never doubles.
+  4. **Web.**
+     - A reasoning part shows as live only while its message is the one streaming.
+     - While live, the label counts seconds (`chat.thinking.live_seconds`).
+     - A turn the person stopped shows the `chat.stopped` line and a Retry that regenerates it.
+     - `useChat` throttles updates to about 50 ms.
+     - A page's queued chat message waits while the chat is `submitted` or `streaming`. After a failed turn it still sends.
+  5. **C8 §5.2 keys** (EN source; the lane adds FR and RO, and the i18n check stays green):
+     - `chat.fallback.stuck`: "I went round in circles on this one and stopped. Could you ask it another way, or one step at a time?";
+     - `chat.stopped`: "Stopped.";
+     - `chat.thinking.live_seconds`: "Mona is thinking… {{count}} s".
+- **Why:** D23. Reasoning deltas reset the idle timer, so a looping turn could only end when the person gave up. The web then left the "thinking" spinner running, with no Retry.
+- **Lanes:** FIX-16 W.
+
+## A59 · 2026-11-18 · C8 §4, SOUL: filenames don't vote on the reply language; SOUL states what Mona can't do
+
+- **Change:**
+  1. **`detect_language` §4.1.** A new step 0: drop every whitespace-separated token that holds a digit, `_`, `/`, `\`, `@` or `://`, or that ends in a dot and 2–4 letters (a file extension), once trailing `.,;:!?)»"'` are stripped. The rest of §4.1 runs on what is left.
+  2. **§4.2.**
+     - The `ro` list gains Romanian words written without diacritics that are not in the §4.2 `fr` or `en` lists: `pus`, `poti`, `vreau`, `toate`, `numele`, `tipul`, `fiind`, `ultimul`, `cuvant`, `deci`, `cum`, `asa`, `acolo`, `aici`, `daca`, `iar`, `imi`, `iti`, `schimb`, `schimbi`.
+     - The `fr` list gains `fichier`, `moi`, `montrez`.
+  3. **§4.3** gains these vectors (all fictional):
+     - "ai pus numele documentului 2026-01-16_Hello-bank_Releve-de-compte.pdf ; poti sa il schimbi la toate de tipul 2026-01-HB-Studio-Ianuarie.pdf" → `ro`. Before A59 it is `fr`, 5–4;
+     - "vreau sa schimb numele la toate" → `ro`;
+     - "Show me the file 2026-01-16_Hello-bank_Releve-de-compte.pdf" → `en`;
+     - "Montrez-moi le fichier 2026-01-16_Hello-bank_Releve-de-compte.pdf" → `fr`;
+     - "Open the file Releve_de_la_banque_des_comptes.pdf" → `en`. It is `fr` without step 0, so it is the step's mutation vector.
+  4. **SOUL** (`deploy/hermes/SOUL.md`):
+     - **Decide quickly.** When no tool does what is asked, say so in one line the first time: don't re-list your tools or redraft the reply.
+     - **Documents arrive** through the Intake page (drag and drop) or as attachments on Telegram. There's no watched folder, scanner or email intake yet.
+     - **The app's pages** are Home, Chat, Intake, Review, Archive, Rules, Entities (with categories and their name templates), Activity and Settings. Never describe a menu, setting or button you don't know.
+     - **Deadlines:** no tool changes a deadline's status. To mark one paid or done, call `list_deadlines` (with `document_id` when you know it). Its card has a "Mark as done" button for the person.
+     - **Never offer a change**, or a table of changes, that no tool will make.
+     - **Renaming:** call `rename_documents` with the name the person gave, copied exactly. Never type a rename table.
+- **Why:** D23.
+  - A Romanian message quoting two French file names was tagged French, 5–4: the filename gave `releve`.
+  - The model invented a "Settings → Watch Folders" screen, a "mark it paid in the app" flow, and a rename it couldn't make.
+- **Lanes:** FIX-16 S.
+
+## A60 · 2026-11-18 · C2 §10, C7 §2.1, C1 §5, C1 §11.6, C3 §6.2, C4 §3.10: Done on a deadline card is journaled and noted; `list_deadlines` takes `document_id`
+
+- **Change:**
+  1. **The PATCH.** `PATCH /api/deadlines/{id}` takes an optional `conversationId` (the card sends it).
+     - A status change writes a C7 entry, action `deadline.status`:
+       - `subject_id` is the deadline, `document_id` its document;
+       - `before`/`after` are `{status}`;
+       - not undoable (§5.1), like `deadline.add`;
+       - actor `user`/`ui`.
+     - The same PATCH still reverses it. A PATCH that changes nothing writes nothing.
+  2. **The note.** With `conversationId`, the change also adds a C3 §6 card-action note, kind `deadline.status`:
+     - `Marked the deadline "{label}" as done.`
+     - `Reopened the deadline "{label}".`
+     - `Dismissed the deadline "{label}".`
+  3. **`list_deadlines`** (C4 §3.10) gains an optional `document_id`, so the card for an overdue or done deadline can be shown.
+     - It returns only that document's deadlines, any status, ignoring `within_days` and `include_overdue`. The cursor covers `document_id`.
+     - The description adds: "With document_id, that document's deadlines, any status."
+     - C1 §5's `file_ops.action` CHECK and C1 §11.6's `JournalEntry.action` union gain `deadline.status` (migration `0011_deadline_status`). C2 §10's "C1 has no deadline-status action" is superseded.
+  4. **Unchanged:** Mona never changes a deadline's status (C2 §10).
+- **Why:** D23. "Mark URSSAF as paid": the card's button is the way to do it, and Mona must learn it happened.
+- **Lanes:** FIX-16 S.
+
+## A61 · 2026-11-18 · C5 §8.1, §8.2, §8.4, §8.5: a month-name date unit; literals drop diacritics
+
+- **Change:**
+  1. **§8.1.** `format` also accepts the unit `MMMM`, matched before `MM`.
+  2. **§8.2.** `MMMM` renders the month of the token's date as a name in the filing language (`MONTHS`, C8), with an upper-case first letter:
+     - `fr`: Janvier … Décembre;
+     - `ro`: Ianuarie … Decembrie;
+     - `en`: January … December.
+     - Same date and fallback as `{date}`.
+  3. **§8.4 step 2.** A template literal is first NFKD-folded with its combining marks dropped. Only then does every character outside `[A-Za-z0-9._-]` become `-`. So "Médical" stays "Medical", where it used to become "M-dical".
+     - Step 1 already slugs token values, so in a file name `{date:MMMM}` gives `Fevrier`, `Aout`.
+     - Folder segments (§8.3) keep accents: `Février`.
+  4. **§8.5.** A new worked example, case 10:
+     - rule action `filename` `{date:YYYY-MM}-HB-Studio-{date:MMMM}`;
+     - Hello bank statement, entity `studio`, doc_date 2026-02-05, filing language `fr`;
+     - file name `2026-02-HB-Studio-Fevrier.pdf`.
+  5. **Check.** No seeded or stored template or rule may use `MMMM` today (it rendered `1010`). The migration-free check is a test over the seed.
+- **Why:** D23. The person asked for names ending in the month's name (like case 10's `2026-02-HB-Studio-Fevrier.pdf`), and no unit gave one.
+- **Before the release**, the orchestrator also checks the box's stored file templates and rule `filename`s for `MMMM` or a non-ASCII literal.
+- **Lanes:** FIX-16 N.
+
+## A62 · 2026-11-18 · C4 §3.18 (new), C4 §3.8, C1 §11.5, C3 §4.5: `rename_documents`; the rule preview predicts collision suffixes
+
+- **Change:**
+  1. **C4 §3.18 `rename_documents` [V]** (write; web and Telegram).
+     - **Description:** "Rename a document and the others like it to the name the person gave. Pass the name for this document exactly as the person wrote it. Prepares a draft rule and shows the old and new names; nothing moves until it is applied."
+     - **Params:**
+       - `document_id` (required);
+       - exactly one of `example` (the person's name for that document, as written; the extension is optional and ignored) or `pattern` (C5 §8.1 file template).
+     - **The server:**
+       1. **Derives the pattern from `example`.**
+          - It first normalises the example as a C5 §8.4 file name (NFKD fold, then steps 2–3), and works on that. The result shows the normalised name.
+          - It scans left to right. A match starts and ends at the stem's ends or at a `-`, `_` or `.`, and a date format starts and ends with a unit.
+          - The stem must begin with this document's date in some C5 date format. After that leading date, only the `YYYY` and `MMMM` units (`MMMM` in the filing language) are inferred, along with `{counterparty}`, `{entity}`, `{sub}`, and `{reference}` when its value has at least 4 characters. Shorter runs stay literals.
+          - Ties go date > counterparty > entity > sub > reference.
+          - Everything else becomes a literal. The pattern must render this document to exactly the normalised stem.
+       2. **Builds a draft rule** (`source='correction'`, `origin_document_id` = this document, journaled `rule.create` as C4 §3.5.4 does; no migration):
+          - **When a rule filed the document** (its classification's method `rule`): the draft copies that rule's conditions and action and adds `filename` = the pattern, with priority `learned_priority(len(conditions), …)` above that rule.
+          - **Otherwise:** conditions `counterparty equals <its counterparty key>`, `entity equals` and `category equals` with its C5 §4.2 Subject values; action = its filed entity, sub-unit, category and subcategory plus `filename`. When those Subject values differ from where it is filed → `conflict`, hint `would_refile`.
+          - The rule is named "Rename <counterparty> <category>".
+       3. **Runs the rule preview** (§3.8) and refuses, writing nothing:
+          - with `conflict`, hint `would_refile`, when any candidate would change folder, entity, sub-unit, category or subcategory, including a candidate filed under an older template version. So renaming is rename-only;
+          - with `conflict`, hint `in_review`, when any candidate is waiting in Review.
+     - **Result:** `{rule_id, pattern, renames_total, renames: [{document_id, title, from_name, to_name}] (≤ 5), collisions: [{to_name, count}], not_covered: n, date_fallbacks: n, card_refs}`.
+       - `not_covered` counts live archive documents of the same counterparty that aren't candidates, for any reason.
+       - `date_fallbacks` counts names that used the arrival date.
+       - Card: `rulePreview`.
+     - Calling it again with the same input returns the same draft (`rule_id`).
+     - **Errors** (`invalid_argument` with `field`):
+       - the example doesn't start with this document's date;
+       - a literal holds a month name (EN/FR/RO) or this document's year (they would repeat in every name; the error names the token to use);
+       - the derived pattern doesn't round-trip (`hint`: the name it would give);
+       - a C5 §8.1 grammar error (`offset`, `valid`);
+       - the document has no counterparty.
+       - `not_allowed` for a Visitors document.
+     - **Then:** the person applies from the card, or Mona calls `apply_rule`. `undo` on the apply group restores the names and returns the rule to draft (C7 §5.4).
+     - Tool label (C3 §4.5): "Preparing the new names…" / "Prepared the new names".
+  2. **C4 §3.8 / C1 §11.5.**
+     - A preview of a rule not yet applied predicts the C7 §8.1 collision suffixes by simulating the apply in (`arrived_at`, `id`) order.
+     - A name is taken if a file or directory exists there that isn't this document, or an earlier candidate was assigned it. A later candidate's current name stays taken until its turn.
+     - `to_path` then shows the name the apply will produce, and the apply must produce exactly that.
+- **Why:** D23. Renaming had no tool. The model offered a 15-row rename table, then couldn't make it, and looped.
+  - A rule carrying `filename` reuses the journaled preview → apply → undo, and names future statements the same way.
+  - Copying the filing rule matters because statements are often routed by IBAN rather than by the model's entity (C5 §8.5 case 2). Conditions on the model's values would match none of them, or refile them.
+- **Lanes:** FIX-16 N.
