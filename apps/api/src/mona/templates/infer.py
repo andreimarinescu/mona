@@ -25,6 +25,7 @@ EXTENSION = re.compile(r"\.(?:pdf|jpe?g|png)$", re.IGNORECASE)
 UNITS = {"YYYY": "y", "YY": "y", "MMMM": "m", "MM": "m", "DD": "d"}
 ORDERS = [("y", "m", "d"), ("d", "m", "y"), ("m", "d", "y"), ("y", "m"), ("m", "y"), ("y",)]
 MIN_REFERENCE = 4
+LEFTOVER_DATE = re.compile(r"[-_.]\d{1,2}(?=[-_.]|$)")
 MONTH_NAMES = {fold(m).casefold() for names in MONTHS.values() for m in names}
 
 
@@ -108,7 +109,7 @@ def infer(example: str, v: RenderValues) -> Inferred:
     stem = normalise(example)
     d, lang = file_date(v), filing_language(v)
     lead = _leading_date(stem, d, lang)
-    if lead is None:
+    if lead is None or LEFTOVER_DATE.match(stem, lead[0]):
         raise InferError(f"The name must start with this document's date, {d.isoformat()}.")
     pos, fmt = lead
     parts: list[Part] = [Token("date", fmt, 0)]

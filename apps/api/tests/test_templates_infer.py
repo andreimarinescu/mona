@@ -72,12 +72,23 @@ def test_a_month_name_in_a_literal_is_refused_naming_the_token(example):
 
 
 @pytest.mark.parametrize(
-    "example", ["Hello bank 2026-01", "2025-01-16_HB", "16-02_HB", "01-16_HB", "16_HB", ""]
+    ("example", "d"),
+    [
+        ("Hello bank 2026-01", date(2026, 1, 16)),
+        ("2025-01-16_HB", date(2026, 1, 16)),
+        ("16-02_HB", date(2026, 1, 16)),
+        ("01-16_HB", date(2026, 1, 16)),
+        ("16_HB", date(2026, 1, 16)),
+        ("", date(2026, 1, 16)),
+        ("2026-02-16_HB", date(2026, 1, 16)),
+        ("2026-01-HB-LMNP", date(2026, 2, 5)),
+        ("2026-01-16_Hello-bank", date(2026, 1, 17)),
+    ],
 )
-def test_the_name_must_start_with_the_document_date(example):
+def test_the_name_must_start_with_the_document_date(example, d):
     with pytest.raises(InferError) as e:
-        infer(example, statement())
-    assert "2026-01-16" in e.value.message
+        infer(example, statement(d))
+    assert d.isoformat() in e.value.message
 
 
 def test_the_date_is_the_arrival_date_without_a_doc_date():
