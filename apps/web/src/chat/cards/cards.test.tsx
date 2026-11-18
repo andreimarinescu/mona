@@ -279,6 +279,14 @@ describe('DeadlineCard and DraftCard actions', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
+  it('a dismissed deadline shows the Dismissed badge and no due badge or buttons', async () => {
+    await renderInApp(<DeadlineCard deadline={{ ...DEADLINE, status: 'dismissed', daysLeft: -3 }} />);
+    const d = within(card('deadline'));
+    expect(d.getByText('Dismissed')).toBeInTheDocument();
+    expect(d.queryByText(/Overdue|Due/)).toBeNull();
+    expect(d.queryByRole('button')).toBeNull();
+  });
+
   it('a deadline already past is overdue, not urgent-due', async () => {
     await renderInApp(<DeadlineCard deadline={{ ...DEADLINE, daysLeft: -3 }} />);
     expect(screen.getByText('Overdue by 3 days')).toBeInTheDocument();

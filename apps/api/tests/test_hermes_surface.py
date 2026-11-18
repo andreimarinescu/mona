@@ -133,6 +133,23 @@ def test_soul_offers_only_its_tools_and_never_claims_blank_columns():
     assert "Never type a table, a header row or a placeholder" in table
 
 
+def test_soul_states_a59_limits():
+    soul = (ROOT / "deploy" / "hermes" / "SOUL.md").read_text()
+    can = soul.split("## What you can do here, and what you can't", 1)[1].split("\n## ", 1)[0]
+    principles = soul.split("## Principles", 1)[1].split("\n## ", 1)[0]
+    lines = can.strip().splitlines()
+    assert any("There's no watched folder, scanner or email intake yet" in x for x in lines)
+    assert any("Never describe a menu, setting or button you don't know" in x for x in lines)
+    deadline = next(x for x in lines if x.startswith("- No tool changes a deadline's status."))
+    assert "`list_deadlines` (with `document_id` when you know it)" in deadline
+    assert 'in the web app its card has a "Mark as done" button' in deadline
+    assert "on Telegram, say it can be marked done in the web app" in deadline
+    rename = next(x for x in lines if x.startswith("- Renaming:"))
+    assert "`rename_documents`" in rename and "Never type a rename table" in rename
+    assert any(x.startswith("- Decide quickly.") for x in principles.splitlines())
+    assert any(x.startswith("- Never offer a change") for x in principles.splitlines())
+
+
 def test_hermes_keeps_calling_mona_after_three_failed_calls():
     """A32, captured on the pinned image with `tests/hermes_breaker.py`."""
     calls = json.loads((Path(__file__).parent / "fixtures" / "hermes" / "breaker.json").read_text())

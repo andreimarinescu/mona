@@ -95,6 +95,8 @@ export function DeadlineCard({ deadline: snapshot }: { deadline: Deadline }) {
       <div className="flex flex-wrap items-center gap-2">
         {deadline.status === 'done' ? (
           <Badge tone="success">{t('deadline.markedDone')}</Badge>
+        ) : deadline.status === 'dismissed' ? (
+          <Badge tone="neutral">{t('deadline.dismissed')}</Badge>
         ) : (
           <DueBadge deadline={deadline} />
         )}

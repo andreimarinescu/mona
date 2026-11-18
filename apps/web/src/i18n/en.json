@@ -1018,7 +1018,8 @@
     "remindOn": "Remind me on {{date}}",
     "reminderSet": "Reminder set for {{date}}",
     "done": "Mark as done",
-    "markedDone": "Marked as done"
+    "markedDone": "Marked as done",
+    "dismissed": "Dismissed"
   },
   "auth": {
     "unlock": {

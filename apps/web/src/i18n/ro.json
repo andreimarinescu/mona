@@ -1060,7 +1060,8 @@
     "remindOn": "Reamintiți-mi pe {{date}}",
     "reminderSet": "Memento setat pentru {{date}}",
     "done": "Marcați ca achitat",
-    "markedDone": "Marcat ca achitat"
+    "markedDone": "Marcat ca achitat",
+    "dismissed": "Ignorată"
   },
   "auth": {
     "unlock": {

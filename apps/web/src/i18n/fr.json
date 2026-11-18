@@ -1060,7 +1060,8 @@
     "remindOn": "Me le rappeler le {{date}}",
     "reminderSet": "Rappel programmé pour le {{date}}",
     "done": "Marquer comme réglé",
-    "markedDone": "Marqué comme réglé"
+    "markedDone": "Marqué comme réglé",
+    "dismissed": "Écartée"
   },
   "auth": {
     "unlock": {

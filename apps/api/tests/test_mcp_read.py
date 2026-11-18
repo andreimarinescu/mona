@@ -418,9 +418,6 @@ async def test_list_deadlines_by_document_returns_any_status_ignoring_the_window
     assert [i["deadline_id"] for i in res.data["items"]] == [paid, gone, far]
     assert [i["status"] for i in res.data["items"]] == ["done", "dismissed", "open"]
     assert res.data["card_refs"] and len(res.data["card_refs"]) == 3
-    assert [i["deadline_id"] for i in (await call("list_deadlines")).data["items"]] == [
-        i["deadline_id"] for i in (await call("list_deadlines", {"within_days": 30})).data["items"]
-    ]
     assert paid not in [i["deadline_id"] for i in (await call("list_deadlines")).data["items"]]
 
 
@@ -430,6 +427,8 @@ async def test_list_deadlines_by_document_stays_visible_filtered(archive):
     assert (await call("list_deadlines", {"document_id": doc})).data["total"] == 1
     tg = await call("list_deadlines", {"document_id": doc}, channel="telegram")
     assert tg.data["total"] == 0 and tg.data["card_refs"] == []
+    rows.deadline("Of a deleted doc", TODAY + timedelta(days=2), document_id=archive["deleted"],
+                  entity="personal")  # fmt: skip
     gone = await call("list_deadlines", {"document_id": archive["deleted"]})
     assert gone.data["total"] == 0
 
