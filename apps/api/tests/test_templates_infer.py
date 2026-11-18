@@ -69,6 +69,11 @@ def test_a_complete_leading_date_or_an_inferred_token_is_no_wrong_date(example, 
     assert infer(example, statement(d, **kw)).pattern == pattern
 
 
+def test_a_sub_label_starting_with_a_number_is_no_wrong_date():
+    v = replace(statement(), subcategory_labels=dict.fromkeys(("en", "fr", "ro"), "12 Mois"))
+    assert infer("2026-01_12-Mois", v).pattern == "{date:YYYY-MM}_{sub}"
+
+
 @pytest.mark.parametrize("example", ["2026-03-Marchand", "2026-03_Decor", "2026-03-Octave-x"])
 def test_a_word_that_starts_like_a_month_is_no_month(example):
     v = statement(date(2026, 3, 5))
