@@ -102,6 +102,15 @@ C8_VECTORS = [
     ("What's in Impôts et taxes?", "en"),
     ("Show me the Relevé de compte from Hello bank", "en"),
     ("open the prévoyance folder", "en"),
+    (
+        "ai pus numele documentului 2026-01-16_Hello-bank_Releve-de-compte.pdf ; poti sa il"
+        " schimbi la toate de tipul 2026-01-HB-Studio-Ianuarie.pdf",
+        "ro",
+    ),
+    ("vreau sa schimb numele la toate", "ro"),
+    ("Show me the file 2026-01-16_Hello-bank_Releve-de-compte.pdf", "en"),
+    ("Montrez-moi le fichier 2026-01-16_Hello-bank_Releve-de-compte.pdf", "fr"),
+    ("Open the file Releve_de_la_banque_des_comptes.pdf", "en"),
 ]
 C3_SENTENCES = [
     ("Combien avons-nous payé à l'URSSAF ?", "fr"),

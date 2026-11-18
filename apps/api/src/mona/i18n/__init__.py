@@ -133,6 +133,8 @@ def format_money(value: Decimal | float, currency: str, lang: str) -> str:
 
 
 _LETTERS = re.compile(r"[^\W\d_]+")
+_NOT_PROSE = re.compile(r"[\d_/\\@]|://|\.[^\W\d_]{2,4}$")
+_TRAILING = ".,;:!?)»\"'"
 _CUES = {"ro": set("ășşțţ"), "fr": set("éèêëàçùûôœïÿ")}
 _WORDS = {
     lang: frozenset(words.split())
@@ -146,12 +148,13 @@ _WORDS = {
         " vous avons avez pour une un au aux ou ce cette ces dans sur avec mon ma mes notre nos"
         " votre vos pas ne il elle je paye payes payee doit echeance echeancier mois annee"
         " derniere dernier redigez rediger reponse demander facture factures releve merci"
-        " bonjour passons revue lot en a",
+        " bonjour passons revue lot en a fichier moi montrez",
         "ro": "si este sunt ce cat cata cate cati avem aveti pentru nu in pe ca cu aceasta acest"
         " aceste acesti am ati la din anul trecut luna asta cand unde cine care platit platim"
         " plata plati scadent scadenta dumneavoastra va rog documente factura facturile extras"
         " raspuns redactati buna ziua multumesc sa se mi ne al ale lui unei unui acum despre prin"
-        " trecem intrebarile de o",
+        " trecem intrebarile de o pus poti vreau toate numele tipul fiind ultimul cuvant deci cum"
+        " asa acolo aici daca iar imi iti schimb schimbi",
     }.items()
 }
 
@@ -160,9 +163,12 @@ Lang = Literal["en", "fr", "ro"]
 
 
 def detect_language(text: str) -> Lang | None:
-    """C8 §4: letter cues from the first and lower-case words (capitalised words are usually
-    names), word hits through `norm()`, at least 2 and 1 clear of the runner-up."""
-    words = _LETTERS.findall(unicodedata.normalize("NFC", text))
+    """C8 §4: file names and other non-prose tokens are dropped; letter cues from the first and
+    lower-case words (capitalised words are usually names), word hits through `norm()`, at least
+    2 and 1 clear of the runner-up."""
+    tokens = unicodedata.normalize("NFC", text).split()
+    prose = [tok for tok in tokens if not _NOT_PROSE.search(tok.rstrip(_TRAILING))]
+    words = _LETTERS.findall(" ".join(prose))
     cue_words = [w.lower() for i, w in enumerate(words) if i == 0 or not w[0].isupper()]
     cues = {lang for lang, marks in _CUES.items() if any(marks & set(w) for w in cue_words)}
     counted = [norm(w) for w in words if len(w) >= 2]
