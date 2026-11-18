@@ -317,6 +317,7 @@ class RenameResult(Strict):
     not_covered: int
     date_fallbacks: int
     card_refs: list[CardRef]
+    truncated: bool = False
 
 
 def unim_filed(w, month: int, entity: str = "cabinet") -> str:
@@ -362,6 +363,28 @@ async def test_rename_prepares_a_draft_with_a_rule_preview_card(l2_world):
     ok(await call("undo", {"group_id": applied["group_id"]}), UndoResult)
     assert w.row(docs[0])["current_path"].endswith("/2025-01-03_UNIM.pdf")
     assert sql("SELECT state FROM rules WHERE id = %s", (body["rule_id"],)) == [("draft",)]
+
+
+async def test_rename_at_the_clip_limits_with_ten_collisions_fits_4000_chars(l2_world):
+    w = l2_world
+    long = "Contrat-Prevoyance-Annexe-Garanties-Collectives-Conditions-Particulieres-" * 3
+    docs = []
+    for m in range(1, 11):
+        for day in (3, 4):
+            doc = w.doc(counterparty="unim", category="insurance", subcategory="prevoyance",
+                        entity="cabinet", doc_date=date(2025, m, day), status="processing",
+                        title="Titre " * 60)  # fmt: skip
+            classify(w, doc, f"Cabinet Marchand/Assurances/UNIM/Prévoyance/2025/"
+                             f"2025-{m:02d}-{day:02d}_{long}.pdf")  # fmt: skip
+            file_document(w.ctx, doc)
+            docs.append(doc)
+    pattern = "{date:YYYY-MM}_" + long[:120].rstrip("-")
+    res = await call("rename_documents", {"document_id": docs[0], "pattern": pattern})
+    body = ok(res, RenameResult)
+    assert len(res.text) <= 4000 and body["truncated"] is True
+    assert body["renames_total"] == 20 and len(body["collisions"]) == 10
+    assert len(body["renames"]) < 5 and body["renames"][0]["document_id"] == docs[0]
+    assert len(body["renames"][0]["title"]) == 160 and len(body["renames"][0]["from_name"]) == 200
 
 
 async def test_rename_errors_are_results_and_write_nothing(l2_world):
