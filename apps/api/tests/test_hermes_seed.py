@@ -149,5 +149,14 @@ def test_an_unchanged_plugin_keeps_its_mtime_and_a_changed_one_is_reinstalled(
         )
         assert chowned["plugin.yaml"][1] == "0:0 644"
         assert chowned["plugin.yaml"][0] > changed["plugin.yaml"][0]
+
+        for drift, name in (
+            ("chmod 666 /opt/data/plugins/mona_prompt/cut.py", "cut.py"),
+            ("chmod 777 /opt/data/plugins/mona_prompt", "mona_prompt"),
+        ):
+            before = plugin_mtimes(command, seed, volume, stub)
+            drifted = plugin_mtimes(command, seed, volume, stub, drift)
+            assert {n: v[1] for n, v in drifted.items()} == {n: v[1] for n, v in first.items()}
+            assert drifted[name][0] > before[name][0], drift
     finally:
         subprocess.run(["docker", "volume", "rm", "-f", volume], capture_output=True)

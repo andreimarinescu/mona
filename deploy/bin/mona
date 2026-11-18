@@ -11,6 +11,7 @@
 #   mona backup --name <n> [--to <dir>]        (default ~/DevFiles/mona-hq/demo-data/snapshots)
 #   mona restore --name <n> [--from <dir>] [--anchor …] [--yes]
 #   mona up | stop | status                    (start, stop, list the stack; on the box it is the prod stack)
+#   mona restart hermes                        (restart Hermes with the stack's own compose files, then wait for health)
 #   mona doctor [--privacy] [--json]           (host checks: GPU, published ports, cloud-key names)
 #   mona perf [--dry-run] [--batch <dir>] [--order <file>] [--beats <file>] [--cold|--no-cold]
 #                                              (report in <data>/perf; VRAM sampled on the host)
@@ -64,6 +65,12 @@ wait_healthy() {
 
 start_services() {
   compose start api "${WORKERS[@]}" hermes >/dev/null
+  wait_healthy
+}
+
+restart_hermes() {
+  [[ "$*" == "hermes" ]] || die "restart: only 'hermes' can be restarted (mona restart hermes)"
+  compose restart hermes >/dev/null
   wait_healthy
 }
 
@@ -318,6 +325,7 @@ case "$cmd" in
   up) compose up -d --wait ;;
   stop) compose stop ;;
   status) compose ps ;;
+  restart) restart_hermes "$@" ;;
   doctor) doctor "$@" ;;
   perf) perf "$@" ;;
   chat-replay) chat_replay "$@" ;;

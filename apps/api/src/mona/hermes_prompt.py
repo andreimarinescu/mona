@@ -5,6 +5,7 @@ this file into the Hermes container, where `main` reads the newest web session r
 
 import contextlib
 import json
+import math
 import os
 import sqlite3
 import sys
@@ -27,7 +28,7 @@ MARKERS = (
 PLUGIN = "mona_prompt"
 WEB_SOURCE = "api_server"
 NO_CONVERSATION = "no conversation since the release"
-STALE = "Hermes started before the installed plugin: restart Hermes"
+STALE = "Hermes started before the installed plugin: run `mona restart hermes`"
 
 Cut = Callable[[str], tuple[str, list[str]]]
 Line = tuple[str, str, str]
@@ -143,21 +144,23 @@ def plugin_state() -> dict[str, Any]:
     }
 
 
-def main() -> int:
-    home = Path(os.environ.get("HERMES_HOME") or "/opt/data")
+def check(home: Path, state: dict[str, Any] | None) -> list[Line]:
+    """The plugin line and the prompt line; the prompt must postdate the running gateway's start."""
     cut_py = home / "plugins" / PLUGIN / "cut.py"
     cut = load_cut(cut_py) if cut_py.is_file() else None
-    try:
-        since = (home / "config.yaml").stat().st_mtime
-    except OSError:
-        since = 0.0
+    started = gateway_started(home)
+    plugin = plugin_line(state, started, plugin_installed(home / "plugins" / PLUGIN))
+    since = math.inf if started is None else started
+    return [plugin, prompt_line(newest_web_prompt(home / "state.db", since), cut)]
+
+
+def main() -> int:
+    home = Path(os.environ.get("HERMES_HOME") or "/opt/data")
     try:
         state = plugin_state()
     except Exception:
         state = None
-    plugin = plugin_line(state, gateway_started(home), plugin_installed(home / "plugins" / PLUGIN))
-    lines = [plugin, prompt_line(newest_web_prompt(home / "state.db", since), cut)]
-    sys.stdout.write("".join("\t".join(line) + "\n" for line in lines))
+    sys.stdout.write("".join("\t".join(line) + "\n" for line in check(home, state)))
     sys.stdout.flush()
     return 0
 

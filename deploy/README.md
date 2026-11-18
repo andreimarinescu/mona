@@ -4,7 +4,7 @@ Prod on mona is `compose.yaml` plus `deploy/compose.prod.yaml`: Caddy is the onl
 
 | Path | What |
 |---|---|
-| `bin/mona` | Host wrapper: `up`, `stop`, `status`, `doctor`, `perf`, `demo-reset`, `demo-snapshot`, `backup`, `restore`; anything else runs in the api image |
+| `bin/mona` | Host wrapper: `up`, `stop`, `status`, `restart hermes`, `doctor`, `perf`, `demo-reset`, `demo-snapshot`, `backup`, `restore`; anything else runs in the api image |
 | `bin/doctor-host` | Host half of `mona doctor`: GPU, published ports, cloud-key names in containers, and A57's `plugin` and `prompt` lines from inside Hermes |
 | `bin/deploy` | Build and tag `mona-api` and `mona-web`, start them, run doctor; keeps the last 2 releases; `--rollback` |
 | `bin/egress-test`, `bin/egress-analyze` | C9 §2.3 capture and judge |
@@ -18,13 +18,13 @@ Prod on mona is `compose.yaml` plus `deploy/compose.prod.yaml`: Caddy is the onl
 2. `deploy/bin/deploy`. It builds, starts, and runs `mona doctor`. The model line stays red until llama-swap is up.
 3. `deploy/bin/mona seed load /seed`, then `deploy/bin/mona demo-reset --yes`.
 4. llama-swap: in `~/llm` put `llama-swap.prod.yaml` and `compose.prod.yaml` (from `deploy/llm/`), set `MONA_NETWORK` to the prod network (`docker network ls`, `<project>_default`), tune `--n-cpu-moe` in the macro, then `docker compose -f compose.prod.yaml up -d`. It is reached as `http://llama-swap:8080/v1` (the value of `MONA_LLM_BASE_URL`) and is published on `127.0.0.1:9292` only.
-5. `deploy/bin/mona doctor` all green, except `prompt`, which stays amber ("no conversation since the release") until the first web conversation after each Hermes start.
+5. `deploy/bin/mona doctor` all green, except `prompt`, which stays amber ("no conversation since the release") until the first web conversation after the running Hermes gateway started; a seed re-run that changes nothing does not reset it.
 
 Rollbacks:
 - Release: `deploy/bin/deploy --rollback` restores the previous images. Migrations only move forward.
 - llama-swap: put `llama-swap.two-lane.yaml` back as `llama-swap.yaml` with the old `compose.yaml`, then `docker compose up -d --force-recreate`; point `MONA_LLM_MODEL` at a lane it serves.
 
-Both seeds install `SOUL.md`, their environment's config and the plugin on every start, and Hermes restarts whenever its seed is recreated (`restart: true`). If `mona doctor` says "Hermes started before the installed plugin: restart Hermes", run `docker compose restart hermes` with the stack's compose files.
+Both seeds install `SOUL.md`, their environment's config and the plugin on every start, and Hermes restarts whenever its seed is recreated (`restart: true`). If `mona doctor` says "Hermes started before the installed plugin", run `deploy/bin/mona restart hermes` (it uses the stack's own compose files, the prod overlay and `MONA_TAG` on the box, and waits for health).
 
 ## Perf (Oct 8)
 `mona perf --batch <folder of the rehearsed live batch> --order <names, one per line> --beats <json of {id, prompt}>` writes `<data>/perf/perf-<time>.md` and `.json`: classification per document, the chat beats cold (llama-swap unloaded first), warm, and during the running batch, llama-swap reloads (polls `/running`), and VRAM sampled with `nvidia-smi` on the host. `--dry-run` writes the skeleton and touches nothing. Batch and beats live in `demo-data/`, never in the repo; the report names documents by `sha256[:12]`. Afterwards `mona demo-reset`: the run leaves a batch and Hermes sessions behind.

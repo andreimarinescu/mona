@@ -48,6 +48,46 @@ def test_an_explicit_compose_command_still_gets_the_current_release_tag(tmp_path
     assert call == "TAG=20261008-1200 compose -p demo -f a.yaml up -d --wait"
 
 
+def restart(tmp_path: Path, *args: str, **env: str) -> subprocess.CompletedProcess:
+    bindir = tmp_path / "bin"
+    bindir.mkdir(exist_ok=True)
+    docker = bindir / "docker"
+    docker.write_text(
+        f'#!/bin/sh\necho "TAG=$MONA_TAG $*" >> {tmp_path}/calls\n'
+        'case "$*" in *"ps --format"*) printf "api=healthy\\nhermes=healthy\\n" ;; esac\n'
+    )
+    docker.chmod(docker.stat().st_mode | stat.S_IEXEC)
+    base = {"PATH": f"{bindir}:/usr/bin:/bin", "HOME": str(tmp_path), "MONA_ROOT": str(tmp_path)}
+    (tmp_path / "calls").write_text("")
+    return subprocess.run(
+        [str(WRAPPER), "restart", *args], env={**base, **env}, capture_output=True, text=True
+    )
+
+
+def test_restart_hermes_uses_the_stack_s_own_compose_then_waits_for_health(tmp_path):
+    state = tmp_path / ".deploy"
+    state.mkdir()
+    (state / "current").write_text("20261008-1200\n")
+    assert restart(tmp_path, "hermes").returncode == 0
+    restart_call, wait_call = (tmp_path / "calls").read_text().splitlines()
+    assert restart_call == (
+        "TAG=20261008-1200 compose -f compose.yaml -f deploy/compose.prod.yaml restart hermes"
+    )
+    assert (
+        wait_call.startswith("TAG=20261008-1200 compose -f compose.yaml")
+        and "ps --format" in wait_call
+    )
+
+
+def test_restart_hermes_on_a_dev_stack_keeps_the_project_and_refuses_other_services(tmp_path):
+    assert restart(tmp_path, "hermes", MONA_COMPOSE="docker compose -p demo").returncode == 0
+    assert (tmp_path / "calls").read_text().splitlines()[0] == "TAG= compose -p demo restart hermes"
+    for args in ((), ("api",), ("hermes", "api")):
+        done = restart(tmp_path, *args, MONA_COMPOSE="docker compose -p demo")
+        assert done.returncode == 1 and "only 'hermes'" in done.stderr
+        assert (tmp_path / "calls").read_text() == ""
+
+
 def stage_build(tmp_path: Path, *args: str, uncovered: int = 0) -> subprocess.CompletedProcess:
     """`mona stage-build` against a fake docker; the first `uncovered` live runs exit 3."""
     bindir = tmp_path / "bin"

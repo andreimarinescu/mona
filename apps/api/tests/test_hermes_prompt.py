@@ -235,7 +235,7 @@ LOADED = {"found": True, "enabled": True, "failed": False, "middleware": True}
 
 def test_the_plugin_line_is_red_when_the_gateway_started_before_the_installed_plugin():
     assert hp.plugin_line(LOADED, started=100.0, installed=100.5) == (hp.RED, "plugin", hp.STALE)
-    assert hp.STALE == "Hermes started before the installed plugin: restart Hermes"
+    assert "`mona restart hermes`" in hp.STALE
     assert hp.plugin_line(LOADED, started=None, installed=100.0)[:2] == (hp.RED, "plugin")
     assert hp.plugin_line(LOADED, started=100.0, installed=None)[:2] == (hp.RED, "plugin")
     assert hp.plugin_line(LOADED, started=100.5, installed=100.0)[0] == hp.GREEN
@@ -256,6 +256,42 @@ def test_the_gateway_start_is_the_mtime_of_a_live_gateway_pid(tmp_path):
     for record in (json.dumps({"pid": dead}), "{}", "not a pid"):
         pid.write_text(record)
         assert hp.gateway_started(tmp_path) is None, record
+
+
+def seeded_home(tmp_path: Path, web_started: list[float]) -> Path:
+    """A Hermes home after a no-op seed re-run: config.yaml is newer than the gateway start."""
+    home = tmp_path / "home"
+    plugin = home / "plugins" / "mona_prompt"
+    plugin.mkdir(parents=True)
+    (plugin / "cut.py").write_text((PLUGIN / "cut.py").read_text())
+    (home / "gateway.pid").write_text(json.dumps({"pid": os.getpid()}))
+    (home / "config.yaml").write_text("{}")
+    for path, mtime in ((plugin / "cut.py", 50.0), (plugin, 50.0), (home / "gateway.pid", 100.0)):
+        os.utime(path, (mtime, mtime))
+    os.utime(home / "config.yaml", (500.0, 500.0))
+    prompt = (PROMPTS / "before-prod-docker-wsl.txt").read_text()
+    state_db(home / "state.db", [("api_server", prompt, t, None) for t in web_started])
+    return home
+
+
+def test_a_no_op_seed_rerun_under_a_running_gateway_keeps_the_prompt_line_green(tmp_path):
+    home = seeded_home(tmp_path, [300.0])
+    plugin, prompt = hp.check(home, LOADED)
+    assert plugin[0] == hp.GREEN
+    assert prompt[0] == hp.GREEN and "newest web conversation" in prompt[2]
+
+
+def test_a_web_session_older_than_the_running_gateway_is_no_conversation(tmp_path):
+    home = seeded_home(tmp_path, [90.0])
+    assert hp.check(home, LOADED)[1] == (hp.AMBER, "prompt", hp.NO_CONVERSATION)
+
+
+def test_without_a_running_gateway_the_prompt_line_is_no_conversation(tmp_path):
+    home = seeded_home(tmp_path, [300.0])
+    (home / "gateway.pid").unlink()
+    plugin, prompt = hp.check(home, LOADED)
+    assert plugin[0] == hp.RED
+    assert prompt == (hp.AMBER, "prompt", hp.NO_CONVERSATION)
 
 
 def test_the_plugin_install_time_is_its_newest_mtime(tmp_path):
