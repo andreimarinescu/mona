@@ -1,6 +1,6 @@
 # deploy/
 
-Prod on mona is `compose.yaml` plus `deploy/compose.prod.yaml`: Caddy is the only published port (loopback, `WEB_PORT`, default 8080; reach it through the SSH tunnel), `/mcp` is not routed, no cloud key is in any service, and `hermes-seed` installs `config.prod.yaml` and runs A4/A5 before Hermes starts.
+Prod on mona is `compose.yaml` plus `deploy/compose.prod.yaml`: Caddy is the only published port (loopback, `WEB_PORT`, default 8080; reach it through the SSH tunnel), `/mcp` is not routed, no cloud key is in any service, and `hermes-seed` installs `config.prod.yaml`, `SOUL.md` and the `mona_prompt` plugin and runs A4/A5 before Hermes starts.
 
 | Path | What |
 |---|---|
