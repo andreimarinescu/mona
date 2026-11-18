@@ -1,8 +1,10 @@
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { chatBodies } from '../mocks';
+import type { ChatOutbox } from '../state/context';
 import { useMockApi } from '../test/mockApi';
 import { renderInApp } from '../test/renderInApp';
 import { ConversationThread } from './ConversationThread';
@@ -40,6 +42,39 @@ describe('ThinkingBlock: "Thought for N seconds" per block, not the turn total',
     rerender(ui(twoBlocks('done', 'done', 10_000)));
     await waitFor(() => expect(screen.getAllByTestId('thinking').map((b) => b.dataset.seconds)).toEqual(['3', '7']));
     expect(screen.getAllByTestId('thinking').map((b) => b.querySelector('summary span')!.textContent)).toEqual(['Thought for 3 seconds', 'Thought for 7 seconds']);
+  });
+
+  it('a live block counts its seconds, once a second', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    try {
+      let now = 0;
+      const clock = new ReasoningClock(() => now);
+      await renderInApp(
+        <ReasoningClockContext.Provider value={clock}>
+          <MonaMessage message={twoBlocks('streaming', null)} streaming newest />
+        </ReasoningClockContext.Provider>,
+      );
+      const label = () => screen.getByTestId('thinking').querySelector('summary span')!.textContent;
+      expect(label()).toBe('Mona is thinking… 0 s');
+      now = 1_400;
+      act(() => vi.advanceTimersByTime(1_000));
+      expect(label()).toBe('Mona is thinking… 1 s');
+      now = 3_900;
+      act(() => vi.advanceTimersByTime(1_000));
+      expect(label()).toBe('Mona is thinking… 3 s');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a streaming part is not live once its message is no longer the streaming one', async () => {
+    await renderInApp(
+      <ReasoningClockContext.Provider value={new ReasoningClock()}>
+        <MonaMessage message={twoBlocks('streaming', null)} streaming={false} newest />
+      </ReasoningClockContext.Provider>,
+    );
+    expect(screen.getByTestId('thinking')).toHaveAttribute('data-live', 'false');
+    expect(screen.getByTestId('thinking')).not.toHaveTextContent('Mona is thinking');
   });
 
   it('on reload, a lone block takes the turn reasoningMs and several blocks show no invented time', async () => {
@@ -153,6 +188,104 @@ describe('the thread over the mock api', () => {
     const line = await screen.findByTestId('chat-error');
     expect(line).toHaveTextContent('The answer was cut off. Try again.');
     expect(screen.getAllByText('Hello there Mona')).toHaveLength(1);
+  });
+
+  /** A /api/chat stand-in whose streams stay open until `finish` is called. */
+  function heldStreams() {
+    const enc = new TextEncoder();
+    const frame = (c: object) => enc.encode(`data: ${JSON.stringify(c)}\n\n`);
+    const held: { finish(): void }[] = [];
+    api.server.use(
+      http.post('/api/chat', async ({ request }) => {
+        chatBodies.push((await request.json()) as Record<string, unknown>);
+        const n = chatBodies.length;
+        let ctl!: ReadableStreamDefaultController<Uint8Array>;
+        const stream = new ReadableStream<Uint8Array>({
+          start(c) {
+            ctl = c;
+            [{ type: 'start', messageId: `msg_held${n}` }, { type: 'start-step' }, { type: 'reasoning-start', id: 'r1' }, { type: 'reasoning-delta', id: 'r1', delta: 'Looking at the archive.' }].forEach((c_) => c.enqueue(frame(c_)));
+          },
+        });
+        held.push({
+          finish() {
+            [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }, { type: 'text-delta', id: 't1', delta: `Reply ${n}.` }, { type: 'text-end', id: 't1' }, { type: 'finish-step' }, { type: 'finish', finishReason: 'stop' }].forEach((c) => ctl.enqueue(frame(c)));
+            ctl.enqueue(enc.encode('data: [DONE]\n\n'));
+            ctl.close();
+          },
+        });
+        return new HttpResponse(stream, { headers: { 'content-type': 'text/event-stream', 'x-vercel-ai-ui-message-stream': 'v1' } });
+      }),
+    );
+    return held;
+  }
+
+  it('Stop ends the live thinking and shows Stopped. with a Retry that regenerates the turn', async () => {
+    const held = heldStreams();
+    const { box } = await open();
+    await userEvent.type(box(), 'Hello there Mona{Enter}');
+    await waitFor(() => expect(screen.getByTestId('thinking')).toHaveAttribute('data-live', 'true'));
+    expect(screen.queryByTestId('chat-stopped')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    const line = await screen.findByTestId('chat-stopped');
+    expect(line).toHaveTextContent('Stopped.');
+    expect(screen.getByTestId('thinking')).toHaveAttribute('data-live', 'false');
+    expect(document.querySelector('[data-chat-status="ready"]')).not.toBeNull();
+    await userEvent.click(within(line).getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(chatBodies).toHaveLength(2));
+    expect(chatBodies[1]).toMatchObject({ message: 'Hello there Mona' });
+    expect(screen.queryByTestId('chat-stopped')).toBeNull();
+    held[1]!.finish();
+    expect(await screen.findByText('Reply 2.')).toBeInTheDocument();
+    expect(screen.getAllByText('Hello there Mona')).toHaveLength(1);
+    expect(screen.queryByTestId('chat-stopped')).toBeNull();
+  });
+
+  function withOutbox() {
+    let post!: (o: ChatOutbox) => void;
+    function Harness() {
+      const [outbox, setOutbox] = useState<ChatOutbox | null>(null);
+      post = setOutbox;
+      return <ConversationThread variant="page" pageContext={() => page} outbox={outbox} />;
+    }
+    return { ui: <Harness />, post: (message: string, id: number) => act(() => post({ id, message, pageContext: page })) };
+  }
+
+  it('a queued message waits while Mona is answering, then sends', async () => {
+    const held = heldStreams();
+    chatBodies.length = 0;
+    const harness = withOutbox();
+    await renderInApp(harness.ui);
+    await userEvent.type(screen.getByRole('textbox', { name: 'Write to Mona…' }), 'First question{Enter}');
+    await waitFor(() => expect(document.querySelector('[data-chat-status="streaming"]')).not.toBeNull());
+    harness.post('Queued question', 1);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(chatBodies.map((b) => b.message)).toEqual(['First question']);
+    held[0]!.finish();
+    await waitFor(() => expect(chatBodies.map((b) => b.message)).toEqual(['First question', 'Queued question']));
+    held[1]!.finish();
+    expect(await screen.findByText('Reply 2.')).toBeInTheDocument();
+  });
+
+  it('a queued message still sends after a failed turn', async () => {
+    let failing = true;
+    api.server.use(
+      http.post('/api/chat', async ({ request }) => {
+        if (!failing) return undefined;
+        chatBodies.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json({ error: { code: 'internal', message: 'x' } }, { status: 500 });
+      }),
+    );
+    chatBodies.length = 0;
+    const harness = withOutbox();
+    await renderInApp(harness.ui);
+    await userEvent.type(screen.getByRole('textbox', { name: 'Write to Mona…' }), 'First question{Enter}');
+    await screen.findByTestId('chat-error');
+    expect(document.querySelector('[data-chat-status="error"]')).not.toBeNull();
+    failing = false;
+    harness.post('How much did we pay last year?', 1);
+    await waitFor(() => expect(chatBodies.map((b) => b.message)).toEqual(['First question', 'How much did we pay last year?']));
+    expect(await screen.findByText(/You paid these two amounts/)).toBeInTheDocument();
+    expect(chatBodies).toHaveLength(2);
   });
 
   it('a refused turn (409 turn_in_progress) explains itself', async () => {

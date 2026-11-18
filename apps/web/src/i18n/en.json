@@ -245,6 +245,7 @@
     },
     "thinking": {
       "live": "Mona is thinking…",
+      "live_seconds": "Mona is thinking… {{count}} s",
       "done_one": "Thought for 1 second",
       "done_other": "Thought for {{count}} seconds",
       "untimed": "Reasoning",
@@ -256,6 +257,7 @@
       "stream_interrupted": "The answer was cut off. Try again.",
       "internal": "Something went wrong. Try again."
     },
+    "stopped": "Stopped.",
     "offline": {
       "title": "Mona is offline"
     },

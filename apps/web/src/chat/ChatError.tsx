@@ -32,3 +32,16 @@ export function ChatError({ error, onRetry }: { error: Error; onRetry(): void })
     </div>
   );
 }
+
+/** A turn the person stopped: "Stopped." and a Retry that regenerates it. */
+export function ChatStopped({ onRetry }: { onRetry(): void }) {
+  const { t } = useTranslation();
+  return (
+    <div role="status" className="flex flex-wrap items-center gap-3 pl-11 font-ui text-[15px] leading-[22px] text-text-muted" data-testid="chat-stopped">
+      <span>{t('chat.stopped')}</span>
+      <Button size="sm" variant="ghost" onClick={onRetry}>
+        {t('common.retry')}
+      </Button>
+    </div>
+  );
+}

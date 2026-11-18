@@ -10,7 +10,7 @@ import { toastFailure } from '../data/journal';
 import type { ChatOutbox } from '../state/context';
 import { toasts } from '../toast/store';
 import { ChatComposer, type PendingAttachment } from './ChatComposer';
-import { ChatError } from './ChatError';
+import { ChatError, ChatStopped } from './ChatError';
 import { ChatCardContext } from './context';
 import { LanguageDivider } from './LanguageDivider';
 import { MonaMessage, UserMessage } from './Messages';
@@ -53,12 +53,15 @@ export function ChatThread({ conversationId, initial, pageContext, onConversatio
   const input = useRef<HTMLTextAreaElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
+  const [stopped, setStopped] = useState(false);
 
   const chat = useChat<MonaUIMessage>({
     id: conversationId,
     messages: initial,
     transport: mona.transport,
-    onFinish: () => {
+    throttle: 50,
+    onFinish: ({ isAbort }) => {
+      setStopped(isAbort);
       void refreshCards();
       void qc.invalidateQueries({ queryKey: ['conversations'] });
       onTurnFinished?.();
@@ -75,8 +78,9 @@ export function ChatThread({ conversationId, initial, pageContext, onConversatio
   }, [latestId, mona, onConversationId]);
 
   const sent = useRef(0);
+  const sending = status === 'submitted' || status === 'streaming';
   useEffect(() => {
-    if (!outbox || sent.current === outbox.id) return;
+    if (!outbox || sent.current === outbox.id || sending) return;
     const timer = setTimeout(() => {
       sent.current = outbox.id;
       mona.overrideNext(outbox.pageContext);
@@ -85,7 +89,7 @@ export function ChatThread({ conversationId, initial, pageContext, onConversatio
       onOutboxSent?.(outbox.id);
     }, 0);
     return () => clearTimeout(timer);
-  }, [outbox, sendMessage, onOutboxSent, mona]);
+  }, [outbox, sending, sendMessage, onOutboxSent, mona]);
 
   useEffect(() => {
     const el = viewport.current;
@@ -137,7 +141,6 @@ export function ChatThread({ conversationId, initial, pageContext, onConversatio
     setAttachments([]);
   }
 
-  const sending = status === 'submitted' || status === 'streaming';
   const lastAssistant = messages.findLastIndex((m) => m.role === 'assistant');
   const waiting = sending && (messages.at(-1)?.role === 'user' || (lastAssistant === messages.length - 1 && !visible(messages[lastAssistant]!)));
   let previousReply: Lang | undefined;
@@ -201,6 +204,7 @@ export function ChatThread({ conversationId, initial, pageContext, onConversatio
                 </div>
               ) : null}
               {error && status === 'error' ? <ChatError error={error} onRetry={() => void regenerate()} /> : null}
+              {stopped && status === 'ready' ? <ChatStopped onRetry={() => void regenerate()} /> : null}
             </div>
           </div>
           <div className={page ? 'mx-auto box-border w-full max-w-[880px] px-4 pb-4 lg:px-8' : ''}>

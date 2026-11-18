@@ -253,6 +253,7 @@
     },
     "thinking": {
       "live": "Mona se gândește…",
+      "live_seconds": "Mona se gândește… {{count}} s",
       "done_one": "A reflectat o secundă",
       "done_few": "A reflectat {{count}} secunde",
       "done_other": "A reflectat {{count}} de secunde",
@@ -265,6 +266,7 @@
       "stream_interrupted": "Răspunsul s-a întrerupt. Încercați din nou.",
       "internal": "Ceva nu a funcționat. Încercați din nou."
     },
+    "stopped": "Oprit.",
     "offline": {
       "title": "Mona nu este conectată"
     },

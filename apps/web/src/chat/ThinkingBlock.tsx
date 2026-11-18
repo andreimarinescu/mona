@@ -1,7 +1,7 @@
 import { Icon } from '@mona/ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useBlockSeconds } from './reasoningClock';
+import { useBlockSeconds, useLiveSeconds } from './reasoningClock';
 
 export interface ThinkingBlockProps {
   /** `messageId:partIndex`, so each block keeps its own time. */
@@ -16,7 +16,8 @@ export function ThinkingBlock({ blockKey, text, live, onlyBlockMs }: ThinkingBlo
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const seconds = useBlockSeconds(blockKey, live, onlyBlockMs);
-  const label = live ? t('chat.thinking.live') : seconds === null ? t('chat.thinking.untimed') : t('chat.thinking.done', { count: seconds });
+  const liveSeconds = useLiveSeconds(blockKey, live);
+  const label = live ? t('chat.thinking.live_seconds', { count: liveSeconds }) : seconds === null ? t('chat.thinking.untimed') : t('chat.thinking.done', { count: seconds });
   return (
     <details
       data-testid="thinking"

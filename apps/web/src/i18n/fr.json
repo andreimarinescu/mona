@@ -253,6 +253,7 @@
     },
     "thinking": {
       "live": "Mona réfléchit…",
+      "live_seconds": "Mona réfléchit… {{count}} s",
       "done_one": "Réflexion : {{count}} seconde",
       "done_many": "Réflexion : {{count}} secondes",
       "done_other": "Réflexion : {{count}} secondes",
@@ -265,6 +266,7 @@
       "stream_interrupted": "La réponse a été interrompue. Réessayez.",
       "internal": "Un problème est survenu. Réessayez."
     },
+    "stopped": "Interrompu.",
     "offline": {
       "title": "Mona est hors ligne"
     },

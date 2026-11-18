@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useSyncExternalStore } from 'react';
+import { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 
 /** Wall time of each reasoning block, measured as it streams: C3's `reasoningMs` is the turn's sum. */
 export class ReasoningClock {
@@ -14,6 +14,11 @@ export class ReasoningClock {
       span.end = this.now();
       this.listeners.forEach((l) => l());
     }
+  }
+
+  elapsed(key: string): number {
+    const span = this.spans.get(key);
+    return span ? (span.end ?? this.now()) - span.start : 0;
   }
 
   measured(key: string): number | null {
@@ -43,4 +48,16 @@ export function useBlockSeconds(key: string, live: boolean, onlyBlockMs: number 
   if (live) return null;
   if (measured !== null) return toSeconds(measured);
   return onlyBlockMs ? toSeconds(onlyBlockMs) : null;
+}
+
+/** Whole seconds a live block has been open, re-read once a second. */
+export function useLiveSeconds(key: string, live: boolean): number {
+  const clock = useContext(ReasoningClockContext);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!live) return;
+    const timer = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(timer);
+  }, [live]);
+  return Math.floor(clock.elapsed(key) / 1000);
 }

@@ -97,7 +97,7 @@ export function MonaMessage({ message, streaming, newest }: MonaMessageProps) {
           key={`r${i}`}
           blockKey={`${message.id}:${i}`}
           text={part.text}
-          live={part.state === 'streaming'}
+          live={streaming && part.state === 'streaming'}
           onlyBlockMs={reasoningBlocks === 1 ? message.metadata?.reasoningMs : undefined}
         />,
       );
