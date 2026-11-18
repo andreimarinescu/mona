@@ -11,6 +11,11 @@ describe('parseTemplate (C5 §8.1)', () => {
     expect(file.parts[0]).toMatchObject({ kind: 'token', name: 'date', format: 'YYYY-MM-DD' });
   });
 
+  it('offers a month-name chip (A61)', () => {
+    expect(TOKEN_CHIPS).toContain('{date:MMMM}');
+    expect(parseTemplate('{date:YYYY-MM}-{date:MMMM}', 'file').parts[2]).toMatchObject({ name: 'date', format: 'MMMM' });
+  });
+
   it('accepts every token chip it offers', () => {
     for (const chip of TOKEN_CHIPS) expect([parseTemplate(`{date:YYYY}_${chip}`, 'file').error, parseTemplate(`${chip}/x`, 'path').error]).toEqual([null, null]);
   });

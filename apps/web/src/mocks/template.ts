@@ -2,6 +2,7 @@ import type { TemplatePreview } from '../data/dto';
 import { parseTemplate, type TemplateError, type TemplatePart } from '../data/template';
 
 export interface SampleValues {
+  lang: 'en' | 'fr' | 'ro';
   entity: string;
   fyEnd: string;
   category: string;
@@ -16,7 +17,7 @@ export interface SampleValues {
 export const MESSAGES: Record<TemplateError['reason'], string> = {
   unknown_token: 'Unknown token.',
   format_on_token: 'Only {date} takes a format.',
-  bad_format: 'The date format uses YYYY, YY, MM, DD and - _ . only.',
+  bad_format: 'The date format uses YYYY, YY, MMMM, MM, DD and - _ . only.',
   stray_brace: 'A brace has no partner.',
   empty: 'The template is empty.',
   empty_segment: 'A folder name is empty.',
@@ -30,9 +31,16 @@ function fiscalYear(date: string, fyEnd: string): number {
   return date.slice(5) <= fyEnd ? year : year + 1;
 }
 
-function dateText(date: string, format: string): string {
+const MONTHS: Record<SampleValues['lang'], string[]> = {
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  fr: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+  ro: ['Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'],
+};
+
+function dateText(date: string, format: string, lang: SampleValues['lang']): string {
   const [y = '', m = '', d = ''] = date.split('-');
-  return format.replace(/YYYY|YY|MM|DD/g, (u) => (u === 'YYYY' ? y : u === 'YY' ? y.slice(2) : u === 'MM' ? m : d));
+  const units: Record<string, string> = { YYYY: y, YY: y.slice(2), MMMM: MONTHS[lang][Number(m) - 1] ?? '', MM: m, DD: d };
+  return format.replace(/YYYY|YY|MMMM|MM|DD/g, (u) => units[u]!);
 }
 
 function value(part: Extract<TemplatePart, { kind: 'token' }>, v: SampleValues): string {
@@ -54,14 +62,14 @@ function value(part: Extract<TemplatePart, { kind: 'token' }>, v: SampleValues):
     case 'reference':
       return v.reference;
     case 'date':
-      return dateText(v.docDate, part.format ?? 'YYYY-MM-DD');
+      return dateText(v.docDate, part.format ?? 'YYYY-MM-DD', v.lang);
   }
 }
 
+const fold = (s: string) => s.normalize('NFKD').replace(/\p{M}/gu, '');
+
 const slug = (s: string) =>
-  s
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+  fold(s)
     .replace(/[^A-Za-z0-9.]+/g, '-')
     .replace(/^[-.]+|[-.]+$/g, '');
 
@@ -87,7 +95,7 @@ export function renderTemplates(pathTemplate: string, fileTemplate: string, samp
     .map(segment)
     .filter(Boolean);
   const stem = file.parts
-    .map((p) => (p.kind === 'literal' ? p.text.replace(/[^A-Za-z0-9._-]/g, '-') : slug(value(p, sample))))
+    .map((p) => (p.kind === 'literal' ? fold(p.text).replace(/[^A-Za-z0-9._-]/g, '-') : slug(value(p, sample))))
     .join('')
     .replace(/[_-]*_[_-]*/g, '_')
     .replace(/-{2,}/g, '-')

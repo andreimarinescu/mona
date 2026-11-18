@@ -2,7 +2,7 @@ export const TOKEN_NAMES = ['entity', 'year', 'fy', 'category', 'sub', 'counterp
 export type TokenName = (typeof TOKEN_NAMES)[number];
 
 /** The token chips offered next to a field: `{date:…}` carries its default format. */
-export const TOKEN_CHIPS = ['{entity}', '{year}', '{fy}', '{category}', '{sub}', '{counterparty}', '{issuer}', '{reference}', '{date:YYYY-MM-DD}'] as const;
+export const TOKEN_CHIPS = ['{entity}', '{year}', '{fy}', '{category}', '{sub}', '{counterparty}', '{issuer}', '{reference}', '{date:YYYY-MM-DD}', '{date:MMMM}'] as const;
 
 export type TemplateKind = 'path' | 'file';
 
@@ -13,7 +13,7 @@ export interface TemplateError {
   reason: 'unknown_token' | 'format_on_token' | 'bad_format' | 'stray_brace' | 'empty' | 'empty_segment' | 'bad_segment' | 'slash' | 'date_first';
 }
 
-const DATE_FORMAT = /^(?:YYYY|YY|MM|DD|[-_.])+$/;
+const DATE_FORMAT = /^(?:YYYY|YY|MMMM|MM|DD|[-_.])+$/;
 
 /** C5 §8.1: splits a template into literals and tokens, or names the first error and its character offset. */
 export function parseTemplate(text: string, kind: TemplateKind): { parts: TemplatePart[]; error: null } | { parts: TemplatePart[]; error: TemplateError } {

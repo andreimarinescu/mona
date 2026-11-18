@@ -131,6 +131,7 @@ export function createRegistry(deps: RegistryDeps) {
   function previewTemplate(body: { pathTemplate: string; fileTemplate: string; entityId?: string }) {
     const entity = ENTITIES.find((e) => e.id === body.entityId) ?? ENTITIES[0]!;
     const sample: SampleValues = {
+      lang: entity.filingLanguage ?? 'fr',
       entity: entity.folderName,
       fyEnd: entity.fiscalYearEnd,
       category: 'Appels de paiement',

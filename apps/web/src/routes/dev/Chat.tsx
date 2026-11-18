@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConversationThread } from '../../chat/ConversationThread';
 import type { PageContext } from '../../chat/types';
+import { ToastRegion } from '../../shell/ToastRegion';
 
 const CHAT_PAGE: PageContext = { route: '/dev/chat', summary: 'Chat page' };
 
@@ -22,6 +23,7 @@ export function Chat() {
           onConversationId={(id) => void navigate({ to: '/dev/chat', search: (prev) => ({ ...prev, c: id }), replace: true })}
         />
       </div>
+      <ToastRegion />
     </main>
   );
 }

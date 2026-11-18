@@ -744,6 +744,7 @@
       "save": "Save name",
       "condition": "When",
       "destination": "Files to",
+      "fileName": "File name",
       "problems": "Problems with this rule"
     }
   },

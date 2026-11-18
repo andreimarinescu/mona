@@ -772,6 +772,7 @@
       "save": "Salvați numele",
       "condition": "Când",
       "destination": "Arhivează în",
+      "fileName": "Numele fișierului",
       "problems": "Probleme cu această regulă"
     }
   },

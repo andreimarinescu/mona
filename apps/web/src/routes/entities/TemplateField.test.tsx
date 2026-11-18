@@ -22,10 +22,11 @@ describe('TemplateField', () => {
     expect(screen.getByRole('textbox', { name: 'Path template' })).toHaveValue('{entity}/{fy} {entity}/Documents');
   });
 
-  it('offers the nine tokens and inserts one where the caret is', async () => {
+  it('offers the nine tokens and the month-name chip, and inserts one where the caret is', async () => {
     render(<Harness initial="{entity}/" />);
     const group = screen.getByRole('group', { name: 'Tokens' });
-    expect(within(group).getAllByRole('button')).toHaveLength(9);
+    expect(within(group).getAllByRole('button')).toHaveLength(10);
+    expect(within(group).getByRole('button', { name: 'Insert {date:MMMM}' })).toBeInTheDocument();
     await userEvent.click(within(group).getByRole('button', { name: 'Insert {counterparty}' }));
     expect(screen.getByRole('textbox', { name: 'Path template' })).toHaveValue('{entity}/{counterparty}');
     expect(screen.getByTestId('template-chips').querySelectorAll('[data-token]')).toHaveLength(2);

@@ -1,9 +1,12 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { RouterProvider, createMemoryHistory, createRootRoute, createRoute, createRouter, Outlet } from '@tanstack/react-router';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 import i18n from '../../i18n';
-import { useMockApi } from '../../test/mockApi';
+import { queryWrapper, useMockApi } from '../../test/mockApi';
 import { renderRoute } from '../../test/renderRoute';
+import { RuleDetail } from './RuleDetail';
 import { RulesPage } from './RulesPage';
 import { lastFiredLabel, needsCheck } from './ruleView';
 
@@ -66,6 +69,40 @@ describe('RulesPage', () => {
     await userEvent.clear(screen.getByRole('searchbox', { name: 'Find a rule' }));
     await userEvent.type(screen.getByRole('searchbox', { name: 'Find a rule' }), 'zzzz');
     expect(await screen.findByText('No rule matches', undefined, { timeout: 2_000 })).toBeInTheDocument();
+  });
+});
+
+describe('RuleDetail', () => {
+  const api = useMockApi();
+
+  async function open(id: string) {
+    const { Wrapper } = queryWrapper();
+    const root = createRootRoute({ component: () => <Wrapper><Outlet /></Wrapper> });
+    const shell = createRoute({ getParentRoute: () => root, id: 'shell', component: Outlet });
+    const detail = createRoute({ getParentRoute: () => shell, path: '/rules/$ruleId', component: RuleDetail });
+    const router = createRouter({ routeTree: root.addChildren([shell.addChildren([detail])]), history: createMemoryHistory({ initialEntries: [`/rules/${id}`] }) });
+    await router.load();
+    render(<RouterProvider router={router} />);
+    return screen.findByTestId('rule-detail');
+  }
+
+  it('shows the file name a rule gives', async () => {
+    const plain = api.world().registry.listRules(new URLSearchParams({ q: 'Martin' })).items[0]!.rule;
+    const named = { ...plain, id: 'rul_renamed', action: { ...plain.action, filename: '{date:YYYY-MM}-HB-{date:MMMM}' } };
+    api.server.use(http.get('/api/rules/rul_renamed', () => HttpResponse.json({ rule: named, problems: [] })));
+    const page = await open('rul_renamed');
+    expect(within(page).getByText('File name')).toBeInTheDocument();
+    expect(within(page).getByTestId('rule-file-name')).toHaveTextContent('{date:YYYY-MM}-HB-{date:MMMM}');
+  });
+
+  it('has no file name row for a rule without one', async () => {
+    const plain = api.world().registry.listRules(new URLSearchParams({ q: 'Martin' })).items[0]!.rule;
+    const page = await open(plain.id);
+    expect(within(page).queryByText('File name')).toBeNull();
+  });
+
+  it.each([['fr', 'Nom du fichier'], ['ro', 'Numele fișierului']])('labels the row in %s', (lng, label) => {
+    expect(i18n.getFixedT(lng)('rules.detail.fileName')).toBe(label);
   });
 });
 

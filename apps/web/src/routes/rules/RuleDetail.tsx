@@ -60,6 +60,7 @@ export function RuleDetail() {
   }
 
   const n = (v: number) => format.number(v, lang);
+  const fileName = typeof rule.action?.filename === 'string' ? rule.action.filename : null;
   const stats: [string, string][] = [
     [t('rules.table.fired'), n(rule.firedCount)],
     [t('rules.table.lastFired'), lastFiredLabel(rule.lastFiredAt, query.dataUpdatedAt, lang, t)],
@@ -85,6 +86,14 @@ export function RuleDetail() {
         <dd className="m-0 text-text">{rule.condition}</dd>
         <dt className="font-ui text-[14px] leading-5 font-semibold text-text-muted">{t('rules.detail.destination')}</dt>
         <dd className="m-0 [font:var(--type-filename)] text-text">{destinationText(rule)}</dd>
+        {fileName ? (
+          <>
+            <dt className="font-ui text-[14px] leading-5 font-semibold text-text-muted">{t('rules.detail.fileName')}</dt>
+            <dd className="m-0 [font:var(--type-filename)] text-text" data-testid="rule-file-name">
+              {fileName}
+            </dd>
+          </>
+        ) : null}
         {stats.map(([term, value]) => (
           <div key={term} className="contents">
             <dt className="font-ui text-[14px] leading-5 font-semibold text-text-muted">{term}</dt>

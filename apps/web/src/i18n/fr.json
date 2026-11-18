@@ -772,6 +772,7 @@
       "save": "Enregistrer le nom",
       "condition": "Quand",
       "destination": "Classe dans",
+      "fileName": "Nom du fichier",
       "problems": "Problèmes avec cette règle"
     }
   },
