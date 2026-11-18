@@ -196,7 +196,7 @@ describe('the thread over the mock api', () => {
   });
 
   /** A /api/chat stand-in whose streams stay open until `finish` is called. */
-  function heldStreams(openText = false) {
+  function heldStreams(open: 'reasoning' | 'text' | 'tool' = 'reasoning') {
     const enc = new TextEncoder();
     const frame = (c: object) => enc.encode(`data: ${JSON.stringify(c)}\n\n`);
     const held: { finish(): void }[] = [];
@@ -208,12 +208,17 @@ describe('the thread over the mock api', () => {
         const stream = new ReadableStream<Uint8Array>({
           start(c) {
             ctl = c;
-            [{ type: 'start', messageId: `msg_held${n}` }, { type: 'start-step' }, { type: 'reasoning-start', id: 'r1' }, { type: 'reasoning-delta', id: 'r1', delta: 'Looking at the archive.' }, ...(openText ? [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }, { type: 'text-delta', id: 't1', delta: 'Partial answer so far' }] : [])].forEach((c_) => c.enqueue(frame(c_)));
+            const opened = {
+              reasoning: [],
+              text: [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }, { type: 'text-delta', id: 't1', delta: 'Partial answer so far' }],
+              tool: [{ type: 'reasoning-end', id: 'r1' }, { type: 'tool-input-start', toolCallId: 'call_held', toolName: 'search_documents', dynamic: true }, { type: 'tool-input-available', toolCallId: 'call_held', toolName: 'search_documents', input: {}, dynamic: true }],
+            }[open];
+            [{ type: 'start', messageId: `msg_held${n}` }, { type: 'start-step' }, { type: 'reasoning-start', id: 'r1' }, { type: 'reasoning-delta', id: 'r1', delta: 'Looking at the archive.' }, ...opened].forEach((c_) => c.enqueue(frame(c_)));
           },
         });
         held.push({
           finish() {
-            [...(openText ? [] : [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }]), { type: 'text-delta', id: 't1', delta: `Reply ${n}.` }, { type: 'text-end', id: 't1' }, { type: 'finish-step' }, { type: 'finish', finishReason: 'stop' }].forEach((c) => ctl.enqueue(frame(c)));
+            [...{ reasoning: [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }], text: [], tool: [{ type: 'text-start', id: 't1' }] }[open], { type: 'text-delta', id: 't1', delta: `Reply ${n}.` }, { type: 'text-end', id: 't1' }, { type: 'finish-step' }, { type: 'finish', finishReason: 'stop' }].forEach((c) => ctl.enqueue(frame(c)));
             ctl.enqueue(enc.encode('data: [DONE]\n\n'));
             ctl.close();
           },
@@ -246,7 +251,7 @@ describe('the thread over the mock api', () => {
   });
 
   it('Stop leaves no blinking caret on a text part that was still open', async () => {
-    heldStreams(true);
+    heldStreams('text');
     const { box } = await open();
     await userEvent.type(box(), 'Hello there Mona{Enter}');
     await waitFor(() => expect(document.querySelector('.mona-caret')).not.toBeNull());
@@ -254,6 +259,21 @@ describe('the thread over the mock api', () => {
     await screen.findByTestId('chat-stopped');
     expect(screen.getByText('Partial answer so far')).toBeInTheDocument();
     expect(document.querySelector('.mona-caret')).toBeNull();
+  });
+
+  it('Stop shows a tool chip that was still running as interrupted, with no spinner', async () => {
+    heldStreams('tool');
+    const { box } = await open();
+    await userEvent.type(box(), 'Hello there Mona{Enter}');
+    await waitFor(() => expect(screen.getByTestId('tool-chip')).toHaveAttribute('data-state', 'running'));
+    expect(screen.getByTestId('tool-chip').querySelector('.mona-spin')).not.toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    await screen.findByTestId('chat-stopped');
+    const chip = screen.getByTestId('tool-chip');
+    expect(chip).toHaveAttribute('data-state', 'interrupted');
+    expect(chip).toHaveAttribute('data-live', 'false');
+    expect(chip.querySelector('.mona-spin')).toBeNull();
+    expect(chip).toHaveTextContent('· interrupted');
   });
 
   function withOutbox() {

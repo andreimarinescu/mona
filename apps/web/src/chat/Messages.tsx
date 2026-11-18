@@ -37,11 +37,11 @@ export function UserMessage({ message }: { message: MonaUIMessage }) {
   );
 }
 
-function toolState(part: MonaPart): ToolState {
+function toolState(part: MonaPart, streaming: boolean): ToolState {
   if (!isToolUIPart(part)) return 'done';
   if (part.state === 'output-available') return 'done';
   if (part.state === 'output-error' || part.state === 'output-denied') return 'interrupted';
-  return 'running';
+  return streaming ? 'running' : 'interrupted';
 }
 
 function DataCard({ part }: { part: MonaPart }) {
@@ -87,7 +87,7 @@ export function MonaMessage({ message, streaming, newest }: MonaMessageProps) {
   };
   message.parts.forEach((part, i) => {
     if (isToolUIPart(part)) {
-      chips.push(<ToolActivityChip key={part.toolCallId} toolName={getToolName(part)} state={toolState(part)} />);
+      chips.push(<ToolActivityChip key={part.toolCallId} toolName={getToolName(part)} state={toolState(part, streaming)} />);
       return;
     }
     flushChips(String(i));
