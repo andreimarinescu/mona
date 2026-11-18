@@ -3,11 +3,21 @@ model:
   provider: "custom"
   base_url: "${MONA_LLM_BASE_URL}"
   context_length: 65536
+custom_providers:
+  - name: "mona-local"
+    base_url: "${MONA_LLM_BASE_URL}"
+    extra_body:
+      presence_penalty: 1.5
+      reasoning_budget_tokens: 1024
+      reasoning_budget_message: "\n\nI have enough to answer now.\n"
 agent:
   reasoning_effort: "medium"
   max_turns: 8
   tool_use_enforcement: false
   execution_guidance: false
+  task_completion_guidance: false
+  parallel_tool_call_guidance: false
+  environment_probe: false
   disabled_toolsets:
     - terminal
     - code_execution
@@ -26,6 +36,9 @@ agent:
 terminal:
   backend: "docker"
   docker_network: false
+platform_hints:
+  api_server:
+    replace: "You're replying in the Mona web app's chat, which renders Markdown. Keep replies short."
 platform_toolsets:
   api_server: [memory, mona]
   telegram: [memory, mona_tg]
@@ -89,3 +102,5 @@ mcp_servers:
     tools:
       resources: false
       prompts: false
+plugins:
+  enabled: [mona_prompt]

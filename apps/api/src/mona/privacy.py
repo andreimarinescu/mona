@@ -47,6 +47,16 @@ PLATFORM_TOOLSETS = {
 }
 MCP_URL = "http://api:8765/mcp"
 CHANNELS = {"mona": "web", "mona_tg": "telegram"}
+LLM_EXTRA_BODY = {
+    "presence_penalty": 1.5,
+    "reasoning_budget_tokens": 1024,
+    "reasoning_budget_message": "\n\nI have enough to answer now.\n",
+}
+PROMPT_SWITCHES = ("task_completion_guidance", "parallel_tool_call_guidance", "environment_probe")
+API_SERVER_HINT = (
+    "You're replying in the Mona web app's chat, which renders Markdown. Keep replies short."
+)
+PLUGINS = ["mona_prompt"]
 
 
 class ProdCheckFailed(SettingsError):
@@ -209,6 +219,49 @@ def hermes_config_problems(
     expect("telemetry.shared_metrics.enabled", False)
     if _get(cfg, "provider_routing") is not _MISSING:
         out.append("provider_routing is set")
+    out += _llm_extra_body_problems(cfg, env)
+    for switch in PROMPT_SWITCHES:
+        expect(f"agent.{switch}", False)
+    expect("platform_hints.api_server", {"replace": API_SERVER_HINT})
+    expect("plugins.enabled", PLUGINS)
+    return out
+
+
+def _custom_providers(cfg: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """`custom_providers`, plus the `providers` entries Hermes' boot migration moves them to."""
+    listed = _get(cfg, "custom_providers")
+    out = [e for e in listed if isinstance(e, Mapping)] if isinstance(listed, list) else []
+    providers = _get(cfg, "providers")
+    for entry in providers.values() if isinstance(providers, Mapping) else ():
+        if isinstance(entry, Mapping):
+            out.append({
+                "base_url": entry.get("api") or entry.get("base_url"),
+                "model": entry.get("default_model") or entry.get("model") or entry.get("models"),
+                "extra_body": entry.get("extra_body"),
+            })  # fmt: skip
+    return out
+
+
+def _llm_extra_body_problems(cfg: Mapping[str, Any], env: Mapping[str, str]) -> list[str]:
+    """A57: Hermes sends `extra_body` only when an entry's normalised `base_url` is the model's."""
+
+    def norm(value: Any) -> str:
+        return str(_expand(value, env) or "").strip().rstrip("/") if value is not _MISSING else ""
+
+    target = norm(_get(cfg, "model.base_url"))
+    entry = next(
+        (e for e in _custom_providers(cfg) if target and norm(e.get("base_url")) == target), None
+    )
+    if entry is None:
+        return ["custom_providers has no entry whose base_url is model.base_url"]
+    out = []
+    if entry.get("model"):
+        out.append("custom_providers entry for model.base_url names a model")
+    extra = entry.get("extra_body")
+    extra = extra if isinstance(extra, Mapping) else {}
+    for key, wanted in LLM_EXTRA_BODY.items():
+        if extra.get(key) != wanted:
+            out.append(f"custom_providers extra_body.{key} is not {wanted!r}")
     return out
 
 

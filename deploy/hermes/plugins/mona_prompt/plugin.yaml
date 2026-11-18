@@ -1,0 +1,5 @@
+name: mona_prompt
+version: "1.0.0"
+description: "Mona: removes Hermes' foreign sections from the system prompt of every LLM request (A57)."
+author: "Mona"
+kind: standalone

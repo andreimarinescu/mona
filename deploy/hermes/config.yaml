@@ -14,6 +14,12 @@ agent:
   max_turns: 8
   tool_use_enforcement: false
   execution_guidance: false
+  task_completion_guidance: false
+  parallel_tool_call_guidance: false
+  environment_probe: false
+platform_hints:
+  api_server:
+    replace: "You're replying in the Mona web app's chat, which renders Markdown. Keep replies short."
 platform_toolsets:
   api_server: [memory, mona]
   telegram: [memory, mona_tg]
@@ -71,3 +77,5 @@ mcp_servers:
     tools:
       resources: false
       prompts: false
+plugins:
+  enabled: [mona_prompt]

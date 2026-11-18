@@ -11,7 +11,7 @@ import pytest
 import yaml
 
 from mona import llm
-from mona.privacy import ProdCheckFailed, llm_endpoint_problem
+from mona.privacy import ProdCheckFailed, hermes_config_problems, llm_endpoint_problem
 from mona.settings import Settings
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -147,6 +147,27 @@ def test_an_empty_cloud_key_in_the_profile_env_passes(tmp_path):
         (lambda c: c["telemetry"]["shared_metrics"].update(enabled=True), "telemetry"),
         (lambda c: c["mcp_servers"]["mona_tg"]["headers"].update({"X-Mona-Channel": "web"}),
          "mcp_servers.mona_tg"),
+        (lambda c: c["custom_providers"][0]["extra_body"].pop("presence_penalty"),
+         "extra_body.presence_penalty"),
+        (lambda c: c["custom_providers"][0]["extra_body"].pop("reasoning_budget_tokens"),
+         "extra_body.reasoning_budget_tokens"),
+        (lambda c: c["custom_providers"][0]["extra_body"].update(reasoning_budget_message=""),
+         "extra_body.reasoning_budget_message"),
+        (lambda c: c["custom_providers"][0]["extra_body"].update(presence_penalty=1.0),
+         "extra_body.presence_penalty"),
+        (lambda c: c["custom_providers"][0].update(base_url="http://llama-swap:8080/v1/x"),
+         "no entry whose base_url is model.base_url"),
+        (lambda c: c["custom_providers"][0].update(model="qwen36"), "names a model"),
+        (lambda c: c.pop("custom_providers"), "no entry whose base_url is model.base_url"),
+        (lambda c: c["agent"].pop("task_completion_guidance"), "agent.task_completion_guidance"),
+        (lambda c: c["agent"].update(parallel_tool_call_guidance=True),
+         "agent.parallel_tool_call_guidance"),
+        (lambda c: c["agent"].update(environment_probe="auto"), "agent.environment_probe"),
+        (lambda c: c["platform_hints"]["api_server"].update(replace="Plain text."),
+         "platform_hints.api_server"),
+        (lambda c: c.pop("platform_hints"), "platform_hints.api_server"),
+        (lambda c: c["plugins"].update(enabled=[]), "plugins.enabled"),
+        (lambda c: c.pop("plugins"), "plugins.enabled"),
     ],
 )  # fmt: skip
 def test_a_config_off_the_lockdown_fails_a5(tmp_path, change, says):
@@ -154,6 +175,30 @@ def test_a_config_off_the_lockdown_fails_a5(tmp_path, change, says):
     change(cfg)
     r = check(profile(tmp_path, config=cfg))
     assert r.returncode == 1 and "A5 FAILED" in r.stdout and says in r.stdout
+
+
+def test_a5_accepts_the_providers_entry_hermes_boot_migration_moves_custom_providers_to(tmp_path):
+    cfg = yaml.safe_load(PROD_CONFIG.read_text())
+    entry = cfg.pop("custom_providers")[0]
+    cfg["providers"] = {"mona-local": {"api": entry["base_url"] + "/", "name": entry["name"],
+                                       "extra_body": entry["extra_body"]}}  # fmt: skip
+    cfg["_config_version"] = 46
+    assert check(profile(tmp_path, config=cfg)).returncode == 0
+    cfg["providers"]["mona-local"]["default_model"] = "qwen36"
+    (second := tmp_path / "second").mkdir()
+    r = check(profile(second, config=cfg))
+    assert r.returncode == 1 and "names a model" in r.stdout
+
+
+def test_a5_compares_base_urls_after_expanding_the_environment():
+    cfg = yaml.safe_load(PROD_CONFIG.read_text())
+    cfg["custom_providers"][0]["base_url"] = LOCAL + "/"
+    env = {"MONA_LLM_BASE_URL": LOCAL, "MONA_LLM_MODEL": "qwen36"}
+    assert hermes_config_problems(cfg, env, lambda h: ["10.0.0.5"]) == []
+    cfg["custom_providers"][0]["base_url"] = "http://other:8080/v1"
+    assert hermes_config_problems(cfg, env, lambda h: ["10.0.0.5"]) == [
+        "custom_providers has no entry whose base_url is model.base_url"
+    ]
 
 
 def test_a3_reads_the_rendered_compose_by_name(tmp_path):
