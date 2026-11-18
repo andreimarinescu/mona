@@ -3,7 +3,8 @@
 import asyncio
 import json
 import logging
-from collections.abc import AsyncIterator
+import time
+from collections.abc import AsyncIterator, Callable
 from contextlib import aclosing
 from typing import Any
 
@@ -18,7 +19,9 @@ from mona.chat.overlay import build_overlay, language_slip, reply_text
 from mona.chat.parts import PartsRecorder
 from mona.chat.translate import SSEParser, Translator
 from mona.chat.turns import Turn, close_turn, touch
+from mona.chat.watchdog import ReasoningWatchdog, Trip
 from mona.i18n import t
+from mona.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -100,9 +103,20 @@ async def _reconcile(engine: AsyncEngine, hermes: HermesClient, turn: Turn) -> l
 
 
 async def run_turn(
-    engine: AsyncEngine, hermes: HermesClient, turn: Turn, route: str, summary: str
+    engine: AsyncEngine,
+    hermes: HermesClient,
+    turn: Turn,
+    route: str,
+    summary: str,
+    *,
+    clock: Callable[[], float] = time.monotonic,
 ) -> AsyncIterator[str]:
-    rec, tr, parser, guard = PartsRecorder(), Translator(), SSEParser(), TableLineGuard()
+    rec, tr, parser, guard = PartsRecorder(), Translator(clock), SSEParser(), TableLineGuard()
+    settings = get_settings()
+    dog = ReasoningWatchdog(
+        settings.mona_chat_reasoning_max_chars, settings.mona_chat_reasoning_max_s, clock
+    )
+    trip: Trip | None = None
     status, error_code, release = "open", None, False
     loop_time = asyncio.get_running_loop().time
     last_touch = loop_time()
@@ -115,7 +129,12 @@ async def run_turn(
         return "".join(frames)
 
     def no_text_reply() -> list[dict[str, Any]]:
-        key = "chat.table.intro" if guard.active else "chat.fallback.too_complex"
+        if trip is not None:
+            key = "chat.fallback.stuck"
+        elif guard.active:
+            key = "chat.table.intro"
+        else:
+            key = "chat.fallback.too_complex"
         return tr.text(t(key, turn.reply_language))
 
     def offline_tail() -> list[str]:
@@ -165,6 +184,8 @@ async def run_turn(
                 async for kind, value in events:
                     if kind == "idle":
                         yield KEEPALIVE
+                        if trip := dog.check(tr.open_reasoning):
+                            break
                         continue
                     if kind == "offline":
                         logger.warning("turn %s: Hermes unreachable: %s", turn.id, value)
@@ -183,6 +204,8 @@ async def run_turn(
                         continue
                     if ev.comment:
                         yield KEEPALIVE
+                        if trip := dog.check(tr.open_reasoning):
+                            break
                         continue
                     for chunk in tr.feed(ev):
                         if frames := out(chunk):
@@ -194,8 +217,12 @@ async def run_turn(
                                 yield out(card)
                     if tr.done:
                         break
+                    if trip := dog.check(tr.open_reasoning):
+                        break
         except ValueError:
             logger.warning("turn %s: unparseable upstream chunk", turn.id)
+        if trip is not None:
+            logger.warning("turn %s: reasoning cut: %s, %d chars", turn.id, trip.reason, trip.chars)
 
         for chunk in tr.close():
             if frames := out(chunk):
@@ -204,11 +231,11 @@ async def run_turn(
             yield out(card)
         for card in await _reconcile(engine, hermes, turn):
             yield out(card)
-        if not tr.done:
+        if not tr.done and trip is None:
             status, error_code = "failed", "stream_interrupted"
             yield sse({"type": "error", "errorText": "stream_interrupted"})
             yield sse({"type": "finish", "finishReason": "error"})
-        elif tr.finish_reason == "error":
+        elif trip is None and tr.finish_reason == "error":
             status, error_code = "failed", "hermes_agent_error"
             if not rec.text_emitted:
                 release = True
@@ -219,6 +246,8 @@ async def run_turn(
                 yield sse({"type": "finish", "finishReason": "error"})
         else:
             status = "closed"
+            if trip is not None:
+                error_code = "reasoning_cap"
             if not rec.has_text:
                 for chunk in no_text_reply():
                     yield out(chunk)
@@ -226,7 +255,7 @@ async def run_turn(
             yield sse(
                 {
                     "type": "finish",
-                    "finishReason": tr.ui_finish_reason,
+                    "finishReason": "other" if trip is not None else tr.ui_finish_reason,
                     "messageMetadata": {"reasoningMs": round(tr.reasoning_ms)},
                 }
             )
@@ -241,6 +270,8 @@ async def run_turn(
         yield sse({"type": "finish", "finishReason": "error"})
         yield DONE
     finally:
+        for chunk in tr.close():
+            rec.record(chunk)
         if status == "open" and not rec.has_text and any(p["type"] == "tool" for p in rec.parts):
             for chunk in no_text_reply():
                 rec.record(chunk)

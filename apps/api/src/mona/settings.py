@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     mona_attach_root: Path = Path("/opt/data/cache")
     mona_llm_model: str = "qwen/qwen3.7-flash"
     mona_turn_tool_budget: int = 6
+    mona_chat_reasoning_max_chars: int = 12000
+    mona_chat_reasoning_max_s: float = 120
     mona_llm_backend: Literal["openrouter", "llama-server"] = "openrouter"
     mona_llm_base_url: str | None = None
     mona_hermes_home: Path | None = None

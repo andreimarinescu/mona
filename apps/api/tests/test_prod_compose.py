@@ -131,6 +131,13 @@ def test_the_hermes_container_gets_the_local_endpoint_and_no_provider_key(render
 
 
 @needs_docker
+def test_the_api_gets_the_reasoning_caps_with_their_defaults(rendered):
+    env = env_of(rendered["services"]["api"])
+    assert env["MONA_CHAT_REASONING_MAX_CHARS"] == "12000"
+    assert env["MONA_CHAT_REASONING_MAX_S"] == "120"
+
+
+@needs_docker
 def test_a3_passes_on_the_rendered_file(rendered, tmp_path):
     out = tmp_path / "compose.json"
     out.write_text(json.dumps(rendered))

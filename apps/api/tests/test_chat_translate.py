@@ -1,7 +1,7 @@
 import itertools
 import json
 
-from mona.chat.translate import SSEParser, Translator, translate_lines
+from mona.chat.translate import OpenReasoning, SSEParser, Translator, translate_lines
 from tests.fixtures import (
     S1_OVERLAY_GOLDEN,
     S1_OVERLAY_STREAM,
@@ -144,3 +144,26 @@ def test_status_events_keepalives_and_role_chunks_are_dropped():
 def test_s1_overlay_fixture_matches_the_golden_chunks():
     golden = json.loads(S1_OVERLAY_GOLDEN.read_text())
     assert translate_lines(fixture_lines(S1_OVERLAY_STREAM)) == golden
+
+
+def test_delta_reasoning_counts_only_without_reasoning_content():
+    lines = [
+        _chunk({"reasoning": "Open"}),
+        _chunk({"reasoning_content": "ing ", "reasoning": "ing "}),
+        _chunk({"reasoning_content": "", "reasoning": "dup"}),
+        _chunk({"reasoning": "it."}),
+    ]
+    assert joined(translate_lines(lines), "reasoning") == "Opening it."
+
+
+def test_open_reasoning_is_the_current_part_with_its_text_and_start():
+    ticks = itertools.count(10)
+    parser, tr = SSEParser(), Translator(clock=lambda: next(ticks))
+    assert tr.open_reasoning is None
+    for line in [_chunk({"reasoning_content": "A "}), _chunk({"reasoning_content": "B"})]:
+        tr.feed(parser.feed(line))
+    assert tr.open_reasoning == OpenReasoning("r1", "A B", 10)
+    tr.feed(parser.feed(_chunk({"content": "Hi"})))
+    assert tr.open_reasoning is None
+    tr.feed(parser.feed(_chunk({"reasoning_content": "C"})))
+    assert tr.open_reasoning == OpenReasoning("r2", "C", 12)

@@ -64,7 +64,8 @@
   },
   "chat": {
     "fallback": {
-      "too_complex": "Această cerere are nevoie de mai mulți pași decât pot face dintr-odată. Pot căuta și deschide documente, aduna sume, enumera scadențele, redacta o scrisoare, exporta un tabel de documente, pregăti pachetul pentru contabil și trece prin întrebările despre un lot. Îmi puteți cere unul dintre aceste lucruri?"
+      "too_complex": "Această cerere are nevoie de mai mulți pași decât pot face dintr-odată. Pot căuta și deschide documente, aduna sume, enumera scadențele, redacta o scrisoare, exporta un tabel de documente, pregăti pachetul pentru contabil și trece prin întrebările despre un lot. Îmi puteți cere unul dintre aceste lucruri?",
+      "stuck": "M-am învârtit în cerc cu această cerere și m-am oprit. Puteți să o formulați altfel sau pas cu pas?"
     },
     "table": {
       "intro": "Iată tabelul."

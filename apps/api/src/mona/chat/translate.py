@@ -18,6 +18,13 @@ class SSEEvent:
     comment: bool = False
 
 
+@dataclass(frozen=True)
+class OpenReasoning:
+    id: str
+    text: str
+    opened_at: float
+
+
 class SSEParser:
     """Line-at-a-time SSE parser: `event:` names the next `data:` line; `:` lines are comments."""
 
@@ -58,6 +65,7 @@ class Translator:
         self._reasoning_n = 0
         self._text_n = 0
         self._reasoning_started = 0.0
+        self._reasoning_text = ""
         self.reasoning_ms = 0.0
         self._seen_calls: set[str] = set()
         self.completed_tools: list[str] = []
@@ -79,8 +87,9 @@ class Translator:
         out: list[Chunk] = []
         for choice in payload.get("choices", []):
             delta = choice.get("delta") or {}
-            if delta.get("reasoning_content"):
-                out += self._reasoning_delta(delta["reasoning_content"])
+            key = "reasoning_content" if "reasoning_content" in delta else "reasoning"
+            if delta.get(key):
+                out += self._reasoning_delta(delta[key])
             if delta.get("content"):
                 out += self._text_delta(delta["content"])
             if choice.get("finish_reason"):
@@ -97,6 +106,12 @@ class Translator:
         return self._text_delta(text) + self._end_text()
 
     @property
+    def open_reasoning(self) -> OpenReasoning | None:
+        if self._reasoning is None:
+            return None
+        return OpenReasoning(self._reasoning, self._reasoning_text, self._reasoning_started)
+
+    @property
     def ui_finish_reason(self) -> str:
         return self.finish_reason if self.finish_reason in ("stop", "length") else "other"
 
@@ -106,7 +121,9 @@ class Translator:
             self._reasoning_n += 1
             self._reasoning = f"r{self._reasoning_n}"
             self._reasoning_started = self._clock()
+            self._reasoning_text = ""
             out.append({"type": "reasoning-start", "id": self._reasoning})
+        self._reasoning_text += delta
         out.append({"type": "reasoning-delta", "id": self._reasoning, "delta": delta})
         return out
 

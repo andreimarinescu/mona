@@ -11,6 +11,7 @@ CONTRACT_KEYS = [f"review.sentence.{k}{v}" for k in SENTENCES for v in ("", "_an
     "review.sentence.first",
     "interview.option.ask",
     "chat.fallback.too_complex",
+    "chat.fallback.stuck",
     "chat.table.intro",
 ]
 PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
