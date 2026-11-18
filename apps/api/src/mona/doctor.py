@@ -19,8 +19,8 @@ from mona.text import norm
 GREEN, AMBER, RED = "green", "amber", "red"
 ORDER = (
     "env", "settings", "postgres", "migrations", "queues", "workers", "hermes", "toolsets",
-    "model", "gpu", "disk", "missing-files", "purge", "origin", "telegram", "exposure",
-    "A1", "A2", "A3", "A4", "A5", "memory",
+    "plugin", "prompt", "model", "gpu", "disk", "missing-files", "purge", "origin", "telegram",
+    "exposure", "A1", "A2", "A3", "A4", "A5", "memory",
 )  # fmt: skip
 GIB = 1 << 30
 DISK_AMBER, DISK_RED = 10 * GIB, 2 * GIB

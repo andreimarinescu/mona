@@ -3,6 +3,7 @@
 Regenerate the prompt fixtures (from apps/api): uv run python -m tests.hermes_image <before-rev>"""
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -27,6 +28,11 @@ PROD_ENV = {
     "MONA_LLM_MODEL": "qwen-test",
     "MONA_SERVICE_KEY": SERVICE_KEY,
 }
+COMPOSE_ENV = {
+    "POSTGRES_PASSWORD": "pw", "MONA_SERVICE_KEY": "k" * 32, "HERMES_API_KEY": "h" * 32,
+    "OPENROUTER_API_KEY": "or", "MONA_LLM_BASE_URL": "http://llama-swap:8080/v1",
+    "MONA_LLM_MODEL": "qwen-test", "MONA_PUBLIC_ORIGIN": "http://localhost:8080", "MONA_TAG": "t1",
+}  # fmt: skip
 FIXTURE_SOUL = "# Mona\n\nA fixture SOUL; the real one is deploy/hermes/SOUL.md.\n"
 
 
@@ -51,6 +57,23 @@ def render(config: Path, soul: Path, env: dict[str, str], wsl: bool = False) -> 
     )  # fmt: skip
     assert out.returncode == 0, out.stderr[-2000:]
     return json.loads(out.stdout.strip().splitlines()[-1])
+
+
+def seed_command(tmp_path: Path, *overlay: str) -> str:
+    """The rendered `hermes-seed` command, with `$$` unescaped as compose does when it runs it."""
+    env_file = tmp_path / "fixture.env"
+    env_file.write_text("".join(f"{k}={v}\n" for k, v in COMPOSE_ENV.items()))
+    cmd = ["docker", "compose", "--env-file", str(env_file), "-p", "seedtest", "-f", "compose.yaml"]
+    for f in overlay:
+        cmd += ["-f", f]
+    out = subprocess.run(
+        [*cmd, "config", "--format", "json"], cwd=ROOT, capture_output=True, text=True,
+        env={"PATH": os.environ["PATH"], "HOME": os.environ.get("HOME", "/tmp")},
+    )  # fmt: skip
+    assert out.returncode == 0, out.stderr[-500:]
+    seed = json.loads(out.stdout)["services"]["hermes-seed"]
+    assert seed["entrypoint"] == ["sh", "-c"]
+    return seed["command"][0].replace("$$", "$")
 
 
 def write_fixtures(before_rev: str, work: Path) -> None:

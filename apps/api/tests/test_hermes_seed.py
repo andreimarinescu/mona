@@ -1,7 +1,6 @@
 """A57 item 5: both `hermes-seed` services install SOUL, the config and the plugin on every start;
 memories and sessions stay. Each rendered seed command runs in the pinned Hermes image."""
 
-import json
 import os
 import shutil
 import subprocess
@@ -9,30 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from tests.hermes_image import HERMES, ROOT, ensure_image
+from tests.hermes_image import HERMES, ensure_image, seed_command
 
-FIXTURE_ENV = {
-    "POSTGRES_PASSWORD": "pw", "MONA_SERVICE_KEY": "k" * 32, "HERMES_API_KEY": "h" * 32,
-    "OPENROUTER_API_KEY": "or", "MONA_LLM_BASE_URL": "http://llama-swap:8080/v1",
-    "MONA_LLM_MODEL": "qwen-test", "MONA_PUBLIC_ORIGIN": "http://localhost:8080", "MONA_TAG": "t1",
-}  # fmt: skip
 FILES = ("plugin.yaml", "__init__.py", "cut.py")
-
-
-def seed_command(tmp_path: Path, *overlay: str) -> str:
-    env_file = tmp_path / "fixture.env"
-    env_file.write_text("".join(f"{k}={v}\n" for k, v in FIXTURE_ENV.items()))
-    cmd = ["docker", "compose", "--env-file", str(env_file), "-p", "seedtest", "-f", "compose.yaml"]
-    for f in overlay:
-        cmd += ["-f", f]
-    out = subprocess.run(
-        [*cmd, "config", "--format", "json"], cwd=ROOT, capture_output=True, text=True,
-        env={"PATH": os.environ["PATH"], "HOME": os.environ.get("HOME", "/tmp")},
-    )  # fmt: skip
-    assert out.returncode == 0, out.stderr[-500:]
-    seed = json.loads(out.stdout)["services"]["hermes-seed"]
-    assert seed["entrypoint"] == ["sh", "-c"]
-    return seed["command"][0].replace("$$", "$")
 
 
 def run_seed(command: str, seed: Path, data: Path, stub: Path) -> dict[str, str]:

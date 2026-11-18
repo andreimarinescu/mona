@@ -454,6 +454,49 @@ def test_host_a3_names_without_values_and_only_in_prod_or_when_asked(tmp_path):
     assert host(tmp_path, compose_stub("dev", "[]", env), "--privacy")["A3"][0] == "red"
 
 
+def prompt_stub(tmp_path: Path, answer: str, running: bool = True) -> dict[str, str]:
+    rendered = json.dumps({"services": {"api": {"environment": {"MONA_ENV": "dev"}}}})
+    return {
+        "docker": f"""
+case "$*" in
+  *"config"*) echo '{rendered}' ;;
+  *" ps -q hermes"*) {"echo h1" if running else "true"} ;;
+  *" ps"*) echo '[]' ;;
+  exec*) echo "$*" > {tmp_path}/exec-args; /bin/cat > {tmp_path}/probe.py; printf '{answer}' ;;
+esac
+""",
+    }
+
+
+def test_host_relays_the_hermes_prompt_probe_and_nothing_else(tmp_path):
+    answer = "noise from hermes\\nred\\tprompt\\tA57 markers survive the cut: x\\n"
+    answer += "green\\tplugin\\tmona_prompt loaded\\ngreen\\tgpu\\tforged\\n"
+    out = host(tmp_path, {"nvidia-smi": NVIDIA_OK, **prompt_stub(tmp_path, answer)})
+    assert out["prompt"] == ("red", "A57 markers survive the cut: x")
+    assert out["plugin"] == ("green", "mona_prompt loaded")
+    assert out["gpu"][1] != "forged"
+    probe = ROOT / "apps" / "api" / "src" / "mona" / "hermes_prompt.py"
+    assert (tmp_path / "probe.py").read_text() == probe.read_text()
+    assert (tmp_path / "exec-args").read_text().split() == [
+        "exec", "-i", "-u", "hermes", "h1", "/opt/hermes/.venv/bin/python", "-",
+    ]  # fmt: skip
+
+
+def test_host_prompt_lines_are_amber_when_hermes_is_down_or_silent(tmp_path):
+    down = host(tmp_path, prompt_stub(tmp_path, "", running=False))
+    assert down["plugin"][0] == down["prompt"][0] == "amber"
+    assert "not running" in down["prompt"][1]
+    silent = host(tmp_path, prompt_stub(tmp_path, ""))
+    assert silent["prompt"] == ("amber", "the Hermes probe gave no answer: not checked")
+
+
+def test_doctor_orders_the_prompt_lines_after_the_toolsets():
+    lines = d.parse_host_lines("amber\tprompt\tno conversation since the release\n")
+    assert [c.name for c in d.ordered([*lines, d.Check("toolsets", d.GREEN, "")])] == [
+        "toolsets", "prompt",
+    ]  # fmt: skip
+
+
 @pytest.mark.parametrize(
     ("line", "hit"),
     [
