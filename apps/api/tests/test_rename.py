@@ -145,6 +145,34 @@ def test_a_statement_waiting_in_review_refuses(s):
     assert (e.value.code, e.value.hint) == ("conflict", "in_review")
 
 
+def test_refusal_counts_only_documents_the_channel_may_see(s):
+    docs = six_statements(s)
+    for d in docs[2:4]:
+        correct_document(s.ctx, d, actor="mona", via="chat", entity="cabinet")
+    hidden: set[str] = {docs[2]}
+    with pytest.raises(ServiceError) as e:
+        rename(s, docs[0], example=EXAMPLE, visible=lambda r: r["id"] not in hidden)
+    assert "move 1 document(s)" in e.value.message
+    hidden.add(docs[3])
+    with pytest.raises(ServiceError) as e:
+        rename(s, docs[0], example=EXAMPLE, visible=lambda r: r["id"] not in hidden)
+    assert e.value.hint == "would_refile" and "move some documents" in e.value.message
+    assert not any(ch.isdigit() for ch in e.value.message)
+
+
+def test_an_in_review_refusal_counts_only_visible_documents(s):
+    docs = six_statements(s)
+    waiting = statement(s, 6, 16, 10)
+    with pytest.raises(ServiceError) as e:
+        rename(s, docs[0], example=EXAMPLE)
+    assert e.value.message.startswith("1 of these document(s) are waiting")
+    with pytest.raises(ServiceError) as e:
+        rename(s, docs[0], example=EXAMPLE, visible=lambda r: r["id"] != waiting)
+    assert e.value.hint == "in_review"
+    assert e.value.message.startswith("Some of these documents are waiting")
+    assert not any(ch.isdigit() for ch in e.value.message)
+
+
 def test_a_statement_filed_under_an_older_template_would_refile(s):
     t = T["templates"]
     with s.engine.begin() as conn:

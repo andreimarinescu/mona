@@ -130,19 +130,29 @@ def _refiles(snap: Snapshot, c: Candidate) -> bool:
     return now != (p.entity, p.unit, p.category, p.subcategory, p.rendered.folder)
 
 
-def _check(snap: Snapshot, cands: list[Candidate]) -> None:
+def _count(offenders: list[Candidate], visible: Visible, counted: str, uncounted: str) -> str:
+    """C4 §2.6: only documents the channel may see are counted; none seen gives no number."""
+    n = sum(1 for c in offenders if visible is None or visible(c.doc))
+    return counted.format(n=n) if n else uncounted
+
+
+def _check(snap: Snapshot, cands: list[Candidate], visible: Visible) -> None:
     """A62 1.3: rename-only, and nothing waiting in Review."""
     waiting = [c for c in cands if c.doc["status"] != "filed" or c.doc["location"] != "archive"]
     if waiting:
+        lead = _count(
+            waiting, visible, "{n} of these document(s) are", "Some of these documents are"
+        )
         raise ServiceError(
-            "conflict", f"{len(waiting)} of these document(s) are waiting in Review; they need "
-            "filing before they can be renamed.", hint="in_review",
+            "conflict", f"{lead} waiting in Review; they need filing before they can be renamed.",
+            hint="in_review",
         )  # fmt: skip
     moving = [c for c in cands if _refiles(snap, c)]
     if moving:
+        what = _count(moving, visible, "{n} document(s)", "some documents")
         raise ServiceError(
-            "conflict", f"This would also move {len(moving)} document(s) to another folder, "
-            "entity or category; only names can change here.", hint="would_refile",
+            "conflict", f"This would also move {what} to another folder, entity or category; "
+            "only names can change here.", hint="would_refile",
         )  # fmt: skip
 
 
@@ -232,7 +242,7 @@ def rename_documents(
             )  # fmt: skip
             specs.append(spec)
         cands = rule_candidates(conn, snap, specs, row["id"] if row else UNSAVED, ctx.textcache)
-        _check(snap, cands)
+        _check(snap, cands, visible)
         if row is None:
             cat = snap.categories[dest.category]["labels"]["en"] if dest.category else ""
             name = f"Rename {snap.counterparties[cp]['name']} {cat}".strip()

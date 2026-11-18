@@ -2,7 +2,7 @@
 
 import json
 import socket
-from datetime import date
+from datetime import date, timedelta
 from typing import Literal
 
 import psycopg
@@ -10,11 +10,12 @@ from pydantic import Field
 
 from mona.chat.cards import card_chunk
 from mona.db import get_engine
-from mona.services import correct_document, file_document
+from mona.services import apply_rule, correct_document, file_document
 from mona.settings import get_settings
 from tests import rows
 from tests.mcp_http import call
 from tests.mcp_results import CardRef, Strict
+from tests.services_world import ARRIVED, IBAN_SPACED
 from tests.test_services import classify
 
 DOC = Field(pattern=r"^doc_[0-9a-hjkmnp-tv-z]{26}$")
@@ -393,6 +394,24 @@ async def test_rename_on_telegram_hides_personal_documents(l2_world):
         RenameResult,
     )
     assert shown["renames_total"] == 1
+
+
+async def test_rename_on_telegram_counts_no_hidden_refiling_document(l2_world):
+    w = l2_world
+    docs = [
+        w.doc(counterparty="hello-bank", category="bank", subcategory="releve", entity="lmnp",
+              text=f"Relevé de compte {IBAN_SPACED}", doc_date=date(2026, m, 16),
+              arrived_at=ARRIVED + timedelta(minutes=m))
+        for m in (1, 2, 3)
+    ]  # fmt: skip
+    assert apply_rule(w.ctx, w.rule_id("hello-bank-lmnp"), actor="mona", via="chat").moved == 3
+    correct_document(w.ctx, docs[2], actor="mona", via="chat", entity="personal")
+    args = {"document_id": docs[0], "example": "2026-01 HB"}
+    refused = error(await call("rename_documents", args, channel="telegram"))
+    assert (refused["code"], refused["hint"]) == ("conflict", "would_refile")
+    assert not any(ch.isdigit() for ch in refused["message"])
+    on_web = error(await call("rename_documents", args))
+    assert "move 1 document(s)" in on_web["message"]
 
 
 # --- undo ---
