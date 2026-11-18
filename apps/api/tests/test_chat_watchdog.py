@@ -284,3 +284,37 @@ async def test_an_aborted_turn_keeps_its_reasoning_time():
     assert row.status == "aborted"
     assert [p["type"] for p in row.parts] == ["reasoning"]
     assert row.reasoning_ms is not None and row.reasoning_ms > 0
+
+
+class Quiet(FakeHermes):
+    """One reasoning delta, then only `quiet` frames (SSE comments, or silence) until closed."""
+
+    def __init__(self, quiet: str | None):
+        super().__init__(b"")
+        self.quiet = quiet
+
+    async def __call__(self, request):
+        if request.url.path != "/v1/chat/completions":
+            return await super().__call__(request)
+
+        async def stream():
+            yield (recorded({"role": "assistant"}) + "\n\n").encode()
+            yield (recorded({"reasoning_content": "Thinking it over. "}) + "\n\n").encode()
+            for _ in range(200):
+                if self.quiet is not None:
+                    yield self.quiet.encode()
+                await asyncio.sleep(0.02)
+            yield (recorded({}, "stop") + "\n\ndata: [DONE]\n\n").encode()
+
+        return httpx.Response(200, content=stream())
+
+
+async def test_a_keepalive_only_stream_trips_on_time():
+    turn, chunks = await drive(Quiet(": keepalive\n\n"), clock=ticking(7.0))
+    assert_tripped(turn, chunks)
+
+
+async def test_an_idle_tick_trips_on_time(monkeypatch):
+    monkeypatch.setattr("mona.chat.stream.KEEPALIVE_S", 0.01)
+    turn, chunks = await drive(Quiet(None), clock=ticking(7.0))
+    assert_tripped(turn, chunks)

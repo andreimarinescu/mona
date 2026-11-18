@@ -104,7 +104,7 @@ export function MonaMessage({ message, streaming, newest }: MonaMessageProps) {
     } else if (part.type === 'text') {
       if (!part.text.trim()) return;
       cited.push(...citedNumbers(part.text, docs.length));
-      body.push(<MonaText key={`t${i}`} text={part.text.trim()} streaming={part.state === 'streaming'} docs={docs} lang={textLang} />);
+      body.push(<MonaText key={`t${i}`} text={part.text.trim()} streaming={streaming && part.state === 'streaming'} docs={docs} lang={textLang} />);
     } else if (part.type.startsWith('data-')) {
       body.push(<DataCard key={`${part.type}:${(part as { id?: string }).id ?? i}`} part={part} />);
     }

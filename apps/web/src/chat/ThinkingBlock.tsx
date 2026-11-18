@@ -17,7 +17,7 @@ export function ThinkingBlock({ blockKey, text, live, onlyBlockMs }: ThinkingBlo
   const [open, setOpen] = useState(false);
   const seconds = useBlockSeconds(blockKey, live, onlyBlockMs);
   const liveSeconds = useLiveSeconds(blockKey, live);
-  const label = live ? t('chat.thinking.live_seconds', { count: liveSeconds }) : seconds === null ? t('chat.thinking.untimed') : t('chat.thinking.done', { count: seconds });
+  const label = seconds === null ? t('chat.thinking.untimed') : t('chat.thinking.done', { count: seconds });
   return (
     <details
       data-testid="thinking"
@@ -30,7 +30,14 @@ export function ThinkingBlock({ blockKey, text, live, onlyBlockMs }: ThinkingBlo
       <summary className="flex cursor-pointer list-none items-center gap-2 font-ui text-[14px] leading-5 [&::-webkit-details-marker]:hidden">
         <Icon name={live ? 'loader' : open ? 'chevron-down' : 'chevron-right'} spin={live} size={16} />
         <span className={`flex-1 font-semibold ${live ? 'text-info' : 'text-text'}`} aria-live={live ? 'polite' : undefined}>
-          {label}
+          {live ? (
+            <>
+              <span className="sr-only">{t('chat.thinking.live')}</span>
+              <span aria-hidden="true">{t('chat.thinking.live_seconds', { count: liveSeconds })}</span>
+            </>
+          ) : (
+            label
+          )}
         </span>
         <span className="text-text-muted">{open ? t('chat.thinking.hide') : t('chat.thinking.show')}</span>
       </summary>

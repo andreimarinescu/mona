@@ -54,14 +54,19 @@ describe('ThinkingBlock: "Thought for N seconds" per block, not the turn total',
           <MonaMessage message={twoBlocks('streaming', null)} streaming newest />
         </ReasoningClockContext.Provider>,
       );
-      const label = () => screen.getByTestId('thinking').querySelector('summary span')!.textContent;
+      const region = () => screen.getByTestId('thinking').querySelector('summary [aria-live="polite"]')!;
+      const label = () => region().querySelector('[aria-hidden="true"]')!.textContent;
+      const spoken = () => region().querySelector('.sr-only')!.textContent;
       expect(label()).toBe('Mona is thinking… 0 s');
+      expect(spoken()).toBe('Mona is thinking…');
       now = 1_400;
       act(() => vi.advanceTimersByTime(1_000));
       expect(label()).toBe('Mona is thinking… 1 s');
       now = 3_900;
       act(() => vi.advanceTimersByTime(1_000));
       expect(label()).toBe('Mona is thinking… 3 s');
+      expect(spoken()).toBe('Mona is thinking…');
+      expect([...region().children].filter((c) => !c.hasAttribute('aria-hidden')).map((c) => c.textContent)).toEqual(['Mona is thinking…']);
     } finally {
       vi.useRealTimers();
     }
@@ -191,7 +196,7 @@ describe('the thread over the mock api', () => {
   });
 
   /** A /api/chat stand-in whose streams stay open until `finish` is called. */
-  function heldStreams() {
+  function heldStreams(openText = false) {
     const enc = new TextEncoder();
     const frame = (c: object) => enc.encode(`data: ${JSON.stringify(c)}\n\n`);
     const held: { finish(): void }[] = [];
@@ -203,12 +208,12 @@ describe('the thread over the mock api', () => {
         const stream = new ReadableStream<Uint8Array>({
           start(c) {
             ctl = c;
-            [{ type: 'start', messageId: `msg_held${n}` }, { type: 'start-step' }, { type: 'reasoning-start', id: 'r1' }, { type: 'reasoning-delta', id: 'r1', delta: 'Looking at the archive.' }].forEach((c_) => c.enqueue(frame(c_)));
+            [{ type: 'start', messageId: `msg_held${n}` }, { type: 'start-step' }, { type: 'reasoning-start', id: 'r1' }, { type: 'reasoning-delta', id: 'r1', delta: 'Looking at the archive.' }, ...(openText ? [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }, { type: 'text-delta', id: 't1', delta: 'Partial answer so far' }] : [])].forEach((c_) => c.enqueue(frame(c_)));
           },
         });
         held.push({
           finish() {
-            [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }, { type: 'text-delta', id: 't1', delta: `Reply ${n}.` }, { type: 'text-end', id: 't1' }, { type: 'finish-step' }, { type: 'finish', finishReason: 'stop' }].forEach((c) => ctl.enqueue(frame(c)));
+            [...(openText ? [] : [{ type: 'reasoning-end', id: 'r1' }, { type: 'text-start', id: 't1' }]), { type: 'text-delta', id: 't1', delta: `Reply ${n}.` }, { type: 'text-end', id: 't1' }, { type: 'finish-step' }, { type: 'finish', finishReason: 'stop' }].forEach((c) => ctl.enqueue(frame(c)));
             ctl.enqueue(enc.encode('data: [DONE]\n\n'));
             ctl.close();
           },
@@ -238,6 +243,17 @@ describe('the thread over the mock api', () => {
     expect(await screen.findByText('Reply 2.')).toBeInTheDocument();
     expect(screen.getAllByText('Hello there Mona')).toHaveLength(1);
     expect(screen.queryByTestId('chat-stopped')).toBeNull();
+  });
+
+  it('Stop leaves no blinking caret on a text part that was still open', async () => {
+    heldStreams(true);
+    const { box } = await open();
+    await userEvent.type(box(), 'Hello there Mona{Enter}');
+    await waitFor(() => expect(document.querySelector('.mona-caret')).not.toBeNull());
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    await screen.findByTestId('chat-stopped');
+    expect(screen.getByText('Partial answer so far')).toBeInTheDocument();
+    expect(document.querySelector('.mona-caret')).toBeNull();
   });
 
   function withOutbox() {
