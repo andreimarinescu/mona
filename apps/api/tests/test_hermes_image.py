@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import httpx
 import pytest
+import yaml
 
 from mona import hermes_prompt as hp
 from mona.privacy import API_SERVER_HINT, LLM_EXTRA_BODY
@@ -107,50 +108,74 @@ def docker(*args: str, **kw) -> subprocess.CompletedProcess:
     return subprocess.run(["docker", *args], capture_output=True, text=True, **kw)
 
 
-@pytest.fixture(scope="module")
-def turn(tmp_path_factory):
-    """Seeds a fresh volume with the prod seed, starts Hermes on it and sends one web turn."""
-    image = ensure_image()
-    work = tmp_path_factory.mktemp("capture")
+def stub_dir(work) -> str:
     stub = work / "stub"
-    stub.mkdir()
+    stub.mkdir(exist_ok=True)
     (stub / "mona").write_text("#!/bin/sh\nexit 0\n")
     (stub / "mona").chmod(0o755)
-    Capture.seen = []
-    upstream = ThreadingHTTPServer(("127.0.0.1", free_port()), Capture)
-    threading.Thread(target=upstream.serve_forever, daemon=True).start()
-    name = f"mona-a57-capture-{uuid.uuid4().hex[:8]}"
-    port = free_port()
+    return str(stub)
+
+
+def prod_seed(volume: str, work, seed=HERMES) -> None:
     seeded = docker(
-        "run", "--rm", "--network", "none", "-u", "0:0", "-v", f"{HERMES}:/seed:ro",
-        "-v", f"{name}:/opt/data", "-v", f"{stub}:/stub:ro", "-e", "PATH=/stub:/usr/bin:/bin",
-        "--entrypoint", "sh", image, "-c", seed_command(work, "deploy/compose.prod.yaml"),
+        "run", "--rm", "--network", "none", "-u", "0:0", "-v", f"{seed}:/seed:ro",
+        "-v", f"{volume}:/opt/data", "-v", f"{stub_dir(work)}:/stub:ro",
+        "-e", "PATH=/stub:/usr/bin:/bin", "--entrypoint", "sh", ensure_image(),
+        "-c", seed_command(work, "deploy/compose.prod.yaml"),
     )  # fmt: skip
     assert seeded.returncode == 0, seeded.stderr[-800:]
+
+
+def start_gateway(name: str, port: int, upstream_port: int) -> None:
     env = {
         "HERMES_UID": "1000", "HERMES_GID": "1000", "API_SERVER_KEY": API_KEY,
         "API_SERVER_HOST": "127.0.0.1", "API_SERVER_PORT": str(port),
         "API_SERVER_MODEL_NAME": "mona",
         "MONA_SERVICE_KEY": PROD_ENV["MONA_SERVICE_KEY"], "MONA_LLM_MODEL": MODEL,
-        "MONA_LLM_BASE_URL": f"http://127.0.0.1:{upstream.server_port}/v1",
+        "MONA_LLM_BASE_URL": f"http://127.0.0.1:{upstream_port}/v1",
     }  # fmt: skip
     started = docker(
         "run", "-d", "--name", name, "--network", "host", "--add-host", "api:127.0.0.1",
         "-v", f"{name}:/opt/data", *[x for k, v in env.items() for x in ("-e", f"{k}={v}")],
-        image, "gateway", "run",
+        ensure_image(), "gateway", "run",
     )  # fmt: skip
+    assert started.returncode == 0, started.stderr[-800:]
+
+
+def wait_healthy(name: str, port: int) -> None:
+    deadline = time.monotonic() + 180
+    while True:
+        try:
+            if httpx.get(f"http://127.0.0.1:{port}/health", timeout=2).status_code == 200:
+                return
+        except httpx.HTTPError:
+            pass
+        assert time.monotonic() < deadline, docker("logs", name).stderr[-3000:]
+        time.sleep(1)
+
+
+def probe(name: str) -> dict[str, tuple[str, str]]:
+    out = docker(
+        "exec", "-i", "-u", "hermes", name, "/opt/hermes/.venv/bin/python", "-",
+        input=PROBE.read_text(), timeout=120,
+    )  # fmt: skip
+    return hp.parse(out.stdout)
+
+
+@pytest.fixture(scope="module")
+def turn(tmp_path_factory):
+    """Seeds a fresh volume with the prod seed, starts Hermes on it and sends one web turn."""
+    work = tmp_path_factory.mktemp("capture")
+    Capture.seen = []
+    upstream = ThreadingHTTPServer(("127.0.0.1", free_port()), Capture)
+    threading.Thread(target=upstream.serve_forever, daemon=True).start()
+    name = f"mona-a57-capture-{uuid.uuid4().hex[:8]}"
+    port = free_port()
     try:
-        assert started.returncode == 0, started.stderr[-800:]
+        prod_seed(name, work)
+        start_gateway(name, port, upstream.server_port)
         base = f"http://127.0.0.1:{port}"
-        deadline = time.monotonic() + 180
-        while True:
-            try:
-                if httpx.get(f"{base}/health", timeout=2).status_code == 200:
-                    break
-            except httpx.HTTPError:
-                pass
-            assert time.monotonic() < deadline, docker("logs", name).stderr[-3000:]
-            time.sleep(1)
+        wait_healthy(name, port)
         reply = httpx.post(
             f"{base}/v1/chat/completions",
             headers={"Authorization": f"Bearer {API_KEY}"},
@@ -158,11 +183,7 @@ def turn(tmp_path_factory):
             timeout=180,
         )
         assert reply.status_code == 200, reply.text[-500:]
-        probe = docker(
-            "exec", "-i", "-u", "hermes", name, "/opt/hermes/.venv/bin/python", "-",
-            input=PROBE.read_text(), timeout=120,
-        )  # fmt: skip
-        yield {"reply": reply.json(), "seen": list(Capture.seen), "probe": hp.parse(probe.stdout)}
+        yield {"reply": reply.json(), "seen": list(Capture.seen), "probe": probe(name)}
     finally:
         docker("rm", "-f", name)
         docker("volume", "rm", "-f", name)
@@ -206,6 +227,45 @@ def test_hermes_reports_the_plugin_loaded_and_the_doctor_probe_passes(turn):
     )  # fmt: skip
     level, detail = turn["probe"]["prompt"]
     assert level == "green" and "runtime-environment" in detail
+
+
+def test_a_release_seeded_under_a_running_gateway_is_red_until_hermes_restarts(tmp_path):
+    """The box before FIX-16: a gateway with no plugin, then the release's seed beside it."""
+    upstream = ThreadingHTTPServer(("127.0.0.1", free_port()), Capture)
+    threading.Thread(target=upstream.serve_forever, daemon=True).start()
+    name = f"mona-a57-stale-{uuid.uuid4().hex[:8]}"
+    port = free_port()
+    before = tmp_path / "before"
+    before.mkdir()
+    config = yaml.safe_load((HERMES / "config.prod.yaml").read_text())
+    config["plugins"]["enabled"] = []
+    (before / "config.yaml").write_text(yaml.safe_dump(config))
+    try:
+        prod_seed(name, tmp_path)
+        unseeded = docker(
+            "run", "--rm", "--network", "none", "-u", "0:0", "-v", f"{before}:/before:ro",
+            "-v", f"{name}:/opt/data", "--entrypoint", "sh", ensure_image(), "-c",
+            "rm -rf /opt/data/plugins/mona_prompt && install -m 640 -o 1000 -g 1000"
+            " /before/config.yaml /opt/data/config.yaml",
+        )  # fmt: skip
+        assert unseeded.returncode == 0, unseeded.stderr[-800:]
+        start_gateway(name, port, upstream.server_port)
+        wait_healthy(name, port)
+        assert probe(name)["plugin"][0] == hp.RED
+
+        prod_seed(name, tmp_path)
+        assert probe(name)["plugin"] == (hp.RED, hp.STALE)
+
+        restarted = docker("restart", name, timeout=180)
+        assert restarted.returncode == 0, restarted.stderr[-800:]
+        wait_healthy(name, port)
+        assert probe(name)["plugin"] == (
+            "green", "mona_prompt loaded, llm_request middleware registered",
+        )  # fmt: skip
+    finally:
+        docker("rm", "-f", name)
+        docker("volume", "rm", "-f", name)
+        upstream.shutdown()
 
 
 def test_the_cut_anchors_on_the_pinned_image_s_own_text():

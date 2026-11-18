@@ -59,8 +59,7 @@ def render(config: Path, soul: Path, env: dict[str, str], wsl: bool = False) -> 
     return json.loads(out.stdout.strip().splitlines()[-1])
 
 
-def seed_command(tmp_path: Path, *overlay: str) -> str:
-    """The rendered `hermes-seed` command, with `$$` unescaped as compose does when it runs it."""
+def compose_services(tmp_path: Path, *overlay: str) -> dict:
     env_file = tmp_path / "fixture.env"
     env_file.write_text("".join(f"{k}={v}\n" for k, v in COMPOSE_ENV.items()))
     cmd = ["docker", "compose", "--env-file", str(env_file), "-p", "seedtest", "-f", "compose.yaml"]
@@ -71,7 +70,12 @@ def seed_command(tmp_path: Path, *overlay: str) -> str:
         env={"PATH": os.environ["PATH"], "HOME": os.environ.get("HOME", "/tmp")},
     )  # fmt: skip
     assert out.returncode == 0, out.stderr[-500:]
-    seed = json.loads(out.stdout)["services"]["hermes-seed"]
+    return json.loads(out.stdout)["services"]
+
+
+def seed_command(tmp_path: Path, *overlay: str) -> str:
+    """The rendered `hermes-seed` command, with `$$` unescaped as compose does when it runs it."""
+    seed = compose_services(tmp_path, *overlay)["hermes-seed"]
     assert seed["entrypoint"] == ["sh", "-c"]
     return seed["command"][0].replace("$$", "$")
 

@@ -158,10 +158,17 @@ services:
         for f in config.yaml SOUL.md; do
         install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/$$f /opt/data/$$f;
         done;
+        install -d -m 755 -o 0 -g 0 /opt/data/plugins;
+        rm -rf /tmp/mona_prompt;
+        install -d -m 755 -o 0 -g 0 /tmp/mona_prompt;
+        install -m 644 -o 0 -g 0 -t /tmp/mona_prompt
+        /seed/plugins/mona_prompt/plugin.yaml /seed/plugins/mona_prompt/*.py;
+        if ! diff -r /tmp/mona_prompt /opt/data/plugins/mona_prompt >/dev/null 2>&1
+        || [ -n "$$(find /opt/data/plugins/mona_prompt ! -user 0 -o ! -group 0
+        -o -type f ! -perm 644 -o -type d ! -perm 755)" ]; then
         rm -rf /opt/data/plugins/mona_prompt;
-        install -d -m 755 -o 0 -g 0 /opt/data/plugins /opt/data/plugins/mona_prompt;
-        install -m 644 -o 0 -g 0 -t /opt/data/plugins/mona_prompt
-        /seed/plugins/mona_prompt/plugin.yaml /seed/plugins/mona_prompt/*.py
+        cp -a /tmp/mona_prompt /opt/data/plugins/mona_prompt;
+        fi
     restart: "no"
     volumes:
       - ./deploy/hermes:/seed:ro
@@ -192,6 +199,7 @@ services:
     depends_on:
       hermes-seed:
         condition: service_completed_successfully
+        restart: true
       api:
         condition: service_healthy
 

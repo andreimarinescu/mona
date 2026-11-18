@@ -4,6 +4,7 @@ real prompts (fixtures rendered by tests/hermes_image.py)."""
 import importlib.util
 import json
 import logging
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -225,8 +226,49 @@ def test_the_prompt_line_names_markers_only():
     ],
 )
 def test_the_plugin_line(state, level, words):
-    got = hp.plugin_line(state)
+    got = hp.plugin_line(state, started=200.0, installed=100.0)
     assert got[:2] == (level, "plugin") and words in got[2]
+
+
+LOADED = {"found": True, "enabled": True, "failed": False, "middleware": True}
+
+
+def test_the_plugin_line_is_red_when_the_gateway_started_before_the_installed_plugin():
+    assert hp.plugin_line(LOADED, started=100.0, installed=100.5) == (hp.RED, "plugin", hp.STALE)
+    assert hp.STALE == "Hermes started before the installed plugin: restart Hermes"
+    assert hp.plugin_line(LOADED, started=None, installed=100.0)[:2] == (hp.RED, "plugin")
+    assert hp.plugin_line(LOADED, started=100.0, installed=None)[:2] == (hp.RED, "plugin")
+    assert hp.plugin_line(LOADED, started=100.5, installed=100.0)[0] == hp.GREEN
+
+
+def test_the_gateway_start_is_the_mtime_of_a_live_gateway_pid(tmp_path):
+    pid = tmp_path / "gateway.pid"
+    assert hp.gateway_started(tmp_path) is None
+    pid.write_text(json.dumps({"pid": os.getpid(), "kind": "hermes-gateway", "start_time": 1}))
+    os.utime(pid, (1000.0, 1000.0))
+    assert hp.gateway_started(tmp_path) == 1000.0
+    pid.write_text(str(os.getpid()))
+    os.utime(pid, (2000.0, 2000.0))
+    assert hp.gateway_started(tmp_path) == 2000.0
+    dead = 2**22 + 1
+    while Path(f"/proc/{dead}").exists():
+        dead += 1
+    for record in (json.dumps({"pid": dead}), "{}", "not a pid"):
+        pid.write_text(record)
+        assert hp.gateway_started(tmp_path) is None, record
+
+
+def test_the_plugin_install_time_is_its_newest_mtime(tmp_path):
+    folder = tmp_path / "mona_prompt"
+    assert hp.plugin_installed(folder) is None
+    folder.mkdir()
+    for name, mtime in (("plugin.yaml", 10.0), ("cut.py", 30.0), ("__init__.py", 20.0)):
+        (folder / name).write_text(name)
+        os.utime(folder / name, (mtime, mtime))
+    os.utime(folder, (5.0, 5.0))
+    assert hp.plugin_installed(folder) == 30.0
+    os.utime(folder, (40.0, 40.0))
+    assert hp.plugin_installed(folder) == 40.0
 
 
 def state_db(path: Path, rows: list[tuple[str, str, float, str | None]]) -> Path:
@@ -263,13 +305,18 @@ def test_the_newest_web_session_since_the_release_is_read(tmp_path):
     assert hp.newest_web_prompt(legacy, since=0.0) == "inline prompt"
 
 
-def test_the_check_opens_the_database_read_only(tmp_path):
+def test_the_check_opens_the_database_read_only(tmp_path, monkeypatch):
     db = state_db(tmp_path / "state.db", [("api_server", "p", 1.0, None)])
+    opened, connect = [], sqlite3.connect
+    monkeypatch.setattr(
+        hp.sqlite3, "connect", lambda *a, **kw: opened.append((a, kw)) or connect(*a, **kw)
+    )
     db.chmod(0o444)
     tmp_path.chmod(0o555)
     try:
         assert hp.newest_web_prompt(db, since=0.0) == "p"
         assert sorted(p.name for p in tmp_path.iterdir()) == ["state.db"]
+        assert opened == [((f"file:{db}?mode=ro",), {"uri": True})]
     finally:
         tmp_path.chmod(0o755)
 

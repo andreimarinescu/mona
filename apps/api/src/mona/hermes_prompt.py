@@ -4,6 +4,7 @@ Lines name markers and sections only, never prompt text (C9 §7). Stdlib only: `
 this file into the Hermes container, where `main` reads the newest web session read-only."""
 
 import contextlib
+import json
 import os
 import sqlite3
 import sys
@@ -26,6 +27,7 @@ MARKERS = (
 PLUGIN = "mona_prompt"
 WEB_SOURCE = "api_server"
 NO_CONVERSATION = "no conversation since the release"
+STALE = "Hermes started before the installed plugin: restart Hermes"
 
 Cut = Callable[[str], tuple[str, list[str]]]
 Line = tuple[str, str, str]
@@ -57,8 +59,10 @@ def prompt_line(prompt: str | None, cut: Cut | None) -> Line:
     return GREEN, "prompt", detail + (f" (cut: {', '.join(removed)})" if removed else "")
 
 
-def plugin_line(state: dict[str, Any] | None) -> Line:
-    """`state` is what Hermes' own plugin manager reports in a fresh process (`plugin_state`)."""
+def plugin_line(
+    state: dict[str, Any] | None, started: float | None, installed: float | None
+) -> Line:
+    """A fresh-process `plugin_state`, red unless the running gateway started after the install."""
     if state is None:
         return RED, "plugin", "Hermes' plugin manager could not be queried"
     if not state.get("found"):
@@ -69,7 +73,34 @@ def plugin_line(state: dict[str, Any] | None) -> Line:
         return RED, "plugin", f"{PLUGIN} failed to load"
     if not state.get("middleware"):
         return RED, "plugin", f"{PLUGIN} loaded but registered no llm_request middleware"
+    if started is None:
+        return RED, "plugin", "the running Hermes gateway's start time could not be read"
+    if installed is None:
+        return RED, "plugin", f"the installed {PLUGIN} files could not be read"
+    if started < installed:
+        return RED, "plugin", STALE
     return GREEN, "plugin", f"{PLUGIN} loaded, llm_request middleware registered"
+
+
+def gateway_started(home: Path) -> float | None:
+    """The mtime of `gateway.pid`, which the gateway creates once at start, while its PID lives."""
+    path = home / "gateway.pid"
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+        pid = int(record["pid"] if isinstance(record, dict) else record)
+        if not Path(f"/proc/{pid}").is_dir():
+            return None
+        return path.stat().st_mtime
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def plugin_installed(folder: Path) -> float | None:
+    """The newest mtime of the installed plugin's folder and files."""
+    try:
+        return max(p.stat().st_mtime for p in (folder, *folder.iterdir()))
+    except OSError:
+        return None
 
 
 def newest_web_prompt(db: Path, since: float) -> str | None:
@@ -124,7 +155,8 @@ def main() -> int:
         state = plugin_state()
     except Exception:
         state = None
-    lines = [plugin_line(state), prompt_line(newest_web_prompt(home / "state.db", since), cut)]
+    plugin = plugin_line(state, gateway_started(home), plugin_installed(home / "plugins" / PLUGIN))
+    lines = [plugin, prompt_line(newest_web_prompt(home / "state.db", since), cut)]
     sys.stdout.write("".join("\t".join(line) + "\n" for line in lines))
     sys.stdout.flush()
     return 0
