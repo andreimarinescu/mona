@@ -32,6 +32,7 @@ agent = AIAgent(
     model=model, **runtime, quiet_mode=True, platform="api_server",
     enabled_toolsets=sorted(_get_platform_tools(cfg, "api_server")),
     session_id="20261118_120000_replay",
+    reasoning_config=gr.GatewayRunner._load_reasoning_config(model),
 )  # fmt: skip
 messages = [{"role": "system", "content": "S"}, {"role": "user", "content": "U"}]
 kwargs = build_api_kwargs(agent, messages, agent.tools)

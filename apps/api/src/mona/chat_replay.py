@@ -280,6 +280,33 @@ def load_config(path: Path) -> Mapping[str, Any]:
     return cfg
 
 
+_VAR = re.compile(r"\$\{([A-Z0-9_]+)\}")
+EFFORTS = frozenset({"minimal", "low", "medium", "high", "xhigh", "max"})
+OFF = frozenset({"none", "false", "disabled"})
+
+
+def _base_urls(cfg: Mapping[str, Any]) -> list[str]:
+    model = cfg.get("model")
+    found = [model.get("base_url") if isinstance(model, Mapping) else None]
+    listed = cfg.get("custom_providers")
+    entries = [e for e in listed if isinstance(e, Mapping)] if isinstance(listed, list) else []
+    providers = cfg.get("providers")
+    entries += [e for e in providers.values() if isinstance(e, Mapping)] if isinstance(
+        providers, Mapping
+    ) else []  # fmt: skip
+    found += [e.get("base_url") or e.get("api") for e in entries]
+    return [v for v in found if isinstance(v, str)]
+
+
+def _no_extra_reason(cfg: Mapping[str, Any]) -> str:
+    unset = sorted(
+        {v for url in _base_urls(cfg) for v in _VAR.findall(url) if not os.environ.get(v)}
+    )
+    if unset:
+        return f"${{{unset[0]}}} in a base_url is not set"
+    return "no provider entry with an extra_body matches model.base_url"
+
+
 def merge_extra(
     config: Path | None, extra: dict[str, Any] | None, *, none: bool
 ) -> tuple[dict[str, Any], str]:
@@ -289,10 +316,30 @@ def merge_extra(
     body: dict[str, Any] = {}
     source = "inline" if extra else "none"
     if config is not None:
-        body = privacy.provider_extra_body(load_config(config), os.environ)
+        cfg = load_config(config)
+        body = privacy.provider_extra_body(cfg, os.environ)
+        if not body and not extra:
+            raise ReplayError(
+                f"--extra-from {config}: {_no_extra_reason(cfg)}; --no-extra sends none"
+            )
         source = "config+inline" if extra else "config"
     body.update(extra or {})
     return body, source
+
+
+def wire_effort(value: Any) -> tuple[str, bool]:
+    """(the `reasoning_effort` Hermes puts on the wire for `agent.reasoning_effort`, recognised)."""
+    if isinstance(value, Mapping):
+        if value.get("enabled", True) is False:
+            return "none", True
+        level = str(value.get("effort") or "").strip().lower()
+        return ("max" if level == "ultra" else level, True) if level else (DEFAULT_EFFORT, False)
+    level = str(value).strip().lower() if value is not None and value is not True else ""
+    if level in OFF:
+        return "none", True
+    if level in EFFORTS or level == "ultra":
+        return ("max" if level == "ultra" else level), True
+    return DEFAULT_EFFORT, False
 
 
 def config_effort(config: Path | None) -> tuple[str, str]:
@@ -300,9 +347,21 @@ def config_effort(config: Path | None) -> tuple[str, str]:
     if config is None:
         return DEFAULT_EFFORT, "default"
     agent = load_config(config).get("agent")
-    value = agent.get("reasoning_effort") if isinstance(agent, Mapping) else None
-    effort = str(value or "").strip().lower()
-    return (effort, "config") if effort else (DEFAULT_EFFORT, "default")
+    effort, known = wire_effort(
+        agent.get("reasoning_effort") if isinstance(agent, Mapping) else None
+    )
+    return (effort, "config") if known else (DEFAULT_EFFORT, "default")
+
+
+def sent_effort(
+    effort: tuple[str, str], extra: Mapping[str, Any], inline: Mapping[str, Any] | None
+) -> tuple[Any, str]:
+    """The effort the request carries: an `extra` key overrides the config's."""
+    if "reasoning_effort" not in extra:
+        return effort
+    return extra[
+        "reasoning_effort"
+    ], "inline" if inline and "reasoning_effort" in inline else "config"
 
 
 def _new_record() -> dict[str, Any]:

@@ -60,6 +60,19 @@ def test_the_replayed_request_carries_hermes_reasoning_effort_and_extra_body(ima
     assert cr.config_effort(dev_path)[0] == image["dev"]["extra_body"]["reasoning"]["effort"]
 
 
+EDGE_EFFORTS = ["high", "ultra", "none", False, "hgih", {"enabled": False}, {"effort": "Bespoke"}]
+
+
+@pytest.mark.parametrize("value", EDGE_EFFORTS, ids=repr)
+def test_config_effort_is_what_hermes_sends_for_the_configured_value(served, tmp_path, value):
+    cfg = yaml.safe_load((HERMES / "config.prod.yaml").read_text())
+    cfg["agent"]["reasoning_effort"] = value
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.safe_dump(cfg))
+    sent = request_kwargs(path, PROD_ENV, served)
+    assert cr.config_effort(path)[0] == sent["reasoning_effort"]
+
+
 def test_the_migrated_fixture_is_what_the_pinned_image_writes():
     written = migrated(HERMES / "config.prod.yaml")
     assert "custom_providers" not in written and set(written["providers"]) == {"mona-local"}

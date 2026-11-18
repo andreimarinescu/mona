@@ -625,8 +625,37 @@ def test_extra_from_takes_the_matching_providers_extra_body(tmp_path):
     extra = {"presence_penalty": 1.5, "reasoning_budget_tokens": 1024}
     path = config(tmp_path, extra)
     assert cr.merge_extra(path, None, none=False) == (extra, "config")
-    assert cr.merge_extra(config(tmp_path, extra, "http://other/v1"), None, none=False)[0] == {}
-    assert cr.merge_extra(config(tmp_path, None), None, none=False)[0] == {}
+    assert cr.merge_extra(path, {"top_k": 20}, none=False)[0] == {**extra, "top_k": 20}
+
+
+def test_a_config_that_yields_no_extra_body_stops_the_run_and_names_why(tmp_path, monkeypatch):
+    other = config(tmp_path, {"presence_penalty": 1.5}, "http://other/v1")
+    with pytest.raises(cr.ReplayError, match=r"no provider entry .* matches model\.base_url"):
+        cr.merge_extra(other, None, none=False)
+    bare = config(tmp_path, None)
+    with pytest.raises(cr.ReplayError, match="matches model.base_url"):
+        cr.merge_extra(bare, None, none=False)
+    monkeypatch.delenv("MONA_TEST_BASE", raising=False)
+    unset = tmp_path / "unset.yaml"
+    entry = {"base_url": "${MONA_TEST_BASE}", "extra_body": {"top_k": 20}}
+    unset.write_text(
+        yaml.safe_dump({"model": {"base_url": "${MONA_TEST_BASE}"}, "custom_providers": [entry]})
+    )
+    with pytest.raises(cr.ReplayError, match=r"\$\{MONA_TEST_BASE\} in a base_url is not set"):
+        cr.merge_extra(unset, None, none=False)
+    monkeypatch.setenv("MONA_TEST_BASE", BASE)
+    assert cr.merge_extra(unset, None, none=False)[0] == {"top_k": 20}
+    assert cr.merge_extra(other, {"top_k": 20}, none=False) == ({"top_k": 20}, "config+inline")
+    assert cr.merge_extra(other, None, none=True) == ({}, "none")
+
+
+def test_the_run_command_refuses_a_config_without_an_extra_body(tmp_path, monkeypatch):
+    scen = write_scenarios(tmp_path / "scen")
+    seen: list[httpx.Request] = []
+    other = config(tmp_path, {"presence_penalty": 1.5}, "http://other/v1")
+    res = run_cli(tmp_path, monkeypatch, "--scenarios", str(scen), "--extra-from", str(other),
+                  seen=seen)  # fmt: skip
+    assert res.exit_code != 0 and "matches model.base_url" in res.output and seen == []
 
 
 def test_extra_overrides_keys_and_no_extra_sends_nothing(tmp_path):
@@ -711,12 +740,40 @@ def test_reasoning_effort_comes_from_the_config_even_with_no_extra(tmp_path, mon
     finally:
         default.chmod(0o600)
     other = tmp_path / "other.yaml"
+    entry = {"base_url": BASE, "extra_body": {"top_k": 20}}
     other.write_text(
-        yaml.safe_dump({"model": {"base_url": BASE}, "agent": {"reasoning_effort": "low"}})
+        yaml.safe_dump(
+            {
+                "model": {"base_url": BASE},
+                "custom_providers": [entry],
+                "agent": {"reasoning_effort": "low"},
+            }
+        )  # fmt: skip
     )
     assert sent("--extra-from", str(other)) == ("low", "config")
-    assert sent("--extra-from", str(other), "--extra", '{"reasoning_effort": "none"}')[0] == "none"
+    assert sent("--extra-from", str(other), "--extra", '{"reasoning_effort": "high"}') == (
+        "high",
+        "inline",
+    )
+    assert sent("--extra-from", str(other), "--extra", '{"top_k": 1}') == ("low", "config")
     assert cr.config_effort(None) == ("medium", "default")
+
+
+EFFORT_CASES = [
+    ("high", "high", "config"), (" XHigh ", "xhigh", "config"), ("ultra", "max", "config"),
+    (False, "none", "config"), ("false", "none", "config"), ("disabled", "none", "config"),
+    ("hgih", "medium", "default"), ("", "medium", "default"), (None, "medium", "default"),
+    (True, "medium", "default"), (0, "medium", "default"),
+    ({"enabled": False}, "none", "config"), ({"effort": "Bespoke"}, "bespoke", "config"),
+    ({"enabled": True}, "medium", "default"),
+]  # fmt: skip
+
+
+@pytest.mark.parametrize(("value", "wire", "source"), EFFORT_CASES)
+def test_config_effort_maps_the_value_as_hermes_does(tmp_path, value, wire, source):
+    path = tmp_path / "c.yaml"
+    path.write_text(yaml.safe_dump({"agent": {"reasoning_effort": value}}))
+    assert cr.config_effort(path) == (wire, source)
 
 
 def test_the_summary_files_hold_none_of_the_texts_and_texts_go_only_where_asked(

@@ -322,7 +322,8 @@ def replay_run(
         typer.Option(
             help="Hermes config whose provider extra_body and agent.reasoning_effort are sent "
             "(default: /hermes/config.yaml). If that file is not readable by this user, pass the "
-            "checkout's deploy/hermes/config.prod.yaml: its extra body is the same."
+            "checkout's deploy/hermes/config.prod.yaml: its extra body is the same. Stops if the "
+            "config yields no extra body and --extra adds none."
         ),
     ] = None,
     extra: Annotated[
@@ -374,7 +375,9 @@ def replay_run(
         config = cr.DEFAULT_CONFIG
     body, source = cr.merge_extra(config, inline, none=no_extra)
     readable = os.access(cr.DEFAULT_CONFIG, os.R_OK) and cr.DEFAULT_CONFIG.is_file()
-    effort, effort_source = cr.config_effort(config or (cr.DEFAULT_CONFIG if readable else None))
+    effort, effort_source = cr.sent_effort(
+        cr.config_effort(config or (cr.DEFAULT_CONFIG if readable else None)), body, inline
+    )
     texts: dict[str, Any] = {}
     summary = asyncio.run(
         cr.run_replay(
