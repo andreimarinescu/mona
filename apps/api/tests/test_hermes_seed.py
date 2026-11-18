@@ -1,0 +1,127 @@
+"""A57 item 5: both `hermes-seed` services install SOUL, the config and the plugin on every start;
+memories and sessions stay. Each rendered seed command runs in the pinned Hermes image."""
+
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from tests.hermes_image import HERMES, ROOT, ensure_image
+
+FIXTURE_ENV = {
+    "POSTGRES_PASSWORD": "pw", "MONA_SERVICE_KEY": "k" * 32, "HERMES_API_KEY": "h" * 32,
+    "OPENROUTER_API_KEY": "or", "MONA_LLM_BASE_URL": "http://llama-swap:8080/v1",
+    "MONA_LLM_MODEL": "qwen-test", "MONA_PUBLIC_ORIGIN": "http://localhost:8080", "MONA_TAG": "t1",
+}  # fmt: skip
+FILES = ("plugin.yaml", "__init__.py", "cut.py")
+
+
+def seed_command(tmp_path: Path, *overlay: str) -> str:
+    env_file = tmp_path / "fixture.env"
+    env_file.write_text("".join(f"{k}={v}\n" for k, v in FIXTURE_ENV.items()))
+    cmd = ["docker", "compose", "--env-file", str(env_file), "-p", "seedtest", "-f", "compose.yaml"]
+    for f in overlay:
+        cmd += ["-f", f]
+    out = subprocess.run(
+        [*cmd, "config", "--format", "json"], cwd=ROOT, capture_output=True, text=True,
+        env={"PATH": os.environ["PATH"], "HOME": os.environ.get("HOME", "/tmp")},
+    )  # fmt: skip
+    assert out.returncode == 0, out.stderr[-500:]
+    seed = json.loads(out.stdout)["services"]["hermes-seed"]
+    assert seed["entrypoint"] == ["sh", "-c"]
+    return seed["command"][0].replace("$$", "$")
+
+
+def run_seed(command: str, seed: Path, data: Path, stub: Path) -> dict[str, str]:
+    """Runs the seed, then reports owner and mode of every installed path; hands `data` back."""
+    report = (
+        "cd /opt/data && find . -type f -o -type d | sort"
+        " | while read p; do stat -c '%u:%g %a %n' \"$p\"; done;"
+        f" chown -R {os.getuid()}:{os.getgid()} /opt/data"
+    )
+    out = subprocess.run(
+        ["docker", "run", "--rm", "--network", "none", "-u", "0:0",
+         "-v", f"{seed}:/seed:ro", "-v", f"{data}:/opt/data", "-v", f"{stub}:/stub:ro",
+         "-e", "PATH=/stub:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+         "--entrypoint", "sh", ensure_image(), "-c", f"{command}\n{report}"],
+        capture_output=True, text=True, timeout=120,
+    )  # fmt: skip
+    assert out.returncode == 0, out.stderr[-1000:]
+    stats = {}
+    for line in out.stdout.splitlines():
+        owner, mode, path = line.split(" ", 2)
+        stats[path.removeprefix("./")] = f"{owner} {mode}"
+    return stats
+
+
+@pytest.fixture
+def seed(tmp_path: Path) -> Path:
+    """The repo's deploy/hermes, plus bytecode a test run could have left next to the plugin."""
+    copy = tmp_path / "seed"
+    shutil.copytree(HERMES, copy)
+    cache = copy / "plugins" / "mona_prompt" / "__pycache__"
+    cache.mkdir(exist_ok=True)
+    (cache / "cut.cpython-313.pyc").write_bytes(b"stale")
+    return copy
+
+
+@pytest.fixture
+def stub(tmp_path: Path) -> Path:
+    folder = tmp_path / "stub"
+    folder.mkdir()
+    mona = folder / "mona"
+    mona.write_text('#!/bin/sh\necho "$*" > /opt/data/.check-prod-args\n')
+    mona.chmod(0o755)
+    return folder
+
+
+@pytest.mark.parametrize(
+    ("overlay", "config", "config_mode"),
+    [((), "config.yaml", "644"), (("deploy/compose.prod.yaml",), "config.prod.yaml", "640")],
+    ids=["dev", "prod"],
+)
+def test_the_seed_installs_soul_config_and_plugin_on_every_start(
+    tmp_path, seed, stub, overlay, config, config_mode
+):
+    command = seed_command(tmp_path, *overlay)
+    data = tmp_path / "data"
+    data.mkdir()
+    stats = run_seed(command, seed, data, stub)
+    assert (data / "config.yaml").read_bytes() == (HERMES / config).read_bytes()
+    assert (data / "SOUL.md").read_bytes() == (HERMES / "SOUL.md").read_bytes()
+    assert stats["config.yaml"] == f"1000:1000 {config_mode}"
+    assert stats["SOUL.md"] == "1000:1000 644"
+    assert stats["plugins"] == stats["plugins/mona_prompt"] == "0:0 755"
+    plugin = sorted(p for p in stats if p.startswith("plugins/mona_prompt/"))
+    assert plugin == sorted(f"plugins/mona_prompt/{f}" for f in FILES)
+    for f in FILES:
+        assert stats[f"plugins/mona_prompt/{f}"] == "0:0 644"
+        assert (data / "plugins/mona_prompt" / f).read_bytes() == (
+            HERMES / "plugins/mona_prompt" / f
+        ).read_bytes()
+
+    (data / "SOUL.md").write_text("# an old SOUL\n")
+    (data / "config.yaml").write_text("model: {}\n")
+    (data / "plugins/mona_prompt/cut.py").write_text("tampered")
+    (data / "plugins/mona_prompt/stale.py").write_text("removed")
+    (data / "memories" / "MEMORY.md").write_text("the owner prefers French\n")
+    (data / "sessions").mkdir()
+    (data / "sessions" / "session_1.json").write_text("{}")
+    (data / "state.db").write_bytes(b"sqlite")
+    stats = run_seed(command, seed, data, stub)
+    assert (data / "SOUL.md").read_bytes() == (HERMES / "SOUL.md").read_bytes()
+    assert (data / "config.yaml").read_bytes() == (HERMES / config).read_bytes()
+    assert sorted(p.name for p in (data / "plugins/mona_prompt").iterdir()) == sorted(FILES)
+    assert (data / "plugins/mona_prompt/cut.py").read_bytes() == (
+        HERMES / "plugins/mona_prompt/cut.py"
+    ).read_bytes()
+    assert (data / "memories" / "MEMORY.md").read_text() == "the owner prefers French\n"
+    assert (data / "sessions" / "session_1.json").read_text() == "{}"
+    assert (data / "state.db").read_bytes() == b"sqlite"
+    checked = data / ".check-prod-args"
+    assert checked.is_file() == bool(overlay)
+    if overlay:
+        assert checked.read_text().strip() == "check-prod --hermes-home /opt/data"

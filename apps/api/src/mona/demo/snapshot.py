@@ -338,6 +338,7 @@ def restore(env: OpsEnv, name: str, anchor_day: date | None, now: datetime | Non
             _own(env, env.snapshots, env.snapshots / RESET_STATE)
             rep.say(f"brief jobs kept: {len(jobs)}")
             chown_tree(env.hermes, env.hermes_owner)
+            hermes.install_plugin(env.hermes, env.hermes_seed)
             from mona.demo.fingerprint import fingerprint
 
             h = fingerprint(env, hermes_only=True)["hermes"]

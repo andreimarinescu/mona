@@ -1,6 +1,7 @@
 """A scratch stage for C9 §8 test 8: demo seed, a filed synthetic batch, a fake Hermes profile."""
 
 import json
+import shutil
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
@@ -18,6 +19,7 @@ NOW = datetime(2026, 10, 1, 12, 0, tzinfo=UTC)
 DAY = date(2026, 9, 28)
 CONFIG = "model:\n  default: test\n"
 SOUL = "# Mona, as the repo has her\n"
+PLUGIN = Path(__file__).resolve().parents[3] / "deploy" / "hermes" / "plugins" / "mona_prompt"
 JOBS = {"jobs": [{"id": "job0brief", "name": "morning-brief", "schedule": {"expr": "30 7 * * *"}}]}
 
 
@@ -75,6 +77,7 @@ def build(engine: Engine, url: str, root: Path) -> Stage:
     seed.mkdir()
     (seed / "config.yaml").write_text(CONFIG, encoding="utf-8")
     (seed / "SOUL.md").write_text(SOUL, encoding="utf-8")
+    shutil.copytree(PLUGIN, seed / "plugins/mona_prompt", ignore=shutil.ignore_patterns("__*__"))
     env = OpsEnv(url=url, data=root / "data", hermes=make_hermes(root / "hermes"), hermes_seed=seed)
     filed = [i.document_id for i in intake.items if i.document_id]
     return Stage(env, p, engine, review.items[0].document_id, filed)  # type: ignore[arg-type]

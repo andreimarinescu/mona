@@ -97,8 +97,12 @@ services:
         for d in memories cache cache/documents cache/images; do
         [ -d /opt/data/$$d ] || install -d -m 755 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /opt/data/$$d;
         done;
-        [ -e /opt/data/SOUL.md ] || install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/SOUL.md /opt/data/SOUL.md;
+        install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/SOUL.md /opt/data/SOUL.md;
         install -m 640 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/config.prod.yaml /opt/data/config.yaml;
+        rm -rf /opt/data/plugins/mona_prompt;
+        install -d -m 755 -o 0 -g 0 /opt/data/plugins /opt/data/plugins/mona_prompt;
+        install -m 644 -o 0 -g 0 -t /opt/data/plugins/mona_prompt
+        /seed/plugins/mona_prompt/plugin.yaml /seed/plugins/mona_prompt/*.py;
         mona check-prod --hermes-home /opt/data
     environment: !override
       HOME: /tmp

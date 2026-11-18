@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import shutil
 import sqlite3
 from datetime import UTC, date, datetime, timedelta
 
@@ -11,7 +12,7 @@ from sqlalchemy import create_engine, text
 from mona.demo import anchor, checks
 from mona.demo.anchor import timestamp_columns
 from mona.demo.fingerprint import fingerprint
-from mona.demo.hermes import job_ids
+from mona.demo.hermes import job_ids, restore_part
 from mona.demo.snapshot import (
     EXCLUDE_DATA,
     postcheck,
@@ -30,6 +31,7 @@ from tests.demo_world import (
     DAY,
     JOBS,
     NOW,
+    PLUGIN,
     SOUL,
     build,
     canonical,
@@ -207,6 +209,46 @@ def test_a_reset_installs_the_repos_soul_over_an_old_snapshots(stage):
     rehearse(stage)
     reset(stage)
     assert fingerprint(stage.env) == first
+
+
+def plugin_files(home) -> dict[str, tuple[bytes, int]]:
+    folder = home / "plugins" / "mona_prompt"
+    return {p.name: (p.read_bytes(), p.stat().st_mode & 0o777) for p in folder.iterdir()}
+
+
+def test_a_reset_installs_the_prompt_plugin_read_only_and_restores_a_changed_one(stage):
+    snap(stage)
+    rehearse(stage)
+    reset(stage)
+    home = stage.env.hermes
+    want = {n: ((PLUGIN / n).read_bytes(), 0o644) for n in ("plugin.yaml", "__init__.py", "cut.py")}
+    assert plugin_files(home) == want
+    assert (home / "plugins" / "mona_prompt").stat().st_mode & 0o777 == 0o755
+    first = fingerprint(stage.env)
+    (home / "plugins" / "mona_prompt" / "cut.py").write_text("tampered")
+    (home / "plugins" / "mona_prompt" / "__pycache__").mkdir()
+    rehearse(stage)
+    reset(stage)
+    assert plugin_files(home) == want
+    assert fingerprint(stage.env) == first
+
+
+def test_the_restore_mirror_never_deletes_the_plugins(tmp_path):
+    part, home = tmp_path / "part", tmp_path / "home"
+    (part / "memories").mkdir(parents=True)
+    (home / "plugins" / "mona_prompt").mkdir(parents=True)
+    (home / "plugins" / "mona_prompt" / "cut.py").write_text("cut")
+    (home / "stray.txt").write_text("gone after the mirror")
+    restore_part(part, home)
+    assert (home / "plugins" / "mona_prompt" / "cut.py").read_text() == "cut"
+    assert not (home / "stray.txt").exists()
+
+
+def test_a_reset_refuses_a_seed_without_the_plugin(stage):
+    snap(stage)
+    shutil.rmtree(stage.env.hermes_seed / "plugins")
+    with pytest.raises(OpsError, match="plugins/mona_prompt is missing"):
+        restore(stage.env, "scratch", DAY, now=NOW)
 
 
 def test_the_findquery_fixture_check_names_a_changed_field(stage):

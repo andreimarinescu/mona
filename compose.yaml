@@ -156,8 +156,12 @@ services:
         [ -d /opt/data/$$d ] || install -d -m 755 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /opt/data/$$d;
         done;
         for f in config.yaml SOUL.md; do
-        [ -e /opt/data/$$f ] || install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/$$f /opt/data/$$f;
-        done
+        install -m 644 -o ${HERMES_UID:-1000} -g ${HERMES_GID:-1000} /seed/$$f /opt/data/$$f;
+        done;
+        rm -rf /opt/data/plugins/mona_prompt;
+        install -d -m 755 -o 0 -g 0 /opt/data/plugins /opt/data/plugins/mona_prompt;
+        install -m 644 -o 0 -g 0 -t /opt/data/plugins/mona_prompt
+        /seed/plugins/mona_prompt/plugin.yaml /seed/plugins/mona_prompt/*.py
     restart: "no"
     volumes:
       - ./deploy/hermes:/seed:ro

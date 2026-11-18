@@ -9,7 +9,8 @@ from pathlib import Path
 from mona.demo.tools import OpsError, empty_dir, mirror
 
 ATTACHMENT_DIRS = ("cache/documents", "cache/images")
-INSTALLED = ("/config.yaml", "/SOUL.md", "/.env", "/cron/")
+INSTALLED = ("/config.yaml", "/SOUL.md", "/.env", "/cron/", "/plugins/")
+PLUGIN = "plugins/mona_prompt"
 CLOUD_KEYS = ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY")
 # Written by Hermes at start or by its scheduler; excluded from the idempotency comparison.
 RUNTIME = (
@@ -89,3 +90,25 @@ def install_config(hermes: Path, seed: Path | None, env: str, env_keys: tuple[st
     env_file = hermes / ".env"
     env_file.write_text("".join(lines), encoding="utf-8")
     os.chmod(env_file, 0o600)
+
+
+def install_plugin(hermes: Path, seed: Path | None) -> None:
+    """A57: the repo's `mona_prompt` plugin, read-only and root-owned: no bytecode lands in it."""
+    if seed is None:
+        raise OpsError("MONA_HERMES_SEED is not set: no Hermes plugin to install")
+    src = seed / PLUGIN
+    files = sorted([*src.glob("*.py"), src / "plugin.yaml"]) if src.is_dir() else []
+    if not files or not all(f.is_file() for f in files):
+        raise OpsError(f"{PLUGIN} is missing from the Hermes seed directory")
+    dst = hermes / PLUGIN
+    if dst.exists():
+        shutil.rmtree(dst)
+    dst.mkdir(parents=True)
+    for f in files:
+        shutil.copyfile(f, dst / f.name)
+        os.chmod(dst / f.name, 0o644)
+    for path in (dst.parent, dst, *(dst / f.name for f in files)):
+        if path.is_dir():
+            os.chmod(path, 0o755)
+        if os.geteuid() == 0:
+            os.lchown(path, 0, 0)
