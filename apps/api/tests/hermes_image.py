@@ -65,8 +65,9 @@ def compose_services(tmp_path: Path, *overlay: str) -> dict:
     cmd = ["docker", "compose", "--env-file", str(env_file), "-p", "seedtest", "-f", "compose.yaml"]
     for f in overlay:
         cmd += ["-f", f]
+    cmd += ["config", "--no-env-resolution", "--format", "json"]
     out = subprocess.run(
-        [*cmd, "config", "--format", "json"], cwd=ROOT, capture_output=True, text=True,
+        cmd, cwd=ROOT, capture_output=True, text=True,
         env={"PATH": os.environ["PATH"], "HOME": os.environ.get("HOME", "/tmp")},
     )  # fmt: skip
     assert out.returncode == 0, out.stderr[-500:]
