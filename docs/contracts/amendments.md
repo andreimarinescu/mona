@@ -431,7 +431,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   4. **Checks.**
      - C9 §4.1's check A5 (`hermes_config_problems`) also expects items 1–3:
        - the `extra_body` keys and values;
-       - a `custom_providers` entry whose `base_url` equals `model.base_url` and which has no `model` key (Hermes matches on the normalised `base_url`; a mismatch silently drops the budget);
+       - a `custom_providers` entry whose `base_url` equals `model.base_url` and which has no `model` key (Hermes matches on the normalised `base_url`; a mismatch silently drops the budget). On every start, Hermes' boot migration moves the installed file's `custom_providers` into `providers.<key>` (`_config_version` 46). A5 accepts either form, and so does every other reader of the installed config: one helper, `privacy.provider_extra_body`;
        - the three `agent.*` switches, the platform hint, and `mona_prompt` in `plugins.enabled`.
      - A **prompt check** applies the plugin's cut to a stored prompt and fails if any of these markers, Hermes' exact strings, survives:
        - `# Hermes runtime environment`, `Terminal backend: `, `/mnt/c/`;
@@ -446,6 +446,8 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
      - Its output names markers and sections only, never prompt text (C9 §7).
   5. **Seeding (extends A33):**
      - Both `hermes-seed` services install `SOUL.md`, the config and the plugin directory on every start, not only when missing. SOUL, config and plugin are code, versioned with the release.
+     - Hermes loads plugins once per process, so **Hermes restarts whenever its seed is recreated**: compose `restart: true` on `hermes.depends_on.hermes-seed`.
+     - The doctor's plugin line goes red when the running gateway started before the installed plugin files.
      - `demo-reset` installs the plugin as it does SOUL and config, and its restore never deletes it.
      - The plugin is installed read-only, so no bytecode lands next to it and the Hermes fingerprint doesn't drift.
      - Memories and sessions are never touched.
@@ -503,7 +505,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
      - **Decide quickly.** When no tool does what is asked, say so in one line the first time: don't re-list your tools or redraft the reply.
      - **Documents arrive** through the Intake page (drag and drop) or as attachments on Telegram. There's no watched folder, scanner or email intake yet.
      - **The app's pages** are Home, Chat, Intake, Review, Archive, Rules, Entities (with categories and their name templates), Activity and Settings. Never describe a menu, setting or button you don't know.
-     - **Deadlines:** no tool changes a deadline's status. To mark one paid or done, call `list_deadlines` (with `document_id` when you know it). Its card has a "Mark as done" button for the person.
+     - **Deadlines:** no tool changes a deadline's status. To mark one paid or done, call `list_deadlines` (with `document_id` when you know it). In the web app its card has a "Mark as done" button for the person; on Telegram, say it can be marked done in the web app.
      - **Never offer a change**, or a table of changes, that no tool will make.
      - **Renaming:** call `rename_documents` with the name the person gave, copied exactly. Never type a rename table.
 - **Why:** D23.
@@ -530,6 +532,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
      - The description adds: "With document_id, that document's deadlines, any status."
      - C1 §5's `file_ops.action` CHECK and C1 §11.6's `JournalEntry.action` union gain `deadline.status` (migration `0011_deadline_status`). C2 §10's "C1 has no deadline-status action" is superseded.
   4. **Unchanged:** Mona never changes a deadline's status (C2 §10).
+  5. **A dismissed deadline's card** shows a "Dismissed" badge (`deadline.dismissed`: EN "Dismissed", FR « Écartée », RO „Ignorată") instead of the due badge, with no Done or Remind button. `list_deadlines(document_id)` can now return one.
 - **Why:** D23. "Mark URSSAF as paid": the card's button is the way to do it, and Mona must learn it happened.
 - **Lanes:** FIX-16 S.
 
@@ -566,7 +569,7 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
        1. **Derives the pattern from `example`.**
           - It first normalises the example as a C5 §8.4 file name (NFKD fold, then steps 2–3), and works on that. The result shows the normalised name.
           - It scans left to right. A match starts and ends at the stem's ends or at a `-`, `_` or `.`, and a date format starts and ends with a unit.
-          - The stem must begin with this document's date in some C5 date format. After that leading date, only the `YYYY` and `MMMM` units (`MMMM` in the filing language) are inferred, along with `{counterparty}`, `{entity}`, `{sub}`, and `{reference}` when its value has at least 4 characters. Shorter runs stay literals.
+          - The stem must begin with this document's date in some C5 date format. The whole leading date counts: if a one- or two-digit run follows the matched date (`2026-02-16` against a document dated 2026-01-16 matches only `2026`), it is the first error, not a literal. After that leading date, only the `YYYY` and `MMMM` units (`MMMM` in the filing language) are inferred, along with `{counterparty}`, `{entity}`, `{sub}`, and `{reference}` when its value has at least 4 characters. Shorter runs stay literals.
           - Ties go date > counterparty > entity > sub > reference.
           - Everything else becomes a literal. The pattern must render this document to exactly the normalised stem.
        2. **Builds a draft rule** (`source='correction'`, `origin_document_id` = this document, journaled `rule.create` as C4 §3.5.4 does; no migration):
@@ -585,10 +588,12 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
        - the example doesn't start with this document's date;
        - a literal holds a month name (EN/FR/RO) or this document's year (they would repeat in every name; the error names the token to use);
        - the derived pattern doesn't round-trip (`hint`: the name it would give);
-       - a C5 §8.1 grammar error (`offset`, `valid`);
+       - a C5 §8.1 grammar error (`valid`, and the character offset in `hint`, since C4 §2.4's envelope has no `offset` key);
        - the document has no counterparty.
        - `not_allowed` for a Visitors document.
      - **Then:** the person applies from the card, or Mona calls `apply_rule`. `undo` on the apply group restores the names and returns the rule to draft (C7 §5.4).
+     - The rename-only check runs when the draft is made. Apply is the ordinary `apply_rule`: a document that arrived or was corrected in between is placed by the rule, as with any rule, and the live `rulePreview` card shows it before Apply.
+     - Counts in a refusal cover only documents the channel may see (C4 §2.6). When every offender is hidden, the message has no number.
      - Tool label (C3 §4.5): "Preparing the new names…" / "Prepared the new names".
   2. **C4 §3.8 / C1 §11.5.**
      - A preview of a rule not yet applied predicts the C7 §8.1 collision suffixes by simulating the apply in (`arrived_at`, `id`) order.
