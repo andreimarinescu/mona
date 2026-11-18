@@ -26,7 +26,11 @@ UNITS = {"YYYY": "y", "YY": "y", "MMMM": "m", "MM": "m", "DD": "d"}
 ORDERS = [("y", "m", "d"), ("d", "m", "y"), ("m", "d", "y"), ("y", "m"), ("m", "y"), ("y",)]
 MIN_REFERENCE = 4
 LEFTOVER_DATE = re.compile(r"[-_.]\d{1,2}(?=[-_.]|$)")
-MONTH_NAMES = {fold(m).casefold() for names in MONTHS.values() for m in names}
+MONTH_ABBREVIATIONS = {
+    *("jan", "janv", "ian", "feb", "fev", "fevr", "mar", "apr", "avr", "jun", "iun", "jul"),
+    *("juil", "iul", "aug", "sep", "sept", "oct", "nov", "noi", "dec"),
+}
+MONTH_NAMES = {fold(m).casefold() for names in MONTHS.values() for m in names} | MONTH_ABBREVIATIONS
 
 
 class InferError(ValueError):

@@ -254,6 +254,8 @@ def test_a_model_filed_document_filed_elsewhere_than_read_would_refile(s):
         ({"pattern": "{date:YYYY}_Juin"}, "pattern", "{date:MMMM}"),
         ({"example": "2025-03_" + "-".join(["Contrat"] * 20)}, "example", "2025-03_Contrat"),
         ({"pattern": "{date:YYYY}_{nope}"}, "pattern", "offset 12"),
+        ({"example": "2025-mar-03_UNIM"}, "example", "{date:MMMM}"),
+        ({"pattern": "{date:YYYY}-Févr_{counterparty}"}, "pattern", "{date:MMMM}"),
         ({}, "example", None),
         ({"example": "2025-03", "pattern": "{date:YYYY}"}, "example", None),
     ],

@@ -69,9 +69,10 @@ def test_a_complete_leading_date_or_an_inferred_token_is_no_wrong_date(example, 
     assert infer(example, statement(d, **kw)).pattern == pattern
 
 
-def test_marchand_is_no_month():
+@pytest.mark.parametrize("example", ["2026-03-Marchand", "2026-03_Decor", "2026-03-Octave-x"])
+def test_a_word_that_starts_like_a_month_is_no_month(example):
     v = statement(date(2026, 3, 5))
-    assert infer("2026-03-Marchand", v).pattern == "{date:YYYY-MM}-Marchand"
+    assert infer(example, v).pattern == "{date:YYYY-MM}" + normalise(example)[7:]
 
 
 def test_mmmm_is_inferred_only_in_the_filing_language():
@@ -82,10 +83,21 @@ def test_mmmm_is_inferred_only_in_the_filing_language():
     assert e.value.hint == "{date:MMMM}"
 
 
-@pytest.mark.parametrize("example", ["2026-01-HB-January", "2026-01_mars", "2026-01-HB-Mai"])
-def test_a_month_name_in_a_literal_is_refused_naming_the_token(example):
+@pytest.mark.parametrize(
+    ("example", "language"),
+    [
+        ("2026-01-HB-January", "fr"),
+        ("2026-01_mars", "fr"),
+        ("2026-01-HB-Mai", "fr"),
+        ("2026-01-HB-Aug", "en"),
+        ("2026-janv-16 HB", "fr"),
+        ("2026-01_FÉVR_HB", "fr"),
+        ("2026-01-HB-iun", "ro"),
+    ],
+)
+def test_a_month_name_in_a_literal_is_refused_naming_the_token(example, language):
     with pytest.raises(InferError) as e:
-        infer(example, statement())
+        infer(example, replace(statement(), language=language))
     assert e.value.hint == "{date:MMMM}" and "{date:MMMM}" in e.value.message
 
 
