@@ -9,6 +9,7 @@ from mona.services.corrections import (
 )
 from mona.services.errors import ServiceError
 from mona.services.pipeline import add_extracted_deadline, file_document, finish_batch_if_done
+from mona.services.rename import Rename, rename_documents
 from mona.services.rules import Applied, apply_rule, preview_rule
 from mona.services.undo import Undone, delete_document, restore_document, undo
 
@@ -16,6 +17,7 @@ __all__ = [
     "Applied",
     "Correction",
     "Ctx",
+    "Rename",
     "ServiceError",
     "Undone",
     "add_extracted_deadline",
@@ -27,6 +29,7 @@ __all__ = [
     "learn_alias",
     "make_context",
     "preview_rule",
+    "rename_documents",
     "resolve_counterparty",
     "restore_document",
     "undo",

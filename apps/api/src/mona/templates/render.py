@@ -128,9 +128,14 @@ def slug(value: str) -> str:
     return re.sub(r"-+", "-", s).strip("-.")
 
 
+def fold_separators(value: str) -> str:
+    """C5 §8.4.3: a run of `_` and `-` with an `_` → `_`, else `-`; ends stripped."""
+    return _SEP_RUN.sub(lambda m: "_" if "_" in m.group(0) else "-", value).strip("_-.")
+
+
 def file_stem(concatenated: str) -> str:
     """C5 §8.4.3–4: separator runs folded, capped at 116 characters."""
-    s = _SEP_RUN.sub(lambda m: "_" if "_" in m.group(0) else "-", concatenated).strip("_-.")
+    s = fold_separators(concatenated)
     if len(s) > STEM_MAX:
         cut = max(s.rfind("_", 0, STEM_MAX + 1), s.rfind("-", 0, STEM_MAX + 1))
         s = (s[:cut] if cut >= STEM_CUT_MIN else s[:STEM_MAX]).strip("_-.")
@@ -205,6 +210,20 @@ class _Values:
 
     def document_fiscal_year(self) -> int:
         return self._fy(self.v.period_end or self.v.doc_date or self.arrived)
+
+
+def token_value(v: RenderValues, name: str, fmt: str | None = None) -> str:
+    """One token's C5 §8.2 value, before any slugging; the entity must be set."""
+    return _Values(v).value(Token(name, fmt, 0))
+
+
+def file_date(v: RenderValues) -> date:
+    """The date `{date}` renders: `doc_date`, else the arrival date in Paris."""
+    return v.doc_date or paris_date(v.arrived_at)
+
+
+def filing_language(v: RenderValues) -> str:
+    return (v.entity.filing_language if v.entity else None) or v.language
 
 
 def document_fiscal_year(

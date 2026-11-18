@@ -125,7 +125,7 @@ def _candidates(
     return cands if visible is None else [c for c in cands if visible(c.doc)]
 
 
-def _stays(c: Candidate) -> bool:
+def stays_in_place(c: Candidate) -> bool:
     return c.doc["location"] == "archive" and is_suffix_of(c.doc["current_path"], c.placement.path)
 
 
@@ -140,14 +140,14 @@ def preview_rule(
         cands = _candidates(ctx, conn, snap, rule_id, visible)
         applied = _applied_group(conn, rule_id)
         if applied is None:
-            pending = [c for c in cands if not _stays(c)]
+            pending = [c for c in cands if not stays_in_place(c)]
             targets = ctx.ops.predict_names([(c.doc, c.placement.path) for c in pending])
             moves = [
                 _move(c.doc, {"location": c.doc["location"], "path": c.doc["current_path"]},
                       {"location": "archive", "path": to})
                 for c, to in zip(pending, targets, strict=True)
             ]  # fmt: skip
-            stays = [c.doc["id"] for c in cands if _stays(c)]
+            stays = [c.doc["id"] for c in cands if stays_in_place(c)]
         else:
             f, d = T["file_ops"], T["documents"]
             entries = (
@@ -237,7 +237,7 @@ def apply_rule(
             raise ServiceError("conflict", "The rule is invalid.", hint="rule_invalid")
         snap = registry.load(conn)
         cands = _candidates(ctx, conn, snap, rule_id, visible)
-        moves = [c for c in cands if not _stays(c)]
+        moves = [c for c in cands if not stays_in_place(c)]
         group = None
         if moves:
             group = new_id("grp")
