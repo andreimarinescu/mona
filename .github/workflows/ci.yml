@@ -62,7 +62,6 @@ jobs:
           image=$(sed -n 's/.*&hermes-image \(.*\)$/\1/p' compose.yaml)
           [ -n "$image" ] || { echo "no &hermes-image in compose.yaml" >&2; exit 1; }
           echo "image=$image" >> "$GITHUB_OUTPUT"
-          echo "hermes=hermes-image-${image##*@sha256:}" >> "$GITHUB_OUTPUT"
       - id: apt
         uses: actions/cache/restore@v6
         with:
@@ -83,29 +82,10 @@ jobs:
         with:
           path: ~/apt-debs
           key: ${{ steps.keys.outputs.apt }}
-      - id: hermes
-        uses: actions/cache/restore@v6
-        with:
-          path: ~/hermes-image
-          key: ${{ steps.keys.outputs.hermes }}
-      - name: The pinned Hermes image (the Hermes image tests)
+      - name: The pinned Hermes image (the Hermes image tests; a pull beats a 2.7 GB cache restore and load)
         env:
           IMAGE: ${{ steps.keys.outputs.image }}
-          HIT: ${{ steps.hermes.outputs.cache-hit }}
-        run: |
-          if [ "$HIT" = true ]; then
-            time docker load -q -i ~/hermes-image/image.tar
-          fi
-          time docker pull -q "$IMAGE"
-          if [ "$HIT" != true ]; then
-            mkdir -p ~/hermes-image
-            time docker save -o ~/hermes-image/image.tar "$(docker image inspect -f '{{.Id}}' "$IMAGE")"
-          fi
-      - if: steps.hermes.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
-        with:
-          path: ~/hermes-image
-          key: ${{ steps.keys.outputs.hermes }}
+        run: docker pull -q "$IMAGE"
       - name: An empty .env (docker compose config for the prod compose tests)
         run: touch .env
       - run: make py-check
