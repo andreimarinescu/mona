@@ -138,12 +138,16 @@ def test_soul_states_a59_limits():
     can = soul.split("## What you can do here, and what you can't", 1)[1].split("\n## ", 1)[0]
     principles = soul.split("## Principles", 1)[1].split("\n## ", 1)[0]
     lines = can.strip().splitlines()
-    assert any("There's no watched folder, scanner or email intake yet" in x for x in lines)
+    intake = next(x for x in lines if x.startswith("- Documents arrive only through"))
+    assert "no watched folder, scanner, email intake, import API or script yet" in intake
+    assert "never suggest setting one up" in intake
     assert any("Never describe a menu, setting or button you don't know" in x for x in lines)
-    deadline = next(x for x in lines if x.startswith("- No tool changes a deadline's status."))
-    assert "`list_deadlines` (with `document_id` when you know it)" in deadline
-    assert 'in the web app its card has a "Mark as done" button' in deadline
-    assert "on Telegram, say it can be marked done in the web app" in deadline
+    deadline = next(x for x in lines if x.startswith("- When the person asks to mark a deadline"))
+    assert "always call `list_deadlines` (with `document_id` when you know it)" in deadline
+    assert "even when a brief or an earlier result already shows that deadline" in deadline
+    assert 'only its card has the "Mark as done" and "Remind me" buttons' in deadline
+    assert "No tool changes a deadline's status or sets a reminder" in deadline
+    assert "on Telegram, say it can be done in the web app" in deadline
     rename = next(x for x in lines if x.startswith("- Renaming:"))
     assert "`rename_documents`" in rename and "Never type a rename table" in rename
     assert any(x.startswith("- Decide quickly.") for x in principles.splitlines())

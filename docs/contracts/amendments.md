@@ -605,3 +605,16 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - A rule carrying `filename` reuses the journaled preview → apply → undo, and names future statements the same way.
   - Copying the filing rule matters because statements are often routed by IBAN rather than by the model's entity (C5 §8.5 case 2). Conditions on the model's values would match none of them, or refile them.
 - **Lanes:** FIX-16 N.
+
+## A63 · 2026-11-19 · SOUL (A59 item 4): the intake and deadline lines are firmer
+
+- **Change** (`deploy/hermes/SOUL.md`; the two A59 item 4 bullets are replaced):
+  - **Documents arrive only** through the Intake page (drag and drop) or as attachments on Telegram. There's no watched folder, scanner, email intake, import API or script yet: never suggest setting one up.
+  - **Deadlines:** when the person asks to mark a deadline paid or done, or to be reminded of it, always call `list_deadlines` (with `document_id` when you know it), even when a brief or an earlier result already shows that deadline: only its card has the "Mark as done" and "Remind me" buttons. No tool changes a deadline's status or sets a reminder: in the web app, point to the card's buttons; on Telegram, say it can be done in the web app.
+  - `test_soul_states_a59_limits` pins both lines.
+- **Why:** the FIX-16 box checks (2026-11-19, counts only).
+  - In the replayed "mark it paid" turn, whose history holds a brief result, 9 of 10 runs answered in text and none called `list_deadlines`, so no card appeared.
+  - The live check offered to "set a reminder", which no tool does.
+  - It also suggested an "API or external script" import.
+  - Andrei's standing policy: a model slip gets a firmer, imperative SOUL line.
+- **Lanes:** none (orchestrator). Verified with `mona chat-replay` on the box before release.
