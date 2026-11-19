@@ -78,6 +78,12 @@ echo dirty >> f1; run --dry-run; git checkout -q f1
 check "a refused dry run shows no dialog" '[ $rc = 3 ] && [ ! -s "$ROOT/zenity-log" ]'
 check "dry run leaves main" '[ "$(git rev-parse main)" = "$tip" ]'
 
+fresh; long=$(printf 'x%.0s' $(seq 400))
+for i in $(seq 40); do echo "$i" > "g$i"; git add "g$i"; git commit -q -m "long $i $long"; done
+run --dry-run
+check "a sitting of 44 long commits plans without a broken pipe" '[ $rc = 0 ] && grep -q "43 signature" "$ROOT/out"'
+check "its list stops at 20" '[ "$(grep -c "^  • " "$ROOT/out")" = 20 ]'
+
 fresh; tip=$(git rev-parse main); rt=$(remote_tip)
 ASK_ANSWER=1 run
 check "declined exits 3" '[ $rc = 3 ]'

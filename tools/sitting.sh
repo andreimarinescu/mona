@@ -95,7 +95,7 @@ main() {
 
   plan=$("$RESIGN" --dry-run $rflag "$rbase" "$branch" 2>&1) || stop "$(printf '%s' "$plan" | tail -1)" $EX_DECLINED
   sigs=$(printf '%s\n' "$plan" | sed -n 's/^resign: sign: *\([0-9]*\) commit.*/\1/p')
-  list=$(git log --reverse --format='  • %s' "$rbase..$branch" | grep -v '^  • fixup! ' | head -20)
+  list=$(git log --reverse --format='  • %s' "$rbase..$branch" | awk '!/^  • fixup! / && n++ < 20')
   say "plan: $sigs signature(s) for $n commit(s) on $branch, then push to $remote"
   [ -z "$dry" ] || { printf '%s\n%s\n' "$plan" "$list" >&2; exit 0; }
 
