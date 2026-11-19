@@ -68,18 +68,15 @@ jobs:
         with:
           path: ~/apt-debs
           key: ${{ steps.keys.outputs.apt }}
+      - run: .github/apt-cache.sh
       - name: PostgreSQL 17 client (pg_dump for the schema parity test), poppler-utils and the image's OCR tools (the extraction tests)
         run: |
-          sudo rm -f /var/lib/man-db/auto-update
-          mkdir -p ~/apt-debs/partial
-          cache=(-o "Dir::Cache::Archives=$HOME/apt-debs" -o APT::Keep-Downloaded-Packages=true)
-          sudo apt-get install -y "${cache[@]}" postgresql-common
+          sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y "${cache[@]}" postgresql-client-17
-          sudo apt-get install -y --no-install-recommends "${cache[@]}" poppler-utils img2pdf ocrmypdf \
+          sudo apt-get install -y postgresql-client-17
+          sudo apt-get install -y --no-install-recommends poppler-utils img2pdf ocrmypdf \
             tesseract-ocr tesseract-ocr-fra tesseract-ocr-eng tesseract-ocr-ron
-          sudo rm -rf ~/apt-debs/partial ~/apt-debs/lock
-          sudo chown -R "$(id -u):$(id -g)" ~/apt-debs
+          .github/apt-cache.sh done
           echo "PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump" >> "$GITHUB_ENV"
       - if: steps.apt.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
@@ -138,18 +135,31 @@ jobs:
             apps/web/node_modules
             packages/ui/node_modules
           key: node-modules-ubuntu-24.04-node24-${{ hashFiles('package-lock.json') }}
-      - id: playwright
-        run: echo "version=$(jq -r '.packages["node_modules/@playwright/test"].version' package-lock.json)" >> "$GITHUB_OUTPUT"
+      - id: keys
+        run: |
+          echo "playwright=$(jq -r '.packages["node_modules/@playwright/test"].version' package-lock.json)" >> "$GITHUB_OUTPUT"
+          echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
       - id: browsers
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-ubuntu-24.04-${{ steps.playwright.outputs.version }}-chromium
-      - run: sudo rm -f /var/lib/man-db/auto-update
+          key: playwright-ubuntu-24.04-${{ steps.keys.outputs.playwright }}-chromium
+      - id: apt
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/apt-debs
+          key: apt-e2e-ubuntu-24.04-${{ steps.keys.outputs.playwright }}-${{ steps.keys.outputs.month }}
+      - run: .github/apt-cache.sh
       - if: steps.browsers.outputs.cache-hit != 'true'
         run: npx --workspace apps/web playwright install --with-deps chromium
       - if: steps.browsers.outputs.cache-hit == 'true'
         run: npx --workspace apps/web playwright install-deps chromium
+      - run: .github/apt-cache.sh done
+      - if: steps.apt.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/apt-debs
+          key: apt-e2e-ubuntu-24.04-${{ steps.keys.outputs.playwright }}-${{ steps.keys.outputs.month }}
       - run: make e2e
       - if: failure()
         uses: actions/upload-artifact@v7
