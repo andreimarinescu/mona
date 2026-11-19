@@ -12,8 +12,24 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
+      - id: modules
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            packages/ui/node_modules
+          key: node-modules-ubuntu-24.04-node24-${{ hashFiles('package-lock.json') }}
+      - if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
+      - if: steps.modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            packages/ui/node_modules
+          key: node-modules-ubuntu-24.04-node24-${{ hashFiles('package-lock.json') }}
       - run: make web-check
 
   py:
@@ -39,16 +55,60 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: 0.12.10
-      - name: PostgreSQL 17 client (pg_dump for the schema parity test)
+          enable-cache: true
+      - id: keys
         run: |
-          sudo apt-get install -y postgresql-common
+          echo "apt=apt-py-ubuntu-24.04-${{ hashFiles('.github/workflows/ci.yml') }}-$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+          image=$(sed -n 's/.*&hermes-image \(.*\)$/\1/p' compose.yaml)
+          [ -n "$image" ] || { echo "no &hermes-image in compose.yaml" >&2; exit 1; }
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "hermes=hermes-image-${image##*@sha256:}" >> "$GITHUB_OUTPUT"
+      - id: apt
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/apt-debs
+          key: ${{ steps.keys.outputs.apt }}
+      - name: PostgreSQL 17 client (pg_dump for the schema parity test), poppler-utils and the image's OCR tools (the extraction tests)
+        run: |
+          sudo rm -f /var/lib/man-db/auto-update
+          mkdir -p ~/apt-debs/partial
+          cache=(-o "Dir::Cache::Archives=$HOME/apt-debs" -o APT::Keep-Downloaded-Packages=true)
+          sudo apt-get install -y "${cache[@]}" postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-client-17
+          sudo apt-get install -y "${cache[@]}" postgresql-client-17
+          sudo apt-get install -y --no-install-recommends "${cache[@]}" poppler-utils img2pdf ocrmypdf \
+            tesseract-ocr tesseract-ocr-fra tesseract-ocr-eng tesseract-ocr-ron
+          sudo rm -rf ~/apt-debs/partial ~/apt-debs/lock
+          sudo chown -R "$(id -u):$(id -g)" ~/apt-debs
           echo "PG_DUMP=/usr/lib/postgresql/17/bin/pg_dump" >> "$GITHUB_ENV"
-      - name: poppler-utils and the image's OCR tools (the extraction tests)
-        run: >-
-          sudo apt-get install -y --no-install-recommends poppler-utils img2pdf ocrmypdf
-          tesseract-ocr tesseract-ocr-fra tesseract-ocr-eng tesseract-ocr-ron
+      - if: steps.apt.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/apt-debs
+          key: ${{ steps.keys.outputs.apt }}
+      - id: hermes
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/hermes-image
+          key: ${{ steps.keys.outputs.hermes }}
+      - name: The pinned Hermes image (the Hermes image tests)
+        env:
+          IMAGE: ${{ steps.keys.outputs.image }}
+          HIT: ${{ steps.hermes.outputs.cache-hit }}
+        run: |
+          if [ "$HIT" = true ]; then
+            time docker load -q -i ~/hermes-image/image.tar
+          fi
+          time docker pull -q "$IMAGE"
+          if [ "$HIT" != true ]; then
+            mkdir -p ~/hermes-image
+            time docker save -o ~/hermes-image/image.tar "$(docker image inspect -f '{{.Id}}' "$IMAGE")"
+          fi
+      - if: steps.hermes.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/hermes-image
+          key: ${{ steps.keys.outputs.hermes }}
       - name: An empty .env (docker compose config for the prod compose tests)
         run: touch .env
       - run: make py-check
@@ -60,9 +120,36 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npx --workspace apps/web playwright install --with-deps chromium
+      - id: modules
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            packages/ui/node_modules
+          key: node-modules-ubuntu-24.04-node24-${{ hashFiles('package-lock.json') }}
+      - if: steps.modules.outputs.cache-hit != 'true'
+        run: npm ci
+      - if: steps.modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            packages/ui/node_modules
+          key: node-modules-ubuntu-24.04-node24-${{ hashFiles('package-lock.json') }}
+      - id: playwright
+        run: echo "version=$(jq -r '.packages["node_modules/@playwright/test"].version' package-lock.json)" >> "$GITHUB_OUTPUT"
+      - id: browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-ubuntu-24.04-${{ steps.playwright.outputs.version }}-chromium
+      - run: sudo rm -f /var/lib/man-db/auto-update
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: npx --workspace apps/web playwright install --with-deps chromium
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: npx --workspace apps/web playwright install-deps chromium
       - run: make e2e
       - if: failure()
         uses: actions/upload-artifact@v7
