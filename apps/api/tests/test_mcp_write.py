@@ -396,7 +396,7 @@ async def test_rename_errors_are_results_and_write_nothing(l2_world):
     neither = error(await call("rename_documents", {"document_id": doc}))
     long = error(await call("rename_documents", {"document_id": doc, "example": "2" * 201}))
     assert (month["code"], month["field"], month["hint"]) == (
-        "invalid_argument", "example", "{date:MMMM}"
+        "invalid_argument", "example", "{date:YYYY-MM}_{date:MMMM}"
     )  # fmt: skip
     assert (late["code"], late["field"]) == ("invalid_argument", "example")
     assert (bad["field"], bad["hint"]) == ("pattern", "offset 12") and bad["valid"]

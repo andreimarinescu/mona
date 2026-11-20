@@ -3,8 +3,8 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from mona.templates import render
-from mona.templates.infer import InferError, infer, normalise
+from mona.templates import parse, render
+from mona.templates.infer import InferError, check_literals, infer, normalise
 from tests.c5_registry import values
 
 
@@ -85,7 +85,7 @@ def test_mmmm_is_inferred_only_in_the_filing_language():
     assert infer("2026-01-HB-Ianuarie", ro).pattern == "{date:YYYY-MM}-HB-{date:MMMM}"
     with pytest.raises(InferError) as e:
         infer("2026-01-HB-Ianuarie", statement())
-    assert e.value.hint == "{date:MMMM}"
+    assert e.value.hint == "{date:YYYY-MM}-HB-{date:MMMM}" and "Janvier" in e.value.message
 
 
 @pytest.mark.parametrize(
@@ -103,7 +103,9 @@ def test_mmmm_is_inferred_only_in_the_filing_language():
 def test_a_month_name_in_a_literal_is_refused_naming_the_token(example, language):
     with pytest.raises(InferError) as e:
         infer(example, replace(statement(), language=language))
-    assert e.value.hint == "{date:MMMM}" and "{date:MMMM}" in e.value.message
+    hint = e.value.hint
+    assert hint is not None and "MMMM" in hint and f"pattern {hint}." in e.value.message
+    check_literals(parse(hint, "file"), date(2026, 1, 16), language)
 
 
 @pytest.mark.parametrize(
@@ -118,6 +120,9 @@ def test_a_month_name_in_a_literal_is_refused_naming_the_token(example, language
         ("2026-02-16_HB", date(2026, 1, 16)),
         ("2026-01-HB-LMNP", date(2026, 2, 5)),
         ("2026-01-16_Hello-bank", date(2026, 1, 17)),
+        ("2026-16_HB", date(2026, 1, 16)),
+        ("16-2026_HB", date(2026, 1, 16)),
+        ("2026-03_HB-{date:MMMM}", date(2026, 4, 3)),
     ],
 )
 def test_the_name_must_start_with_the_document_date(example, d):
@@ -154,3 +159,37 @@ def test_a_name_that_does_not_round_trip_is_refused_with_the_name_it_would_give(
         infer(long, statement())
     assert e.value.hint is not None and len(e.value.hint) <= 116
     assert long.startswith(e.value.hint)
+
+
+def test_tokens_written_into_an_example_take_this_documents_values():
+    for example in (
+        "2026-01-HB-{date:MMMM}",
+        "{date:YYYY-MM}-HB-Janvier",
+        "{date:YYYY-MM}-HB-{date:MMMM}",
+    ):
+        got = infer(example, statement())
+        assert (got.pattern, got.stem) == ("{date:YYYY-MM}-HB-{date:MMMM}", "2026-01-HB-Janvier")
+
+
+@pytest.mark.parametrize("example", ["2026-01-HB-{nope}", "2026-01-HB-{date:MMMM", "2026-01}"])
+def test_an_example_with_a_broken_token_is_refused(example):
+    with pytest.raises(InferError, match="give it exactly as the person wrote it"):
+        infer(example, statement())
+
+
+@pytest.mark.parametrize("example", ["2026-01_DSN{date:MMMM}", "2026-01-HB-{date:DD}"])
+def test_a_written_token_that_would_be_fixed_text_is_refused(example):
+    with pytest.raises(InferError, match="would be the same text in every name"):
+        infer(example, statement())
+
+
+def test_a_month_hint_on_an_example_keeps_the_day_a_date_unit():
+    with pytest.raises(InferError) as e:
+        infer("2026-janv-16 HB", statement())
+    assert e.value.hint == "{date:YYYY-MMMM-DD}-HB"
+
+
+@pytest.mark.parametrize("pattern", ["{date:YYYY}-HB\uff0dAvril", "{date:YYYY}-HB\uff3f2026"])
+def test_full_width_separators_still_split_literal_segments(pattern):
+    with pytest.raises(InferError):
+        check_literals(parse(pattern, "file"), date(2026, 1, 16), "fr")

@@ -618,3 +618,27 @@ Set A (C1, C3 shape, C4, C5, C7) froze at v1.0 on 2026-09-30. Set B (C2, C6, C8,
   - It also suggested an "API or external script" import.
   - Andrei's standing policy: a model slip gets a firmer, imperative SOUL line.
 - **Lanes:** none (orchestrator). Verified with `mona chat-replay` on the box before release.
+
+## A64 · 2026-11-20 · C4 §3.18 (A62 item 1): examples with tokens, no day without a month, hints that are patterns; firmer rename wording
+
+- **Change:**
+  1. **Tokens in an example** (`templates/infer.py`). Before it is normalised, an example's `{…}` tokens (C5 §8.1 grammar) become this document's values, and the name is then inferred as usual. So `2026-01-HB-{date:MMMM}` gives `{date:YYYY-MM}-HB-{date:MMMM}`, as `2026-01-HB-Janvier` does. These are an `invalid_argument` on `example`:
+     - an unknown or unclosed token, or a stray `}`;
+     - a written token whose value would end up inside fixed text (`2026-01_DSN{date:MMMM}`, `{date:DD}` after the leading date), since it would be the same text in every name.
+  2. **Leading date:** a date format with a day must also have a month. So `2024-03_…` on a document dated 2024-04-03 is the first error ("must start with this document's date"), not `{date:YYYY-DD}`.
+  3. **Month and year literal errors** (example and pattern). The `hint` is a full pattern, in place of the bare `{date:MMMM}` / `{date:YYYY}`. The message says to call again with that pattern. For a month, it also names this document's month in the filing language (names follow each document's date).
+     - For an example, the hint is the pattern inferred once every month name in it is this document's month. So `2025-mar-17_UNIM` gives `{date:YYYY-MMMM-DD}_{counterparty}`, not a fixed `-17`.
+     - Otherwise, and for a pattern, the hint is the pattern with that segment replaced by its token.
+     - Segments are compared after folding, so full-width separators still split them.
+  4. **An example for another document of the same series.** When the example doesn't start with this document's date, the server tries the other filed archive documents with the same counterparty, entity and category, in date order. It skips Visitors documents and documents the channel may not see. It anchors on the first one that builds the same rule as this document (the same conditions and action) and whose date the example starts with: its values and `origin_document_id` are used, and it comes first in `renames`. A document filed by another rule is never the anchor. A month or year literal error on that document is reported as usual. When no document fits, the error names this document's date. So `2024-04_DSN-Avril`, passed with the declaration titled "Avril" (dated 2024-05-06), anchors on the one dated 2024-04-03.
+  5. **Description (C4 §3.18):** "Rename a document and the others like it to the name the person gave. Call it once, for the document that name is for, and pass the name exactly as the person wrote it; it finds the others. Prepares a draft rule and shows the old and new names; nothing moves until it is applied. When it refuses with a pattern as the hint, call it again with that pattern."
+  6. **SOUL:** the renaming line is replaced:
+     - When the person asks to rename documents or gives a name to follow, call `rename_documents` once, for the document their name is for, with the name copied character for character: the tool finds the others and gives each its own date and month.
+     - Never write an example per document, never type a rename table, and never ask whether to go ahead: the card's Apply button renames.
+     - When it refuses with a pattern, call it again with that `pattern`, then explain in plain words, with no ids or `{…}` tokens.
+     - `test_soul_states_a59_limits` pins the line.
+- **Why:** the laptop rename test (2026-11-20, demo snapshot, Qwen 3.6). The model passed the person's example as written in 1 of 3 conversations.
+  - It built one example per document from the titles' period months. The bare hint led it to write `2024-04_DSN-{date:MMMM}`, which normalising turned into the literal `date-MMMM`, and the round-trip passed. So every preview name ended in `DSN-date-MMMM`, with Apply offered.
+  - `2024-03_DSN-{date:MMMM}` on a document dated 2024-04-03 inferred `{date:YYYY-DD}`, giving names like `2024-31_…`.
+  - In French it typed a rename table and asked whether to proceed, without calling a tool.
+- **Lanes:** none (orchestrator). Verified with the same conversations on a dev stack before release.

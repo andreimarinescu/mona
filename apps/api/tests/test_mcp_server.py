@@ -112,9 +112,11 @@ async def test_descriptions_are_the_contract_text():
     assert by_name["sum_amounts"].startswith("Add up document amounts, either for a list")
     assert by_name["get_brief"].endswith("amounts and due dates first, one short paragraph.")
     assert by_name["rename_documents"] == (
-        "Rename a document and the others like it to the name the person gave. Pass the name for "
-        "this document exactly as the person wrote it. Prepares a draft rule and shows the old "
-        "and new names; nothing moves until it is applied."
+        "Rename a document and the others like it to the name the person gave. Call it once, for "
+        "the document that name is for, and pass the name exactly as the person wrote it; it "
+        "finds the others. Prepares a draft rule and shows the old and new names; nothing moves "
+        "until it is applied. When it refuses with a pattern as the hint, call it again with that "
+        "pattern."
     )
     assert by_name["ingest_attachment"] == (
         "Add a file the person sent you on Telegram to Mona's intake, using the exact path the "

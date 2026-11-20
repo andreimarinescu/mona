@@ -18,8 +18,8 @@ from mona.services.placement import Candidate, render_values, rule_candidates, s
 from mona.services.registry import Snapshot, T
 from mona.services.rules import Visible, stays_in_place
 from mona.templates import TOKENS, TemplateError, parse
-from mona.templates.infer import InferError, check_literals, infer
-from mona.templates.render import file_date
+from mona.templates.infer import DateMismatch, InferError, check_literals, infer
+from mona.templates.render import file_date, filing_language
 
 UNSAVED = "rul_unsaved"
 VALID_TOKENS = sorted(
@@ -30,7 +30,7 @@ VALID_TOKENS = sorted(
 
 @dataclass
 class Rename:
-    """C4 §3.18 result; `renames` lists every rename, this document first."""
+    """C4 §3.18 result; `renames` lists every rename, the anchor document first (A64)."""
 
     rule_id: str
     pattern: str
@@ -86,9 +86,12 @@ def _base(
 
 
 def _pattern(example: str | None, pattern: str | None, values: Any) -> str:
+    """The file template; a DateMismatch on `example` is left to the caller."""
     if example is not None:
         try:
             return infer(example, values).pattern
+        except DateMismatch:
+            raise
         except InferError as e:
             raise _invalid(e.message, "example", hint=e.hint) from None
     assert pattern is not None
@@ -100,7 +103,7 @@ def _pattern(example: str | None, pattern: str | None, values: Any) -> str:
             field="pattern", valid=VALID_TOKENS, hint=f"offset {e.offset}",
         ) from None  # fmt: skip
     try:
-        check_literals(parts, file_date(values))
+        check_literals(parts, file_date(values), filing_language(values))
     except InferError as e:
         raise _invalid(e.message, "pattern", hint=e.hint) from None
     return pattern
@@ -171,6 +174,82 @@ def _not_covered(
     return sum(1 for r in rows if r["id"] not in ids and (visible is None or visible(r)))
 
 
+@dataclass(frozen=True)
+class _Anchor:
+    s: Any
+    filing: Mapping[str, Any] | None
+    conditions: list[dict[str, Any]]
+    action: dict[str, Any]
+    dest: Any
+    cp: str
+    values: Any
+
+
+def _anchor(conn: Connection, snap: Snapshot, doc: Mapping[str, Any], ctx: Ctx) -> _Anchor:
+    s = subject(conn, snap, doc, ctx.textcache)
+    filing = _filing_rule(conn, doc)
+    conditions, action = _base(snap, doc, s, filing)
+    try:
+        base = RuleAction.model_validate(action)
+    except ValidationError as e:
+        raise ServiceError("conflict", "The filing rule is invalid.", hint="rule_invalid") from e
+    dest = destination(base, s, snap.world)
+    cp = dest.counterparty or snap.counterparty_keys[doc["counterparty_id"]]
+    values = render_values(
+        snap, doc, entity=dest.entity, unit=dest.unit, category=dest.category,
+        subcategory=dest.subcategory, counterparty=cp,
+    )  # fmt: skip
+    if values.entity is None or values.category_labels is None:
+        raise ServiceError("conflict", "The document has no entity or category to keep.",
+                           hint="would_refile")  # fmt: skip
+    return _Anchor(s, filing, conditions, action, dest, cp, values)
+
+
+def _fitting_sibling(
+    conn: Connection,
+    snap: Snapshot,
+    doc: Mapping[str, Any],
+    own: _Anchor,
+    example: str,
+    ctx: Ctx,
+    visible: Visible,
+) -> tuple[Mapping[str, Any], _Anchor] | None:
+    """A64: the first filed document of the same series that builds the same rule as this one
+    and whose date the example starts with."""
+    d, b = T["documents"], T["batches"]
+    rows = conn.execute(
+        select(d)
+        .where(
+            d.c.counterparty_id == doc["counterparty_id"],
+            d.c.entity_id == doc["entity_id"],
+            d.c.category_id == doc["category_id"],
+            d.c.status == "filed",
+            d.c.location == "archive",
+            d.c.deleted_at.is_(None),
+            d.c.id != doc["id"],
+            d.c.batch_id.not_in(select(b.c.id).where(b.c.visitor)),
+        )
+        .order_by(d.c.doc_date, d.c.id)
+    ).mappings()
+    for row in rows:
+        if visible is not None and not visible(row):
+            continue
+        try:
+            anchor = _anchor(conn, snap, row, ctx)
+        except ServiceError:
+            continue
+        if (anchor.conditions, anchor.action) != (own.conditions, own.action):
+            continue
+        try:
+            infer(example, anchor.values)
+        except DateMismatch:
+            continue
+        except InferError:
+            pass
+        return row, anchor
+    return None
+
+
 def rename_documents(
     ctx: Ctx,
     document_id: str,
@@ -205,25 +284,19 @@ def rename_documents(
             raise _invalid("The document has no counterparty; correct that first.", "document_id")
         snap = registry.load(conn)
         specs = registry.rule_specs(conn)
-        s = subject(conn, snap, doc, ctx.textcache)
-        filing = _filing_rule(conn, doc)
-        conditions, action = _base(snap, doc, s, filing)
+        anchor = _anchor(conn, snap, doc, ctx)
         try:
-            base = RuleAction.model_validate(action)
-        except ValidationError as e:
-            raise ServiceError(
-                "conflict", "The filing rule is invalid.", hint="rule_invalid"
-            ) from e
-        dest = destination(base, s, snap.world)
-        cp = dest.counterparty or snap.counterparty_keys[doc["counterparty_id"]]
-        values = render_values(
-            snap, doc, entity=dest.entity, unit=dest.unit, category=dest.category,
-            subcategory=dest.subcategory, counterparty=cp,
-        )  # fmt: skip
-        if values.entity is None or values.category_labels is None:
-            raise ServiceError("conflict", "The document has no entity or category to keep.",
-                               hint="would_refile")  # fmt: skip
-        filename = _pattern(example, pattern, values)
+            filename = _pattern(example, pattern, anchor.values)
+        except DateMismatch as e:
+            assert example is not None
+            found = _fitting_sibling(conn, snap, doc, anchor, example, ctx, visible)
+            if found is None:
+                raise _invalid(e.message, "example") from None
+            doc, anchor = found
+            document_id = doc["id"]
+            filename = _pattern(example, None, anchor.values)
+        s, filing, conditions, action = anchor.s, anchor.filing, anchor.conditions, anchor.action
+        dest, cp = anchor.dest, anchor.cp
         body = RuleBody.model_validate(
             {"conditions": conditions, "action": {**action, "filename": filename}}
         )

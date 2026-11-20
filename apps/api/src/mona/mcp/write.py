@@ -241,9 +241,10 @@ async def apply_rule(rule_id: RuleIdParam) -> dict:
 
 
 @tool(
-    "Rename a document and the others like it to the name the person gave. Pass the name for "
-    "this document exactly as the person wrote it. Prepares a draft rule and shows the old and "
-    "new names; nothing moves until it is applied."
+    "Rename a document and the others like it to the name the person gave. Call it once, for "
+    "the document that name is for, and pass the name exactly as the person wrote it; it finds "
+    "the others. Prepares a draft rule and shows the old and new names; nothing moves until it "
+    "is applied. When it refuses with a pattern as the hint, call it again with that pattern."
 )
 async def rename_documents(
     document_id: DocIdParam, example: FileName = None, pattern: FileName = None

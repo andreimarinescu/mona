@@ -148,8 +148,10 @@ def test_soul_states_a59_limits():
     assert 'only its card has the "Mark as done" and "Remind me" buttons' in deadline
     assert "No tool changes a deadline's status or sets a reminder" in deadline
     assert "on Telegram, say it can be done in the web app" in deadline
-    rename = next(x for x in lines if x.startswith("- Renaming:"))
-    assert "`rename_documents`" in rename and "Never type a rename table" in rename
+    rename = next(x for x in lines if x.startswith("- When the person asks to rename documents"))
+    assert "call `rename_documents` once" in rename and "character for character" in rename
+    assert "Never write an example per document, never type a rename table" in rename
+    assert "never ask whether to go ahead" in rename and "with that `pattern`" in rename
     assert any(x.startswith("- Decide quickly.") for x in principles.splitlines())
     assert any(x.startswith("- Never offer a change") for x in principles.splitlines())
 

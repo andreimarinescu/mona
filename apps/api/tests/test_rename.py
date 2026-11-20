@@ -249,13 +249,17 @@ def test_a_model_filed_document_filed_elsewhere_than_read_would_refile(s):
     ("kw", "field", "hint"),
     [
         ({"example": "UNIM 2025-03"}, "example", None),
-        ({"example": "2025-03_UNIM_Avril"}, "example", "{date:MMMM}"),
-        ({"pattern": "{date:MM}_UNIM_2025"}, "pattern", "{date:YYYY}"),
-        ({"pattern": "{date:YYYY}_Juin"}, "pattern", "{date:MMMM}"),
+        ({"example": "2025-03_UNIM_Avril"}, "example", "{date:YYYY-MM}_{counterparty}_{date:MMMM}"),
+        ({"pattern": "{date:MM}_UNIM_2025"}, "pattern", "{date:MM}_UNIM_{date:YYYY}"),
+        ({"pattern": "{date:YYYY}_Juin"}, "pattern", "{date:YYYY}_{date:MMMM}"),
         ({"example": "2025-03_" + "-".join(["Contrat"] * 20)}, "example", "2025-03_Contrat"),
         ({"pattern": "{date:YYYY}_{nope}"}, "pattern", "offset 12"),
-        ({"example": "2025-mar-03_UNIM"}, "example", "{date:MMMM}"),
-        ({"pattern": "{date:YYYY}-Févr_{counterparty}"}, "pattern", "{date:MMMM}"),
+        ({"example": "2025-mar-03_UNIM"}, "example", "{date:YYYY-MMMM-DD}_{counterparty}"),
+        (
+            {"pattern": "{date:YYYY}-Févr_{counterparty}"},
+            "pattern",
+            "{date:YYYY}-{date:MMMM}_{counterparty}",
+        ),
         ({}, "example", None),
         ({"example": "2025-03", "pattern": "{date:YYYY}"}, "example", None),
     ],
@@ -302,3 +306,58 @@ def test_names_that_used_the_arrival_date_are_counted(s):
     out = rename(s, doc, example="2025-03_UNIM")
     assert out.date_fallbacks == 1
     assert sorted(r["to_name"] for r in out.renames) == ["2025-03_UNIM.pdf", "2025-06_UNIM.pdf"]
+
+
+def test_an_example_for_another_document_of_the_series_anchors_on_it(s):
+    docs = six_statements(s)
+    out = rename(s, docs[4], example=EXAMPLE)
+    assert out.pattern == "{date:YYYY-MM}-HB-{entity}-{date:MMMM}"
+    assert out.renames_total == 6 and out.renames[0]["document_id"] == docs[0]
+    with s.engine.connect() as conn:
+        assert store.rule_row(conn, out.rule_id)["origin_document_id"] == docs[0]
+    assert rename(s, docs[2], example=EXAMPLE).rule_id == out.rule_id
+
+
+def test_an_example_that_fits_no_document_of_the_series_names_this_documents_date(s):
+    docs = six_statements(s)
+    counted = rules_count(s)
+    with pytest.raises(ServiceError) as e:
+        rename(s, docs[0], example="2026-07 HB LMNP Juillet")
+    assert (e.value.code, e.value.field) == ("invalid_argument", "example")
+    assert "2026-01-16" in e.value.message and rules_count(s) == counted
+
+
+def test_a_sibling_whose_date_fits_reports_its_month_literal(s):
+    docs = six_statements(s)
+    with pytest.raises(ServiceError) as e:
+        rename(s, docs[0], example="2026-04 HB LMNP Mars")
+    assert e.value.hint == "{date:YYYY-MM}-HB-{entity}-{date:MMMM}" and "Avril" in e.value.message
+
+
+def test_a_sibling_the_channel_may_not_see_is_never_the_anchor(s):
+    docs = six_statements(s)
+    with pytest.raises(ServiceError) as e:
+        rename(s, docs[4], example=EXAMPLE, visible=lambda r: r["id"] != docs[0])
+    assert "2026-04-16" in e.value.message
+
+
+def test_a_model_filed_document_of_the_series_is_never_the_anchor(s):
+    docs = six_statements(s)
+    stray = model_filed(
+        s, f"{FOLDER}/2026-01-05_Hello-bank_Releve-de-compte.pdf",
+        counterparty="hello-bank", category="bank", subcategory="releve", entity="lmnp",
+        sub_unit_id=s.ids("sub_units")["angers-strasbourg"], doc_date=date(2026, 1, 5),
+        arrived_at=ARRIVED + timedelta(minutes=40),
+    )  # fmt: skip
+    direct = rename(s, docs[0], example=EXAMPLE)
+    via = rename(s, docs[4], example=EXAMPLE)
+    with s.engine.connect() as conn:
+        origin = store.rule_row(conn, via.rule_id)["origin_document_id"]
+    assert via.rule_id == direct.rule_id and origin == docs[0] != stray
+
+
+def test_a_month_hint_keeps_the_day_a_date_unit(s):
+    doc = unim(s, date(2025, 3, 17), 1)
+    with pytest.raises(ServiceError) as e:
+        rename(s, doc, example="2025-mar-17_UNIM")
+    assert e.value.hint == "{date:YYYY-MMMM-DD}_{counterparty}"
